@@ -55,7 +55,7 @@ function Theme(name)
                 for (var j in setting.scope)
                 {
                     setting.scope[j] = setting.scope[j].trim();
-                    name = "." + setting.scope[j].replace(".", "_");
+                    name = "." + setting.scope[j].replace(/\./g, "_");
                     this.createCss(name, setting);
                 }
             }
@@ -82,7 +82,7 @@ function Theme(name)
                     for (var j in setting.scope)
                     {
                         if (scopes.endsWith(setting.scope[j]))
-                            return setting.scope[j].replace(".", "_");
+                            return setting.scope[j].replace(/\./g, "_");
                     }
                 }
             }
