@@ -64,6 +64,10 @@ function Theme(name)
                 this.createCss(name, setting);
             }
         }
+        cssDef += ".default\n{\n";
+        cssDef += "\tfont-family:\"Menlo Regular\", monospace;\n";
+        cssDef += "\tfont-size:12px;\n";
+        cssDef += "}";
     }
     var sheet = document.createElement('style')
     sheet.innerHTML = cssDef;
