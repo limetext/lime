@@ -1,0 +1,6 @@
+[submodule "3rdparty/plist_parser"]
+	path = 3rdparty/plist_parser
+	url = https://github.com/pugetive/plist_parser
+[submodule "3rdparty/xregexp"]
+	path = 3rdparty/xregexp
+	url = https://github.com/slevithan/xregexp
