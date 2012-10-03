@@ -4,3 +4,9 @@
 [submodule "3rdparty/xregexp"]
 	path = 3rdparty/xregexp
 	url = https://github.com/slevithan/xregexp
+[submodule "3rdparty/monokai.tmbundle"]
+	path = 3rdparty/monokai.tmbundle
+	url = https://github.com/textmate/monokai.tmbundle
+[submodule "3rdparty/javascript.tmbundle"]
+	path = 3rdparty/javascript.tmbundle
+	url = https://github.com/textmate/javascript.tmbundle

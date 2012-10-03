@@ -125,7 +125,7 @@ function Regex(pattern, flags)
         flags = "m";
 
     pattern = pattern.replace("\\h", "[a-fA-F0-9]");
-    if (pattern.startsWith("(?<="))
+    if (pattern.startsWith("(?<"))
     {
         var temp = XRegExp("(\\\([^\(]+\\\))(.*)").exec(pattern);
         this.lookback = temp[1];
@@ -136,6 +136,20 @@ function Regex(pattern, flags)
         this.lookback = null;
     }
 
+    if (pattern.indexOf("(?<") != -1)
+    {
+        console.log("Warning, lookback regex is used somewhere else than right at the start. Lookback pattern will be stripped");
+        var pat = "(.*)(\\\(\\\?\\\<[^\)]+\\\))(.*)";
+        var re = XRegExp(pat);
+        var res = null;
+        var pattern2 = pattern;
+        while (res = re.exec(pattern2))
+        {
+            pattern2 = res[0].replace(res[2], "");
+        }
+
+        pattern = pattern2;
+    }
     try
     {
         this.pattern = XRegExp(pattern, flags);

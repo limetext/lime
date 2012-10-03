@@ -391,13 +391,26 @@ function Syntax(name)
                     {
                         end = match2.index + idx + match2[0].length;
                     }
+                    else
+                    {
+                        if (cache.length == 0)
+                        {
+                            // oops.. no end found, set it to the next line
+                            end = data.indexOf("\n");
+                        }
+                        else
+                        {
+                            end = idx;
+                            break;
+                        }
+                    }
 
                     if (pattern.patterns)
                     {
 
                         var pattern2 = this.firstMatch(slice, pattern.patterns, cache);
 
-                        if (pattern2 && pattern2.match && pattern2.match.index < match2.index)
+                        if (pattern2 && pattern2.match && ((!match2 && pattern2.match.index < end) || (match2 && pattern2.match.index < match2.index)))
                         {
                             var applied = this.applyPattern(slice, scope, pattern2, theme);
                             ret += applied.ret;
@@ -408,11 +421,14 @@ function Syntax(name)
                             continue;
                         }
                     }
-                    ret += htmlify(data.slice(0, match2.index));
-                    var appl = this.innerApplyPattern(slice, scope, match2, pattern.endCaptures)
-                    data = appl.data;
-                    ret += appl.ret;
-                    start = end = idx = 0;
+                    if (match2)
+                    {
+                        ret += htmlify(data.slice(0, match2.index));
+                        var appl = this.innerApplyPattern(slice, scope, match2, pattern.endCaptures)
+                        data = appl.data;
+                        ret += appl.ret;
+                        start = end = idx = 0;
+                    }
 
                     break;
                 }
@@ -426,7 +442,10 @@ function Syntax(name)
         }
         ret += "</span>"
         var idx = start + fullline.length;
-        data = data.slice(idx);
+        if (idx != 0)
+        {
+            data = data.slice(idx);
+        }
         return {"ret": ret, "data": data};
     }
     this.transform = function(data, theme)
@@ -441,7 +460,7 @@ function Syntax(name)
             var scope = this.jsonData.scopeName;
             var pattern = this.firstMatch(data, this.jsonData.patterns, cache, true);
 
-            if (!pattern)
+            if (!pattern.pattern)
             {
                 // No more matches found
                 break;
@@ -555,8 +574,8 @@ document.body.onmousemove =function(e)
 
 
 var startTime = new Date().getTime();
-var theme = new Theme("/Packages/Color Scheme - Default/Monokai.tmTheme")
-var syntax = new Syntax("Packages/JavaScript/JavaScript.tmLanguage");
+var theme = new Theme("/3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
+var syntax = new Syntax("/3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
 var data = loadFile("lime.js");
 console.log("theme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0));
 startTime = new Date().getTime();
