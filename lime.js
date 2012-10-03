@@ -467,6 +467,63 @@ function main_onclick(e)
 
     console.log(e);
 }
+
+var targetScroll = null;
+var scroller = null;
+var lastTime = -1;
+function doScroll()
+{
+    var currTime = new Date().getTime();
+    if (lastTime == -1)
+    {
+        lastTime = currTime;
+    }
+    var diff = currTime-lastTime;
+    lastTime = currTime;
+    var current = window.pageYOffset;
+    if (Math.abs(targetScroll-current) > 5)
+    {
+        window.scrollBy(0, (targetScroll-current)*0.0175*diff);
+    }
+    else
+    {
+        lastTime = -1;
+        window.scrollTo(window.pageXOffset, targetScroll);
+        clearInterval(scroller);
+    }
+}
+
+function minimap_onclick(e)
+{
+    if (!e) var e = window.event;
+    var minimap = document.getElementById('minimap');
+
+
+    var tp = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
+    var p = (e.y/window.innerHeight);
+
+    var diff = minimap.offsetHeight-window.innerHeight
+    var top = tp*(diff);
+    var div = minimap.offsetHeight/(diff);
+    var target = (top + p*window.innerHeight)/minimap.offsetHeight;
+
+
+    var current = window.pageYOffset;
+    targetScroll = target*(document.body.offsetHeight-window.innerHeight);
+
+    scroller = setInterval("doScroll()", 10);
+}
+
+var drag = false;
+function minimap_area_ondown(e)
+{
+    document.body.onselectstart= function() { return false; };
+    document.body.onmousedown= function() { return false; };
+    drag = true;
+}
+
+document.body.onmouseup = function() { drag = false; };
+
 window.onscroll = function()
 {
     var scroll = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
@@ -480,6 +537,14 @@ window.onscroll = function()
     minimap_visible_area.style.width = minimap.offsetWidth + "px";
 }
 
+document.body.onmousemove =function(e)
+{
+    if (!e) var e = window.event;
+    if (drag)
+    {
+        window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(document.body.offsetHeight-window.innerHeight));
+    }
+}
 
 
 var startTime = new Date().getTime();
@@ -511,8 +576,8 @@ while (regex.exec(tdata))
 var main = document.createElement('span');
 var html = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td>";
 html += "<td id=\"main\" class=\"main\" onclick=\"main_onclick();\">" + tdata + "</td>";
-html += "<td id=\"minimap\" class=\"minimap\">" + tdata + "</td></tr></table>";
-html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\"></div>";
+html += "<td id=\"minimap\" class=\"minimap\" onclick=\"minimap_onclick();\">" + tdata + "</td></tr></table>";
+html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmousedown=\"minimap_area_ondown()\"></div>";
 main.innerHTML = html;
 document.body.appendChild(main);
 window.onscroll();
