@@ -239,32 +239,20 @@ function Syntax(name)
             if (innerPattern.match)
             {
                 innermatch = cache[i] ? cache[i] : innerPattern.match.exec(data);
-                cache[i] = innermatch;
-                if (innermatch)
-                {
-                    var idx = innermatch.index;
-                    if (startIdx < 0 || startIdx > idx)
-                    {
-                        startIdx = idx;
-                        match = innermatch;
-                        pattern = innerPattern;
-                    }
-                }
             }
             else if (innerPattern.begin)
             {
                 innermatch = cache[i] ? cache[i] : innerPattern.begin.exec(data);
-                cache[i] = innermatch;
-                // TODO: remove duplicate..
-                if (innermatch)
+            }
+            cache[i] = innermatch;
+            if (innermatch)
+            {
+                var idx = innermatch.index;
+                if (startIdx < 0 || startIdx > idx)
                 {
-                    var idx = innermatch.index;
-                    if (startIdx < 0 || startIdx > idx)
-                    {
-                        startIdx = idx;
-                        match = innermatch;
-                        pattern = innerPattern;
-                    }
+                    startIdx = idx;
+                    match = innermatch;
+                    pattern = innerPattern;
                 }
             }
             if (remove && innermatch == null)
