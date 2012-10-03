@@ -116,10 +116,9 @@ function SyntaxPattern(pattern)
     {
         this.end = new Regex(pattern.end);
     }
-    if (pattern.captures)
-    {
-        this.captures = pattern.captures;
-    }
+    this.captures = pattern.captures;
+    this.beginCaptures = pattern.beginCaptures;
+    this.endCaptures = pattern.endCaptures;
     if (pattern.patterns)
     {
         this.patterns = pattern.patterns;
@@ -191,6 +190,62 @@ function Syntax(name)
         return pattern;
     }
 
+    this.innerApplyPattern = function(data, scope, match, captures)
+    {
+        var ret = "";
+        if (match[0].indexOf("\"") != -1)
+        {
+            console.log(captures);
+        }
+        if (captures)
+        {
+            var lastIdx = 0;
+            if (captures[0])
+            {
+                ret += "<span class=\"" + theme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
+            }
+
+            for (var i = 1; i < match.length; i++)
+            {
+                if (!match[i])
+                {
+                    continue;
+                }
+                if (!match[0].slice(lastIdx).startsWith(match[i]))
+                {
+                    ret += match[0].slice(lastIdx, match[0].indexOf(match[i], lastIdx));
+                }
+
+                var capture = captures[i];
+                var span = htmlify(match[i]);
+                if (capture)
+                {
+                    span = "<span class=\"" + theme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
+                }
+
+                ret += span;
+                lastIdx = match[0].indexOf(match[i], lastIdx) + match[i].length;
+            }
+            if (lastIdx != match[0].length)
+            {
+                ret += match[0].slice(lastIdx);
+            }
+            if (captures[0])
+            {
+                ret += "</span>";
+            }
+        }
+        else
+        {
+            ret += htmlify(match[0]);
+        }
+        fullline = match[0];
+        start = match.index;
+
+        var idx = start + fullline.length;
+        data = data.slice(idx);
+        return {"ret": ret, "data": data};
+    }
 
     this.applyPattern = function(data, scope, pattern, theme)
     {
@@ -216,48 +271,19 @@ function Syntax(name)
 
         if (pattern.match)
         {
-            if (pattern.captures)
-            {
-                var lastIdx = 0;
-                for (var i = 0; i < match.length; i++)
-                {
-                    if (!match[i+1])
-                    {
-                        continue;
-                    }
-                    if (!match[0].slice(lastIdx).startsWith(match[i+1]))
-                    {
-                        ret += match[0].slice(lastIdx, match[0].indexOf(match[i+1], lastIdx));
-                    }
-
-                    var capture = pattern.captures[i+1];
-                    var span = htmlify(match[i+1]);
-                    if (capture)
-                    {
-                        span = "<span class=\"" + theme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
-                    }
-
-                    ret += span;
-                    lastIdx = match[0].indexOf(match[i+1], lastIdx) + match[i+1].length;
-                }
-                if (lastIdx != match[0].length)
-                {
-                    ret += match[0].slice(lastIdx);
-                }
-            }
-            else
-            {
-                ret += htmlify(match[0]);
-            }
-            fullline = match[0];
-            start = match.index;
+            var appl = this.innerApplyPattern(data, scope, match, pattern.captures);
+            data = appl.data;
+            ret += appl.ret;
         }
         else
         {
             match = pattern.begin.exec(data);
-            ret += htmlify(match[0]);
+            var appl = this.innerApplyPattern(data, scope, match, pattern.beginCaptures)
+            data = appl.data;
+            ret += appl.ret;
 
-            start = match.index + match[0].length;
+            start = 0;
+
             var idx = start;
             var end = data.length;
             if (pattern.end)
@@ -290,12 +316,21 @@ function Syntax(name)
                             continue;
                         }
                     }
+                    ret += htmlify(data.slice(0, match2.index));
+                    var appl = this.innerApplyPattern(slice, scope, match2, pattern.endCaptures)
+                    data = appl.data;
+                    ret += appl.ret;
+                    start = end = idx = 0;
+
                     break;
                 }
             }
-            var span = data.slice(start, end);
-            ret += htmlify(span);
-            fullline = span;
+            if (start != end)
+            {
+                var span = data.slice(start, end);
+                ret += htmlify(span);
+                fullline = span;
+            }
         }
         ret += "</span>"
 
