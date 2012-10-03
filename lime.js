@@ -42,7 +42,7 @@ function Theme(name)
         }
         if (name == "body")
         {
-            cssDef += "\tfont-family:\"Menlo Regular\", monospace;\n";
+            cssDef += "\tfont-family:\"Menlo\", sans-serif, monospace;\n";
             cssDef += "\tfont-size:12px;\n";
             cssDef += "\twhite-space:pre;\n";
         }
@@ -86,20 +86,38 @@ function Theme(name)
                     cssDef += name + def;
                     cssDef += ".default" + def;
                 }
+                cssDef += ".main\n{                    \n"  +
+                          "    padding-right:200px;    \n"  +
+                          "}                           \n";
+                cssDef += ".lineNumbers\n{             \n"  +
+                          "    vertical-align:text-top;\n"  +
+                          "    text-align:right;       \n"  +
+                          "    color:#777777;          \n"  +
+                          "    padding-right: 15px;    \n"  +
+                          "}                           \n";
+                cssDef += ".minimap\n{                 \n"  +
+                          "    font-size:2px;          \n"  +
+                          "    vertical-align:text-top;\n"  +
+                          "    padding-left:15px;      \n"  +
+                          "    position:fixed;         \n"  +
+                          "    right:0px;              \n"  +
+                          "    z-index:10;             \n"  +
+                          "    background-color:" + setting.settings.background + ";             \n"  +
+                          "}                           \n";
+                cssDef += ".minimap_visible_area\n{    \n"  +
+                          "    position:fixed;         \n"  +
+                          "    height:200px;           \n"  +
+                          "    width:200px;           \n"  +
+                          "    right:0px;              \n"  +
+                          "    top:0px;                \n"  +
+                          "    z-index:11;             \n"  +
+                          "    vertical-align:text-top;\n"  +
+                          "    opacity:0.1;            \n"  +
+                          "    background-color:#ffffff\n"  +
+                          "}                           \n";
             }
         }
     }
-
-    cssDef += ".minimap\n{\n";
-    cssDef += "\tfont-size:2px;\n";
-    cssDef += "\tvertical-align:text-top;\n";
-    cssDef += "}\n";
-    cssDef += ".lineNumbers\n{\n";
-    cssDef += "\tvertical-align:text-top;\n";
-    cssDef += "\ttext-align:right;\n";
-    cssDef += "\tcolor:#777777;\n";
-    cssDef += "\tpadding-right: 15px;\n";
-    cssDef += "}\n";
 
     var sheet = document.createElement('style')
     sheet.innerHTML = cssDef;
@@ -442,6 +460,28 @@ function Syntax(name)
     }
     return this;
 }
+
+function main_onclick(e)
+{
+    if (!e) var e = window.event;
+
+    console.log(e);
+}
+window.onscroll = function()
+{
+    var scroll = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
+    var minimap = document.getElementById('minimap');
+    minimap.style.top = -(scroll*(minimap.offsetHeight-window.innerHeight)) + "px";
+
+    var minimap_visible_area = document.getElementById('minimap_visible_area');
+    var height = minimap.offsetHeight*(window.innerHeight/document.body.offsetHeight);
+    minimap_visible_area.style.height = height + "px";
+    minimap_visible_area.style.top = (scroll*(window.innerHeight-height)) + "px";
+    minimap_visible_area.style.width = minimap.offsetWidth + "px";
+}
+
+
+
 var startTime = new Date().getTime();
 var theme = new Theme("/Packages/Color Scheme - Default/Monokai.tmTheme")
 var syntax = new Syntax("Packages/JavaScript/JavaScript.tmLanguage");
@@ -469,8 +509,13 @@ while (regex.exec(tdata))
 }
 
 var main = document.createElement('span');
-main.innerHTML = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td><td>" + tdata + "</td><td class=\"minimap\">" + tdata + "</td></tr></table>";
+var html = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td>";
+html += "<td id=\"main\" class=\"main\" onclick=\"main_onclick();\">" + tdata + "</td>";
+html += "<td id=\"minimap\" class=\"minimap\">" + tdata + "</td></tr></table>";
+html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\"></div>";
+main.innerHTML = html;
 document.body.appendChild(main);
+window.onscroll();
 
 // console.log(syntax.transform("// test\nbice", theme));
 // console.log(syntax.transform("// test\n", theme));
