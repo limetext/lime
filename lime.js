@@ -585,8 +585,8 @@ document.body.onmousemove =function(e)
 
 
 var startTime = new Date().getTime();
-var theme = new Theme("/3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
-var syntax = new Syntax("/3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
+var theme = new Theme("3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
+var syntax = new Syntax("3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
 var data = loadFile("lime.js");
 console.log("theme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0));
 startTime = new Date().getTime();
