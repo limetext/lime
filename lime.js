@@ -161,7 +161,7 @@ function Theme(name)
     return this;
 }
 
-function SyntaxPattern(pattern)
+function SyntaxPattern(pattern, syntax)
 {
     if (pattern.match)
     {
@@ -180,10 +180,25 @@ function SyntaxPattern(pattern)
     this.endCaptures = pattern.endCaptures;
     if (pattern.patterns)
     {
-        this.patterns = pattern.patterns;
+        this.patterns = new Array();
         for (var i in pattern.patterns)
         {
-            this.patterns[i] = new SyntaxPattern(pattern.patterns[i]);
+            var pat = pattern.patterns[i];
+            if (pat.include)
+            {
+                pat = syntax.jsonData.repository[pat.include.slice(1)];
+                if (pat)
+                {
+                    for (var j in pat.patterns)
+                    {
+                        this.patterns.push(pat.patterns[j]);
+                    }
+                }
+            }
+            else
+            {
+                this.patterns.push(new SyntaxPattern(pattern.patterns[i], syntax));
+            }
         }
     }
     this.name = pattern.name;
@@ -194,14 +209,22 @@ function Syntax(name)
 {
     var tmLang = loadFile(name);
     var jsonString = PlistParser.parse(toXML(tmLang));
+    this.jsonData = jsonString;
+    for (var i in jsonString.repository)
+    {
+        var repo = jsonString.repository[i];
+        for (var j in repo.patterns)
+        {
+            repo.patterns[j] = new SyntaxPattern(repo.patterns[j], this);
+        }
+    }
 
     var patterns = jsonString.patterns;
     for (var i in patterns)
     {
         var pattern = patterns[i];
-        patterns[i] = new SyntaxPattern(pattern);
+        patterns[i] = new SyntaxPattern(pattern, this);
     }
-    this.jsonData = jsonString;
 
     this.firstMatch = function(data, patterns, cache, remove)
     {

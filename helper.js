@@ -150,6 +150,11 @@ function Regex(pattern, flags)
 
         pattern = pattern2;
     }
+    if (pattern.indexOf("\\G") != -1)
+    {
+        console.log("Warning, unsupported \\G used. \\G will be stripped");
+        pattern = pattern.replace("\\G", "");
+    }
     try
     {
         this.pattern = XRegExp(pattern, flags);
