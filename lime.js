@@ -483,7 +483,13 @@ function doScroll()
     var current = window.pageYOffset;
     if (Math.abs(targetScroll-current) > 5)
     {
-        window.scrollBy(0, (targetScroll-current)*0.0175*diff);
+        var diff2 = targetScroll-current;
+        diff = diff2*0.0175*diff;
+        if (Math.abs(diff) > Math.abs(diff2))
+        {
+            diff = diff2;
+        }
+        window.scrollBy(0, diff);
     }
     else
     {
@@ -496,8 +502,8 @@ function doScroll()
 function minimap_onclick(e)
 {
     if (!e) var e = window.event;
+    if (!e.y) e.y = e.clientY;
     var minimap = document.getElementById('minimap');
-
 
     var tp = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
     var p = (e.y/window.innerHeight);
@@ -507,11 +513,10 @@ function minimap_onclick(e)
     var div = minimap.offsetHeight/(diff);
     var target = (top + p*window.innerHeight)/minimap.offsetHeight;
 
-
     var current = window.pageYOffset;
     targetScroll = target*(document.body.offsetHeight-window.innerHeight);
 
-    scroller = setInterval("doScroll()", 10);
+    scroller = setInterval("doScroll()", 30);
 }
 
 var drag = false;
@@ -539,9 +544,11 @@ window.onscroll = function()
 
 document.body.onmousemove =function(e)
 {
-    if (!e) var e = window.event;
     if (drag)
     {
+        if (!e) var e = window.event;
+        if (!e.y) e.y = e.clientY;
+
         window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(document.body.offsetHeight-window.innerHeight));
     }
 }
@@ -576,7 +583,7 @@ while (regex.exec(tdata))
 var main = document.createElement('span');
 var html = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td>";
 html += "<td id=\"main\" class=\"main\" onclick=\"main_onclick();\">" + tdata + "</td>";
-html += "<td id=\"minimap\" class=\"minimap\" onclick=\"minimap_onclick();\">" + tdata + "</td></tr></table>";
+html += "<td id=\"minimap\" class=\"minimap\" onclick=\"minimap_onclick(event);\">" + tdata + "</td></tr></table>";
 html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmousedown=\"minimap_area_ondown()\"></div>";
 main.innerHTML = html;
 document.body.appendChild(main);
