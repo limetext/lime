@@ -1,12 +1,12 @@
 [submodule "3rdparty/plist_parser"]
 	path = 3rdparty/plist_parser
-	url = https://github.com/pugetive/plist_parser
+	url = git://github.com/pugetive/plist_parser.git
 [submodule "3rdparty/xregexp"]
 	path = 3rdparty/xregexp
-	url = https://github.com/slevithan/xregexp
+	url = git://github.com/slevithan/xregexp.git
 [submodule "3rdparty/monokai.tmbundle"]
 	path = 3rdparty/monokai.tmbundle
-	url = https://github.com/textmate/monokai.tmbundle
+	url = git://github.com/textmate/monokai.tmbundle.git
 [submodule "3rdparty/javascript.tmbundle"]
 	path = 3rdparty/javascript.tmbundle
-	url = https://github.com/textmate/javascript.tmbundle
+	url = git://github.com/textmate/javascript.tmbundle.git
