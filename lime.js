@@ -26,6 +26,7 @@ function Theme(name)
     var tmLang = loadFile(name);
     this.jsonString = PlistParser.parse(toXML(tmLang));
     var cssDef = "";
+    this.cache = {};
 
     this.createCss = function(name, setting)
     {
@@ -38,6 +39,12 @@ function Theme(name)
         if (setting.settings.background)
         {
             cssDef += "\tbackground-color:" + setting.settings.background + ";\n";
+        }
+        if (name == "body")
+        {
+            cssDef += "\tfont-family:\"Menlo Regular\", monospace;\n";
+            cssDef += "\tfont-size:12px;\n";
+            cssDef += "\twhite-space:pre;\n";
         }
 
         cssDef += "}\n";
@@ -62,13 +69,38 @@ function Theme(name)
             else
             {
                 this.createCss(name, setting);
+                if (setting.settings.selection)
+                {
+                    var def = "::selection\n{\n";
+                    if (setting.settings.background)
+                    {
+                        var rgb1 = hexToRgb(setting.settings.selection);
+                        var rgb2 = hexToRgb(setting.settings.background);
+                        def += "\tbackground-color:" + rgbToHex(rgb1.r+rgb2.r, rgb1.g+rgb2.g, rgb1.b+rgb2.b) + ";\n";
+                    }
+                    else
+                    {
+                        def += "\tbackground-color:" + setting.settings.selection + ";\n";
+                    }
+                    def += "}\n";
+                    cssDef += name + def;
+                    cssDef += ".default" + def;
+                }
             }
         }
-        cssDef += ".default\n{\n";
-        cssDef += "\tfont-family:\"Menlo Regular\", monospace;\n";
-        cssDef += "\tfont-size:12px;\n";
-        cssDef += "}";
     }
+
+    cssDef += ".minimap\n{\n";
+    cssDef += "\tfont-size:2px;\n";
+    cssDef += "\tvertical-align:text-top;\n";
+    cssDef += "}\n";
+    cssDef += ".lineNumbers\n{\n";
+    cssDef += "\tvertical-align:text-top;\n";
+    cssDef += "\ttext-align:right;\n";
+    cssDef += "\tcolor:#777777;\n";
+    cssDef += "\tpadding-right: 15px;\n";
+    cssDef += "}\n";
+
     var sheet = document.createElement('style')
     sheet.innerHTML = cssDef;
     document.body.appendChild(sheet);
@@ -76,6 +108,11 @@ function Theme(name)
 
     this.getCssClassesForScopes = function(scopes)
     {
+        if (this.cache[scopes])
+        {
+            return this.cache[scopes];
+        }
+        var key = scopes;
         while (scopes.length)
         {
             for (var i in this.jsonString.settings)
@@ -86,7 +123,11 @@ function Theme(name)
                     for (var j in setting.scope)
                     {
                         if (scopes.endsWith(setting.scope[j]))
-                            return setting.scope[j].replace(/\./g, "_");
+                        {
+                            var value = setting.scope[j].replace(/\./g, "_");
+                            this.cache[key] = value;
+                            return value;
+                        }
                     }
                 }
             }
@@ -96,7 +137,7 @@ function Theme(name)
                 break;
             scopes = scopes.slice(0, Math.max(idx, idx2));
         }
-        //console.log("No scope found for " + scopes);
+        this.cache[key] = "default";
         return "default";
     }
     return this;
@@ -144,19 +185,20 @@ function Syntax(name)
     }
     this.jsonData = jsonString;
 
-    this.firstMatch = function(data, patterns)
+    this.firstMatch = function(data, patterns, cache, remove)
     {
         // Find the pattern that is the earliest match
-        // TODO: this could be optimized
         var match = null;
         var startIdx = -1;
         var pattern = null;
-        for (var i in patterns)
+        for (var i = 0; i < patterns.length; )
         {
             var innerPattern = patterns[i];
+            var innermatch = null;
             if (innerPattern.match)
             {
-                var innermatch = innerPattern.match.exec(data);
+                innermatch = cache[i] ? cache[i] : innerPattern.match.exec(data);
+                cache[i] = innermatch;
                 if (innermatch)
                 {
                     var idx = innermatch.index;
@@ -165,13 +207,13 @@ function Syntax(name)
                         startIdx = idx;
                         match = innermatch;
                         pattern = innerPattern;
-                        // console.log("" + pattern + ", match: " + match + ", idx: " + idx);
                     }
                 }
             }
             else if (innerPattern.begin)
             {
-                var innermatch = innerPattern.begin.exec(data);
+                innermatch = cache[i] ? cache[i] : innerPattern.begin.exec(data);
+                cache[i] = innermatch;
                 // TODO: remove duplicate..
                 if (innermatch)
                 {
@@ -181,22 +223,63 @@ function Syntax(name)
                         startIdx = idx;
                         match = innermatch;
                         pattern = innerPattern;
-                        // console.log("" + pattern + ", match: " + match + ", idx: " + idx);
-
                     }
                 }
             }
+            if (remove && innermatch == null)
+            {
+                // No match was found and we've indicated that the pattern can be removed
+                // if that is the case (ie if it wasn't found, it's never going to be found,
+                // so no point in looking for it again after this point).
+                patterns.splice(i, 1);
+                cache.splice(i, 1);
+            }
+            else
+            {
+                i++;
+            }
         }
-        return pattern;
+        return {pattern:pattern, match:match};
+    }
+    this.flushCache = function(cache, end)
+    {
+        for (var i in cache)
+        {
+            // disqualify patterns that are inside of the selected pattern
+            if (cache[i])
+            {
+                if (!cache[i][0])
+                {
+                    cache[i] = null;
+                    continue;
+                }
+                var end2 = cache[i].index+cache[i][0].length;
+                if (cache[i].index <= end)
+                {
+                    // starts within or before the selected pattern
+                    cache[i] = null;
+                }
+                else if (end2 <= end)
+                {
+                    // ends within or before the selected pattern
+                    cache[i] = null;
+                }
+                else if (cache[i].lookback && end2-cache[i].lookback.length < end)
+                {
+                    cache[i] = null;
+                }
+
+                if (cache[i])
+                {
+                    cache[i].index -= end;
+                }
+            }
+        }
     }
 
     this.innerApplyPattern = function(data, scope, match, captures)
     {
         var ret = "";
-        if (match[0].indexOf("\"") != -1)
-        {
-            console.log(captures);
-        }
         if (captures)
         {
             var lastIdx = 0;
@@ -250,19 +333,12 @@ function Syntax(name)
     this.applyPattern = function(data, scope, pattern, theme)
     {
         var ret = "";
-        var match = null;
+        var match = pattern.match;
+        var pattern = pattern.pattern;
         var start = 0;
 
 
         scope += " " + pattern.name;
-        if (pattern.match)
-        {
-            match = pattern.match.exec(data);
-        }
-        else
-        {
-            match = pattern.begin.exec(data);
-        }
 
         ret += htmlify(data.slice(0, match.index));
         ret += "<span class=\"" + theme.getCssClassesForScopes(scope) + "\">";
@@ -288,6 +364,7 @@ function Syntax(name)
             var end = data.length;
             if (pattern.end)
             {
+                var cache = new Array();
                 while (data.length)
                 {
                     var slice = data.slice(idx);
@@ -299,20 +376,17 @@ function Syntax(name)
 
                     if (pattern.patterns)
                     {
-                        var pattern2 = this.firstMatch(slice, pattern.patterns);
-                        var match3 = null;
 
-                        if (pattern2)
-                        {
-                            match3 = pattern2.match.exec(slice);
-                        }
-                        if (match3 && match3.index < match2.index)
+                        var pattern2 = this.firstMatch(slice, pattern.patterns, cache);
+
+                        if (pattern2 && pattern2.match && pattern2.match.index < match2.index)
                         {
                             var applied = this.applyPattern(slice, scope, pattern2, theme);
                             ret += applied.ret;
                             start = end = idx = 0;
+                            var flush = data.length - applied.data.length;
+                            this.flushCache(cache, flush);
                             data = applied.data;
-
                             continue;
                         }
                     }
@@ -333,7 +407,6 @@ function Syntax(name)
             }
         }
         ret += "</span>"
-
         var idx = start + fullline.length;
         data = data.slice(idx);
         return {"ret": ret, "data": data};
@@ -341,13 +414,14 @@ function Syntax(name)
     this.transform = function(data, theme)
     {
         var ret = "";
-        ret += "<pre class=\"" + theme.getCssClassesForScopes(this.jsonData.scopeName) + "\">";
+        ret += "<span class=\"" + theme.getCssClassesForScopes(this.jsonData.scopeName) + "\">";
 
         var max = 10000;
+        var cache = new Array();
         while (data.length > 0 && --max > 0)
         {
             var scope = this.jsonData.scopeName;
-            var pattern = this.firstMatch(data, this.jsonData.patterns);
+            var pattern = this.firstMatch(data, this.jsonData.patterns, cache, true);
 
             if (!pattern)
             {
@@ -358,21 +432,45 @@ function Syntax(name)
             {
                 var applied = this.applyPattern(data, scope, pattern, theme);
                 ret += applied.ret;
+                var flushLen = data.length - applied.data.length;
+                this.flushCache(cache, flushLen);
                 data = applied.data;
             }
         }
-        ret += "</pre>";
+        ret += "</span>";
         return ret;
     }
     return this;
 }
-
+var startTime = new Date().getTime();
 var theme = new Theme("/Packages/Color Scheme - Default/Monokai.tmTheme")
 var syntax = new Syntax("Packages/JavaScript/JavaScript.tmLanguage");
 var data = loadFile("lime.js");
+console.log("theme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0));
+startTime = new Date().getTime();
 var tdata = syntax.transform(data, theme);
-document.write(tdata);
-document.getElementsByTagName('body').innerHTML = tdata;
+console.log("transform1: " + ((new Date().getTime()-startTime)/1000.0));
+/*
+startTime = new Date().getTime();
+tdata = syntax.transform(data, theme);
+console.log("transform2: " + ((new Date().getTime()-startTime)/1000.0));
+startTime = new Date().getTime();
+tdata = syntax.transform(data, theme);
+console.log("transform3: " + ((new Date().getTime()-startTime)/1000.0));
+*/
+var lineNumbers = "";
+var regex = /\n/g;
+var count = 0;
+while (regex.exec(tdata))
+{
+    if (count++ > 1000)
+        break;
+    lineNumbers += count + "<br>";
+}
+
+var main = document.createElement('span');
+main.innerHTML = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td><td>" + tdata + "</td><td class=\"minimap\">" + tdata + "</td></tr></table>";
+document.body.appendChild(main);
 
 // console.log(syntax.transform("// test\nbice", theme));
 // console.log(syntax.transform("// test\n", theme));

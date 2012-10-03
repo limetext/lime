@@ -119,8 +119,11 @@ if (typeof String.prototype.trim != 'function') {
 
 
 
-function Regex(pattern)
+function Regex(pattern, flags)
 {
+    if (typeof(flags) === 'undefined')
+        flags = "m";
+
     pattern = pattern.replace("\\h", "[a-fA-F0-9]");
     if (pattern.startsWith("(?<="))
     {
@@ -135,7 +138,7 @@ function Regex(pattern)
 
     try
     {
-        this.pattern = XRegExp(pattern, "m");
+        this.pattern = XRegExp(pattern, flags);
     }
     catch (e)
     {
@@ -157,6 +160,21 @@ function Regex(pattern)
         return null;
     }
     return this;
+}
+
+// hexToRgb and rgbToHex from http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+function hexToRgb(hex) {
+    var result = /^#?(a-f\d){0,2}([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[2], 16),
+        g: parseInt(result[3], 16),
+        b: parseInt(result[4], 16)
+    } : null;
+}
+
+function rgbToHex(r, g, b)
+{
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
 function htmlify(str)
