@@ -127,7 +127,7 @@ function Regex(pattern, flags)
     pattern = pattern.replace("\\h", "[a-fA-F0-9]");
     if (pattern.startsWith("(?<"))
     {
-        var temp = XRegExp("(\\\([^\(]+\\\))(.*)").exec(pattern);
+        var temp = XRegExp("(\\\([^\)]+\\\))(.*)").exec(pattern);
         this.lookback = temp[1];
         pattern = temp[2];
     }

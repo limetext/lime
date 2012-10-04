@@ -314,7 +314,7 @@ function Syntax(name)
             var lastIdx = 0;
             if (captures[0])
             {
-                ret += "<span class=\"" + theme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
+                ret += "<!--" + scope + " " + captures[0].name + "--><span class=\"" + theme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
             }
 
             for (var i = 1; i < match.length; i++)
@@ -332,7 +332,7 @@ function Syntax(name)
                 var span = htmlify(match[i]);
                 if (capture)
                 {
-                    span = "<span class=\"" + theme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
+                    span = "<!--" + scope + " " + capture.name + "--><span class=\"" + theme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
                 }
 
                 ret += span;
@@ -370,7 +370,7 @@ function Syntax(name)
         scope += " " + pattern.name;
 
         ret += htmlify(data.slice(0, match.index));
-        ret += "<span class=\"" + theme.getCssClassesForScopes(scope) + "\">";
+        ret += "<!--" + scope + "--><span class=\"" + theme.getCssClassesForScopes(scope) + "\">";
         var fullline = "";
 
 
@@ -583,7 +583,6 @@ document.body.onmousemove =function(e)
     }
 }
 
-
 var startTime = new Date().getTime();
 var theme = new Theme("3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
 var syntax = new Syntax("3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
@@ -592,14 +591,6 @@ console.log("theme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0
 startTime = new Date().getTime();
 var tdata = syntax.transform(data, theme);
 console.log("transform1: " + ((new Date().getTime()-startTime)/1000.0));
-/*
-startTime = new Date().getTime();
-tdata = syntax.transform(data, theme);
-console.log("transform2: " + ((new Date().getTime()-startTime)/1000.0));
-startTime = new Date().getTime();
-tdata = syntax.transform(data, theme);
-console.log("transform3: " + ((new Date().getTime()-startTime)/1000.0));
-*/
 var lineNumbers = "";
 var regex = /\n/g;
 var count = 0;
@@ -618,7 +609,6 @@ html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmouse
 main.innerHTML = html;
 document.body.appendChild(main);
 window.onscroll();
-
 // console.log(syntax.transform("// test\nbice", theme));
 // console.log(syntax.transform("// test\n", theme));
 // console.log(syntax.transform("// test", theme));
