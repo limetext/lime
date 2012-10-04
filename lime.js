@@ -99,6 +99,7 @@ function ColorScheme(name)
                           "    font-size:2px;          \n"  +
                           "    vertical-align:text-top;\n"  +
                           "    padding-left:15px;      \n"  +
+                          "    width:125px;            \n"  +
                           "    position:fixed;         \n"  +
                           "    right:0px;              \n"  +
                           "    z-index:10;             \n"  +
@@ -107,7 +108,7 @@ function ColorScheme(name)
                 cssDef += ".minimap_visible_area\n{    \n"  +
                           "    position:fixed;         \n"  +
                           "    height:200px;           \n"  +
-                          "    width:200px;           \n"  +
+                          "    width:125px;            \n"  +
                           "    right:0px;              \n"  +
                           "    top:0px;                \n"  +
                           "    z-index:11;             \n"  +
@@ -210,6 +211,7 @@ function Syntax(name)
     var tmLang = loadFile(name);
     var jsonString = PlistParser.parse(toXML(tmLang));
     this.jsonData = jsonString;
+    this.scopeStack = new Array();
     for (var i in jsonString.repository)
     {
         var repo = jsonString.repository[i];
@@ -305,6 +307,35 @@ function Syntax(name)
             }
         }
     }
+    this.pushScope = function(scope)
+    {
+        var lastScope = null;
+        if (this.scopeStack.length > 0)
+        {
+            lastScope = this.scopeStack[this.scopeStack.length-1];
+        }
+        var css = colorScheme.getCssClassesForScopes(scope);
+        this.scopeStack.push(css);
+        if (css != lastScope)
+        {
+           return "<!--" + scope + "--><span class=\"" + css + "\">";
+        }
+        return "";
+    }
+    this.popScope = function()
+    {
+        var scope = this.scopeStack.pop();
+        var lastScope = null;
+        if (this.scopeStack.length > 0)
+        {
+            lastScope = this.scopeStack[this.scopeStack.length-1];
+        }
+        if (scope != lastScope)
+        {
+            return "</span>";
+        }
+        return "";
+    }
 
     this.innerApplyPattern = function(data, scope, match, captures)
     {
@@ -314,7 +345,7 @@ function Syntax(name)
             var lastIdx = 0;
             if (captures[0])
             {
-                ret += "<!--" + scope + " " + captures[0].name + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
+                ret += this.pushScope(scope + " " + captures[0].name);
             }
 
             for (var i = 1; i < match.length; i++)
@@ -332,7 +363,7 @@ function Syntax(name)
                 var span = htmlify(match[i]);
                 if (capture)
                 {
-                    span = "<!--" + scope + " " + capture.name + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
+                    span =  this.pushScope(scope + " " + capture.name) + span + this.popScope();
                 }
 
                 ret += span;
@@ -344,7 +375,7 @@ function Syntax(name)
             }
             if (captures[0])
             {
-                ret += "</span>";
+                ret += this.popScope();
             }
         }
         else
@@ -370,7 +401,7 @@ function Syntax(name)
         scope += " " + pattern.name;
 
         ret += htmlify(data.slice(0, match.index));
-        ret += "<!--" + scope + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope) + "\">";
+        ret += this.pushScope(scope);
         var fullline = "";
 
 
@@ -451,7 +482,7 @@ function Syntax(name)
                 fullline = span;
             }
         }
-        ret += "</span>"
+        ret += this.popScope();
         var idx = start + fullline.length;
         if (idx != 0)
         {
@@ -462,7 +493,7 @@ function Syntax(name)
     this.transform = function(data, colorScheme)
     {
         var ret = "";
-        ret += "<span class=\"" + colorScheme.getCssClassesForScopes(this.jsonData.scopeName) + "\">";
+        ret += this.pushScope(this.jsonData.scopeName);
 
         var max = 10000;
         var cache = new Array();
@@ -485,7 +516,7 @@ function Syntax(name)
                 data = applied.data;
             }
         }
-        ret += "</span>";
+        ret += this.popScope();
         return ret;
     }
     return this;
@@ -667,7 +698,7 @@ window.onscroll = function()
     var height = minimap.offsetHeight*(window.innerHeight/document.body.offsetHeight);
     minimap_visible_area.style.height = height + "px";
     minimap_visible_area.style.top = (scroll*(window.innerHeight-height)) + "px";
-    minimap_visible_area.style.width = minimap.offsetWidth + "px";
+    minimap_visible_area.style.width = minimap.style.width + "px";
 }
 
 document.body.onmousemove =function(e)
@@ -706,8 +737,9 @@ while (regex.exec(tdata))
 {
     if (count++ > 1000)
         break;
-    lineNumbers += count + "<br>";
+    lineNumbers += count + "\n";
 }
+lineNumbers += ++count + "\n";
 
 var main = document.createElement('span');
 var html = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td>";
