@@ -10,3 +10,6 @@
 [submodule "3rdparty/javascript.tmbundle"]
 	path = 3rdparty/javascript.tmbundle
 	url = git://github.com/textmate/javascript.tmbundle.git
+[submodule "3rdparty/Theme - Soda"]
+	path = 3rdparty/Theme - Soda
+	url = git://github.com/buymeasoda/soda-theme.git

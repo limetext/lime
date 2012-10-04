@@ -21,7 +21,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-function Theme(name)
+function ColorScheme(name)
 {
     var tmLang = loadFile(name);
     this.jsonString = PlistParser.parse(toXML(tmLang));
@@ -314,7 +314,7 @@ function Syntax(name)
             var lastIdx = 0;
             if (captures[0])
             {
-                ret += "<!--" + scope + " " + captures[0].name + "--><span class=\"" + theme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
+                ret += "<!--" + scope + " " + captures[0].name + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope + " " + captures[0].name) + "\">";
             }
 
             for (var i = 1; i < match.length; i++)
@@ -332,7 +332,7 @@ function Syntax(name)
                 var span = htmlify(match[i]);
                 if (capture)
                 {
-                    span = "<!--" + scope + " " + capture.name + "--><span class=\"" + theme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
+                    span = "<!--" + scope + " " + capture.name + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope + " " + capture.name) + "\">" + span + "</span>";
                 }
 
                 ret += span;
@@ -359,7 +359,7 @@ function Syntax(name)
         return {"ret": ret, "data": data};
     }
 
-    this.applyPattern = function(data, scope, pattern, theme)
+    this.applyPattern = function(data, scope, pattern, colorScheme)
     {
         var ret = "";
         var match = pattern.match;
@@ -370,7 +370,7 @@ function Syntax(name)
         scope += " " + pattern.name;
 
         ret += htmlify(data.slice(0, match.index));
-        ret += "<!--" + scope + "--><span class=\"" + theme.getCssClassesForScopes(scope) + "\">";
+        ret += "<!--" + scope + "--><span class=\"" + colorScheme.getCssClassesForScopes(scope) + "\">";
         var fullline = "";
 
 
@@ -423,7 +423,7 @@ function Syntax(name)
 
                         if (pattern2 && pattern2.match && ((!match2 && pattern2.match.index < end) || (match2 && pattern2.match.index < match2.index)))
                         {
-                            var applied = this.applyPattern(slice, scope, pattern2, theme);
+                            var applied = this.applyPattern(slice, scope, pattern2, colorScheme);
                             ret += applied.ret;
                             start = end = idx = 0;
                             var flush = data.length - applied.data.length;
@@ -459,10 +459,10 @@ function Syntax(name)
         }
         return {"ret": ret, "data": data};
     }
-    this.transform = function(data, theme)
+    this.transform = function(data, colorScheme)
     {
         var ret = "";
-        ret += "<span class=\"" + theme.getCssClassesForScopes(this.jsonData.scopeName) + "\">";
+        ret += "<span class=\"" + colorScheme.getCssClassesForScopes(this.jsonData.scopeName) + "\">";
 
         var max = 10000;
         var cache = new Array();
@@ -478,7 +478,7 @@ function Syntax(name)
             }
             else
             {
-                var applied = this.applyPattern(data, scope, pattern, theme);
+                var applied = this.applyPattern(data, scope, pattern, colorScheme);
                 ret += applied.ret;
                 var flushLen = data.length - applied.data.length;
                 this.flushCache(cache, flushLen);
@@ -491,6 +491,104 @@ function Syntax(name)
     return this;
 }
 
+
+function Theme(name)
+{
+    var data = loadFile(name);
+    data = data.replace(/\/\/[^\n]*\n/g, "")
+    var json = JSON.parse(data);
+
+    function tocss(stcolor,name)
+    {
+        if (stcolor)
+        {
+            return "\t" + name + ":" + rgbToHex(stcolor[0], stcolor[1], stcolor[2]) + "\n";
+        }
+        return "";
+    }
+
+    this.createCSS = function(item)
+    {
+        var selected="";
+        var normal="";
+        normal += "." + item.class;
+        if (item.attributes)
+        {
+            normal += "_" + item.attributes.join("_");
+        }
+        normal += "\n{\n";
+        if (item.class === "overlay_control")
+        {
+            normal += "\tmargin-left:auto;\n";
+            normal += "\tmargin-right:auto;\n";
+            normal += "\twidth:33%;\n";
+        }
+        if (item.class === "quick_panel")
+        {
+            normal += "\toverflow:hidden;\n";
+            normal += "\theight:200px;\n";
+        }
+
+        if (item["layer0.texture"])
+        {
+            var offsets = "1";
+            if (item["layer0.inner_margin"])
+            {
+                var o = item["layer0.inner_margin"];
+                o = [o[1], o[0], o[3], o[2]];
+                offsets = o.join(" ");
+                normal += "\tborder-width: " + o.join("px ") + "px;\n";
+                if (item["content_margin"])
+                {
+                    var o2 = item["content_margin"];
+                    o2 = [o2[1], o2[0], o2[3], o2[2]];
+                    o2 = [o[0]-o2[0], o[1]-o2[1], o[2]-o2[2], o[3]-o2[3]];
+                    normal += "\tpadding: " + o2.join("px ") + "px;\n";
+                }
+            }
+            normal += "\tborder-image:url(\"3rdparty/" + item["layer0.texture"] + "\") " + offsets + " fill stretch;\n";
+        }
+        if (item.class.indexOf("quick_panel_row") != -1)
+        {
+            normal += "\twidth:100%;\n";
+            normal += "\toverflow:hidden;\n";
+        }
+        normal += tocss(item.fg, "color");
+        normal += tocss(item.bg, "background-color");
+        normal += "}\n";
+        return normal;
+    }
+    var css = "";
+    for (var i in json)
+    {
+        var item = json[i];
+        if (item.class.indexOf("quick_panel") != -1 || item.class.indexOf("overlay_control") != -1)
+        {
+            css += this.createCSS(item);
+        }
+    }
+    var sheet = document.createElement('style');
+    sheet.innerHTML = css;
+    document.body.appendChild(sheet);
+
+    return this;
+}
+/*
+var quick_panel = document.createElement('span');
+
+var qp = "<div class=\"overlay_control quick_panel\">";
+for (var i = 0; i < 20; i++)
+{
+    var row = "quick_panel_row";
+    if (i == 2)
+        row += " quick_panel_row_selected";
+
+    qp += "<div class=\"" + row + " quick_panel_label\">Hello</div>";
+}
+qp += "</div>";
+quick_panel.innerHTML = qp;
+document.body.appendChild(quick_panel);
+*/
 function main_onclick(e)
 {
     if (!e) var e = window.event;
@@ -582,14 +680,24 @@ document.body.onmousemove =function(e)
         window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(document.body.offsetHeight-window.innerHeight));
     }
 }
+window.onkeydown = function(e)
+{
+    if (e.metaKey && e.keyCode == 'P'.charCodeAt(0))
+    {
+        e.preventDefault();
+        console.log("Hello");
+    }
+}
 
 var startTime = new Date().getTime();
-var theme = new Theme("3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
+var colorScheme = new ColorScheme("3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
 var syntax = new Syntax("3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
+var theme = new Theme("3rdparty/Theme - Soda/Soda Dark.sublime-theme");
+
 var data = loadFile("lime.js");
-console.log("theme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0));
+console.log("theme, color scheme, syntax loading: " + ((new Date().getTime()-startTime)/1000.0));
 startTime = new Date().getTime();
-var tdata = syntax.transform(data, theme);
+var tdata = syntax.transform(data, colorScheme);
 console.log("transform1: " + ((new Date().getTime()-startTime)/1000.0));
 var lineNumbers = "";
 var regex = /\n/g;
@@ -609,6 +717,3 @@ html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmouse
 main.innerHTML = html;
 document.body.appendChild(main);
 window.onscroll();
-// console.log(syntax.transform("// test\nbice", theme));
-// console.log(syntax.transform("// test\n", theme));
-// console.log(syntax.transform("// test", theme));
