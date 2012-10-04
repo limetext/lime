@@ -550,14 +550,22 @@ function Theme(name)
         normal += "\n{\n";
         if (item.class === "overlay_control")
         {
-            normal += "\tmargin-left:auto;\n";
+            normal += "\tmargin-left:33%;\n";
             normal += "\tmargin-right:auto;\n";
             normal += "\twidth:33%;\n";
+            normal += "\tposition:absolute;\n";
         }
+
+
         if (item.class === "quick_panel")
         {
-            normal += "\toverflow:hidden;\n";
+            normal += "\toverflow-x:hidden;\n";
+            normal += "\toverflow-y:scroll;\n";
             normal += "\theight:200px;\n";
+        }
+        if (item.class.indexOf("quick_panel") != -1)
+        {
+            normal += "\tz-index:1;\n";
         }
 
         if (item["layer0.texture"])
@@ -604,22 +612,67 @@ function Theme(name)
 
     return this;
 }
-/*
-var quick_panel = document.createElement('span');
 
-var qp = "<div class=\"overlay_control quick_panel\">";
-for (var i = 0; i < 20; i++)
+function QuickPanel()
 {
-    var row = "quick_panel_row";
-    if (i == 2)
-        row += " quick_panel_row_selected";
+    var quick_panel = document.createElement('div');
+    var attr = document.createAttribute("class");
+    attr.nodeValue="overlay_control quick_panel";
+    quick_panel.setAttributeNode(attr);
 
-    qp += "<div class=\"" + row + " quick_panel_label\">Hello</div>";
+    document.body.appendChild(quick_panel);
+    this.node = quick_panel;
+    this.node.style.visibility = "hidden";
+    this.selected = 0;
+
+
+    this.show = function()
+    {
+        this.selected = 0;
+        var qp = "";
+        for (var i = 0; i < 20; i++)
+        {
+            var row = "quick_panel_row";
+            if (i == this.selected)
+                row += " quick_panel_row_selected";
+
+            qp += "<div class=\"" + row + " quick_panel_label\">Hello</div>";
+        }
+        qp += "</div>";
+        this.node.innerHTML = qp;
+        this.node.style.visibility = "visible";
+    }
+    this.hide = function()
+    {
+        this.node.style.visibility = "hidden";
+    }
+    this.isVisible = function()
+    {
+        return this.node.style.visibility == "visible";
+    }
+    this.select = function(index)
+    {
+        index = clamp(index, 0, this.node.children.length-1);
+        if (index != this.selected)
+        {
+            this.node.children[this.selected].attributes["class"].nodeValue = this.node.children[(this.selected+1)%this.node.children.length].attributes["class"].nodeValue
+            this.selected = index;
+            this.node.children[this.selected].attributes["class"].nodeValue = this.node.children[this.selected].attributes["class"].nodeValue + " quick_panel_row_selected";
+        }
+    }
+    this.previous = function()
+    {
+        this.select(this.selected-1);
+    }
+    this.next = function()
+    {
+        this.select(this.selected+1);
+    }
+
+    return this;
 }
-qp += "</div>";
-quick_panel.innerHTML = qp;
-document.body.appendChild(quick_panel);
-*/
+var quickpanel = new QuickPanel();
+
 function main_onclick(e)
 {
     if (!e) var e = window.event;
@@ -693,6 +746,7 @@ window.onscroll = function()
     var scroll = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
     var minimap = document.getElementById('minimap');
     minimap.style.top = -(scroll*(minimap.offsetHeight-window.innerHeight)) + "px";
+    quickpanel.node.style.top = window.pageYOffset + "px";
 
     var minimap_visible_area = document.getElementById('minimap_visible_area');
     var height = minimap.offsetHeight*(window.innerHeight/document.body.offsetHeight);
@@ -713,10 +767,31 @@ document.body.onmousemove =function(e)
 }
 window.onkeydown = function(e)
 {
+    var handled = true;
     if (e.metaKey && e.keyCode == 'P'.charCodeAt(0))
     {
+        if (quickpanel.isVisible())
+            quickpanel.hide();
+        else
+            quickpanel.show();
+    }
+    else if (quickpanel.isVisible())
+    {
+        switch (e.keyCode)
+        {
+            case 27: quickpanel.hide();     break;
+            case 38: quickpanel.previous(); break;
+            case 40: quickpanel.next();     break;
+            default: handled = false;       break;
+        }
+    }
+    else
+    {
+        handled = false;
+    }
+    if (handled)
+    {
         e.preventDefault();
-        console.log("Hello");
     }
 }
 

@@ -196,6 +196,11 @@ function rgbToHex(r, g, b)
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
+function clamp(nb, min, max)
+{
+    return Math.max(min, Math.min(max, nb));
+}
+
 function htmlify(str)
 {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
