@@ -116,6 +116,9 @@ function ColorScheme(name)
                           "    opacity:0.1;            \n"  +
                           "    background-color:#ffffff\n"  +
                           "}                           \n";
+                cssDef += ".caret\n{                  \n"  +
+                          "    position:absolute;      \n"  +
+                          "}                           \n";
             }
         }
     }
@@ -691,13 +694,6 @@ function QuickPanel()
 }
 var quickpanel = new QuickPanel();
 
-function main_onclick(e)
-{
-    if (!e) var e = window.event;
-
-    console.log(e);
-}
-
 var targetScroll = null;
 var scroller = null;
 var lastTime = -1;
@@ -734,8 +730,9 @@ function minimap_onclick(e)
     if (!e) var e = window.event;
     if (!e.y) e.y = e.clientY;
     var minimap = document.getElementById('minimap');
+    var main = document.getElementById("main");
 
-    var tp = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
+    var tp = window.pageYOffset/(main.offsetHeight-window.innerHeight);
     var p = (e.y/window.innerHeight);
 
     var diff = minimap.offsetHeight-window.innerHeight
@@ -744,7 +741,7 @@ function minimap_onclick(e)
     var target = (top + p*window.innerHeight)/minimap.offsetHeight;
 
     var current = window.pageYOffset;
-    targetScroll = target*(document.body.offsetHeight-window.innerHeight);
+    targetScroll = target*(main.offsetHeight-window.innerHeight);
 
     scroller = setInterval("doScroll()", 30);
 }
@@ -759,15 +756,95 @@ function minimap_area_ondown(e)
 
 document.body.onmouseup = function() { drag = false; };
 
+
+
+function Caret()
+{
+    this.node = document.createElement("div");
+    var attr = document.createAttribute("class");
+    attr.nodeValue = "caret";
+    this.node.innerHTML = "&#x007C;";
+    this.node.setAttributeNode(attr);
+    document.body.appendChild(this.node);
+
+    this.lineHeight = 0;
+    this.columnWidth = 0;
+
+    this.row = 0;
+    this.col = 0;
+    this._top = 0;
+    this._left = 0;
+
+    this.update = function()
+    {
+        var main = document.getElementById("main");
+        {
+            // TODO: is there a better way to do this?
+            var temp1 = document.createElement("span");
+            temp1.innerHTML = "hackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhack";
+            main.appendChild(temp1);
+            this.lineHeight = (main.offsetHeight)/(main.children[0].innerHTML.split("\n").length);
+            this.columnWidth = (temp1.offsetWidth)/temp1.innerHTML.length;
+            main.removeChild(temp1);
+        }
+        this._left = main.offsetLeft;
+        this._top = main.offsetTop;
+        var node = main.offsetParent;
+        while (node)
+        {
+            this._top += node.offsetTop;
+            this._left += node.offsetLeft;
+            node = node.offsetParent;
+        }
+        this._left -= this.columnWidth*0.33;
+    }
+    this.set = function(row, col)
+    {
+        if (this.lineHeight == 0)
+            this.update();
+        if (col < 0)
+            col = 0;
+        if (row < 0)
+            row = 0;
+        var d = data.split("\n");
+        if (row > d.length-2)
+            row = d.length-2;
+        if (col > d[row].length)
+            col = d[row].length;
+
+        this.row = row;
+        this.col = col;
+        this.node.style.top = (this._top+row*this.lineHeight) + "px";
+        this.node.style.left = (this._left+col*this.columnWidth) + "px";
+    }
+    return this;
+}
+var caret = Caret();
+function blink_caret()
+{
+    caret.node.style.opacity = 0.6 + 0.4*Math.sin(0.006*(new Date().getTime()));
+}
+
+setInterval("blink_caret()", 50);
+
+document.body.onclick = function(e)
+{
+    if (!e) var e = window.event;
+    caret.update();
+    var row = Math.floor((e.pageY-caret._top)/caret.lineHeight);
+    var col = Math.floor((e.pageX-caret._left)/caret.columnWidth);
+    caret.set(row, col);
+}
 window.onscroll = function()
 {
-    var scroll = window.pageYOffset/(document.body.offsetHeight-window.innerHeight);
+    var main = document.getElementById("main");
+    var scroll = window.pageYOffset/(main.clientHeight-window.innerHeight);
     var minimap = document.getElementById('minimap');
     minimap.style.top = -(scroll*(minimap.offsetHeight-window.innerHeight)) + "px";
     quickpanel.node.style.top = window.pageYOffset + "px";
 
     var minimap_visible_area = document.getElementById('minimap_visible_area');
-    var height = minimap.offsetHeight*(window.innerHeight/document.body.offsetHeight);
+    var height = minimap.offsetHeight*(window.innerHeight/main.clientHeight);
     minimap_visible_area.style.height = height + "px";
     minimap_visible_area.style.top = (scroll*(window.innerHeight-height)) + "px";
     minimap_visible_area.style.width = minimap.style.width + "px";
@@ -780,7 +857,8 @@ document.body.onmousemove =function(e)
         if (!e) var e = window.event;
         if (!e.y) e.y = e.clientY;
 
-        window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(document.body.offsetHeight-window.innerHeight));
+        var main = document.getElementById("main");
+        window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(main.clientHeight-window.innerHeight));
     }
 }
 window.onkeydown = function(e)
@@ -805,7 +883,17 @@ window.onkeydown = function(e)
     }
     else
     {
-        handled = false;
+        switch (e.keyCode)
+        {
+            case 27: quickpanel.hide();     break;
+            case 37: caret.set(caret.row  , caret.col-1); break;
+            case 38: caret.set(caret.row-1, caret.col); break;
+            case 39: caret.set(caret.row  , caret.col+1); break;
+            case 40: caret.set(caret.row+1, caret.col); break;
+            default:
+                console.log(e);
+            handled = false;       break;
+        }
     }
     if (handled)
     {
@@ -835,10 +923,12 @@ while (regex.exec(tdata))
 lineNumbers += ++count + "\n";
 
 var main = document.createElement('span');
-var html = "<table><tr><td class=\"lineNumbers\">" + lineNumbers + "</td>";
-html += "<td id=\"main\" class=\"main\" onclick=\"main_onclick();\">" + tdata + "</td>";
+var html = "<table><tr style=\"position:absolute; top:0px;\"><td class=\"lineNumbers\">" + lineNumbers + "</td>";
+html += "<td id=\"main\" class=\"main\">" + tdata + "</td>";
 html += "<td id=\"minimap\" class=\"minimap\" onclick=\"minimap_onclick(event);\">" + tdata + "</td></tr></table>";
 html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmousedown=\"minimap_area_ondown()\"></div>";
 main.innerHTML = html;
 document.body.appendChild(main);
+
 window.onscroll();
+caret.set(0, 0);
