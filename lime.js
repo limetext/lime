@@ -533,7 +533,7 @@ function Theme(name)
     {
         if (stcolor)
         {
-            return "\t" + name + ":" + rgbToHex(stcolor[0], stcolor[1], stcolor[2]) + "\n";
+            return "\t" + name + ":" + rgbToHex(stcolor[0], stcolor[1], stcolor[2]) + ";\n";
         }
         return "";
     }
@@ -542,11 +542,7 @@ function Theme(name)
     {
         var selected="";
         var normal="";
-        normal += "." + item.class;
-        if (item.attributes)
-        {
-            normal += "_" + item.attributes.join("_");
-        }
+
         normal += "\n{\n";
         if (item.class === "overlay_control")
         {
@@ -568,6 +564,10 @@ function Theme(name)
             normal += "\tz-index:1;\n";
         }
 
+        if (item.class === "quick_panel_path_label")
+        {
+            normal += "\tfont-size:75%;\n";
+        }
         if (item["layer0.texture"])
         {
             var offsets = "1";
@@ -594,8 +594,21 @@ function Theme(name)
         }
         normal += tocss(item.fg, "color");
         normal += tocss(item.bg, "background-color");
-        normal += "}\n";
-        return normal;
+
+        selected = normal;
+        selected += tocss(item.selected_fg, "color");
+        selected += tocss(item.selected_bg, "background-color");
+
+        var name = "." + item.class;
+        if (item.attributes)
+        {
+            name += "_" + item.attributes.join("_");
+        }
+        normal = name + normal + "}\n";
+        selected = name + "_selected" + selected + "}\n";
+
+
+        return normal+selected;
     }
     var css = "";
     for (var i in json)
@@ -625,18 +638,13 @@ function QuickPanel()
     this.node.style.visibility = "hidden";
     this.selected = 0;
 
-
     this.show = function()
     {
-        this.selected = 0;
+        this.selected = -1;
         var qp = "";
         for (var i = 0; i < 20; i++)
         {
-            var row = "quick_panel_row";
-            if (i == this.selected)
-                row += " quick_panel_row_selected";
-
-            qp += "<div class=\"" + row + " quick_panel_label\">Hello</div>";
+            qp += "<div class=\"quick_panel_row\"><span class=\"quick_panel_label\">Hello</span>\n<span class=\"quick_panel_path_label\">c:\\projects\\world</span></div>";
         }
         qp += "</div>";
         this.node.innerHTML = qp;
@@ -652,12 +660,22 @@ function QuickPanel()
     }
     this.select = function(index)
     {
-        index = clamp(index, 0, this.node.children.length-1);
+        if (index < -1)
+            index = -1;
+        index = (index+this.node.children.length) % this.node.children.length;
         if (index != this.selected)
         {
-            this.node.children[this.selected].attributes["class"].nodeValue = this.node.children[(this.selected+1)%this.node.children.length].attributes["class"].nodeValue
+            if (this.selected != -1)
+            {
+                this.node.children[this.selected].attributes["class"].nodeValue = "quick_panel_row";
+                this.node.children[this.selected].children[0].attributes["class"].nodeValue = "quick_panel_label";
+                this.node.children[this.selected].children[1].attributes["class"].nodeValue = "quick_panel_path_label";
+            }
+
             this.selected = index;
-            this.node.children[this.selected].attributes["class"].nodeValue = this.node.children[this.selected].attributes["class"].nodeValue + " quick_panel_row_selected";
+            this.node.children[this.selected].attributes["class"].nodeValue = "quick_panel_row quick_panel_row_selected";
+            this.node.children[this.selected].children[0].attributes["class"].nodeValue = "quick_panel_label_selected";
+            this.node.children[this.selected].children[1].attributes["class"].nodeValue = "quick_panel_path_label_selected";
         }
     }
     this.previous = function()
