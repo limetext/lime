@@ -556,17 +556,20 @@ function Theme(name)
             normal += "\toutline:none;\n";
         }
 
-
         if (item.class === "quick_panel")
         {
+            normal += "\ttop:0;\n";
             normal += "\toverflow-x:hidden;\n";
             normal += "\toverflow-y:scroll;\n";
             normal += "\theight:200px;\n";
+            normal += "\tborder-style:solid;\n";
         }
         if (item.class.indexOf("quick_panel") != -1)
         {
             normal += "\tz-index:10;\n";
         }
+        if (item.class.indexOf("quick_panel_row") != -1)
+            normal += "\tborder-style:solid;\n";
 
         if (item.class === "quick_panel_path_label")
         {
@@ -589,7 +592,9 @@ function Theme(name)
                     normal += "\tpadding: " + o2.join("px ") + "px;\n";
                 }
             }
-            normal += "\tborder-image:url(\"3rdparty/" + item["layer0.texture"] + "\") " + offsets + " fill stretch;\n";
+            var tmp = "border-image:url(\"3rdparty/" + item["layer0.texture"] + "\") " + offsets;
+            normal += "\t-o-" + tmp + " stretch;\n";
+            normal += "\t" + tmp + " fill stretch;\n";
         }
         if (item.class.indexOf("quick_panel_row") != -1)
         {
