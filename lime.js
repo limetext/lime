@@ -564,7 +564,7 @@ function Theme(name)
         }
         if (item.class.indexOf("quick_panel") != -1)
         {
-            normal += "\tz-index:1;\n";
+            normal += "\tz-index:10;\n";
         }
 
         if (item.class === "quick_panel_path_label")
@@ -692,58 +692,28 @@ function QuickPanel()
 
     return this;
 }
+
 var quickpanel = new QuickPanel();
 
-var targetScroll = null;
-var scroller = null;
-var lastTime = -1;
-function doScroll()
+function getPageHeight()
 {
-    var currTime = new Date().getTime();
-    if (lastTime == -1)
-    {
-        lastTime = currTime;
-    }
-    var diff = currTime-lastTime;
-    lastTime = currTime;
-    var current = window.pageYOffset;
-    if (Math.abs(targetScroll-current) > 5)
-    {
-        var diff2 = targetScroll-current;
-        diff = diff2*0.0175*diff;
-        if (Math.abs(diff) > Math.abs(diff2))
-        {
-            diff = diff2;
-        }
-        window.scrollBy(0, diff);
-    }
-    else
-    {
-        lastTime = -1;
-        window.scrollTo(window.pageXOffset, targetScroll);
-        clearInterval(scroller);
-    }
+    return editor.renderer.lineHeight*editor.getSession().getLength();
 }
-
 function minimap_onclick(e)
 {
     if (!e) var e = window.event;
     if (!e.y) e.y = e.clientY;
     var minimap = document.getElementById('minimap');
-    var main = document.getElementById("main");
 
-    var tp = window.pageYOffset/(main.offsetHeight-window.innerHeight);
+    var pageHeight = getPageHeight();
+    var tp = editor.getSession().getScrollTop()/(pageHeight-window.innerHeight);
     var p = (e.y/window.innerHeight);
 
     var diff = minimap.offsetHeight-window.innerHeight
     var top = tp*(diff);
     var div = minimap.offsetHeight/(diff);
     var target = (top + p*window.innerHeight)/minimap.offsetHeight;
-
-    var current = window.pageYOffset;
-    targetScroll = target*(main.offsetHeight-window.innerHeight);
-
-    scroller = setInterval("doScroll()", 30);
+    editor.scrollToLine(target*editor.getSession().getLength(), true, true);
 }
 
 var drag = false;
@@ -756,111 +726,17 @@ function minimap_area_ondown(e)
 
 document.body.onmouseup = function() { drag = false; };
 
-
-
-function Caret()
-{
-    this.node = document.createElement("div");
-    var attr = document.createAttribute("class");
-    attr.nodeValue = "caret";
-    this.node.innerHTML = "&#x007C;";
-    this.node.setAttributeNode(attr);
-    document.body.appendChild(this.node);
-
-    this.lineHeight = 0;
-    this.columnWidth = 0;
-
-    this.row = 0;
-    this.col = 0;
-    this._top = 0;
-    this._left = 0;
-
-    this.update = function()
-    {
-        var main = document.getElementById("main");
-        {
-            // TODO: is there a better way to do this?
-            var temp1 = document.createElement("span");
-            temp1.innerHTML = "hackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhackhack";
-            main.appendChild(temp1);
-            this.lineHeight = (main.offsetHeight)/(main.children[0].innerHTML.split("\n").length);
-            this.columnWidth = (temp1.offsetWidth)/temp1.innerHTML.length;
-            main.removeChild(temp1);
-        }
-        this._left = main.offsetLeft;
-        this._top = main.offsetTop;
-        var node = main.offsetParent;
-        while (node)
-        {
-            this._top += node.offsetTop;
-            this._left += node.offsetLeft;
-            node = node.offsetParent;
-        }
-        this._left -= this.columnWidth*0.33;
-    }
-    this.set = function(row, col)
-    {
-        if (this.lineHeight == 0)
-            this.update();
-        if (col < 0)
-            col = 0;
-        if (row < 0)
-            row = 0;
-        var d = data.split("\n");
-        if (row > d.length-2)
-            row = d.length-2;
-        if (col > d[row].length)
-            col = d[row].length;
-
-        this.row = row;
-        this.col = col;
-        this.node.style.top = (this._top+row*this.lineHeight) + "px";
-        this.node.style.left = (this._left+col*this.columnWidth) + "px";
-    }
-    return this;
-}
-var caret = Caret();
-function blink_caret()
-{
-    caret.node.style.opacity = 0.6 + 0.4*Math.sin(0.006*(new Date().getTime()));
-}
-
-setInterval("blink_caret()", 50);
-
-document.body.onclick = function(e)
-{
-    if (!e) var e = window.event;
-    caret.update();
-    var row = Math.floor((e.pageY-caret._top)/caret.lineHeight);
-    var col = Math.floor((e.pageX-caret._left)/caret.columnWidth);
-    caret.set(row, col);
-}
-window.onscroll = function()
-{
-    var main = document.getElementById("main");
-    var scroll = window.pageYOffset/(main.clientHeight-window.innerHeight);
-    var minimap = document.getElementById('minimap');
-    minimap.style.top = -(scroll*(minimap.offsetHeight-window.innerHeight)) + "px";
-    quickpanel.node.style.top = window.pageYOffset + "px";
-
-    var minimap_visible_area = document.getElementById('minimap_visible_area');
-    var height = minimap.offsetHeight*(window.innerHeight/main.clientHeight);
-    minimap_visible_area.style.height = height + "px";
-    minimap_visible_area.style.top = (scroll*(window.innerHeight-height)) + "px";
-    minimap_visible_area.style.width = minimap.style.width + "px";
-}
-
-document.body.onmousemove =function(e)
+document.body.onmousemove = function(e)
 {
     if (drag)
     {
         if (!e) var e = window.event;
         if (!e.y) e.y = e.clientY;
 
-        var main = document.getElementById("main");
-        window.scrollTo(window.pageXOffset, (e.y/window.innerHeight)*(main.clientHeight-window.innerHeight));
+        editor.scrollToLine((e.y/window.innerHeight)*editor.getSession().getLength());
     }
 }
+
 window.onkeydown = function(e)
 {
     var handled = true;
@@ -923,12 +799,29 @@ while (regex.exec(tdata))
 lineNumbers += ++count + "\n";
 
 var main = document.createElement('span');
-var html = "<table><tr style=\"position:absolute; top:0px;\"><td class=\"lineNumbers\">" + lineNumbers + "</td>";
-html += "<td id=\"main\" class=\"main\">" + tdata + "</td>";
+var html = "<table><tr style=\"position:absolute; top:0px; width:100%; height:100%;\"><td id=\"main\" class=\"main\"><div id=\"editor\">" + htmlify(data) + "</div></td>";
 html += "<td id=\"minimap\" class=\"minimap\" onclick=\"minimap_onclick(event);\">" + tdata + "</td></tr></table>";
 html += "<div id=\"minimap_visible_area\" class=\"minimap_visible_area\" onmousedown=\"minimap_area_ondown()\"></div>";
 main.innerHTML = html;
 document.body.appendChild(main);
 
-window.onscroll();
-caret.set(0, 0);
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/monokai");
+editor.getSession().setMode("ace/mode/javascript");
+
+
+editor.getSession().on("changeScrollTop", function(scrolltop)
+{
+    var pageHeight = getPageHeight();
+    var scroll = scrolltop/(pageHeight-window.innerHeight);
+    var minimap = document.getElementById('minimap');
+    minimap.style.top = -(scroll*(minimap.offsetHeight-window.innerHeight)) + "px";
+
+    var minimap_visible_area = document.getElementById('minimap_visible_area');
+    var height = minimap.offsetHeight*(window.innerHeight/pageHeight);
+    minimap_visible_area.style.height = height + "px";
+    minimap_visible_area.style.top = (scroll*(window.innerHeight-height)) + "px";
+    minimap_visible_area.style.width = minimap.style.width + "px";
+}
+);
+
