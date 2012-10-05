@@ -553,6 +553,7 @@ function Theme(name)
             normal += "\tmargin-right:auto;\n";
             normal += "\twidth:33%;\n";
             normal += "\tposition:absolute;\n";
+            normal += "\toutline:none;\n";
         }
 
 
@@ -635,6 +636,9 @@ function QuickPanel()
     var attr = document.createAttribute("class");
     attr.nodeValue="overlay_control quick_panel";
     quick_panel.setAttributeNode(attr);
+    attr = document.createAttribute("tabindex");
+    attr.nodeValue="-1";
+    quick_panel.setAttributeNode(attr);
 
     document.body.appendChild(quick_panel);
     this.node = quick_panel;
@@ -652,10 +656,13 @@ function QuickPanel()
         qp += "</div>";
         this.node.innerHTML = qp;
         this.node.style.visibility = "visible";
+        this.previousActive = document.activeElement;
+        this.node.focus();
     }
     this.hide = function()
     {
         this.node.style.visibility = "hidden";
+        this.previousActive.focus();
     }
     this.isVisible = function()
     {
@@ -759,17 +766,7 @@ window.onkeydown = function(e)
     }
     else
     {
-        switch (e.keyCode)
-        {
-            case 27: quickpanel.hide();     break;
-            case 37: caret.set(caret.row  , caret.col-1); break;
-            case 38: caret.set(caret.row-1, caret.col); break;
-            case 39: caret.set(caret.row  , caret.col+1); break;
-            case 40: caret.set(caret.row+1, caret.col); break;
-            default:
-                console.log(e);
-            handled = false;       break;
-        }
+        handled = false;
     }
     if (handled)
     {
