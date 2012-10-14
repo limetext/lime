@@ -5,11 +5,13 @@
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
 #include <CoreServices/CoreServices.h>
+#include <pthread.h>
 
 class EventTapKeyControl
 {
 public:
     EventTapKeyControl()
+    : hasInput(true), running(true)
     {
         int id = getTerminalPid();
         ProcessSerialNumber currentProcess = {kNoProcess, kNoProcess};
@@ -43,18 +45,35 @@ public:
             }
         }
 
+        pthread_create(&thread, NULL, mainloop, this);
+
         CFMachPortRef      eventTap;
         CFRunLoopSourceRef runLoopSource;
         CGEventMask        eventMask = kCGEventMaskForAllEvents;
 
-        eventTap = CGEventTapCreateForPSN(&currentProcess, kCGHeadInsertEventTap, 0, eventMask, myCGEventCallback, NULL);
+        eventTap = CGEventTapCreateForPSN(&currentProcess, kCGHeadInsertEventTap, 0, eventMask, myCGEventCallback, this);
         runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0);
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, kCFRunLoopCommonModes);
         CGEventTapEnable(eventTap, true);
         CFRunLoopRun();
     }
+private:
 
-    static int getTerminalPid()
+    pthread_t thread;
+    bool hasInput;
+    bool running;
+
+    static void* mainloop(void* data)
+    {
+        EventTapKeyControl* ctl = (EventTapKeyControl*) data;
+        while (ctl->running)
+        {
+            int ch = getch();
+            ctl->hasInput = true;
+        }
+    }
+
+    int getTerminalPid()
     {
         int curr = getppid();
 
@@ -91,7 +110,7 @@ public:
         return -1;
     }
 
-    static UInt32 getCharForKey(CGKeyCode keyCode, UInt32 modifierFlags = 0)
+    UInt32 getCharForKey(CGKeyCode keyCode, UInt32 modifierFlags = 0)
     {
         TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardInputSource();
         CFDataRef layoutData = (CFDataRef) TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);
@@ -125,14 +144,23 @@ public:
 
     static CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type,  CGEventRef event, void* refcon)
     {
+        EventTapKeyControl* ctl = (EventTapKeyControl*) refcon;
+
+        if (!ctl->hasInput)
+            return event;
+
         switch (type)
         {
             case kCGEventKeyDown:
             case kCGEventKeyUp:
                 break;
-
+            case kCGEventLeftMouseDown:
+            case kCGEventLeftMouseUp:
+            case kCGEventMouseMoved:
+                ctl->hasInput = false;
+                return event;
             default:
-                return NULL;
+                return event;
         }
 
         CGKeyCode rawcode = (CGKeyCode)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
@@ -159,11 +187,12 @@ public:
             strcat(keys, "cmd ");
         }
 
-        UInt32 code1 = getCharForKey(rawcode);
-        UInt32 code2 = getCharForKey(rawcode, flags);
+        UInt32 code1 = ctl->getCharForKey(rawcode);
+        UInt32 code2 = ctl->getCharForKey(rawcode, flags);
 
         if (code1 == 'c' && (flags & kCGEventFlagMaskControl))
         {
+            ctl->running = false;
             CFRunLoopStop(CFRunLoopGetCurrent());
         }
 
@@ -203,7 +232,6 @@ public:
         return NULL;
     }
 };
-
 int main(int argc, const char* argv[])
 {
 
@@ -211,6 +239,8 @@ int main(int argc, const char* argv[])
 
     initscr();
     raw();
+    noecho();
+    mousemask(ALL_MOUSE_EVENTS, NULL);
     keypad(stdscr, true);
 
     EventTapKeyControl c;
