@@ -9,13 +9,27 @@ if(CURSES_FOUND)
 endif()
 set(FRONTENDS ${CURSES_FRONTEND})
 
-find_library(APP_SERVICES_LIBRARY ApplicationServices)
-find_library(CORE_SERVICES_LIBRARY CoreServices)
-find_library(CARBON_LIBRARY Carbon)
-mark_as_advanced(APP_SERVICES_LIBRARY CORE_SERVICES_LIBRARY CARBON_LIBRARY)
-if(NOT CARBON_LIBRARY)
+
+include(FindPackageHandleStandardArgs)
+macro(my_find_package NAME HEADER)
+    string(TOUPPER ${NAME} NU)
+    find_library(${NU}_LIBRARY ${NAME})
+    find_path(${NU}_INCLUDE_DIR ${HEADER})
+    find_package_handle_standard_args(${NAME} REQUIRED_VARS ${NU}_INCLUDE_DIR ${NU}_LIBRARY)
+    mark_as_advanced(${NU}_INCLUDE_DIR ${NU}_LIBRARY)
+endmacro()
+
+
+my_find_package(Carbon Carbon/Carbon.h)
+if(NOT CARBON_FOUND)
     message(FATAL_ERROR "Carbon not found")
 endif()
+my_find_package(termkey termkey.h)
+if(TERMKEY_FOUND)
+    add_definitions(-DHAVE_TERMKEY)
+endif()
+
+include_directories(backend)
 
 add_executable(lime ${FRONTENDS} ${BACKEND})
-target_link_libraries(lime ${CURSES_LIBRARIES} ${APP_SERVICES_LIBRARY} ${CORE_SERVICES_LIBRARY} ${CARBON_LIBRARY})
+target_link_libraries(lime ${CURSES_LIBRARIES} ${CARBON_LIBRARY} ${TERMKEY_LIBRARY})

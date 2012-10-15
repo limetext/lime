@@ -2,16 +2,20 @@
 #include <string.h>
 #include <locale.h>
 
-#include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
-#include <CoreServices/CoreServices.h>
 #include <pthread.h>
+
+#include "LimeKeyEvent.h"
+
+#ifdef HAVE_TERMKEY
+#include <termkey.h>
+#endif
 
 class EventTapKeyControl
 {
 public:
     EventTapKeyControl()
-    : hasInput(true), running(true)
+    : hasInput(true), running(true), flags(0)
     {
         int id = getTerminalPid();
         ProcessSerialNumber currentProcess = {kNoProcess, kNoProcess};
@@ -23,7 +27,6 @@ public:
 
             if (dict)
             {
-                //CFDictionaryApplyFunction(dict, bice, NULL);
                 CFNumberRef ref = (CFNumberRef) CFDictionaryGetValue(dict, CFSTR("pid"));
 
                 if (ref)
@@ -44,6 +47,9 @@ public:
                 throw "Couldn't get terminal process serial number";
             }
         }
+#ifdef HAVE_TERMKEY
+        tk = termkey_new(0, 0);
+#endif
 
         pthread_create(&thread, NULL, mainloop, this);
 
@@ -57,20 +63,87 @@ public:
         CGEventTapEnable(eventTap, true);
         CFRunLoopRun();
     }
+
+    ~EventTapKeyControl()
+    {
+        running = false;
+        pthread_join(thread, NULL);
+#ifdef HAVE_TERMKEY
+        termkey_destroy(tk);
+#endif
+    }
+
 private:
 
+#ifdef HAVE_TERMKEY
+    TermKey *tk;
+#endif
+
+    LimeKeyEvent currentEvent;
     pthread_t thread;
     bool hasInput;
     bool running;
+    CGEventFlags flags;
 
     static void* mainloop(void* data)
     {
         EventTapKeyControl* ctl = (EventTapKeyControl*) data;
         while (ctl->running)
         {
+            char buf[512];
+            LimeKeyModifiers mod = 0;
+            bool clearMod = true;
+
+#ifdef HAVE_TERMKEY
+            TermKeyResult ret;
+            TermKeyKey key;
+
+            ret = termkey_waitkey(ctl->tk, &key);
+            termkey_strfkey(ctl->tk, buf, sizeof buf, &key, TERMKEY_FORMAT_LONGMOD);
+            ctl->currentEvent.SetRawChar(tolower(key.code.number));
+            ctl->currentEvent.SetUnicodeChar(key.code.number);
+
+            mod = ctl->currentEvent.GetModifiers();
+            clearMod = mod == 0;
+
+            if (clearMod)
+            {
+                if (key.modifiers & TERMKEY_KEYMOD_CTRL)
+                    mod |= LIME_KEY_MODIFIER_CTRL;
+                if (key.modifiers & TERMKEY_KEYMOD_ALT)
+                    mod |= LIME_KEY_MODIFIER_ALT;
+                if (key.modifiers & TERMKEY_KEYMOD_SHIFT)
+                    mod |= LIME_KEY_MODIFIER_SHIFT;
+            }
+            ctl->currentEvent.SetModifiers(mod);
+
+#else
             int ch = getch();
             ctl->hasInput = true;
+            ctl->currentEvent.SetUnicodeChar(ch);
+            ctl->currentEvent.SetRawChar(ch);
+
+#endif
+            // TODO: dispatch
+            sprintf(buf, "%d %d %d %lc (%d) %lc (%d)", clearMod, key.modifiers, ctl->currentEvent.GetModifiers(),
+               ctl->currentEvent.GetRawChar(), ctl->currentEvent.GetRawChar(),
+               ctl->currentEvent.GetUnicodeChar(), ctl->currentEvent.GetUnicodeChar()
+            );
+
+            if (ctl->currentEvent.GetModifiers() == LIME_KEY_MODIFIER_CTRL &&
+                ctl->currentEvent.GetRawChar() == 'c')
+            {
+                ctl->running = false;
+            }
+
+            int row, col;
+            getmaxyx(stdscr, row, col);
+            clear();
+            mvprintw(row / 2, (col - strlen(buf)) / 2, buf, "");
+            refresh();
+            ctl->currentEvent = LimeKeyEvent(0, 0, clearMod ? 0 : mod);
         }
+        return NULL;
     }
 
     int getTerminalPid()
@@ -142,9 +215,36 @@ private:
         }
     }
 
+    LimeKeyModifiers GetModifiers(CGEventFlags flags)
+    {
+        LimeKeyModifiers mod = LIME_KEY_MODIFIER_NONE;
+        if (flags & kCGEventFlagMaskAlternate)
+            mod |= LIME_KEY_MODIFIER_ALT;
+        if (flags & kCGEventFlagMaskShift)
+            mod |= LIME_KEY_MODIFIER_SHIFT;
+        if (flags & kCGEventFlagMaskCommand)
+            mod |= LIME_KEY_MODIFIER_COMMAND;
+        if (flags & kCGEventFlagMaskControl)
+            mod |= LIME_KEY_MODIFIER_CTRL;
+        return mod;
+    }
+
     static CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type,  CGEventRef event, void* refcon)
     {
         EventTapKeyControl* ctl = (EventTapKeyControl*) refcon;
+        ctl->flags = CGEventGetFlags(event);
+
+        if (type == kCGEventFlagsChanged)
+        {
+            mvprintw(0, 0, "mod: %d\t\t\t\t", ctl->GetModifiers(ctl->flags));
+            refresh();
+            ctl->currentEvent.SetModifiers(ctl->GetModifiers(ctl->flags));
+        }
+
+        if (!ctl->running)
+        {
+            CFRunLoopStop(CFRunLoopGetCurrent());
+        }
 
         if (!ctl->hasInput)
             return event;
@@ -167,67 +267,10 @@ private:
         CGEventFlags flags = CGEventGetFlags(event);
         char keys[512] = "";
 
-        if (flags & kCGEventFlagMaskControl)
-        {
-            strcat(keys, "ctrl ");
-        }
-
-        if (flags & kCGEventFlagMaskAlternate)
-        {
-            strcat(keys, "alt ");
-        }
-
-        if (flags & kCGEventFlagMaskShift)
-        {
-            strcat(keys, "shift ");
-        }
-
-        if (flags & kCGEventFlagMaskCommand)
-        {
-            strcat(keys, "cmd ");
-        }
-
-        UInt32 code1 = ctl->getCharForKey(rawcode);
-        UInt32 code2 = ctl->getCharForKey(rawcode, flags);
-
-        if (code1 == 'c' && (flags & kCGEventFlagMaskControl))
-        {
-            ctl->running = false;
-            CFRunLoopStop(CFRunLoopGetCurrent());
-        }
-
-        char buf[512];
-
-        if (code1 == 0x1b)
-        {
-            sprintf(buf, "%s escape", keys);
-        }
-        else if (code1 == 0x1c)
-        {
-            sprintf(buf, "%s left", keys);
-        }
-        else if (code1 == 0x1d)
-        {
-            sprintf(buf, "%s right", keys);
-        }
-        else if (code1 == 0x1e)
-        {
-            sprintf(buf, "%s up", keys);
-        }
-        else if (code1 == 0x1f)
-        {
-            sprintf(buf, "%s down", keys);
-        }
-        else
-        {
-            sprintf(buf, "%s %lc (%d) %lc (%d)", keys, (wchar_t) code1, code1, (wchar_t) code2, code2);
-        }
-
-        int row, col;
-        getmaxyx(stdscr, row, col);
-        clear();
-        mvprintw(row / 2, (col - strlen(buf)) / 2, buf, "");
-        refresh();
+        ctl->currentEvent.SetUnicodeChar(ctl->getCharForKey(rawcode, flags));
+        ctl->currentEvent.SetRawChar(ctl->getCharForKey(rawcode));
+        ctl->currentEvent.SetModifiers(ctl->GetModifiers(ctl->flags));
+        // TODO: dispatch.
 
         return NULL;
     }
@@ -243,8 +286,12 @@ int main(int argc, const char* argv[])
     mousemask(ALL_MOUSE_EVENTS, NULL);
     keypad(stdscr, true);
 
-    EventTapKeyControl c;
+    {
+        EventTapKeyControl c;
+    }
 
+    echo();
+    cbreak();
     endwin();
     printf("cleaning up\n");
 
