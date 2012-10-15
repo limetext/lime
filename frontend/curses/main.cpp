@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "LimeKeyEvent.h"
+#include "Syntax.h"
 
 #ifdef HAVE_TERMKEY
 #include <termkey.h>
@@ -116,16 +117,28 @@ private:
                     mod |= LIME_KEY_MODIFIER_SHIFT;
             }
             ctl->currentEvent.SetModifiers(mod);
-
 #else
             int ch = getch();
             ctl->hasInput = true;
+            mod = ctl->currentEvent.GetModifiers();
+            clearMod = mod == 0;
+            switch (ch)
+            {
+                case 0x3: // ctrl+c
+                    ch = 'c';
+                    mod |= LIME_KEY_MODIFIER_CTRL;
+                    break;
+                default:
+                    break;
+            }
+            ctl->currentEvent.SetModifiers(mod);
+
             ctl->currentEvent.SetUnicodeChar(ch);
             ctl->currentEvent.SetRawChar(ch);
 
 #endif
             // TODO: dispatch
-            sprintf(buf, "%d %d %d %lc (%d) %lc (%d)", clearMod, key.modifiers, ctl->currentEvent.GetModifiers(),
+            sprintf(buf, "%d %d %lc (%d) %lc (%d)", ctl->currentEvent.GetModifiers(),
                ctl->currentEvent.GetRawChar(), ctl->currentEvent.GetRawChar(),
                ctl->currentEvent.GetUnicodeChar(), ctl->currentEvent.GetUnicodeChar()
             );
@@ -271,27 +284,33 @@ private:
         ctl->currentEvent.SetRawChar(ctl->getCharForKey(rawcode));
         ctl->currentEvent.SetModifiers(ctl->GetModifiers(ctl->flags));
         // TODO: dispatch.
+        // return NULL;
 
-        return NULL;
+        return event;
     }
 };
 int main(int argc, const char* argv[])
 {
+    lime::backend::Syntax s("../3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist");
 
     setlocale(LC_ALL, "");
 
     initscr();
+#ifndef HAVE_TERMKEY
     raw();
     noecho();
     mousemask(ALL_MOUSE_EVENTS, NULL);
     keypad(stdscr, true);
+#endif
 
     {
         EventTapKeyControl c;
     }
-
+#ifndef HAVE_TERMKEY
+    noraw();
     echo();
-    cbreak();
+    keypad(stdscr, false);
+#endif
     endwin();
     printf("cleaning up\n");
 

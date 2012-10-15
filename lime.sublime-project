@@ -19,7 +19,8 @@
         "sublimeclang_options":
         [
             "-DHAVE_TERMKEY",
-            "-I${project_path:backend}"
+            "-I${project_path:backend}",
+            "-I${project_path:backend}/3rdparty/PlistCpp/src"
         ]
     }
 }

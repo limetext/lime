@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(CURSES_NEED_NCURSES True)
 find_package(curses REQUIRED) # Required for now..
+find_package(Boost COMPONENTS regex REQUIRED)
 
 if(CURSES_FOUND)
     set(CURSES_FRONTEND frontend/curses/main.cpp)
@@ -29,7 +30,10 @@ if(TERMKEY_FOUND)
     add_definitions(-DHAVE_TERMKEY)
 endif()
 
+include_directories(${Boost_INCLUDE_DIRS})
+add_subdirectory(backend)
+
 include_directories(backend)
 
-add_executable(lime ${FRONTENDS} ${BACKEND})
-target_link_libraries(lime ${CURSES_LIBRARIES} ${CARBON_LIBRARY} ${TERMKEY_LIBRARY})
+add_executable(lime ${FRONTENDS})
+target_link_libraries(lime backend ${CURSES_LIBRARIES} ${CARBON_LIBRARY} ${TERMKEY_LIBRARY} ${Boost_LIBRARIES})
