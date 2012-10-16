@@ -13,6 +13,3 @@
 [submodule "3rdparty/Theme - Soda"]
 	path = 3rdparty/Theme - Soda
 	url = git://github.com/buymeasoda/soda-theme.git
-[submodule "backend/3rdparty/PlistCpp"]
-	path = backend/3rdparty/PlistCpp
-	url = git://github.com/animetrics/PlistCpp.git
