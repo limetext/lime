@@ -13,12 +13,51 @@ class Scope:
         return "%s %s" % (self.name, self.region)
 
 class SyntaxPattern:
+    class HackRegex:
+        class HackMatchObject:
+            def __init__(self, match, idx):
+                self._groups = list(match.groups())
+                self._groups.insert(0, match.group(0))
+                self._start = [match.start(i)+idx for i in range(len(self._groups))]
+                self._end = [match.end(i)+idx for i in range(len(self._groups))]
+
+            def start(self, i=0):
+                return self._start[i]
+
+            def end(self, i=0):
+                return self._end[i]
+
+            def group(self, i=0):
+                return self._groups[i]
+
+            def groups(self):
+                return self._groups[1:]
+
+        def __init__(self, pattern):
+            # \\G means right at the start where the previous pattern ended and
+            # isn't supported by python's regex module, so we'll have to hack
+            # around a bit
+            self.regex = re.compile(re.sub(r"\\G", "^", pattern))
+            self.pattern = pattern
+
+        def search(self, data, idx=0):
+            match = self.regex.search(data[idx:])
+            if match:
+                match = SyntaxPattern.HackRegex.HackMatchObject(match, idx)
+            return match
+
     def compile(self, data, var):
         try:
-            setattr(self, var, re.compile(data[var]) if var in data else None)
+            data = data[var] if var in data else None
+            if data:
+                if "\\G" in data:
+                    data = SyntaxPattern.HackRegex(data)
+                else:
+                    data = re.compile(data)
+            setattr(self, var, data)
         except:
             setattr(self, var, None)
-            print "Failed to compile regex: \"%s\" - %s" % (data[var], sys.exc_info()[1])
+            print "Failed to compile regex: \"%s\" - %s" % (data, sys.exc_info()[1])
 
     def __init__(self, data, syntax):
         self.compile(data, "match")
@@ -34,13 +73,13 @@ class SyntaxPattern:
             for pattern in data["patterns"]:
                 if "include" in pattern:
                     pattern = pattern["include"][1:]
-                    pattern = syntax.repo[pattern] if pattern in syntax.repo else []
-
-                    for pat in pattern:
-                        self.patterns.append(pat)
+                    pattern = syntax.repo[pattern] if pattern in syntax.repo else None
+                    if pattern:
+                        for pat in pattern:
+                            self.patterns.append(pat)
                 else:
                     self.patterns.append(SyntaxPattern(pattern, syntax))
-        self.name = data["name"] if "name" in data else None
+        self.name = data["name"] if "name" in data else ""
 
     def innerApply(self, scope, lastIdx, match, captures):
         scopes = []
@@ -72,7 +111,8 @@ class SyntaxPattern:
                 scope = " ".join(scopes2)
                 scopes.append(Scope(scope, sublime.Region(lastIdx, match.end())))
         else:
-            scopes.append(Scope(scope, sublime.Region(lastIdx, match.end())))
+            if lastIdx != match.end():
+                scopes.append(Scope(scope, sublime.Region(lastIdx, match.end())))
         return scopes
 
     def apply(self, data, scope, match):
@@ -108,8 +148,9 @@ class SyntaxPattern:
                                 scopes.append(Scope(scope, sublime.Region(i, match2.start())))
 
                             found = True
-                            scopes.extend(pattern2.apply(data, scope, match2))
-                            i = match2.end()
+                            innerScopes = pattern2.apply(data, scope, match2)
+                            scopes.extend(innerScopes)
+                            i = innerScopes[-1].region.end()
                             continue
 
                     if endmatch:
@@ -139,7 +180,7 @@ class SyntaxPattern:
                 cache[i] = innermatch
             if innermatch:
                 idx = innermatch.start()
-                if (startIdx < 0 or startIdx > idx) and idx != innermatch.end():
+                if startIdx < 0 or startIdx > idx:
                     startIdx = idx
                     match = innermatch
                     pattern = innerPattern
@@ -193,7 +234,6 @@ class Syntax:
             for j in range(len(cache)):
                 if cache[j] and (cache[j].end() < i or cache[j].start() < i):
                     cache[j] = None
-
         return scopes
 
 

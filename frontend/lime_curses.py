@@ -5,6 +5,7 @@ import os.path
 sys.path.append("%s/../backend" % os.path.dirname(os.path.abspath(__file__)))
 import backend
 import re
+import traceback
 
 
 syntax = backend.Syntax("../3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist")
@@ -70,31 +71,34 @@ try:
     refresh = True
 
     while True:
-        if refresh:
-            clear()
+        try:
+            if refresh:
+                clear()
 
-            line = 0
-            for scope in scopes:
-                output = data[scope.region.begin():scope.region.end()]
-                color = get_color(scheme.getStyleNameForScope(scope.name))
+                line = 0
+                for scope in scopes:
+                    output = data[scope.region.begin():scope.region.end()]
+                    color = get_color(scheme.getStyleNameForScope(scope.name))
 
-                if "\n" in output:
-                    output = output.split("\n")
-                    if stdscr.getyx()[0] + len(output) >= stdscr.getmaxyx()[0]:
-                        break
-                    for l in output[:-1]:
-                        stdscr.addstr(l, color_pair(color))
-                        line += 1
-                        stdscr.move(line, 0)
-                    output = output[-1]
-                stdscr.addstr(output, color_pair(color))
-            stdscr.refresh()
-            refresh = False
+                    if "\n" in output:
+                        output = output.split("\n")
+                        if stdscr.getyx()[0] + len(output) >= stdscr.getmaxyx()[0]:
+                            break
+                        for l in output[:-1]:
+                            stdscr.addstr(l, color_pair(color))
+                            line += 1
+                            stdscr.move(line, 0)
+                        output = output[-1]
+                    stdscr.addstr(output, color_pair(color))
+                stdscr.refresh()
+                refresh = False
 
-        ch = keyname(stdscr.getch())
-        log += ch
-        if ch == "^C":
-            break
+            ch = keyname(stdscr.getch())
+            log += ch
+            if ch == "^C":
+                break
+        except:
+            traceback.print_exc()
 
 finally:
     endwin()

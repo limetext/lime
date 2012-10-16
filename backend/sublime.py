@@ -18,13 +18,11 @@ class Region:
         return "(%d, %d)" % (self.a, self.b)
 
     def intersects(self, other):
-        sb = self.begin()
         ob = other.begin()
-        se = self.end()
         oe = other.end()
 
-        return (sb >= ob and sb <= oe) or \
-               (se >= ob and se <= oe)
+        return self.contains(ob) or \
+               self.contains(oe)
 
     def begin(self):
         return min(self.a, self.b)
@@ -32,5 +30,13 @@ class Region:
     def end(self):
         return max(self.a, self.b)
 
+    def contains(self, point):
+        return point > self.start() and point <= self.end()
+
+    def empty(self):
+        return self.a == self.b
+
+    def size(self):
+        return self.end()-self.begin()
 
 
