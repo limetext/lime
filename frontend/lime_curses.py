@@ -70,10 +70,18 @@ try:
 
     refresh = True
 
+    inv_fg = add_color(scheme.settings["default"]["invisibles"])
+    inv_bg = add_color(scheme.settings["default"]["background"])
+    init_pair(color_pairs, inv_fg, inv_bg)
+    inv_pair = color_pairs
+    color_pairs += 1
+    inv_regex = re.compile(r"(\n|[\t ]+)")
+
     while True:
         try:
             if refresh:
                 clear()
+                stdscr.move(0, 0)
 
                 line = 0
                 for scope in scopes:
@@ -90,11 +98,32 @@ try:
                             stdscr.move(line, 0)
                         output = output[-1]
                     stdscr.addstr(output, color_pair(color))
+                line = 0
+                for match in inv_regex.finditer(data):
+                    l = match.group(1)
+                    add = l.count("\n")
+                    if line + add >= stdscr.getmaxyx()[0]:
+                        break
+                    xoff = len(data[:match.start()].split("\n")[-1])
+
+                    l = l.replace(" ", ".").replace("\n", "$").replace("\t", ">---")
+                    try:
+                        stdscr.addstr(line, xoff, l, color_pair(inv_pair))
+                    except:
+                        break
+                    line += add
+                    if line >= stdscr.getmaxyx()[0]:
+                        break
+
+
                 stdscr.refresh()
                 refresh = False
 
-            ch = keyname(stdscr.getch())
-            log += ch
+            rawch = stdscr.getch()
+            if rawch == KEY_RESIZE:
+                refresh = True
+            ch = keyname(rawch)
+            log += "%s\n" % ch
             if ch == "^C":
                 break
         except:
