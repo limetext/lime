@@ -1,12 +1,20 @@
 import sys
 import os.path
-
+import platform as plat
 sys.path.append("%s/3rdparty/appdirs/lib" % os.path.dirname(os.path.abspath(__file__)))
 import appdirs
+import backend
 
 def packages_path():
     app_dir = appdirs.user_data_dir("Sublime Text 2", "", roaming=True)
     return "%s%sPackages" % (app_dir, os.path.sep)
+
+def platform():
+    lut = {"Darwin": "osx", "Linux": "linux", "Windows": "windows"}
+    return lut[plat.system()]
+
+def arch():
+    return plat.machine()
 
 
 class Region:

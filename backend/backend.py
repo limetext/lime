@@ -1,8 +1,38 @@
-import sublime
 import re
 import plistlib
 import traceback
 import sys
+import json
+import os
+import os.path
+
+def loadjson( name):
+    f = open(name)
+    data = f.read()
+    f.close()
+    regex1 = re.compile(r"(//[^\n]*)(?=\n)", re.MULTILINE|re.DOTALL)
+    regex2 = re.compile(r"(?<!\\)(\".*?(?<!\\)\")", re.MULTILINE|re.DOTALL)
+
+    off = 0
+    while True:
+        m1 = regex1.search(data, off)
+        m2 = regex2.search(data, off)
+        if m1 and (not m2 or (m1.start() < m2.start())):
+            data = "%s%s" % (data[:m1.start()], data[m1.end():])
+            off = m1.start()
+        elif m2:
+            off = m2.end()
+        if not m1:
+            break
+    regex = re.compile(r"/\*.*?\*/", re.MULTILINE|re.DOTALL)
+    data = regex.sub("", data)
+    try:
+        data = json.loads(data)
+    except:
+        traceback.print_exc()
+        print data
+        data = None
+    return data
 
 class Scope:
     def __init__(self, name, region):
@@ -199,12 +229,13 @@ class Syntax:
     def __init__(self, name):
         self.data = plistlib.readPlist(name)
         self.repo = {}
-        for key in self.data["repository"]:
-            repo = self.data["repository"][key]["patterns"] or []
-            if len(repo):
-                self.repo[key] = []
-            for i in range(len(repo)):
-                self.repo[key].append(SyntaxPattern(repo[i], self))
+        if "repository" in self.data:
+            for key in self.data["repository"]:
+                repo = self.data["repository"][key]["patterns"] or []
+                if len(repo):
+                    self.repo[key] = []
+                for i in range(len(repo)):
+                    self.repo[key].append(SyntaxPattern(repo[i], self))
 
         self.rootPattern = SyntaxPattern(self.data, self)
         self.scopeName = self.data["scopeName"]
@@ -269,6 +300,129 @@ class ColorScheme:
     def getStyle(self, name):
         return self.settings[name]
 
+def singleton(cls):
+    instances = {}
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance
 
 
 
+@singleton
+class Editor:
+    class Window:
+        def __init__(self):
+            self._views = {}
+            e = Editor()
+            self._settings = e.Settings(e._settings)
+            # TODO: project settings
+
+        def open_file(self, name, flags=0):
+            # TOOD: handle sublime.ENCODED_POSITION
+            if name not in self._views:
+                e = Editor()
+                self._views[name] = e.View(self, name)
+            return self._views[name]
+
+
+
+    class View:
+        def __init__(self, window, name=None):
+            if name and os.path.isfile(name):
+                f = open(name)
+                self._buffer = f.read()
+                f.close()
+            self._window = window
+            try:
+                e = Editor()
+                self._settings = e.Settings(window._settings)
+                # TODO: dynamically detect syntax
+                # TODO: apply syntax specific settings
+            except:
+                traceback.print_exc()
+
+        def window(self):
+            return self._window
+
+        def settings(self):
+            return self._settings
+
+        def size(self):
+            return len(self._buffer)
+
+        def substr(self, region):
+            return self._buffer[region.begin():region.end()]
+
+    class Settings:
+        def __init__(self, other=None):
+            if other:
+                self._values = dict(other._values)
+            else:
+                self._values = {}
+
+        def get(self, name, default=None):
+            if name in self._values:
+                return self._values[name]
+            return default
+
+        def set(self, name, value):
+            self._values[name] = value
+
+        def erase(self, name):
+            if name in self._values:
+                del self._values[name]
+
+        def _update(self, other):
+            if isinstance(other, str):
+                if os.path.isfile(other):
+                    self._values.update(loadjson(other))
+            else:
+                self._values.update(other._values)
+
+    def __init__(self):
+        self.loadkeymaps()
+        self._settings = self.Settings()
+
+        path = sublime.packages_path()
+        names = ["Default/Preferences.sublime-settings",
+                 "Default/Preferences%s.sublime-settings" % self.platform_settings_name(),
+                 "User/Preferences.sublime-settings",
+                 "User/Preferences%s.sublime-settings" % self.platform_settings_name()]
+        for name in names:
+            name = "%s/%s" % (path, name)
+            self._settings._update(name)
+
+
+        self.scheme = ColorScheme("%s/../%s" % (sublime.packages_path(), self._settings.get("color_scheme")))
+        self._windows = []
+
+    def new_window(self):
+        ret = self.Window()
+        self._windows.append(ret)
+        return ret
+
+    def platform_settings_name(self):
+        lut = {"osx": " (OSX)", "linux": " (Linux)", "windows": " (Windows)"}
+        return lut[sublime.platform()]
+
+    def loadkeymaps(self):
+        keys = []
+        path = sublime.packages_path()
+        oskeymap = "Default%s.sublime-keymap" % self.platform_settings_name()
+        for filename in os.listdir(path):
+            filename = "%s/%s" % (path, filename)
+            if os.path.isdir(filename):
+                for km in ["Default.sublime-keymap", oskeymap]:
+                    km = "%s/%s" % (filename, km)
+                    if os.path.isfile(km):
+                            keys.extend(loadjson(km))
+
+    def windows(self):
+        return self._windows
+
+    def active_window(self):
+        return None
+
+import sublime

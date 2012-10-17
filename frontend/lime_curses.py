@@ -6,13 +6,14 @@ sys.path.append("%s/../backend" % os.path.dirname(os.path.abspath(__file__)))
 import backend
 import re
 import traceback
+import sublime
 
+editor = backend.Editor()
+wnd = editor.new_window()
+view = wnd.open_file("../lime.js")
+data = view.substr(sublime.Region(0, view.size()))
 
-syntax = backend.Syntax("../3rdparty/javascript.tmbundle/Syntaxes/JavaScript.plist")
-scheme = backend.ColorScheme("../3rdparty/monokai.tmbundle/Themes/Monokai.tmTheme")
-f = open("../lime.js")
-data = f.read()
-f.close()
+syntax = backend.Syntax("%s/../%s" % (sublime.packages_path(), view.settings().get("syntax", "Packages/JavaScript/JavaScript.tmLanguage")))
 
 scopes = syntax.extract_scopes(data)
 log = ""
@@ -33,7 +34,6 @@ def add_color(hex):
         color_start += 1
     return ret
 
-
 color_pairs = 4
 pair_lut = {}
 
@@ -42,11 +42,11 @@ def get_color(name):
     if name in pair_lut:
         return pair_lut[name]
 
-    settings = scheme.settings[name]
+    settings = editor.scheme.settings[name]
     fg = add_color(settings["foreground"]) if "foreground" in settings else 0
     bg = add_color(settings["background"]) if "background" in settings else 0
-    if bg == 0 and "background" in scheme.settings["default"]:
-        bg = add_color(scheme.settings["default"]["background"])
+    if bg == 0 and "background" in editor.scheme.settings["default"]:
+        bg = add_color(editor.scheme.settings["default"]["background"])
     init_pair(color_pairs, fg, bg)
     pair_lut[name] = color_pairs
     ret = color_pairs
@@ -70,8 +70,8 @@ try:
 
     refresh = True
 
-    inv_fg = add_color(scheme.settings["default"]["invisibles"])
-    inv_bg = add_color(scheme.settings["default"]["background"])
+    inv_fg = add_color(editor.scheme.settings["default"]["invisibles"])
+    inv_bg = add_color(editor.scheme.settings["default"]["background"])
     init_pair(color_pairs, inv_fg, inv_bg)
     inv_pair = color_pairs
     color_pairs += 1
@@ -86,7 +86,7 @@ try:
                 line = 0
                 for scope in scopes:
                     output = data[scope.region.begin():scope.region.end()]
-                    color = get_color(scheme.getStyleNameForScope(scope.name))
+                    color = get_color(editor.scheme.getStyleNameForScope(scope.name))
 
                     if "\n" in output:
                         output = output.split("\n")
