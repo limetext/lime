@@ -363,7 +363,7 @@ class Editor:
             verify(scopes)
             return scopes
 
-        def apply(self, data, scope, match):
+        def apply(self, data, scope, match, patterns=None, cache=None):
             scopes = []
             if self.name:
                 scope += " %s" % self.name
@@ -386,12 +386,13 @@ class Editor:
                             if not found:
                                 # oops.. no end found, set it to the next line
                                 end = data.find("\n", i);
+                                break
                             else:
                                 end = i
                                 break
 
-                        if len(patterns):
-                            pattern2, match2 = self.firstMatch(data, i, patterns, cache, True)
+                        if (not endmatch or (endmatch and endmatch.start() != 1)) and len(patterns):
+                            pattern2, match2 = self.firstMatch(data, i, patterns, cache)
                             if pattern2 and match2 and \
                                     ((not endmatch and match2.start() < end) or
                                      (endmatch and match2.start() < endmatch.start())):
@@ -411,7 +412,7 @@ class Editor:
                         break
             return scopes
 
-        def firstMatch(self, data, pos, patterns, cache=None, remove=False):
+        def firstMatch(self, data, pos, patterns, cache):
             # Find the pattern that is the earliest match
             match = None
             startIdx = -1
@@ -419,40 +420,60 @@ class Editor:
             i = 0
             e = Editor()
 
-            if cache:
+            def clearcache(cache, pos):
                 for j in range(len(cache)):
-                    if cache[j] and (cache[j].end() < pos or cache[j].start() < pos):
-                        cache[j] = None
+                    if cache[j]:
+                        if isinstance(cache[j], tuple):
+                            cache[j] = cache[j][0], clearcache(cache[j][1], pos), cache[j][2]
+                        elif cache[j].end() < pos or cache[j].start() < pos:
+                            cache[j] = None
+                return cache
+            clearcache(cache, pos)
 
             while i < len(patterns):
-                syntaxMatch = False
                 innerPattern = patterns[i]
+                syntaxMatch = not isinstance(innerPattern, e._Editor__SyntaxPattern)
                 innermatch = None
-                if cache and cache[i]:
+                if not syntaxMatch and cache and cache[i]:
                     innermatch = cache[i]
                 else:
-                    syntaxMatch = not isinstance(innerPattern, e._Editor__SyntaxPattern)
                     if syntaxMatch:
-                        if innerPattern == "$self":
-                            innerPattern, innermatch = self.syntax.recurse(data, pos)
-                        else:
-                            key = innerPattern[1:]
-                            if key in self.syntax._Syntax__repo:
-                                pat = self.syntax._Syntax__repo[key]
-                                pats = []
-                                if pat.match or pat.begin:
-                                    pats = [pat]
-                                else:
-                                    pats = pat.patterns
-                                innerPattern, innermatch = pat.firstMatch(data, pos, pats)
+                        innerCache = None
+                        innerPatterns, innerCache, func = None, None, None
+                        if cache[i]:
+                           innerPatterns, innerCache, func = cache[i]
+
+                        if not func and not innerPatterns:
+                            if innerPattern == "$self":
+                                innerPatterns = list(self.syntax._Syntax__rootPattern.patterns)
+                                func = self.syntax.recurse
                             else:
-                                innerPattern, innermatch = None, None
+                                key = innerPattern[1:]
+                                if key in self.syntax._Syntax__repo:
+                                    pat = self.syntax._Syntax__repo[key]
+                                    innerPatterns = []
+                                    if pat.match or pat.begin:
+                                        innerPatterns = [pat]
+                                    else:
+                                        innerPatterns = list(pat.patterns)
+                                    func = pat.firstMatch
+                                else:
+                                    innerPattern, innermatch = None, None
+                                    innerPatterns = []
+                                    innerCache = []
+                                    func = None
+
+                        if func:
+                            if not innerCache:
+                                innerCache = [None for x in innerPatterns]
+                            innerPattern, innermatch = func(data, pos, innerPatterns, innerCache)
+                        cache[i] = innerPatterns, innerCache, func
                     else:
                         if innerPattern.match:
                             innermatch = innerPattern.match.search(data, pos)
                         elif innerPattern.begin:
                             innermatch = innerPattern.begin.search(data, pos)
-                if cache and not syntaxMatch:
+                if not syntaxMatch:
                     cache[i] = innermatch
                 if innermatch:
                     idx = innermatch.start()
@@ -460,10 +481,11 @@ class Editor:
                         startIdx = idx
                         match = innermatch
                         pattern = innerPattern
-                if remove and innermatch == None:
-                    # No match was found and we've indicated that the pattern can be removed
-                    # if that is the case (ie if it wasn't found, it's never going to be found,
-                    # so no point in looking for it again after this point).
+                        # right at the start, we're not going to find a better pattern than this
+                        if idx <= pos:
+                            break
+                if innermatch == None:
+                    # No match was found so no point in looking for it again after this point.
                     patterns.pop(i)
                     cache.pop(i)
                 else:
@@ -492,16 +514,17 @@ class Editor:
         def get_default_scope(self):
             return self.__scopeName
 
-        def firstMatch(self, data, pos, patterns, cache, remove):
-            return self.__rootPattern.firstMatch(data, pos, patterns, cache, remove)
+        def firstMatch(self, data, pos, patterns, cache):
+            assert cache
+            return self.__rootPattern.firstMatch(data, pos, patterns, cache)
 
 
-        def recurse(self, data, pos):
+        def recurse(self, data, pos, patterns, cache):
             if self.__recurse:
                 return None, None
             self.__recurse = True
             try:
-                return self.firstMatch(data, pos, self.__rootPattern.patterns, None, False)
+                return self.firstMatch(data, pos, patterns, cache)
             finally:
                 self.__recurse = False
 
@@ -515,7 +538,7 @@ class Editor:
             while i < len(data) and len(patterns) and maxiter > 0:
                 maxiter -= 1
                 scope = self.__scopeName
-                pattern, match = self.firstMatch(data, i, patterns, cache, True)
+                pattern, match = self.firstMatch(data, i, patterns, cache)
                 if not match:
                     break
                 innerScopes = pattern.apply(data, self.__scopeName, match)
@@ -524,7 +547,6 @@ class Editor:
                 verify(innerScopes)
                 scopes.extend(innerScopes)
                 i = scopes[-1].region.end()
-
             return scopes
 
 
