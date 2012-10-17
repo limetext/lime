@@ -46,22 +46,22 @@ class SyntaxPattern:
     class HackRegex:
         class HackMatchObject:
             def __init__(self, match, idx):
-                self._groups = list(match.groups())
-                self._groups.insert(0, match.group(0))
-                self._start = [match.start(i)+idx for i in range(len(self._groups))]
-                self._end = [match.end(i)+idx for i in range(len(self._groups))]
+                self.__groups = list(match.groups())
+                self.__groups.insert(0, match.group(0))
+                self.__start = [match.start(i)+idx for i in range(len(self.__groups))]
+                self.__end = [match.end(i)+idx for i in range(len(self.__groups))]
 
             def start(self, i=0):
-                return self._start[i]
+                return self.__start[i]
 
             def end(self, i=0):
-                return self._end[i]
+                return self.__end[i]
 
             def group(self, i=0):
-                return self._groups[i]
+                return self.__groups[i]
 
             def groups(self):
-                return self._groups[1:]
+                return self.__groups[1:]
 
         def __init__(self, pattern):
             # \\G means right at the start where the previous pattern ended and
@@ -103,7 +103,7 @@ class SyntaxPattern:
             for pattern in data["patterns"]:
                 if "include" in pattern:
                     pattern = pattern["include"][1:]
-                    pattern = syntax.repo[pattern] if pattern in syntax.repo else None
+                    pattern = syntax._Syntax__repo[pattern] if pattern in syntax._Syntax__repo else None
                     if pattern:
                         for pat in pattern:
                             self.patterns.append(pat)
@@ -227,35 +227,35 @@ class SyntaxPattern:
 class Syntax:
 
     def __init__(self, name):
-        self.data = plistlib.readPlist(name)
-        self.repo = {}
-        if "repository" in self.data:
-            for key in self.data["repository"]:
-                repo = self.data["repository"][key]["patterns"] or []
+        self.__data = plistlib.readPlist(name)
+        self.__repo = {}
+        if "repository" in self.__data:
+            for key in self.__data["repository"]:
+                repo = self.__data["repository"][key]["patterns"] or []
                 if len(repo):
-                    self.repo[key] = []
+                    self.__repo[key] = []
                 for i in range(len(repo)):
-                    self.repo[key].append(SyntaxPattern(repo[i], self))
+                    self.__repo[key].append(SyntaxPattern(repo[i], self))
 
-        self.rootPattern = SyntaxPattern(self.data, self)
-        self.scopeName = self.data["scopeName"]
+        self.__rootPattern = SyntaxPattern(self.__data, self)
+        self.__scopeName = self.__data["scopeName"]
 
-    def firstMatch(self, data, pos, patterns, cache, remove):
-        return self.rootPattern.firstMatch(data, pos, patterns, cache, remove)
+    def __firstMatch(self, data, pos, patterns, cache, remove):
+        return self.__rootPattern.firstMatch(data, pos, patterns, cache, remove)
 
     def extract_scopes(self, data):
         scopes = []
         maxiter = 10000
         i = 0
-        cache = [None for a in self.rootPattern.patterns]
-        patterns = list(self.rootPattern.patterns)
+        cache = [None for a in self.__rootPattern.patterns]
+        patterns = list(self.__rootPattern.patterns)
         while i < len(data) and len(patterns) and maxiter > 0:
             maxiter -= 1
-            scope = self.scopeName
-            pattern, match = self.firstMatch(data, i, patterns, cache, True)
+            scope = self.__scopeName
+            pattern, match = self.__firstMatch(data, i, patterns, cache, True)
             if not match:
                 break
-            innerScopes = pattern.apply(data, self.scopeName, match)
+            innerScopes = pattern.apply(data, self.__scopeName, match)
             if match.start() != i:
                 scopes.append(Scope(scope, sublime.Region(i, match.start())))
             scopes.extend(innerScopes)
@@ -314,17 +314,17 @@ def singleton(cls):
 class Editor:
     class Window:
         def __init__(self):
-            self._views = {}
+            self.__views = {}
             e = Editor()
-            self._settings = e.Settings(e._settings)
+            self.__settings = e.Settings(e._Editor__settings)
             # TODO: project settings
 
         def open_file(self, name, flags=0):
             # TOOD: handle sublime.ENCODED_POSITION
-            if name not in self._views:
+            if name not in self.__views:
                 e = Editor()
-                self._views[name] = e.View(self, name)
-            return self._views[name]
+                self.__views[name] = e.View(self, name)
+            return self.__views[name]
 
 
 
@@ -332,58 +332,58 @@ class Editor:
         def __init__(self, window, name=None):
             if name and os.path.isfile(name):
                 f = open(name)
-                self._buffer = f.read()
+                self.__buffer = f.read()
                 f.close()
-            self._window = window
+            self.__window = window
             try:
                 e = Editor()
-                self._settings = e.Settings(window._settings)
+                self.__settings = e.Settings(window._Window__settings)
                 # TODO: dynamically detect syntax
                 # TODO: apply syntax specific settings
             except:
                 traceback.print_exc()
 
         def window(self):
-            return self._window
+            return self.__window
 
         def settings(self):
-            return self._settings
+            return self.__settings
 
         def size(self):
-            return len(self._buffer)
+            return len(self.__buffer)
 
         def substr(self, region):
-            return self._buffer[region.begin():region.end()]
+            return self.__buffer[region.begin():region.end()]
 
     class Settings:
         def __init__(self, other=None):
             if other:
-                self._values = dict(other._values)
+                self.__values = dict(other.__values)
             else:
-                self._values = {}
+                self.__values = {}
 
         def get(self, name, default=None):
-            if name in self._values:
-                return self._values[name]
+            if name in self.__values:
+                return self.__values[name]
             return default
 
         def set(self, name, value):
-            self._values[name] = value
+            self.__values[name] = value
 
         def erase(self, name):
-            if name in self._values:
-                del self._values[name]
+            if name in self.__values:
+                del self.__values[name]
 
-        def _update(self, other):
+        def __update(self, other):
             if isinstance(other, str):
                 if os.path.isfile(other):
-                    self._values.update(loadjson(other))
+                    self.__values.update(loadjson(other))
             else:
-                self._values.update(other._values)
+                self.__values.update(other.__values)
 
     def __init__(self):
-        self.loadkeymaps()
-        self._settings = self.Settings()
+        self.__loadkeymaps()
+        self.__settings = self.Settings()
 
         path = sublime.packages_path()
         names = ["Default/Preferences.sublime-settings",
@@ -392,22 +392,22 @@ class Editor:
                  "User/Preferences%s.sublime-settings" % self.platform_settings_name()]
         for name in names:
             name = "%s/%s" % (path, name)
-            self._settings._update(name)
+            self.__settings._Settings__update(name)
 
 
-        self.scheme = ColorScheme("%s/../%s" % (sublime.packages_path(), self._settings.get("color_scheme")))
-        self._windows = []
+        self.scheme = ColorScheme("%s/../%s" % (sublime.packages_path(), self.__settings.get("color_scheme")))
+        self.__windows = []
 
     def new_window(self):
         ret = self.Window()
-        self._windows.append(ret)
+        self.__windows.append(ret)
         return ret
 
     def platform_settings_name(self):
         lut = {"osx": " (OSX)", "linux": " (Linux)", "windows": " (Windows)"}
         return lut[sublime.platform()]
 
-    def loadkeymaps(self):
+    def __loadkeymaps(self):
         keys = []
         path = sublime.packages_path()
         oskeymap = "Default%s.sublime-keymap" % self.platform_settings_name()
@@ -420,7 +420,7 @@ class Editor:
                             keys.extend(loadjson(km))
 
     def windows(self):
-        return self._windows
+        return self.__windows
 
     def active_window(self):
         return None
