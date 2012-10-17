@@ -7,15 +7,19 @@ import backend
 import re
 import traceback
 import sublime
+import time
 
 editor = backend.Editor()
 wnd = editor.new_window()
-view = wnd.open_file("../lime.js")
+start = time.time()
+view = wnd.open_file("lime_curses.py")
+print "js: %f ms" % (1000*(time.time()-start))
+start = time.time()
+view.settings().set("syntax", "Packages/Python/Python.tmLanguage")
+print "py: %f ms" % (1000*(time.time()-start))
 data = view.substr(sublime.Region(0, view.size()))
-
-syntax = backend.Syntax("%s/../%s" % (sublime.packages_path(), view.settings().get("syntax", "Packages/JavaScript/JavaScript.tmLanguage")))
-
-scopes = syntax.extract_scopes(data)
+scopes = [(scope.name, scope.region) for scope in view._View__scopes]
+off = 0
 log = ""
 
 color_start = 30
@@ -84,9 +88,9 @@ try:
                 stdscr.move(0, 0)
 
                 line = 0
-                for scope in scopes:
-                    output = data[scope.region.begin():scope.region.end()]
-                    color = get_color(editor.scheme.getStyleNameForScope(scope.name))
+                for name, region in scopes:
+                    output = data[region.begin():region.end()]
+                    color = get_color(editor.scheme.getStyleNameForScope(name))
 
                     if "\n" in output:
                         output = output.split("\n")
@@ -106,7 +110,7 @@ try:
                         break
                     xoff = len(data[:match.start()].split("\n")[-1])
 
-                    l = l.replace(" ", ".").replace("\n", "$").replace("\t", ">---")
+                    l = l.replace(" ", ".").replace("\n", "").replace("\t", ">---")
                     try:
                         stdscr.addstr(line, xoff, l, color_pair(inv_pair))
                     except:

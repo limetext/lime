@@ -5,6 +5,15 @@ sys.path.append("%s/3rdparty/appdirs/lib" % os.path.dirname(os.path.abspath(__fi
 import appdirs
 import backend
 
+
+OP_EQUAL              = "equal"
+OP_NOT_EQUAL          = "not_equal"
+OP_REGEX_MATCH        = "regex_match"
+OP_NOT_REGEX_MATCH    = "not_regex_match"
+OP_REGEX_CONTAINS     = "regex_contains"
+OP_NOT_REGEX_CONTAINS = "not_regex_contains"
+
+
 def packages_path():
     app_dir = appdirs.user_data_dir("Sublime Text 2", "", roaming=True)
     return "%s%sPackages" % (app_dir, os.path.sep)
@@ -26,11 +35,8 @@ class Region:
         return "(%d, %d)" % (self.a, self.b)
 
     def intersects(self, other):
-        ob = other.begin()
-        oe = other.end()
-
-        return self.contains(ob) or \
-               self.contains(oe)
+        return self.contains(other.begin()) or \
+               self.contains(other.end())
 
     def begin(self):
         return min(self.a, self.b)
@@ -39,7 +45,7 @@ class Region:
         return max(self.a, self.b)
 
     def contains(self, point):
-        return point > self.start() and point <= self.end()
+        return point >= self.begin() and point < self.end()
 
     def empty(self):
         return self.a == self.b
