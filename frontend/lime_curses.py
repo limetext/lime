@@ -9,14 +9,16 @@ import traceback
 import sublime
 import time
 
+if len(sys.argv) != 2:
+    print "usage: python %s <file to open>" % sys.argv[0]
+    sys.exit(1)
+
 editor = backend.Editor()
 wnd = editor.new_window()
 start = time.time()
-view = wnd.open_file("lime_curses.py")
-print "js: %f ms" % (1000*(time.time()-start))
 start = time.time()
-view.settings().set("syntax", "Packages/Python/Python.tmLanguage")
-print "py: %f ms" % (1000*(time.time()-start))
+view = wnd.open_file(sys.argv[1])
+print "load/parse: %f ms" % (1000*(time.time()-start))
 data = view.substr(sublime.Region(0, view.size()))
 scopes = [(scope.name, scope.region) for scope in view._View__scopes]
 off = 0

@@ -5,6 +5,11 @@ import sys
 import json
 import os
 import os.path
+sys.path.append("%s/3rdparty/appdirs/lib" % os.path.dirname(os.path.abspath(__file__)))
+import appdirs
+import pickle
+import gzip
+import time
 
 def loadjson( name):
     f = open(name)
@@ -81,8 +86,8 @@ class Editor:
                 self.__settings = e._Editor__Settings(window._Window__settings)
                 self.__syntax = None
                 self.__settings.add_on_change("__lime_View", self.__settings_changed)
-                # TODO: dynamically detect syntax
-                self.__settings.set("syntax", "Packages/JavaScript/JavaScript.tmLanguage")
+                if name:
+                    self.__settings.set("syntax", e.get_syntax_file_for_filename(name))
             except:
                 traceback.print_exc()
 
@@ -91,7 +96,6 @@ class Editor:
             if self.__syntax == None or self.__syntax.file != syntax:
                 e = Editor()
                 self.__syntax = e.get_syntax(syntax)
-                print self.__syntax.file
                 self.__scopes = self.__syntax.extract_scopes(self.__buffer)
 
         def __find_scope(self, point):
@@ -270,14 +274,18 @@ class Editor:
             try:
                 data = data[var] if var in data else None
                 if data:
+                    # strip comments
                     regex = re.compile(r"(\s+#[^\n]+)?\n\s*")
                     data = regex.sub("", data)
+
+                    # fixed regex settings
                     regex = re.compile(r"(\(\?[iLmsux]+):")
                     match = regex.search(data)
                     while match:
                         data = "%s(?:%s)%s" % (data[:match.start()], match.group(1), data[match.end():])
                         match = regex.search(data)
 
+                    # fix lookback patterns
                     regex = re.compile(r"(\(\?<(=|!))")
                     match = regex.search(data)
                     while match:
@@ -290,8 +298,25 @@ class Editor:
                         start = start + len(new)
                         match = regex.search(data, start)
 
+                    # fix lookahead patterns
+                    data = re.sub(r"(?<!\\)\(\?\>", "(?=", data)
+
+                    # Fix named patterns
                     regex = re.compile(r"(\(\?\<(\w+)\>)")
                     data = regex.sub("(?P<\\2>", data)
+                    data = re.sub(r"\\x\{([0-9a-zA-Z]{1,2})\}", r"\\x\1", data)
+
+                    # fix multiple repeats
+                    regex = re.compile(r"([+*]{2,}|\?[+*?])")
+                    match = regex.search(data)
+                    pos = 0
+                    while match:
+                        match2 = sqregex.search(data, pos)
+                        if match2 and match.start() > match2.start() and match.start() < match2.end():
+                            pos = match2.end()
+                        else:
+                            data = "%s%s%s" % (data[:match.start()], data[match.start()], data[match.end():])
+                        match = regex.search(data, pos)
 
                     if "\\G" in data:
                         data = self.HackRegex(data)
@@ -319,6 +344,9 @@ class Editor:
             self.include = None
             self.hits = 0
             self.misses = 0
+            if self.begin and not self.match and self.captures and not self.beginCaptures:
+                self.beginCaptures = self.captures
+                self.captures = None
 
             if "patterns" in data:
                 e = Editor()
@@ -351,8 +379,12 @@ class Editor:
             elif self.begin:
                 pat, ret = self, self.begin.search(data, pos)
             elif self.include:
-                if self.include == "$self":
+                if self.include == "$self" or self.include == "$base":
                     pat, ret = self.syntax._Syntax__rootPattern.cache(data, pos)
+                elif self.include.startswith("source"):
+                    syntax = Editor().get_syntax_for_scope(self.include)
+                    if syntax:
+                        pat, ret = syntax._Syntax__rootPattern.cache(data, pos)
                 else:
                     key = self.include[1:]
                     if key in self.syntax._Syntax__repo:
@@ -555,6 +587,10 @@ class Editor:
             return self.settings[name]
 
     def __init__(self):
+        start = time.time()
+        self.__user_data_dir = appdirs.user_data_dir("lime")
+        if not os.path.isdir(self.__user_data_dir):
+            os.mkdir(self.__user_data_dir)
         self.__loadkeymaps()
         self.__settings = self.__Settings()
 
@@ -567,12 +603,46 @@ class Editor:
             name = "%s/%s" % (path, name)
             self.__settings._Settings__update(name)
 
-
         self.scheme = self.__ColorScheme("%s/../%s" % (sublime.packages_path(), self.__settings.get("color_scheme")))
         self.__windows = []
+        syntaxScopes = "%s/syntaxes.cache" % self.__user_data_dir
+        if os.path.isfile(syntaxScopes):
+            f = gzip.GzipFile(syntaxScopes, "rb")
+            self.__syntaxScopes = pickle.load(f)
+            self.__syntaxExtensions = pickle.load(f)
+            f.close()
+        else:
+            self.__syntaxScopes, self.__syntaxExtensions = self.__loadsyntaxes()
+            f = gzip.GzipFile(syntaxScopes, "wb")
+            pickle.dump(self.__syntaxScopes, f)
+            pickle.dump(self.__syntaxExtensions, f)
+            f.close()
+        self.__syntaxCache = {}
+        print "init took %f ms" % (1000*(time.time()-start))
+
+    def get_syntax_file_for_filename(self, name):
+        ext = re.search(r"(?<=\.)([^\.]+)$", name)
+        ext = ext.group(1) if ext else ""
+        if ext in self.__syntaxExtensions:
+            return self.__syntaxExtensions[ext]
+        return None
+
+    def get_syntax_for_scope(self, name):
+        if name in self.__syntaxScopes:
+            return self.__get_syntax(self.__syntaxScopes[name])
+        return None
+
+    def __get_syntax(self, name):
+        name = os.path.abspath(name)
+        if name not in self.__syntaxCache:
+            print "loading %s" % name
+            self.__syntaxCache[name] = self.__Syntax(name)
+        return self.__syntaxCache[name]
 
     def get_syntax(self, name):
-        return self.__Syntax("%s/../%s" % (sublime.packages_path(), name))
+        if not name.startswith(sublime.packages_path()):
+            name = "%s/../%s" % (sublime.packages_path(), name)
+        return self.__get_syntax(name)
 
     def new_window(self):
         ret = self.__Window()
@@ -594,6 +664,29 @@ class Editor:
                     km = "%s/%s" % (filename, km)
                     if os.path.isfile(km):
                             keys.extend(loadjson(km))
+
+    def __loadsyntaxes(self):
+        path = sublime.packages_path()
+        syntaxes = {}
+        extensions = {}
+        for filename in os.listdir(path):
+            filename = "%s/%s" % (path, filename)
+            if os.path.isdir(filename):
+                for filename2 in os.listdir(filename):
+                    filename2 = "%s/%s" % (filename, filename2)
+                    if filename2.endswith(".tmLanguage"):
+                        try:
+                            plist = plistlib.readPlist(filename2)
+                            if "scopeName" in plist:
+                                data = plist["scopeName"]
+                                syntaxes[data] = filename2
+                            if "fileTypes" in plist:
+                                for f in plist["fileTypes"]:
+                                    extensions[f] = filename2
+                        except:
+                            print "Failed parsing syntax \"%s\"" % filename2
+                            traceback.print_exc()
+        return syntaxes, extensions
 
     def windows(self):
         return self.__windows
