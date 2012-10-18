@@ -310,10 +310,6 @@ class Editor:
             try:
                 data = data[var] if var in data else None
                 if data:
-                    # strip comments
-                    regex = re.compile(r"(\s+#[^\n]+)?\n\s*")
-                    data = regex.sub("", data)
-
                     # fixed regex settings
                     regex = re.compile(r"(\(\?[iLmsux]+):")
                     match = regex.search(data)

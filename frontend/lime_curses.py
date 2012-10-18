@@ -90,6 +90,8 @@ try:
             if refresh:
                 clear()
                 stdscr.move(0, 0)
+                height, width = stdscr.getmaxyx()
+                console_win.mvwin(height-5, 0)
 
                 line = 0
                 for name, region in scopes:
@@ -127,13 +129,13 @@ try:
                 stdscr.refresh()
                 refresh = False
             console_win.erase()
-            console_win.border()
             line = 1
 
             for l in console.substr(sublime.Region(0, console.size())).split("\n")[-4:]:
                 console_win.move(line, 2)
                 console_win.addstr(l)
                 line += 1
+            console_win.border()
             console_win.refresh()
 
             if editor.update():
