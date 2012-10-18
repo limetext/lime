@@ -8,6 +8,7 @@ import re
 import traceback
 import sublime
 import time
+import sublime_plugin
 
 if len(sys.argv) != 2:
     print "usage: python %s <file to open>" % sys.argv[0]
@@ -21,7 +22,6 @@ print "load/parse: %f ms" % (1000*(time.time()-start))
 data = view.substr(sublime.Region(0, view.size()))
 scopes = [(scope.name, scope.region) for scope in view._View__scopes]
 off = 0
-log = ""
 
 color_start = 30
 colors = {}
@@ -67,6 +67,9 @@ def clear():
 try:
     stdscr = initscr()
 
+    console = editor.get_console()
+    height, width = stdscr.getmaxyx()
+    console_win = newwin(5, width, height-5, 0)
 
     raw()
     noecho()
@@ -123,6 +126,16 @@ try:
 
                 stdscr.refresh()
                 refresh = False
+            console_win.erase()
+            console_win.border()
+            line = 1
+
+            for l in console.substr(sublime.Region(0, console.size())).split("\n")[-4:]:
+                console_win.move(line, 2)
+                console_win.addstr(l)
+                line += 1
+            console_win.refresh()
+
             if editor.update():
                 stdscr.nodelay(1)
             else:
@@ -133,13 +146,14 @@ try:
                 if rawch == KEY_RESIZE:
                     refresh = True
                 ch = keyname(rawch)
-                log += "%s\n" % ch
+                print ch
                 if ch == "^C":
                     break
         except:
             traceback.print_exc()
+except:
+    traceback.print_exc()
 
 finally:
     endwin()
     editor.exit(0)
-    print log

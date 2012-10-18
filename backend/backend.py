@@ -78,6 +78,9 @@ class Editor:
             return self.__views[name]
 
     class __View:
+        class __Edit:
+            pass
+
         def __init__(self, window, name=None):
             self.__window = window
             self.__scratch = False
@@ -89,6 +92,17 @@ class Editor:
                 self.__set_file(name)
             except:
                 traceback.print_exc()
+
+        def begin_edit(self):
+            return self.__Edit()
+
+        def end_edit(self, edit):
+            assert edit
+
+        def replace(self, edit, region, data):
+            assert edit
+            # Todo: don't commit changes until end_edit is called
+            self.__buffer = "%s%s%s" % (self.__buffer[:region.begin()], data, self.__buffer[region.end():])
 
         def __set_file(self, name):
             self.__file = name
@@ -610,14 +624,20 @@ class Editor:
 
 
     class __Log:
-        def __init__(self):
+        def __init__(self, editor):
             self.__log = ""
             self.__old = sys.stdout
+            self.__editor = editor
             sys.stdout = self
             sys.stderr = self
 
         def write(self, data):
             self.__log += data
+            c = self.__editor.get_console()
+            if c:
+                 e = c.begin_edit()
+                 c.replace(e, sublime.Region(0, c.size()), self.__log)
+                 c.end_edit(e)
 
         def flush(self):
             pass
@@ -627,7 +647,7 @@ class Editor:
             print self.__log
 
     def __init__(self):
-        self.__log = self.__Log()
+        self.__log = self.__Log(self)
         start = time.time()
         self.__user_data_dir = appdirs.user_data_dir("lime")
         if not os.path.isdir(self.__user_data_dir):
@@ -658,9 +678,14 @@ class Editor:
             pickle.dump(self.__syntaxExtensions, f)
             f.close()
         self.__syntaxCache = {}
+        self.__console = None
         print "init took %f ms" % (1000*(time.time()-start))
         self.__tasks = Queue.Queue()
         self.__add_task(self.__load_stuff)
+
+    def get_console(self):
+        return self.__console
+
 
     def __add_task(self, task, *args):
         self.__tasks.put((task, args))
@@ -718,6 +743,10 @@ class Editor:
 
     def new_window(self):
         ret = self.__Window()
+        if not self.__console:
+            self.__console = self.__View(ret)
+            self.__console.set_scratch(True)
+
         self.__windows.append(ret)
         return ret
 
