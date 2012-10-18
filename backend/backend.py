@@ -12,6 +12,7 @@ import appdirs
 import pickle
 import gzip
 import time
+import Queue
 
 def loadjson( name):
     f = open(name)
@@ -607,7 +608,26 @@ class Editor:
         def getStyle(self, name):
             return self.settings[name]
 
+
+    class __Log:
+        def __init__(self):
+            self.__log = ""
+            self.__old = sys.stdout
+            sys.stdout = self
+            sys.stderr = self
+
+        def write(self, data):
+            self.__log += data
+
+        def flush(self):
+            pass
+
+        def dump(self):
+            sys.stdout = self.__old
+            print self.__log
+
     def __init__(self):
+        self.__log = self.__Log()
         start = time.time()
         self.__user_data_dir = appdirs.user_data_dir("lime")
         if not os.path.isdir(self.__user_data_dir):
@@ -639,19 +659,22 @@ class Editor:
             f.close()
         self.__syntaxCache = {}
         print "init took %f ms" % (1000*(time.time()-start))
-        self.__tasks = []
+        self.__tasks = Queue.Queue()
         self.__add_task(self.__load_stuff)
 
-    def __add_task(self, task):
-        self.__tasks.append(task)
+    def __add_task(self, task, *args):
+        self.__tasks.put((task, args))
 
     def update(self):
-        for task in self.__tasks:
+        if not self.__tasks.empty():
             try:
-                task()
+                task, args = self.__tasks.get()
+                task(*args)
             except:
                 traceback.print_exc()
-        self.__tasks = []
+            finally:
+                self.__tasks.task_done()
+        return not self.__tasks.empty()
 
     def exit(self, code=0):
         import threading
@@ -666,6 +689,7 @@ class Editor:
                 except:
                     print(str(thread.getName()) + ' could not be terminated')
         print "Good bye"
+        self.__log.dump()
         sys.exit(code)
 
     def get_syntax_file_for_filename(self, name):
@@ -729,12 +753,10 @@ class Editor:
                 for filename2 in os.listdir(filename):
                     if filename2.endswith(".py") and filename2 != "setup.py":
                         filename2 = "%s/%s" % (filename, filename2)
-                        try:
-                            sublime_plugin.reload_plugin(filename2)
-                        except:
-                            print "Plugin failed to load %s" % (filename2)
-                            traceback.print_exc()
-        print "Loading plugins/commands/keymaps took %f ms" % (1000*(time.time()-start))
+                        self.__add_task(sublime_plugin.reload_plugin, filename2)
+        def log_load_time(start):
+            print "Loading plugins/commands/keymaps took %f ms" % (1000*(time.time()-start))
+        self.__add_task(log_load_time, start)
 
 
     def __loadsyntaxes(self):

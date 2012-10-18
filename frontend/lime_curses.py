@@ -14,7 +14,6 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 editor = backend.Editor()
-editor.update()
 wnd = editor.new_window()
 start = time.time()
 view = wnd.open_file(sys.argv[1])
@@ -124,14 +123,19 @@ try:
 
                 stdscr.refresh()
                 refresh = False
+            if editor.update():
+                stdscr.nodelay(1)
+            else:
+                stdscr.nodelay(0)
 
             rawch = stdscr.getch()
-            if rawch == KEY_RESIZE:
-                refresh = True
-            ch = keyname(rawch)
-            log += "%s\n" % ch
-            if ch == "^C":
-                break
+            if rawch != -1:
+                if rawch == KEY_RESIZE:
+                    refresh = True
+                ch = keyname(rawch)
+                log += "%s\n" % ch
+                if ch == "^C":
+                    break
         except:
             traceback.print_exc()
 
