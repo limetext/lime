@@ -270,13 +270,15 @@ class Editor:
             try:
                 data = data[var] if var in data else None
                 if data:
+                    regex = re.compile(r"(\s+#[^\n]+)?\n\s*")
+                    data = regex.sub("", data)
                     regex = re.compile(r"(\(\?[iLmsux]+):")
                     match = regex.search(data)
                     while match:
                         data = "%s(?:%s)%s" % (data[:match.start()], match.group(1), data[match.end():])
                         match = regex.search(data)
 
-                    regex = re.compile(r"(\(\?<)")
+                    regex = re.compile(r"(\(\?<(=|!))")
                     match = regex.search(data)
                     while match:
                         start = match.start()
@@ -287,6 +289,9 @@ class Editor:
                         data = "%s%s%s" % (data[:start], new, data[end+1:])
                         start = start + len(new)
                         match = regex.search(data, start)
+
+                    regex = re.compile(r"(\(\?\<(\w+)\>)")
+                    data = regex.sub("(?P<\\2>", data)
 
                     if "\\G" in data:
                         data = self.HackRegex(data)
@@ -382,7 +387,6 @@ class Editor:
                     if lastIdx < match.start(i):
                         scope = " ".join(scopes2)
                         scopes.append(Editor()._Editor__Scope(scope, sublime.Region(lastIdx, match.start(i))))
-                    verify(scopes)
 
                     si = str(i)
                     if si in captures:
@@ -391,22 +395,17 @@ class Editor:
                     scope = " ".join(scopes2)
                     if lastIdx <= match.start(i):
                         scopes.append(Editor()._Editor__Scope(scope, sublime.Region(match.start(i), match.end(i))))
-                    verify(scopes)
 
                     if si in captures:
                         scopes2.pop()
 
                     lastIdx = match.end(i)
-                verify(scopes)
                 if lastIdx < match.end():
                     scope = " ".join(scopes2)
                     scopes.append(Editor()._Editor__Scope(scope, sublime.Region(lastIdx, match.end())))
-                    verify(scopes)
             else:
                 if lastIdx < match.end():
                     scopes.append(Editor()._Editor__Scope(scope, sublime.Region(lastIdx, match.end())))
-                    verify(scopes)
-            verify(scopes)
             return scopes
 
         def apply(self, data, scope, match):
@@ -517,7 +516,6 @@ class Editor:
                 innerScopes = pattern.apply(data, self.__scopeName, match)
                 if match.start() != i:
                     scopes.append(Editor()._Editor__Scope(scope, sublime.Region(i, match.start())))
-                verify(innerScopes)
                 scopes.extend(innerScopes)
                 i = scopes[-1].region.end()
             #self.__rootPattern.dump()
