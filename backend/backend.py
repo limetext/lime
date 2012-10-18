@@ -6,6 +6,8 @@ import json
 import os
 import os.path
 sys.path.append("%s/3rdparty/appdirs/lib" % os.path.dirname(os.path.abspath(__file__)))
+sys.path.append("/Applications/Sublime Text 2.app/Contents/MacOS/")
+sys.path.append(".")
 import appdirs
 import pickle
 import gzip
@@ -76,20 +78,37 @@ class Editor:
 
     class __View:
         def __init__(self, window, name=None):
-            if name and os.path.isfile(name):
-                f = open(name)
-                self.__buffer = f.read()
-                f.close()
             self.__window = window
+            self.__scratch = False
             try:
                 e = Editor()
                 self.__settings = e._Editor__Settings(window._Window__settings)
                 self.__syntax = None
                 self.__settings.add_on_change("__lime_View", self.__settings_changed)
-                if name:
-                    self.__settings.set("syntax", e.get_syntax_file_for_filename(name))
+                self.__set_file(name)
             except:
                 traceback.print_exc()
+
+        def __set_file(self, name):
+            self.__file = name
+            if name and os.path.isfile(name):
+                f = open(name)
+                self.__buffer = f.read()
+                f.close()
+                if name:
+                    self.__settings.set("syntax", Editor().get_syntax_file_for_filename(name))
+            else:
+                self.__buffer = ""
+            sublime_plugin.on_load(self)
+
+        def is_scratch(self):
+            return self.__scratch
+
+        def set_scratch(self, value):
+            self.__scratch = value
+
+        def file_name(self):
+            return self.__file
 
         def __settings_changed(self):
             syntax = self.__settings.get("syntax")
@@ -124,13 +143,15 @@ class Editor:
         def substr(self, region):
             return self.__buffer[region.begin():region.end()]
 
+        def run_command(self, command, *args):
+            print "wants to run command %s, %s" % (command, args)
+
     class __Settings:
         def __init__(self, other=None):
-            if other:
-                self.__values = dict(other.__values)
-            else:
-                self.__values = {}
+            self.__values = {}
             self.__on_change = {}
+            if other:
+                self.__update(other)
 
         def add_on_change(self, key, callback):
             if key not in self.__on_change:
@@ -591,7 +612,6 @@ class Editor:
         self.__user_data_dir = appdirs.user_data_dir("lime")
         if not os.path.isdir(self.__user_data_dir):
             os.mkdir(self.__user_data_dir)
-        self.__loadkeymaps()
         self.__settings = self.__Settings()
 
         path = sublime.packages_path()
@@ -619,6 +639,34 @@ class Editor:
             f.close()
         self.__syntaxCache = {}
         print "init took %f ms" % (1000*(time.time()-start))
+        self.__tasks = []
+        self.__add_task(self.__load_stuff)
+
+    def __add_task(self, task):
+        self.__tasks.append(task)
+
+    def update(self):
+        for task in self.__tasks:
+            try:
+                task()
+            except:
+                traceback.print_exc()
+        self.__tasks = []
+
+    def exit(self, code=0):
+        import threading
+        for thread in threading.enumerate():
+            if threading.current_thread() ==  thread:
+                continue
+
+            if thread.isAlive():
+                try:
+                    # TODO: is there a documented way to do this?
+                    thread._Thread__stop()
+                except:
+                    print(str(thread.getName()) + ' could not be terminated')
+        print "Good bye"
+        sys.exit(code)
 
     def get_syntax_file_for_filename(self, name):
         ext = re.search(r"(?<=\.)([^\.]+)$", name)
@@ -653,17 +701,41 @@ class Editor:
         lut = {"osx": " (OSX)", "linux": " (Linux)", "windows": " (Windows)"}
         return lut[sublime.platform()]
 
-    def __loadkeymaps(self):
+    def __load_stuff(self):
+        start = time.time()
         keys = []
         path = sublime.packages_path()
+        commands = []
         oskeymap = "Default%s.sublime-keymap" % self.platform_settings_name()
+
         for filename in os.listdir(path):
             filename = "%s/%s" % (path, filename)
             if os.path.isdir(filename):
                 for km in ["Default.sublime-keymap", oskeymap]:
                     km = "%s/%s" % (filename, km)
                     if os.path.isfile(km):
+                        try:
                             keys.extend(loadjson(km))
+                        except:
+                            print "Failed to load keymap %s" % km
+                            traceback.print_exc()
+                cm = "%s/Default.sublime-commands" % filename
+                if os.path.isfile(cm):
+                    try:
+                        commands.extend(loadjson(cm))
+                    except:
+                        print "Failed to load commands %s" % cm
+                        traceback.print_exc()
+                for filename2 in os.listdir(filename):
+                    if filename2.endswith(".py") and filename2 != "setup.py":
+                        filename2 = "%s/%s" % (filename, filename2)
+                        try:
+                            sublime_plugin.reload_plugin(filename2)
+                        except:
+                            print "Plugin failed to load %s" % (filename2)
+                            traceback.print_exc()
+        print "Loading plugins/commands/keymaps took %f ms" % (1000*(time.time()-start))
+
 
     def __loadsyntaxes(self):
         path = sublime.packages_path()
@@ -688,6 +760,7 @@ class Editor:
                             traceback.print_exc()
         return syntaxes, extensions
 
+
     def windows(self):
         return self.__windows
 
@@ -695,3 +768,4 @@ class Editor:
         return None
 
 import sublime
+import sublime_plugin

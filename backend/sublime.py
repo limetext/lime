@@ -54,3 +54,14 @@ class Region:
         return self.end()-self.begin()
 
 
+def set_timeout(timeout, callback):
+    pass
+
+def load_settings(name):
+    path = packages_path()
+    part = name[:name.rfind(".")]
+    e = backend.Editor()
+    ret = e._Editor__Settings("%s/%s/%s" % (path, part, name))
+    ret._Settings__update("%s/User/%s" % (path, name))
+    return ret
+

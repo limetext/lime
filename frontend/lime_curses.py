@@ -14,8 +14,8 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 editor = backend.Editor()
+editor.update()
 wnd = editor.new_window()
-start = time.time()
 start = time.time()
 view = wnd.open_file(sys.argv[1])
 print "load/parse: %f ms" % (1000*(time.time()-start))
@@ -137,4 +137,5 @@ try:
 
 finally:
     endwin()
+    editor.exit(0)
     print log
