@@ -307,19 +307,65 @@ class Editor:
             self.endCaptures = data["endCaptures"] if "endCaptures" in data else None
             self.patterns = []
             self.syntax = syntax
+            self.__cachedData = None
+            self.__cachedMatch = None
+            self.__cachedPat = None
+            self.__cachedPatterns = None
+            self.include = None
+            self.hits = 0
+            self.misses = 0
 
             if "patterns" in data:
                 e = Editor()
                 for pattern in data["patterns"]:
-                    if "include" in pattern:
-                        pattern = pattern["include"]
-                        self.patterns.append(pattern)
-                    else:
-                        self.patterns.append(e._Editor__SyntaxPattern(pattern, syntax))
+                    self.patterns.append(e._Editor__SyntaxPattern(pattern, syntax))
+            if "include" in data:
+                self.include = data["include"]
+
             self.name = data["name"] if "name" in data else None
             if self.name == None and "contentName" in data:
                 self.name = data["contentName"]
 
+        def cache(self, data, pos):
+            pat = None
+            ret = None
+            if self.__cachedData == data:
+                if not self.__cachedMatch:
+                    return None, None
+                if self.__cachedMatch.start() > pos:
+                    self.hits += 1
+                    return self.__cachedPat, self.__cachedMatch
+            else:
+                self.__cachedPatterns = None
+            if self.__cachedPatterns == None:
+                self.__cachedPatterns = list(self.patterns)
+            self.misses += 1
+
+            if self.match:
+                pat, ret = self, self.match.search(data, pos)
+            elif self.begin:
+                pat, ret = self, self.begin.search(data, pos)
+            elif self.include:
+                if self.include == "$self":
+                    pat, ret = self.syntax._Syntax__rootPattern.cache(data, pos)
+                else:
+                    key = self.include[1:]
+                    if key in self.syntax._Syntax__repo:
+                        pat = self.syntax._Syntax__repo[key]
+                        pat, ret = pat.cache(data, pos)
+            else:
+                pat, ret = self.firstMatch(data, pos, self.__cachedPatterns)
+
+            self.__cachedData = data
+            self.__cachedMatch = ret
+            self.__cachedPat = pat
+            return pat, ret
+
+        def dump(self):
+            print self.hits, self.misses
+            for pat in self.patterns:
+                if isinstance(pat, Editor()._Editor__SyntaxPattern):
+                    pat.dump()
 
         def innerApply(self, scope, lastIdx, match, captures):
             scopes = []
@@ -363,7 +409,7 @@ class Editor:
             verify(scopes)
             return scopes
 
-        def apply(self, data, scope, match, patterns=None, cache=None):
+        def apply(self, data, scope, match):
             scopes = []
             if self.name:
                 scope += " %s" % self.name
@@ -373,8 +419,6 @@ class Editor:
                 scopes.extend(self.innerApply(scope, match.start(), match, self.beginCaptures))
 
                 if self.end:
-                    patterns = list(self.patterns)
-                    cache = [None for i in patterns]
                     found = False
                     i = scopes[-1].region.end() if len(scopes) else match.start()
                     end = len(data)
@@ -391,8 +435,8 @@ class Editor:
                                 end = i
                                 break
 
-                        if (not endmatch or (endmatch and endmatch.start() != 1)) and len(patterns):
-                            pattern2, match2 = self.firstMatch(data, i, patterns, cache)
+                        if (not endmatch or (endmatch and endmatch.start() != i+1)) and len(self.__cachedPatterns):
+                            pattern2, match2 = self.firstMatch(data, i, self.__cachedPatterns)
                             if pattern2 and match2 and \
                                     ((not endmatch and match2.start() < end) or
                                      (endmatch and match2.start() < endmatch.start())):
@@ -412,7 +456,7 @@ class Editor:
                         break
             return scopes
 
-        def firstMatch(self, data, pos, patterns, cache):
+        def firstMatch(self, data, pos, patterns):
             # Find the pattern that is the earliest match
             match = None
             startIdx = -1
@@ -420,61 +464,9 @@ class Editor:
             i = 0
             e = Editor()
 
-            def clearcache(cache, pos):
-                for j in range(len(cache)):
-                    if cache[j]:
-                        if isinstance(cache[j], tuple):
-                            cache[j] = cache[j][0], clearcache(cache[j][1], pos), cache[j][2]
-                        elif cache[j].end() < pos or cache[j].start() < pos:
-                            cache[j] = None
-                return cache
-            clearcache(cache, pos)
-
             while i < len(patterns):
-                innerPattern = patterns[i]
-                syntaxMatch = not isinstance(innerPattern, e._Editor__SyntaxPattern)
                 innermatch = None
-                if not syntaxMatch and cache and cache[i]:
-                    innermatch = cache[i]
-                else:
-                    if syntaxMatch:
-                        innerCache = None
-                        innerPatterns, innerCache, func = None, None, None
-                        if cache[i]:
-                           innerPatterns, innerCache, func = cache[i]
-
-                        if not func and not innerPatterns:
-                            if innerPattern == "$self":
-                                innerPatterns = list(self.syntax._Syntax__rootPattern.patterns)
-                                func = self.syntax.recurse
-                            else:
-                                key = innerPattern[1:]
-                                if key in self.syntax._Syntax__repo:
-                                    pat = self.syntax._Syntax__repo[key]
-                                    innerPatterns = []
-                                    if pat.match or pat.begin:
-                                        innerPatterns = [pat]
-                                    else:
-                                        innerPatterns = list(pat.patterns)
-                                    func = pat.firstMatch
-                                else:
-                                    innerPattern, innermatch = None, None
-                                    innerPatterns = []
-                                    innerCache = []
-                                    func = None
-
-                        if func:
-                            if not innerCache:
-                                innerCache = [None for x in innerPatterns]
-                            innerPattern, innermatch = func(data, pos, innerPatterns, innerCache)
-                        cache[i] = innerPatterns, innerCache, func
-                    else:
-                        if innerPattern.match:
-                            innermatch = innerPattern.match.search(data, pos)
-                        elif innerPattern.begin:
-                            innermatch = innerPattern.begin.search(data, pos)
-                if not syntaxMatch:
-                    cache[i] = innermatch
+                innerPattern, innermatch = patterns[i].cache(data, pos)
                 if innermatch:
                     idx = innermatch.start()
                     if startIdx < 0 or startIdx > idx:
@@ -482,14 +474,12 @@ class Editor:
                         match = innermatch
                         pattern = innerPattern
                         # right at the start, we're not going to find a better pattern than this
-                        if idx <= pos:
+                        if idx == pos:
                             break
-                if innermatch == None:
+                    i += 1
+                else:
                     # No match was found so no point in looking for it again after this point.
                     patterns.pop(i)
-                    cache.pop(i)
-                else:
-                    i += 1
             return (pattern, match);
 
     class __Syntax:
@@ -506,7 +496,6 @@ class Editor:
 
             self.__rootPattern = e._Editor__SyntaxPattern(self.__data, self)
             self.__scopeName = self.__data["scopeName"]
-            self.__recurse = False
 
         def name(self):
             return self.__data["name"] if "name" in self.__data else None
@@ -514,31 +503,15 @@ class Editor:
         def get_default_scope(self):
             return self.__scopeName
 
-        def firstMatch(self, data, pos, patterns, cache):
-            assert cache
-            return self.__rootPattern.firstMatch(data, pos, patterns, cache)
-
-
-        def recurse(self, data, pos, patterns, cache):
-            if self.__recurse:
-                return None, None
-            self.__recurse = True
-            try:
-                return self.firstMatch(data, pos, patterns, cache)
-            finally:
-                self.__recurse = False
-
         def extract_scopes(self, data):
             scopes = []
             maxiter = 10000
             i = 0
-            cache = [None for a in self.__rootPattern.patterns]
-            patterns = list(self.__rootPattern.patterns)
 
-            while i < len(data) and len(patterns) and maxiter > 0:
+            while i < len(data) and maxiter > 0:
                 maxiter -= 1
                 scope = self.__scopeName
-                pattern, match = self.firstMatch(data, i, patterns, cache)
+                pattern, match = self.__rootPattern.cache(data, i)
                 if not match:
                     break
                 innerScopes = pattern.apply(data, self.__scopeName, match)
@@ -547,6 +520,7 @@ class Editor:
                 verify(innerScopes)
                 scopes.extend(innerScopes)
                 i = scopes[-1].region.end()
+            #self.__rootPattern.dump()
             return scopes
 
 
