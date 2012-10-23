@@ -67,7 +67,6 @@ class Editor:
             self.__observers = []
 
         def __call__(self, *args):
-            print "event triggered"
             for observer in self.__observers:
                 try:
                     observer(*args)
@@ -88,13 +87,15 @@ class Editor:
             self.__views = {}
             e = Editor()
             self.__settings = e._Editor__Settings(e._Editor__settings)
+            self.view_added_event = e._Editor__Event()
             # TODO: project settings
 
         def open_file(self, name, flags=0):
             # TOOD: handle sublime.ENCODED_POSITION
             if name not in self.__views:
                 e = Editor()
-                self.__views[name] = e._Editor__View(self, name)
+                view = self.__views[name] = e._Editor__View(self, name)
+                self.view_added_event(view)
             return self.__views[name]
 
         def views(self):
@@ -705,12 +706,12 @@ class Editor:
         self.__syntaxCache = {}
         self.__console = None
         print "init took %f ms" % (1000*(time.time()-start))
+        self.new_window_event = self.__Event()
         self.__tasks = Queue.Queue()
         self.__add_task(self.__load_stuff)
 
     def get_console(self):
         return self.__console
-
 
     def __add_task(self, task, *args):
         self.__tasks.put((task, args))
@@ -769,10 +770,10 @@ class Editor:
 
     def new_window(self):
         ret = self.__Window()
+        self.new_window_event(ret)
         if not self.__console:
             self.__console = self.__View(ret)
             self.__console.set_scratch(True)
-
         self.__windows.append(ret)
         return ret
 
