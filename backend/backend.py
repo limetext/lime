@@ -6,7 +6,6 @@ import json
 import os
 import os.path
 sys.path.append("%s/3rdparty/appdirs/lib" % os.path.dirname(os.path.abspath(__file__)))
-sys.path.append("/Applications/Sublime Text 2.app/Contents/MacOS/")
 sys.path.append(".")
 import appdirs
 import pickle
@@ -63,6 +62,27 @@ def singleton(cls):
 @singleton
 class Editor:
 
+    class __Event:
+        def __init__(self):
+            self.__observers = []
+
+        def __call__(self, *args):
+            print "event triggered"
+            for observer in self.__observers:
+                try:
+                    observer(*args)
+                except:
+                    traceback.print_exc()
+
+        def __iadd__(self, observer):
+            self.__observers.append(observer)
+            return self
+
+        def __isub__(self, observer):
+            self.__observers.remove(observer)
+            return self
+
+
     class __Window:
         def __init__(self):
             self.__views = {}
@@ -76,6 +96,9 @@ class Editor:
                 e = Editor()
                 self.__views[name] = e._Editor__View(self, name)
             return self.__views[name]
+
+        def views(self):
+            return self.__views.values()
 
     class __View:
         class __Edit:
@@ -115,6 +138,12 @@ class Editor:
             else:
                 self.__buffer = ""
             sublime_plugin.on_load(self)
+
+        def has_non_empty_selection_region(self):
+            return False # Todo
+
+        def set_status(self, key, value):
+            pass # TODO
 
         def is_scratch(self):
             return self.__scratch
@@ -170,8 +199,8 @@ class Editor:
 
         def add_on_change(self, key, callback):
             if key not in self.__on_change:
-                self.__on_change[key] = []
-            self.__on_change[key].append(callback)
+                self.__on_change[key] = Editor()._Editor__Event()
+            self.__on_change[key] += callback
 
         def clear_on_change(self, key):
             if key in self.__on_change:
@@ -201,8 +230,7 @@ class Editor:
         def __trigger_changes(self):
             for key in self.__on_change:
                 try:
-                    for cb in self.__on_change[key]:
-                        cb()
+                    self.__on_change[key]()
                 except:
                     traceback.print_exc()
 
@@ -347,7 +375,7 @@ class Editor:
                         if match2 and match.start() > match2.start() and match.start() < match2.end():
                             pos = match2.end()
                         else:
-                            data = "%s%s%s" % (data[:match.start()], data[match.start()], data[match.end():])
+                            data = "%s%s%s" % (data[:match.start()], match.group(1)[-1], data[match.end():])
                         match = regex.search(data, pos)
 
                     if "\\G" in data:
@@ -634,13 +662,14 @@ class Editor:
                  e = c.begin_edit()
                  c.replace(e, sublime.Region(0, c.size()), self.__log)
                  c.end_edit(e)
+            if not self.__editor.settings().get("disable_stdout", False):
+                self.__old.write(data)
 
         def flush(self):
             pass
 
         def dump(self):
-            sys.stdout = self.__old
-            print self.__log
+            self.__old.write(self.__log)
 
     def __init__(self):
         self.__log = self.__Log(self)
@@ -710,7 +739,8 @@ class Editor:
                 except:
                     print(str(thread.getName()) + ' could not be terminated')
         print "Good bye"
-        self.__log.dump()
+        if self.__settings.get("disable_stdout", False):
+            self.__log.dump()
         sys.exit(code)
 
     def get_syntax_file_for_filename(self, name):
@@ -807,6 +837,8 @@ class Editor:
                             traceback.print_exc()
         return syntaxes, extensions
 
+    def settings(self):
+        return self.__settings
 
     def windows(self):
         return self.__windows

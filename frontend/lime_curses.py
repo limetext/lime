@@ -15,9 +15,17 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 editor = backend.Editor()
+#editor.settings().set("disable_stdout", True)
+#sublime_plugin.reload_plugin("test.py")
+
+#sublime_plugin.on_load += on_load
+
 wnd = editor.new_window()
 start = time.time()
 view = wnd.open_file(sys.argv[1])
+while editor.update():
+    continue
+editor.exit(0)
 print "load/parse: %f ms" % (1000*(time.time()-start))
 data = view.substr(sublime.Region(0, view.size()))
 scopes = [(scope.name, scope.region) for scope in view._View__scopes]

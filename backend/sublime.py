@@ -53,6 +53,11 @@ class Region:
     def size(self):
         return self.end()-self.begin()
 
+    def cover(self, other):
+        return Region(min(self.begin(), other.begin()), max(self.end(), other.end()))
+
+def windows():
+    return backend.Editor().windows()
 
 def set_timeout(timeout, callback):
     pass

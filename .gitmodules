@@ -13,3 +13,7 @@
 [submodule "3rdparty/Theme - Soda"]
 	path = 3rdparty/Theme - Soda
 	url = git://github.com/buymeasoda/soda-theme.git
+[submodule "backend/3rdparty/appdirs"]
+	path = backend/3rdparty/appdirs
+	url = git://github.com/ActiveState/appdirs.git
+
