@@ -7,7 +7,6 @@
 static void new_window(object arg)
 {
     boost::shared_ptr<LimeWindow> w(new LimeWindow(arg));
-    register_ptr_to_python<boost::shared_ptr<LimeWindow> >();
     setattr(arg, "qtLimeWindow", w);
 
     w->resize(600, 400);
@@ -21,6 +20,8 @@ int main(int argc, char** argv)
     int ret = -1;
     {
         MainLoop *ml = MainLoop::GetInstance();
+        register_ptr_to_python<boost::shared_ptr<LimeWindow> >();
+
         object editor = ml->GetEditor();
 
         editor.attr("new_window_event") += new_window;

@@ -42,9 +42,39 @@ void LimeView::resizeEvent(QResizeEvent* event)
 
 void LimeView::keyPressEvent(QKeyEvent* ke)
 {
-    //window()->setWindowState(window()->windowState() ^ Qt::WindowFullScreen);
+    if (ke->key() > 160000)
+    {
+        // TODO: we don't want to process presses that are just modifiers
+        return;
+    }
     Qt::KeyboardModifiers mod = ke->modifiers();
-    printf("mod: %d%d%d%d, key: %d (%c), scancode: %d (%c), text: %s\n", mod.testFlag(Qt::MetaModifier), mod.testFlag(Qt::ControlModifier), mod.testFlag(Qt::AltModifier), mod.testFlag(Qt::ShiftModifier), ke->key(), ke->key(), ke->nativeVirtualKey(), ke->nativeVirtualKey(), ke->text().constData());
+    MainLoop *loop = MainLoop::GetInstance();
+    object editor = loop->GetEditor();
+    try
+    {
+        printf("ke->text().unicode()[0].unicode(): %d\n", ke->key() & Qt::MODIFIER_MASK);
+        Q_ASSERT(ke->text().length() == 1);
+        object backend = loop->GetBackend();
+        object keypress = backend.attr("KeyPress")(
+                QChar(ke->key()).toLower().unicode(),
+                ke->text().unicode()[0].unicode(),
+#if __APPLE__
+                mod.testFlag(Qt::ControlModifier),
+                mod.testFlag(Qt::MetaModifier),
+                mod.testFlag(Qt::ShiftModifier),
+                mod.testFlag(Qt::AltModifier));
+#else
+                mod.testFlag(Qt::MetaModifier),
+                mod.testFlag(Qt::ControlModifier),
+                mod.testFlag(Qt::ShiftModifier),
+                mod.testFlag(Qt::AltModifier));
+#endif
+        editor.attr("keyEvent")(keypress);
+    }
+    catch (...)
+    {
+        PyErr_Print();
+    }
 }
 void LimeView::paintEvent(QPaintEvent* ev)
 {

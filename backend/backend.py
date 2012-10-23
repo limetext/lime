@@ -41,6 +41,56 @@ def loadjson( name):
         data = None
     return data
 
+class KeyPress:
+    def __init__(self, rawkey, key, super=False, ctrl=False, shift=False, alt=False):
+        self.key = key
+        self.rawkey = rawkey
+        self.shift = shift
+        self.alt = alt
+        self.super = super
+        self.ctrl = ctrl
+
+    def __hash__(self):
+        return hash((self.key, self.rawkey, self.super, self.ctrl, self.shift, self.alt))
+
+    def __eq__(self, other):
+        return self.key == other.key and\
+                self.rawkey == other.rawkey and\
+                self.super == other.super and\
+                self.ctrl == other.ctrl and\
+                self.shift == other.shift and\
+                self.alt == other.alt
+
+    def __repr__(self):
+        ret = ""
+        for name in ["super", "ctrl", "shift", "alt"]:
+            if eval("self.%s" % name):
+                if len(ret):
+                    ret += "+"
+                ret += name
+        if len(ret):
+            ret += "+"
+        ret += eval("u\"\\u%04x\"" % self.rawkey)
+        ret += u" (%s)" % (eval("u\"\\u%04x\"" % self.key))
+        return ret
+
+    @staticmethod
+    def create_from_string(key):
+        match = re.search(r"([^+]+)$", key, re.DOTALL)
+        assert match
+
+        rawkey = match.group(1)
+        if len(rawkey) > 1:
+            raise KeyError("Unknown rawkey: %s" % rawkey)
+        rawkey = ord(rawkey)
+        args = {}
+
+        for k in ["super", "ctrl", "shift", "alt"]:
+            if "%s+" % k in key:
+                args[k] = True
+        return KeyPress(rawkey, 0, **args)
+
+
 def verify(scopes):
     if len(scopes) > 1:
         a = scopes[0].region
@@ -705,6 +755,7 @@ class Editor:
             f.close()
         self.__syntaxCache = {}
         self.__console = None
+        self.__keymap = {}
         print "init took %f ms" % (1000*(time.time()-start))
         self.new_window_event = self.__Event()
         self.__tasks = Queue.Queue()
@@ -781,6 +832,24 @@ class Editor:
         lut = {"osx": " (OSX)", "linux": " (Linux)", "windows": " (Windows)"}
         return lut[sublime.platform()]
 
+    def __fix_keymaps(self, keys):
+        for item in keys:
+            try:
+                comb = [KeyPress.create_from_string(a) for a in item["keys"]]
+                print u"%s" % unicode(comb)
+                if not comb[0] in self.__keymap:
+                    self.__keymap[comb[0]] = []
+                self.__keymap[comb[0]].append((comb[1:], item))
+            except KeyError:
+                pass
+            except:
+                traceback.print_exc()
+
+    def keyEvent(self, ev):
+        print u"got event: %s" % ev
+        if ev in self.__keymap:
+            print self.__keymap[ev]
+
     def __load_stuff(self):
         start = time.time()
         keys = []
@@ -810,6 +879,7 @@ class Editor:
                     if filename2.endswith(".py") and filename2 != "setup.py":
                         filename2 = "%s/%s" % (filename, filename2)
                         self.__add_task(sublime_plugin.reload_plugin, filename2)
+        self.__add_task(self.__fix_keymaps, keys)
         def log_load_time(start):
             print "Loading plugins/commands/keymaps took %f ms" % (1000*(time.time()-start))
         self.__add_task(log_load_time, start)

@@ -32,6 +32,7 @@ import sys \n\
 sys.path.append(\"../frontend/qt/\")\n\
 import lime", dict, dict);
         mLime = dict["lime"];
+        mBackend = mLime.attr("backend");
         mEditor = mLime.attr("editor");
     }
     catch (std::exception &e)
@@ -72,5 +73,9 @@ object MainLoop::GetEditor()
 object MainLoop::GetLime()
 {
     return mLime;
+}
+object MainLoop::GetBackend()
+{
+    return mBackend;
 }
 

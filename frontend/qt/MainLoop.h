@@ -15,6 +15,7 @@ public:
 
     object GetEditor();
     object GetLime();
+    object GetBackend();
 
 public slots:
     void update();
@@ -24,5 +25,6 @@ private:
     virtual ~MainLoop();
     object mEditor;
     object mLime;
+    object mBackend;
     QTimer mainTimer;
 };
