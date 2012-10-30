@@ -51,11 +51,10 @@ class KeyPress:
         self.ctrl = ctrl
 
     def __hash__(self):
-        return hash((self.key, self.rawkey, self.super, self.ctrl, self.shift, self.alt))
+        return hash((self.rawkey, self.super, self.ctrl, self.shift, self.alt))
 
     def __eq__(self, other):
-        return self.key == other.key and\
-                self.rawkey == other.rawkey and\
+        return  self.rawkey == other.rawkey and\
                 self.super == other.super and\
                 self.ctrl == other.ctrl and\
                 self.shift == other.shift and\
@@ -82,7 +81,7 @@ class KeyPress:
         rawkey = match.group(1)
         if len(rawkey) > 1:
             raise KeyError("Unknown rawkey: %s" % rawkey)
-        rawkey = ord(rawkey)
+        rawkey = ord(rawkey.lower())
         args = {}
 
         for k in ["super", "ctrl", "shift", "alt"]:
@@ -722,6 +721,32 @@ class Editor:
         def dump(self):
             self.__old.write(self.__log)
 
+
+    class __Theme:
+        def __init__(self, name):
+            path = re.split(r"(\.|\s)", name)[0]
+            fn = "%s/Theme - %s/%s" % (sublime.packages_path(), path, name)
+            self.__data = loadjson(fn)
+
+        def data(self):
+            return self.__data
+
+        def get_class(self, name, attrs=[]):
+            ret = {}
+            for item in self.__data:
+                if "class" in item and item["class"] == name:
+                    if "settings" in item:
+                        continue
+                    if len(attrs) > 0:
+                        if "attributes" in item and attrs != item["attributes"]:
+                            continue
+                    else:
+                        if "attributes" in item:
+                            continue
+                    ret.update(item)
+            return ret
+
+
     def __init__(self):
         self.__log = self.__Log(self)
         start = time.time()
@@ -739,7 +764,8 @@ class Editor:
             name = "%s/%s" % (path, name)
             self.__settings._Settings__update(name)
 
-        self.scheme = self.__ColorScheme("%s/../%s" % (sublime.packages_path(), self.__settings.get("color_scheme")))
+        self.__scheme = self.__ColorScheme("%s/../%s" % (sublime.packages_path(), self.__settings.get("color_scheme")))
+        self.__theme = self.__Theme(self.__settings.get("theme"))
         self.__windows = []
         syntaxScopes = "%s/syntaxes.cache" % self.__user_data_dir
         if os.path.isfile(syntaxScopes):
@@ -760,6 +786,12 @@ class Editor:
         self.new_window_event = self.__Event()
         self.__tasks = Queue.Queue()
         self.__add_task(self.__load_stuff)
+
+    def scheme(self):
+        return self.__scheme
+
+    def theme(self):
+        return self.__theme
 
     def get_console(self):
         return self.__console
@@ -836,7 +868,6 @@ class Editor:
         for item in keys:
             try:
                 comb = [KeyPress.create_from_string(a) for a in item["keys"]]
-                print u"%s" % unicode(comb)
                 if not comb[0] in self.__keymap:
                     self.__keymap[comb[0]] = []
                 self.__keymap[comb[0]].append((comb[1:], item))

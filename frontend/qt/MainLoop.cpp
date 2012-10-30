@@ -42,6 +42,7 @@ import lime", dict, dict);
     catch(boost::python::error_already_set& e)
     {
         PyErr_Print();
+        PyErr_Clear();
     }
     QObject::connect(&mainTimer, SIGNAL(timeout()), this, SLOT(update()));
     mainTimer.start(100);
@@ -54,14 +55,22 @@ MainLoop::~MainLoop()
 
 void MainLoop::update()
 {
-    bool ret = extract<bool>(mEditor.attr("update")());
-    if (ret)
+    try
     {
-        mainTimer.setInterval(0);
+        bool ret = extract<bool>(mEditor.attr("update")());
+        if (ret)
+        {
+            mainTimer.setInterval(0);
+        }
+        else
+        {
+            mainTimer.setInterval(100);
+        }
     }
-    else
+    catch(boost::python::error_already_set& e)
     {
-        mainTimer.setInterval(100);
+        PyErr_Print();
+        PyErr_Clear();
     }
 }
 

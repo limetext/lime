@@ -12,8 +12,75 @@ import sublime_plugin
 
 editor = backend.Editor()
 
+def cssify(item, attrs=[]):
+    item = editor.theme().get_class(item, attrs)
+    if not item:
+        return ""
+    ret = ""
+    if "color" in item:
+        r,g,b = item["color"][0:3]
+        ret += "\tcolor: #%s;\n" % ("%02x%02x%02x" % (r,g,b))
+    if "fg" in item:
+        r,g,b = item["fg"][0:3]
+        ret += "\tcolor: #%s;\n" % ("%02x%02x%02x" % (r,g,b))
+    if "bg" in item:
+        r,g,b = item["bg"][0:3]
+        ret += "\tbackground-color: #%s;\n" % ("%02x%02x%02x" % (r,g,b))
+
+    if "layer0.texture" in item:
+        offsets = "1"
+        if "layer0.inner_margin" in item:
+            i = item["layer0.inner_margin"]
+            if len(i) == 2:
+                i = [i[0], i[1], i[0],i[1]]
+            i = [i[1], i[0], i[3], i[2]]
+            offsets = " ".join([str(x) for x in i])
+        if "content_margin" in item:
+            ret += "\tpadding: %spx;\n" % "px ".join([str(x) for x in item["content_margin"]])
+
+        ret += "\tborder-image: url(%s/%s) %s;\n" % (sublime.packages_path(), item["layer0.texture"], offsets)
+
+    return ret
+
+def cssify_theme():
+
+    ret = ""
+    ret += "QMainWindow { background: purple; }"
+    ret += "QStatusBar\n{\n"
+    ret += cssify("label_control")
+    ret += cssify("status_bar")
+    ret += "}\n"
+
+    ret += "QTabWidget { position: absolute; left: 0; right: 0; border: solid 10px; background-color: yellow; padding-right: 0; }\n"
+    ret += "QTabWidget::pane {  background-color: pink;  }\n"
+    ret += "QTabWidget::tab-bar\n{\n"
+    ret += cssify("tabset_control")
+    ret += "position: absolute; left: 0; border:solid 10px;\n"
+    ret += "}\n"
+    ret += "QTableView\n{\n"
+    ret += "width: 2000px;\n"
+    ret += "}\n"
+
+    ret += "QTabBar { left: 0px;  }"
+    # "subcontrol-origin: border;  position: absolute; left: 0; right: 0; background-color: blue; padding-right: 0; }\n"
+    ret += "QTabBar::tab\n{\n"
+    ret += cssify("tab_label")
+    ret += cssify("tab_control")
+    item = editor.theme().get_class("tabset_control")
+    #ret += "height: %dpx;" % item["tab_height"]
+    ret += "}\n"
+
+    ret += "QTabBar::tab:hover\n{\n"
+    ret += cssify("tab_control", ["hover"])
+    ret += "}\n"
+
+    ret += "QTabBar::tab:selected\n{\n"
+    ret += cssify("tab_control", ["selected"])
+    ret += "}\n"
+    return str(ret)
+
 def transform_scopes(view):
-    scopes = [(editor.scheme.getStyleNameForScope(scope.name).replace(".", "_dot_"), scope.region) for scope in view._View__scopes]
+    scopes = [(editor.scheme().getStyleNameForScope(scope.name).replace(".", "_dot_"), scope.region) for scope in view._View__scopes]
     # Merge scopes that have the same style
     colorscopes = [scopes[0]]
     for n2,r2 in scopes[1:]:
@@ -39,8 +106,8 @@ def transform_scopes(view):
 def create_stylesheet():
     css = ""
     lut = {"foreground": "color", "background": "background"}
-    for name in editor.scheme.settings:
-        settings = editor.scheme.settings[name]
+    for name in editor.scheme().settings:
+        settings = editor.scheme().settings[name]
         config = ""
         for key in settings:
             if key in lut:
@@ -53,3 +120,5 @@ def create_stylesheet():
 
     return "<style>\n%s</style>" % css
 
+
+print cssify_theme()

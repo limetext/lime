@@ -20,7 +20,6 @@
         "sublimegdb_commandline": "gdb --interpreter=mi ./lime.app/Contents/MacOS/lime",
         "sublimeclang_options":
         [
-            "-DHAVE_TERMKEY",
             "-I${project_path:backend}",
             "-F/usr/local/Cellar/qt/4.8.2/lib",
             "-I/usr/local/Cellar/qt/4.8.2/include/QtGui",

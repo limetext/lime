@@ -20,13 +20,22 @@ int main(int argc, char** argv)
     int ret = -1;
     {
         MainLoop *ml = MainLoop::GetInstance();
-        register_ptr_to_python<boost::shared_ptr<LimeWindow> >();
+        try
+        {
+            register_ptr_to_python<boost::shared_ptr<LimeWindow> >();
 
-        object editor = ml->GetEditor();
+            object editor = ml->GetEditor();
 
-        editor.attr("new_window_event") += new_window;
-        object window = editor.attr("new_window")();
-        window.attr("open_file")("../backend/backend.py");
+            editor.attr("new_window_event") += new_window;
+            object window = editor.attr("new_window")();
+            window.attr("open_file")("../backend/backend.py");
+            window.attr("open_file")("../frontend/qt/lime.py");
+        }
+        catch(boost::python::error_already_set& e)
+        {
+            PyErr_Print();
+            PyErr_Clear();
+        }
 
         ret = app.exec();
         MainLoop::Kill();
