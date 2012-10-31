@@ -13,7 +13,7 @@ import gzip
 import time
 import Queue
 
-def loadjson( name):
+def loadjson(name):
     f = open(name)
     data = f.read()
     f.close()

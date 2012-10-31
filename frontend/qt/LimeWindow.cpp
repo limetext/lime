@@ -1,10 +1,50 @@
 #include "LimeWindow.h"
 #include <QStatusBar>
-#include "LimeView.h"
-#include <QScrollArea>
+#include "LimeViewWidget.h"
+#include <QTabBar>
+#include <QResizeEvent>
+#include <QPaintEvent>
 #include "MainLoop.h"
 
 using namespace boost::python;
+
+class Test : public QWidget
+{
+public:
+    Test()
+    {
+        resize(1000, 20);
+        setAutoFillBackground(true);
+    }
+};
+
+LimeTabWidget::LimeTabWidget()
+{
+    setAutoFillBackground(true);
+    setTabsClosable(true);
+    setMovable(true);
+    setAcceptDrops(true);
+    setDocumentMode(true);
+    //tabBar()->setDrawBase(true);
+    //tabBar()->setAutoFillBackground(true);
+    QObject::connect(this, SIGNAL(currentChanged(int)), this, SLOT(fixSize()));
+}
+
+void LimeTabWidget::resizeEvent(QResizeEvent * e)
+{
+    QTabWidget::resizeEvent(e);
+    fixSize();
+}
+void LimeTabWidget::paintEvent(QPaintEvent * e)
+{
+    QTabWidget::paintEvent(e);
+    fixSize();
+}
+
+void LimeTabWidget::fixSize()
+{
+//    tabBar()->resize(size().width(), tabBar()->size().height());
+}
 
 static void view_added(object view)
 {
@@ -12,11 +52,8 @@ static void view_added(object view)
     LimeWindow* qtLimeWindow = extract<LimeWindow*>(window.attr("qtLimeWindow"));
     QTabWidget *qt = static_cast<QTabWidget*>(qtLimeWindow->centralWidget());
     char * str = extract<char *>(view.attr("file_name")());
-    LimeView *v = new LimeView(view);
-    QScrollArea *s = new QScrollArea();
-    s->setWidgetResizable(true);
-    s->setWidget(v);
-    qt->addTab(s, str);
+    LimeViewWidget *v = new LimeViewWidget(view);
+    qt->addTab(v, str);
 }
 
 LimeWindow::LimeWindow(object pyWindow) : QMainWindow(), mWindow(pyWindow)
@@ -30,10 +67,9 @@ LimeWindow::LimeWindow(object pyWindow) : QMainWindow(), mWindow(pyWindow)
     QStatusBar* bar = new QStatusBar;
     bar->showMessage("This is a status bar");
     setStatusBar(bar);
-    QTabWidget* qt = new QTabWidget;
-    qt->setAutoFillBackground(true);
-    qt->setTabsClosable(true);
-    qt->setMovable(true);
+    QTabWidget* qt = new LimeTabWidget;
+    qt->setCornerWidget(new Test(), Qt::TopRightCorner);
+
 
     printf("final style is:\n%s\n", style.toAscii().constData());
 

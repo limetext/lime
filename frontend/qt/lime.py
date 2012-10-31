@@ -45,28 +45,32 @@ def cssify(item, attrs=[]):
 def cssify_theme():
 
     ret = ""
-    ret += "QMainWindow { background: purple; }"
     ret += "QStatusBar\n{\n"
     ret += cssify("label_control")
     ret += cssify("status_bar")
     ret += "}\n"
+    ret += "QScrollArea { border: 0px; }\n"
 
-    ret += "QTabWidget { position: absolute; left: 0; right: 0; border: solid 10px; background-color: yellow; padding-right: 0; }\n"
-    ret += "QTabWidget::pane {  background-color: pink;  }\n"
+    ret += "QTabWidget { position: absolute; left: 0; color: yellow; background-color: yellow; }\n"
+    ret += "QTabWidget::pane {  color: pink; background-color: pink;  }\n"
     ret += "QTabWidget::tab-bar\n{\n"
-    ret += cssify("tabset_control")
-    ret += "position: absolute; left: 0; border:solid 10px;\n"
-    ret += "}\n"
-    ret += "QTableView\n{\n"
-    ret += "width: 2000px;\n"
+    # ret += cssify("tabset_control")
+    ret += "subcontrol-position: left;\n"
+    ret += "background-color: blue;\n"
+    ret += "alignment: left;\n"
+    ret += "color: blue;\n"
     ret += "}\n"
 
-    ret += "QTabBar { left: 0px;  }"
+    ret += "QTabBar::tab { left: 0px; }"
+    ret += "QTabBar::close-button {subcontrol-position: right;}"
     # "subcontrol-origin: border;  position: absolute; left: 0; right: 0; background-color: blue; padding-right: 0; }\n"
     ret += "QTabBar::tab\n{\n"
     ret += cssify("tab_label")
     ret += cssify("tab_control")
     item = editor.theme().get_class("tabset_control")
+    ret += "position: absolute; left: 0px;"
+    ret += "alignment: left; subcontrol-origin: border; subcontrol-position: left;"
+    ret += "border: 0px; margin: 0px; padding: 0px;"
     #ret += "height: %dpx;" % item["tab_height"]
     ret += "}\n"
 
@@ -97,7 +101,7 @@ def transform_scopes(view):
     od = "<body class=\"default\">"
     for name, region in colorscopes:
         output = data[region.begin():region.end()]
-        output = output.replace(" ", "&nbsp;").replace("\n", "<br>")
+        output = output.replace(" ", "&nbsp;").replace("\n", "<br>\n")
         od += "<span class=\"%s\">%s</span>" % (name, output)
     od += "</body>"
     return od

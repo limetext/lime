@@ -17,8 +17,9 @@ LimeView::LimeView(boost::python::object view) : QWidget(), mView(view)
     const char * str = extract<const char *>(data);
 
     object settings = view.attr("settings")().attr("get");
-    const char *font_face = extract<const char*>(boost::python::str(settings("font_face")));
+    QString font_face = QString::fromAscii(extract<const char*>(boost::python::str(settings("font_face"))));
     int font_size = extract<int>(settings("font_size"));
+    font_face = font_face.replace(" Regular", "");
 
     doc.setDefaultFont(QFont(font_face, font_size));
     doc.setHtml(str);
@@ -33,9 +34,9 @@ LimeView::~LimeView()
 void LimeView::resizeEvent(QResizeEvent* event)
 {
     int width = event->size().width();
-    if (width != (int) doc.textWidth())
+//    if (width != (int) doc.textWidth())
     {
-        doc.setTextWidth(width);
+//        doc.setTextWidth(width);
         setMinimumSize(QSize(0, doc.size().height()));
     }
 }
@@ -83,6 +84,21 @@ void LimeView::paintEvent(QPaintEvent* ev)
     {
         QPainter painter(this);
         doc.drawContents(&painter, ev->rect());
+//        printf("drawing to: %d, %d, %d, %d\n", ev->rect().left(), ev->rect().top(), ev->rect().width(), ev->rect().height());
+        /*
+        QFont f = doc.defaultFont();
+        qreal old = f.pointSizeF();
+        float minimapsize = 0.1;
+        f.setPointSizeF(old*minimapsize);
+        doc.setDefaultFont(f);
+        QRect r = ev->rect();
+        painter.translate(QPoint(r.right()-r.width()*minimapsize, 0));
+        printf("%d, %d, %d, %d\n", r.left(), r.top(), r.width(), r.height());
+        doc.drawContents(&painter, ev->rect());
+        f.setPointSizeF(old);
+        doc.setDefaultFont(f);
+        */
+
         float brightness = 128 + 127 * sin(timer.elapsed() * 1.0 / (150.0));
         painter.setPen(QColor::fromRgb(0xff, 0xff, 0xff, brightness));
 
