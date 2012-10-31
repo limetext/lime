@@ -13,6 +13,8 @@ protected:
     virtual void paintEvent(QPaintEvent * e);
     virtual void resizeEvent(QResizeEvent * e);
     virtual void wheelEvent(QWheelEvent *e);
+    virtual void mousePressEvent(QMouseEvent *e);
+    virtual void mouseMoveEvent(QMouseEvent *e);
 private:
     LimeViewWidget* mView;
     QTextDocument doc;

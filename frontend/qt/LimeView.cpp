@@ -18,12 +18,12 @@ LimeView::LimeView(boost::python::object view) : QWidget(), mView(view)
 
     object settings = view.attr("settings")().attr("get");
     QString font_face = QString::fromAscii(extract<const char*>(boost::python::str(settings("font_face"))));
-    int font_size = extract<int>(settings("font_size"));
+    float font_size = extract<float>(settings("font_size"));
     font_face = font_face.replace(" Regular", "");
 
     doc.setDefaultFont(QFont(font_face, font_size));
     doc.setHtml(str);
-    setMinimumSize(QSize(0, doc.size().height()));
+    setMinimumSize(QSize(doc.size().width(), doc.size().height()));
     timer.start();
     setFocusPolicy(Qt::ClickFocus);
 }
@@ -37,7 +37,7 @@ void LimeView::resizeEvent(QResizeEvent* event)
 //    if (width != (int) doc.textWidth())
     {
 //        doc.setTextWidth(width);
-        setMinimumSize(QSize(0, doc.size().height()));
+        setMinimumSize(QSize(doc.size().width(), doc.size().height()));
     }
 }
 
