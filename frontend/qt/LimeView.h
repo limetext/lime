@@ -17,6 +17,7 @@ private:
 
     QElapsedTimer timer;
     QTextDocument doc;
+    QPixmap         *mPixmap;
 
     friend class LimeMinimap;
 };

@@ -9,10 +9,12 @@
 #include <QRegExp>
 #include <QWheelEvent>
 #include <QApplication>
+#include <QPixmap>
+#include "MainLoop.h"
 
 static const float minimapsize = 0.25;
 LimeMinimap::LimeMinimap(LimeViewWidget* v)
-: mView(v)
+: mView(v), mPixmap(NULL)
 {
     QTextDocument &origDoc = mView->GetLimeView()->doc;
     QFont f = origDoc.defaultFont();
@@ -20,8 +22,22 @@ LimeMinimap::LimeMinimap(LimeViewWidget* v)
     doc.setDefaultFont(f);
     QString html = origDoc.toHtml().replace(QRegExp("font-\\w+:[^;]+;"), "");
     doc.setHtml(html);
+    mPixmap = new QPixmap(doc.size().width(), doc.size().height());
+    QPainter p(mPixmap);
+    object o = MainLoop::GetInstance()->GetLime();
+    o = o.attr("background_color");
+    o = o();
+    p.fillRect(0, 0, doc.size().width(), doc.size().height(), QColor::fromRgb(extract<int>(o[0]), extract<int>(o[1]), extract<int>(o[2])));
+    doc.drawContents(&p);
+
     QObject::connect(mView->GetScrollArea()->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(repaint()));
     QObject::connect(mView->GetScrollArea()->horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(repaint()));
+}
+
+LimeMinimap::~LimeMinimap()
+{
+    delete mPixmap;
+    mPixmap = NULL;
 }
 
 void LimeMinimap::paintEvent(QPaintEvent * e)
@@ -31,7 +47,12 @@ void LimeMinimap::paintEvent(QPaintEvent * e)
     QScrollBar *hs = sa->horizontalScrollBar();
     LimeView * v = mView->GetLimeView();
     float prog = s->value()/(float)(s->maximum());
-    float prog2 = hs->value()/(float)(hs->maximum());
+    float max = hs->maximum();
+    float prog2 = hs->value();
+    if (max == 0)
+        prog2 = 0.0f;
+    else
+        prog2 /= max;
 
     QPainter painter(this);
     float h = doc.size().height()-height();
@@ -41,9 +62,7 @@ void LimeMinimap::paintEvent(QPaintEvent * e)
     if (w < 0)
         w = 0;
     QRect r = e->rect();
-    painter.translate(0,  -prog*h);
-    r.setRect(0, prog*h, width(), height());
-    doc.drawContents(&painter, r);
+    painter.drawPixmap(0, -prog*h, *mPixmap);
 
     float visHeight = height()*float(doc.size().height())/v->doc.size().height();
     float visWidth = width();

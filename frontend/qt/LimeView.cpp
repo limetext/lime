@@ -4,6 +4,7 @@
 #include <QTextLayout>
 #include <QTextBlock>
 #include <QPainter>
+#include <QPixmap>
 #include <math.h>
 #include "MainLoop.h"
 
@@ -17,7 +18,7 @@ LimeView::LimeView(boost::python::object view) : QWidget(), mView(view)
     const char * str = extract<const char *>(data);
 
     object settings = view.attr("settings")().attr("get");
-    QString font_face = QString::fromAscii(extract<const char*>(boost::python::str(settings("font_face"))));
+    QString font_face = QString::fromLatin1(extract<const char*>(boost::python::str(settings("font_face"))));
     float font_size = extract<float>(settings("font_size"));
     font_face = font_face.replace(" Regular", "");
 
@@ -26,9 +27,16 @@ LimeView::LimeView(boost::python::object view) : QWidget(), mView(view)
     setMinimumSize(QSize(doc.size().width(), doc.size().height()));
     timer.start();
     setFocusPolicy(Qt::ClickFocus);
+
+    mPixmap = new QPixmap(doc.size().width(), doc.size().height());
+    object bg = lime.attr("background_color")();
+    QPainter p(mPixmap);
+    p.fillRect(0, 0, doc.size().width(), doc.size().height(), QColor::fromRgb(extract<int>(bg[0]), extract<int>(bg[1]), extract<int>(bg[2])));
+    doc.drawContents(&p);
 }
 LimeView::~LimeView()
 {
+    delete mPixmap;
 }
 
 void LimeView::resizeEvent(QResizeEvent* event)
@@ -83,21 +91,36 @@ void LimeView::paintEvent(QPaintEvent* ev)
     //if (++count < 2)
     {
         QPainter painter(this);
+#if 1
         doc.drawContents(&painter, ev->rect());
+#else
+        QTextBlock block = doc.begin();
+        int j = 0;
+        int vis = 0;
+        while (block.isValid())
+        {
+            const QTextLayout* layout = block.layout();
+            QPointF pos(layout->position());
+            float height = layout->lineAt(0).height();
+            float off = pos.y()+height;
+
+            if (off > ev->rect().y())
+            {
+                //printf("%128s - %d, %f, %d, %d\n", block.text().toAscii().constData(), j, pos.y(), ev->rect().y(), ev->rect().bottom());
+                layout->draw(&painter, QPointF());
+                vis += 1;
+            }
+            if (off > ev->rect().bottom())
+                break;
+            block = block.next();
+            j++;
+        }
+
+        printf("%d, %d, %d, %d, %d\n", vis, ev->rect().x(), ev->rect().y(), ev->rect().width(), ev->rect().height());
+
+//        painter.drawPixmap(0, 0, doc.size().width(), doc.size().height(), *mPixmap);
+#endif
 //        printf("drawing to: %d, %d, %d, %d\n", ev->rect().left(), ev->rect().top(), ev->rect().width(), ev->rect().height());
-        /*
-        QFont f = doc.defaultFont();
-        qreal old = f.pointSizeF();
-        float minimapsize = 0.1;
-        f.setPointSizeF(old*minimapsize);
-        doc.setDefaultFont(f);
-        QRect r = ev->rect();
-        painter.translate(QPoint(r.right()-r.width()*minimapsize, 0));
-        printf("%d, %d, %d, %d\n", r.left(), r.top(), r.width(), r.height());
-        doc.drawContents(&painter, ev->rect());
-        f.setPointSizeF(old);
-        doc.setDefaultFont(f);
-        */
 
         float brightness = 128 + 127 * sin(timer.elapsed() * 1.0 / (150.0));
         painter.setPen(QColor::fromRgb(0xff, 0xff, 0xff, brightness));

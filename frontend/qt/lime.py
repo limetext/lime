@@ -124,5 +124,10 @@ def create_stylesheet():
 
     return "<style>\n%s</style>" % css
 
+def background_color():
+    col = editor.scheme().settings["default"]["background"]
+    match = re.match(r"#([A-Fa-f0-9]{2})([A-Fa-f0-9]{2})([A-Fa-f0-9]{2})", col)
+    return [int(a, 16) for a in match.groups()]
 
-print cssify_theme()
+
+print background_color()

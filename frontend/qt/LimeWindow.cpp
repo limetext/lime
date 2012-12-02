@@ -71,7 +71,7 @@ LimeWindow::LimeWindow(object pyWindow) : QMainWindow(), mWindow(pyWindow)
     qt->setCornerWidget(new Test(), Qt::TopRightCorner);
 
 
-    printf("final style is:\n%s\n", style.toAscii().constData());
+    printf("final style is:\n%s\n", style.toLocal8Bit().constData());
 
     setCentralWidget(qt);
     mWindow.attr("view_added_event") += view_added;

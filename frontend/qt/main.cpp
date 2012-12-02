@@ -15,6 +15,7 @@ static void new_window(object arg)
 
 int main(int argc, char** argv)
 {
+//    QApplication::setGraphicsSystem("opengl");
     QApplication app(argc, argv);
     Py_Initialize();
     int ret = -1;

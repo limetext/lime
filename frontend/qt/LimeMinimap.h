@@ -9,6 +9,7 @@ class LimeMinimap : public QWidget
 {
 public:
     LimeMinimap(LimeViewWidget*);
+    virtual ~LimeMinimap();
 protected:
     virtual void paintEvent(QPaintEvent * e);
     virtual void resizeEvent(QResizeEvent * e);
@@ -18,6 +19,7 @@ protected:
 private:
     LimeViewWidget* mView;
     QTextDocument doc;
+    QPixmap *mPixmap;
 };
 
 #endif

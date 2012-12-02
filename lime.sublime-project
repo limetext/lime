@@ -18,14 +18,9 @@
     {
         "sublimegdb_workingdir": "${project_path:build}",
         "sublimegdb_commandline": "gdb --interpreter=mi ./lime.app/Contents/MacOS/lime",
+        "sublimeclang_options_script": "python ${home}/code/cmake_options_script.py ${project_path:build}/compile_commands.json",
         "sublimeclang_options":
         [
-            "-I${project_path:backend}",
-            "-F/usr/local/Cellar/qt/4.8.2/lib",
-            "-I/usr/local/Cellar/qt/4.8.2/include/QtGui",
-            "-I/usr/local/Cellar/qt/4.8.2/include/QtOpenGL",
-            "-I/usr/local/Cellar/qt/4.8.2/lib/QtCore.framework/Headers",
-            "-I/System/Library/Frameworks/Python.framework/Headers"
         ]
     }
 }
