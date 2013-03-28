@@ -33,3 +33,7 @@ func (r Region) Size() int {
 func (r Region) Cover(other Region) Region {
 	return Region{min(r.Begin(), other.Begin()), max(r.End(), other.End())}
 }
+
+func (r Region) Clip(other Region) Region {
+	return Region{clamp(other.Begin(), other.End(), r.A), clamp(other.Begin(), other.End(), r.B)}
+}

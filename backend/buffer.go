@@ -1,7 +1,7 @@
 package backend
 
 type Buffer struct {
-	data []rune
+	data string
 }
 
 func (b *Buffer) Size() int {
