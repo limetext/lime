@@ -2,9 +2,14 @@ package backend
 
 import "fmt"
 
-type Region struct {
-	A, B int
-}
+type (
+	Region struct {
+		A, B int
+	}
+	RegionSet struct {
+		Regions []Region
+	}
+)
 
 func (r Region) String() string {
 	return fmt.Sprintf("(%d, %d)", r.A, r.B)
@@ -36,4 +41,15 @@ func (r Region) Cover(other Region) Region {
 
 func (r Region) Clip(other Region) Region {
 	return Region{clamp(other.Begin(), other.End(), r.A), clamp(other.Begin(), other.End(), r.B)}
+}
+
+func (r *RegionSet) adjust(position, delta int) {
+	for i := range r.Regions {
+		if r.Regions[i].A > position {
+			r.Regions[i].A += delta
+		}
+		if r.Regions[i].B > position {
+			r.Regions[i].B += delta
+		}
+	}
 }

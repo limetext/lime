@@ -11,7 +11,7 @@ func TestActions(t *testing.T) {
 	}
 	const init = "hello world"
 
-	buffer := Buffer{init}
+	buffer := Buffer{data: init}
 	tests := []Test{
 		{NewInsertAction(&buffer, 0, "hello"), "hellohello world"},
 		{NewInsertAction(&buffer, 1, "hello"), "hhelloello world"},

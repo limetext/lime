@@ -36,11 +36,11 @@ func (ca *compositeAction) Undo() {
 }
 
 func (ia *insertAction) Apply() {
-	ia.buffer.data = ia.buffer.data[0:ia.point] + ia.value + ia.buffer.data[ia.point:len(ia.buffer.data)]
+	ia.buffer.Insert(ia.point, ia.value)
 }
 
 func (ia *insertAction) Undo() {
-	ia.buffer.data = ia.buffer.data[0:ia.point] + ia.buffer.data[ia.point+len(ia.value):len(ia.buffer.data)]
+	ia.buffer.Erase(ia.point, len(ia.value))
 }
 
 func (ea *eraseAction) Apply() {
