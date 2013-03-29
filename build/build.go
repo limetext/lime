@@ -100,8 +100,7 @@ func main() {
 	} else if len(b) != 0 {
 		fmt.Println(string(b))
 	}
-
-	buildPeg("../backend/json/json.peg", "Spacing,Comment,Value,QuotedText,KeyValuePairs,LineComment,BlockComment,Values,JsonFile", "testdata/Default (OSX).sublime-keymap")
+	buildPeg("../backend/json/json.peg", "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment", "testdata/Default (OSX).sublime-keymap")
 	tests := []string{"test"}
 	if verbose {
 		tests = append(tests, "-v")

@@ -1,7 +1,7 @@
-# Sublime Text allows "//" and "/* */" style comments, so isn't "pure" json
+# Sublime Text allows "//" and "/* */" style comments as well as extra commas, so isn't "pure" json
 
 JsonFile       <-    Values EndOfFile?
-Values         <-    Spacing? Value Spacing? (',' Spacing? Value Spacing?)*
+Values         <-    Spacing? Value Spacing? (',' Spacing? Value Spacing?)* JunkComma
 Value          <-    (Dictionary / Array / QuotedText / Float / Integer / Boolean / Null)
 Null           <-    "null"
 Dictionary     <-    '{' KeyValuePairs* '}'
@@ -16,6 +16,7 @@ Boolean        <-    "true" / "false"
 Spacing        <-    (Comment / [ \t\n\r])+
 EndOfFile      <-    !.
 
+JunkComma      <-    (',' Spacing)?
 Comment        <-    LineComment / BlockComment
 LineComment    <-    "//" (![\n\r] .)* [\n\r]
 BlockComment   <-    "/*" (!"*/" .)* "*/"
