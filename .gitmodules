@@ -1,0 +1,3 @@
+[submodule "3rdparty/bundles/c.tmbundle"]
+	path = 3rdparty/bundles/c.tmbundle
+	url = git://github.com/textmate/c.tmbundle

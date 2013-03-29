@@ -20,6 +20,10 @@ func (v *View) setBuffer(b *Buffer) {
 	b.callbacks = append(b.callbacks, v.selection.adjust)
 }
 
+func (v *View) Sel() *RegionSet {
+	return &v.selection
+}
+
 func (v *View) Window() *Window {
 	return v.window
 }

@@ -14,5 +14,6 @@ func (w *Window) NewView() *View {
 	v := &w.views[len(w.views)-1]
 	v.setBuffer(&Buffer{})
 	v.selection.Regions = []Region{{0, 0}}
+	OnNew.Call(v)
 	return v
 }

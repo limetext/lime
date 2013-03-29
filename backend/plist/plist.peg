@@ -1,0 +1,15 @@
+PlistFile      <-    "<?xml" (!"?>" .)+ "?>" Spacing* "<!DOCTYPE" (!'>' .)+ '>' Spacing* Plist Spacing* EndOfFile?
+Plist          <-    "<plist version=\"1.0\">" Values "</plist>"
+
+Dictionary     <-    "<dict>" KeyValuePair+ "</dict>"
+KeyValuePair   <-    Spacing* KeyTag Spacing* Value Spacing*
+KeyTag         <-    "<key>" Key "</key>"
+Key            <-    (!'<' .)*
+StringTag      <-    "<string>" String "</string>"
+String         <-    (!'<' .)*
+Value          <-    Array / StringTag / Dictionary
+Values         <-    (Spacing* Value Spacing*)*
+Array          <-    "<array>" Values "</array>"
+
+Spacing        <-    [ \t\n\r]+
+EndOfFile      <-    !.

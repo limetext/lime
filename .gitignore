@@ -2,5 +2,7 @@
 *.sublime-project
 backend/json/json.go
 backend/json/json_test.go
+backend/plist/plist.go
+backend/plist/plist_test.go
 build/*
 !build/build.go

@@ -11,7 +11,7 @@ import (
 	"runtime"
 )
 
-var ignore = regexp.MustCompile(`\.git|build|testdata`)
+var ignore = regexp.MustCompile(`\.git|build|testdata|3rdparty`)
 var verbose bool
 
 func adddirs(pkg, path string, dirs []string) []string {
@@ -54,8 +54,10 @@ func copy(a, b string) {
 	}
 }
 
-func buildPeg(pegFile, ignore, testfile string) {
-	c := exec.Command("./parser_exe", "-peg="+pegFile, "-notest", "-ignore", ignore, "-testfile", testfile)
+func buildPeg(pegFile, ignore, testfile string, extra ...string) {
+	args := []string{"-peg=" + pegFile, "-notest", "-ignore", ignore, "-testfile", testfile}
+	args = append(args, extra...)
+	c := exec.Command("./parser_exe", args...)
 	if verbose {
 		fmt.Println(c.Args)
 	}
@@ -101,6 +103,7 @@ func main() {
 		fmt.Println(string(b))
 	}
 	buildPeg("../backend/json/json.peg", "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment", "testdata/Default (OSX).sublime-keymap")
+	buildPeg("../backend/plist/plist.peg", "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist", "../../3rdparty/bundles/c.tmbundle/Syntaxes/C.plist", "-dumptree")
 	tests := []string{"test"}
 	if verbose {
 		tests = append(tests, "-v")
