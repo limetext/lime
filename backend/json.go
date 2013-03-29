@@ -3,7 +3,6 @@ package backend
 import (
 	sj "encoding/json"
 	"errors"
-	"fmt"
 	"lime/backend/json"
 )
 
@@ -31,7 +30,6 @@ func LoadJSON(data []byte, intf interface{}) error {
 	for i := range v.selection.Regions {
 		v.Erase(v.selection.Regions[i])
 	}
-	fmt.Println(b.data)
 	// TODO(q): Map any line/column errors to the actual file's line/column
 	return sj.Unmarshal([]byte(b.data), intf)
 }

@@ -1,12 +1,16 @@
 package backend
 
 import (
+	"bytes"
 	"code.google.com/p/log4go"
+	"encoding/json"
+	"fmt"
+	"sort"
 	"strings"
 )
 
 const (
-	Left rune = 0x2190 + iota
+	Left Key = 0x2190 + iota
 	Up
 	Right
 	Down
@@ -20,7 +24,7 @@ const (
 
 const (
 	// map to dingbats...
-	F1 rune = 0x2701 + iota
+	F1 Key = 0x2701 + iota
 	F2
 	F3
 	F4
@@ -40,7 +44,7 @@ const (
 	Break
 )
 
-var keylut = map[string]rune{
+var keylut = map[string]Key{
 	"up":            Up,
 	"left":          Left,
 	"right":         Right,
@@ -78,9 +82,47 @@ var keylut = map[string]rune{
 	"equals":        '=',
 }
 
+var rkeylut = map[Key]string{
+	Up:        "up",
+	Left:      "left",
+	Right:     "right",
+	Down:      "down",
+	Enter:     "enter",
+	'\t':      "tab",
+	Escape:    "escape",
+	' ':       "space",
+	F1:        "f1",
+	F2:        "f2",
+	F3:        "f3",
+	F4:        "f4",
+	F5:        "f5",
+	F6:        "f6",
+	F7:        "f7",
+	F8:        "f8",
+	F9:        "f9",
+	F10:       "f10",
+	F11:       "f11",
+	F12:       "f12",
+	Backspace: "backspace",
+	Delete:    "delete",
+	Insert:    "insert",
+	PageUp:    "pageup",
+	PageDown:  "pagedown",
+	Home:      "home",
+	End:       "end",
+	Break:     "break",
+	'/':       "forward_slash",
+	'`':       "backquote",
+	'"':       "\\\"",
+	'+':       "plus",
+	'-':       "minus",
+	'=':       "equals",
+}
+
 type (
+	Key      rune
 	KeyPress struct {
-		Key                     rune
+		Key                     Key
 		Shift, Super, Alt, Ctrl bool
 	}
 
@@ -96,7 +138,29 @@ type (
 		Args    map[string]interface{}
 		Context []KeyContext
 	}
+
+	KeyBindings struct {
+		Bindings []*KeyBinding
+		keyOff   int
+	}
 )
+
+func (k KeyPress) Index() (ret int) {
+	ret = int(k.Key)
+	if k.Shift {
+		ret += 1 << 30
+	}
+	if k.Alt {
+		ret += 1 << 29
+	}
+	if k.Ctrl {
+		ret += 1 << 28
+	}
+	if k.Super {
+		ret += 1 << 27
+	}
+	return
+}
 
 func (k *KeyPress) UnmarshalJSON(d []byte) error {
 	combo := strings.Split(string(d[1:len(d)-1]), "+")
@@ -115,7 +179,7 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 			if v, ok := keylut[lower]; ok {
 				k.Key = v
 			} else {
-				r := []rune(lower)
+				r := []Key(lower)
 				if len(r) != 1 {
 					log4go.Warn("Unknown key value with %d bytes: %s", len(c), c)
 					return nil
@@ -128,4 +192,78 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 		}
 	}
 	return nil
+}
+
+func (k *KeyBindings) Len() int {
+	return len(k.Bindings)
+}
+
+func (k *KeyBindings) Less(i, j int) bool {
+	return k.Bindings[i].Keys[k.keyOff].Index() < k.Bindings[j].Keys[k.keyOff].Index()
+}
+
+func (k *KeyBindings) Swap(i, j int) {
+	k.Bindings[i], k.Bindings[j] = k.Bindings[j], k.Bindings[i]
+}
+
+func (k *KeyBindings) DropLessEqualKeys(count int) {
+	for i := 0; i < len(k.Bindings); i++ {
+		if len(k.Bindings[i].Keys) <= count {
+			k.Bindings[i] = k.Bindings[len(k.Bindings)]
+			k.Bindings = k.Bindings[:len(k.Bindings)-1]
+		}
+	}
+	sort.Sort(k)
+}
+
+func (k *KeyBindings) UnmarshalJSON(d []byte) error {
+	if err := json.Unmarshal(d, &k.Bindings); err != nil {
+		return err
+	}
+	k.DropLessEqualKeys(0)
+	return nil
+}
+
+func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
+	ret.keyOff = k.keyOff + 1
+	ki := kp.Index()
+	idx := sort.Search(k.Len(), func(i int) bool {
+		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
+	})
+
+	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
+		ret.Bindings = append(ret.Bindings, k.Bindings[i])
+	}
+	return
+}
+
+func (k Key) String() string {
+	if v, ok := rkeylut[k]; ok {
+		return v
+	}
+	return string(k)
+}
+func (k KeyPress) String() (ret string) {
+	if k.Super {
+		ret += "super+"
+	}
+	if k.Ctrl {
+		ret += "ctrl+"
+	}
+	if k.Alt {
+		ret += "alt+"
+	}
+	if k.Shift {
+		ret += "shift+"
+	}
+	ret += fmt.Sprintf("%s", k.Key)
+	return
+}
+
+func (k KeyBindings) String() string {
+	var buf bytes.Buffer
+	for _, b := range k.Bindings {
+		buf.WriteString(fmt.Sprintf("%+v\n", b))
+	}
+	return buf.String()
 }

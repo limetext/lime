@@ -16,7 +16,7 @@ func TestJson(t *testing.T) {
 		if d, err := ioutil.ReadFile(fn); err != nil {
 			t.Logf("Couldn't load file %s: %s", fn, err)
 		} else {
-			var bindings []KeyBinding
+			var bindings KeyBindings
 			if err := LoadJSON(d, &bindings); err != nil {
 				t.Error(err)
 			} else {
