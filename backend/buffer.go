@@ -2,11 +2,16 @@ package backend
 
 type (
 	Buffer struct {
+		filename  string
 		data      string
 		callbacks []BufferChangedCallback
 	}
 	BufferChangedCallback func(position, delta int)
 )
+
+func (b *Buffer) Name() string {
+	return b.filename
+}
 
 func (b *Buffer) Size() int {
 	return len(b.data)

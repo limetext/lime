@@ -3,7 +3,7 @@ package backend
 type (
 	View struct {
 		HasSettings
-		filename  string
+		name      string
 		window    *Window
 		buffer    *Buffer
 		selection RegionSet
@@ -29,8 +29,27 @@ func (v *View) Buffer() *Buffer {
 }
 
 func (v *View) Insert(point int, value string) {
-	ia := NewInsertAction(v.buffer, point, value)
-	v.undoStack.Apply(ia)
+	v.undoStack.Apply(NewInsertAction(v.buffer, point, value))
+}
+
+func (v *View) Erase(r Region) {
+	v.undoStack.Apply(NewEraseAction(v.buffer, r))
+}
+
+func (v *View) Replace(r Region, value string) {
+	v.undoStack.Apply(NewReplaceAction(v.buffer, r, value))
+}
+
+func (v *View) Apply(a Action) {
+	v.undoStack.Apply(a)
+}
+
+func (v *View) Undo() {
+	v.undoStack.Undo()
+}
+
+func (v *View) Redo() {
+	v.undoStack.Redo()
 }
 
 func (us *undoStack) Apply(a Action) {

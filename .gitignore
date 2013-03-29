@@ -1,0 +1,6 @@
+*.sublime-workspace
+*.sublime-project
+backend/json/json.go
+backend/json/json_test.go
+build/*
+!build/build.go
