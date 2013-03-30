@@ -25,15 +25,12 @@ func TestTmLanguage(t *testing.T) {
 	files := []string{
 		"../3rdparty/bundles/property-list.tmbundle/Syntaxes/Property List (XML).tmLanguage",
 		"../3rdparty/bundles/xml.tmbundle/Syntaxes/XML.plist",
+		"../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage",
 	}
-	d0 := ""
-	for i, fn := range files {
+	for _, fn := range files {
 		if d, err := ioutil.ReadFile(fn); err != nil {
-			t.Logf("Couldn't load file %s: %s", fn, err)
+			t.Errorf("Couldn't load file %s: %s", fn, err)
 		} else {
-			if i == 0 {
-				d0 = string(d)
-			}
 			var l textmate.Language
 			if err := LoadPlist(d, &l); err != nil {
 				t.Fatal(err)
@@ -43,17 +40,43 @@ func TestTmLanguage(t *testing.T) {
 		}
 	}
 	textmate.Provider = t2
-	lp := textmate.LanguageParser{Language: t2["text.xml.plist"]}
 
-	lp.Parse(d0)
+	type test struct {
+		in  string
+		out string
+		syn string
+	}
+	tests := []test{
+		{
+			"../3rdparty/bundles/property-list.tmbundle/Syntaxes/Property List (XML).tmLanguage",
+			"testdata/plist.tmlang",
+			"text.xml.plist",
+		},
+		{
+			"textmate_language_test.go",
+			"testdata/go.tmlang",
+			"source.go",
+		},
+	}
+	for _, t3 := range tests {
+		lp := textmate.LanguageParser{Language: t2[t3.syn]}
 
-	const expfile = "testdata/plist.tmlang"
-	str := fmt.Sprintf("%s", lp.RootNode())
-	if d, err := ioutil.ReadFile(expfile); err != nil {
-		if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {
-			t.Error(err)
+		var d0 string
+		if d, err := ioutil.ReadFile(t3.in); err != nil {
+			t.Errorf("Couldn't load file %s: %s", t3.in, err)
+			continue
+		} else {
+			d0 = string(d)
 		}
-	} else if diff := util.Diff(str, string(d)); diff != "" {
-		t.Error(diff)
+		lp.Parse(d0)
+
+		str := fmt.Sprintf("%s", lp.RootNode())
+		if d, err := ioutil.ReadFile(t3.out); err != nil {
+			if err := ioutil.WriteFile(t3.out, []byte(str), 0644); err != nil {
+				t.Error(err)
+			}
+		} else if diff := util.Diff(str, string(d)); diff != "" {
+			t.Error(diff)
+		}
 	}
 }

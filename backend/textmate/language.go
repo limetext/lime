@@ -134,6 +134,8 @@ func (r *RootPattern) UnmarshalJSON(data []byte) error {
 func (r *Regex) UnmarshalJSON(data []byte) error {
 	str := string(data[1 : len(data)-1])
 	str = strings.Replace(str, "\\\\", "\\", -1)
+	str = strings.Replace(str, "\\n", "\n", -1)
+	str = strings.Replace(str, "\\t", "\t", -1)
 	if re, err := rubex.Compile(str); err != nil {
 		log4go.Warn("Couldn't compile language pattern %s: %s", str, err)
 	} else {
