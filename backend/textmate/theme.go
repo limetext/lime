@@ -1,6 +1,7 @@
 package textmate
 
 import (
+	"code.google.com/p/log4go"
 	"encoding/json"
 	"fmt"
 	"image/color"
@@ -40,7 +41,10 @@ func (c Color) String() string {
 }
 
 func (c *Color) UnmarshalJSON(data []byte) error {
-	i64, _ := strconv.ParseInt(string(data[2:len(data)-1]), 16, 32)
+	i64, err := strconv.ParseInt(string(data[2:len(data)-1]), 16, 32)
+	if err != nil {
+		log4go.Warn("Couldn't properly load color from %s: %s", string(data), err)
+	}
 	c.A = uint8((i64 >> 24) & 0xff)
 	c.R = uint8((i64 >> 16) & 0xff)
 	c.G = uint8((i64 >> 8) & 0xff)

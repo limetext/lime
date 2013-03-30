@@ -7,3 +7,6 @@
 [submodule "3rdparty/bundles/monokai.tmbundle"]
 	path = 3rdparty/bundles/monokai.tmbundle
 	url = git://github.com/textmate/monokai.tmbundle
+[submodule "3rdparty/bundles/xml.tmbundle"]
+	path = 3rdparty/bundles/xml.tmbundle
+	url = git://github.com/textmate/xml.tmbundle.git

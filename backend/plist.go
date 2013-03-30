@@ -14,10 +14,23 @@ func plistconv(buf *bytes.Buffer, node *parser.Node) error {
 	case "Key":
 		buf.WriteString("\"" + node.Data() + "\": ")
 	case "String":
-		n := strings.Replace(node.Data(), "\\", "\\\\", -1)
+		hacks := map[string]string{
+			"\\\\": ";;--;;HACK;;---;;",
+		}
+		n := node.Data()
+		for k, v := range hacks {
+			n = strings.Replace(n, k, v, -1)
+		}
+		n = strings.Replace(n, "\\", "\\\\", -1)
 		n = strings.Replace(n, "\"", "\\\"", -1)
 		n = strings.Replace(n, "\n", "\\n", -1)
 		n = strings.Replace(n, "\t", "\\t", -1)
+		n = strings.Replace(n, "&gt;", ">", -1)
+		n = strings.Replace(n, "&lt;", "<", -1)
+
+		for k, v := range hacks {
+			n = strings.Replace(n, v, k, -1)
+		}
 		buf.WriteString("\"" + n + "\"")
 	case "Dictionary":
 		buf.WriteString("{\n\t")
