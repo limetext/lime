@@ -2,6 +2,8 @@ package backend
 
 import (
 	"errors"
+	"fmt"
+	"github.com/quarnster/completion/util"
 	"io/ioutil"
 	"lime/backend/textmate"
 	"testing"
@@ -40,32 +42,18 @@ func TestTmLanguage(t *testing.T) {
 			}
 		}
 	}
-	d0 = `
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>fileTypes</key>
-	<array>
-		<string>xml</string>
-		<string>xsd</string>
-		<string>tld</string>
-		<string>jsp</string>
-		<string>pt</string>
-		<string>cpt</string>
-		<string>dtml</string>
-		<string>rss</string>
-		<string>opml</string>
-	</array>
-	<key>keyEquivalent</key>
-	<string>^~X</string>
-	<key>name</key>
-	<string>XML</string>
-</dict>
-</plist>
-`
 	textmate.Provider = t2
 	lp := textmate.LanguageParser{Language: t2["text.xml.plist"]}
 
-	t.Logf("parse result: %v", lp.Parse(d0))
+	lp.Parse(d0)
+
+	const expfile = "testdata/plist.tmlang"
+	str := fmt.Sprintf("%s", lp.RootNode())
+	if d, err := ioutil.ReadFile(expfile); err != nil {
+		if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {
+			t.Error(err)
+		}
+	} else if diff := util.Diff(str, string(d)); diff != "" {
+		t.Error(diff)
+	}
 }

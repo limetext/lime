@@ -356,6 +356,10 @@ func (d *dp) Data(a, b int) string {
 	return d.data[a:b]
 }
 
+func (lp *LanguageParser) RootNode() *parser.Node {
+	return &lp.root
+}
+
 func (lp *LanguageParser) Parse(data string) bool {
 	d := &dp{data}
 	lp.root = parser.Node{P: d}
@@ -372,6 +376,5 @@ func (lp *LanguageParser) Parse(data string) bool {
 		}
 	}
 	lp.root.UpdateRange()
-	fmt.Println(lp.root)
 	return true
 }
