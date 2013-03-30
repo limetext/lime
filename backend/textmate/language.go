@@ -1,4 +1,4 @@
-package backend
+package textmate
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 type (
 	Regex string
 
-	Syntax struct {
+	Language struct {
 		FileTypes      []string
 		FirstLineMatch string
 		Patterns       []Pattern
@@ -38,7 +38,7 @@ func (p Pattern) String() string {
 	return fmt.Sprintf("%-60s %s", p.Name, p.Match)
 }
 
-func (s Syntax) String() (ret string) {
+func (s Language) String() (ret string) {
 	ret = s.ScopeName + "\n"
 	for i := range s.Patterns {
 		ret += fmt.Sprintf("\t%s\n", s.Patterns[i])

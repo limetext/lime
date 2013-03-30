@@ -6,3 +6,4 @@ backend/plist/plist.go
 backend/plist/plist_test.go
 build/*
 !build/build.go
+out.txt

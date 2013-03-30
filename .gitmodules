@@ -1,3 +1,9 @@
 [submodule "3rdparty/bundles/c.tmbundle"]
 	path = 3rdparty/bundles/c.tmbundle
 	url = git://github.com/textmate/c.tmbundle
+[submodule "3rdparty/bundles/property-list.tmbundle"]
+	path = 3rdparty/bundles/property-list.tmbundle
+	url = git://github.com/textmate/property-list.tmbundle
+[submodule "3rdparty/bundles/monokai.tmbundle"]
+	path = 3rdparty/bundles/monokai.tmbundle
+	url = git://github.com/textmate/monokai.tmbundle
