@@ -14,7 +14,10 @@ const maxiter = 10000
 
 type (
 	Regex struct {
-		re *rubex.Regexp
+		re        *rubex.Regexp
+		lastIndex int
+		lastFound int
+		lastData  string
 	}
 
 	Language struct {
@@ -145,6 +148,31 @@ func (m MatchObject) fix(add int) {
 	}
 }
 
+func (r *Regex) Find(data string, pos int) MatchObject {
+	if r.lastData != data || r.lastIndex > pos {
+		r.lastData = data
+		r.lastFound = 0
+	}
+	r.lastIndex = pos
+	for r.lastFound < len(data) {
+		ret := r.re.FindStringSubmatchIndex(data[r.lastFound:])
+		if ret == nil {
+			break
+		} else if (ret[0] + r.lastFound) < pos {
+			if ret[0] == 0 {
+				r.lastFound++
+			} else {
+				r.lastFound += ret[0]
+			}
+			continue
+		}
+		mo := MatchObject(ret)
+		mo.fix(r.lastFound)
+		return mo
+	}
+	return nil
+}
+
 func (p *Pattern) FirstMatch(data string, pos int) (pat *Pattern, ret MatchObject) {
 	startIdx := -1
 	for i := 0; i < len(p.cachedPatterns); {
@@ -187,11 +215,9 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 	p.misses++
 
 	if p.Match.re != nil {
-		pat, ret = p, p.Match.re.FindStringSubmatchIndex(data[pos:])
-		ret.fix(pos)
+		pat, ret = p, p.Match.Find(data, pos)
 	} else if p.Begin.re != nil {
-		pat, ret = p, p.Begin.re.FindStringSubmatchIndex(data[pos:])
-		ret.fix(pos)
+		pat, ret = p, p.Begin.Find(data, pos)
 	} else if p.Include != "" {
 		if z := p.Include[0]; z == '#' {
 			key := p.Include[1:]
@@ -245,6 +271,9 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 	for k, v := range cap {
 		i64, err := strconv.ParseInt(k, 10, 32)
 		if i := int(i64); err == nil && i < len(parents) {
+			if ranges[i].Start == -1 {
+				continue
+			}
 			child := &parser.Node{Name: v.Name, Range: ranges[i], P: d}
 			parents[i] = child
 			var p *parser.Node
@@ -258,7 +287,6 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 }
 
 func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo MatchObject) *parser.Node {
-	fmt.Println("skipping: ", data[pos:mo[0]], "consuming:", data[mo[0]:mo[1]])
 	ret := parser.Node{Name: p.Name, Range: parser.Range{mo[0], mo[1]}, P: d}
 	if p.Match.re != nil {
 		p.CreateCaptureNodes(data, pos, d, mo, &ret, p.Captures)
@@ -275,9 +303,7 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 				i, end int
 			)
 			for i, end = ret.Range.End, len(data); i < len(data); {
-				endmatch := MatchObject(p.End.re.FindStringSubmatchIndex(data[i:]))
-				endmatch.fix(i)
-				//fmt.Println(i, end, endmatch, p.End.re)
+				endmatch := p.End.Find(data, i)
 				if endmatch != nil {
 					end = endmatch[1]
 				} else {
@@ -286,15 +312,13 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 						if e2 := strings.IndexRune(data[i:], '\n'); e2 != -1 {
 							end = i + e2
 						}
-						//	fmt.Println("break 1")
 						break
 					} else {
 						end = i
-						//fmt.Println("break 2")
 						break
 					}
 				}
-				if (endmatch == nil || (endmatch != nil && endmatch[0] != i+1)) && len(p.cachedPatterns) > 0 {
+				if (endmatch == nil || (endmatch != nil && endmatch[0] != i)) && len(p.cachedPatterns) > 0 {
 					// Might be more recursive patterns to apply BEFORE the end is reached
 					pattern2, match2 := p.FirstMatch(data, i)
 					if match2 != nil &&
@@ -309,9 +333,12 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 					}
 				}
 				if endmatch != nil {
-					p.CreateCaptureNodes(data, i, d, endmatch, &ret, p.EndCaptures)
+					if len(p.EndCaptures) > 0 {
+						p.CreateCaptureNodes(data, i, d, endmatch, &ret, p.EndCaptures)
+					} else {
+						p.CreateCaptureNodes(data, i, d, endmatch, &ret, p.Captures)
+					}
 				}
-				//fmt.Println("break 3")
 				break
 			}
 			ret.Range.End = end
@@ -334,7 +361,6 @@ func (lp *LanguageParser) Parse(data string) bool {
 	lp.root = parser.Node{P: d}
 	iter := maxiter
 	for i := 0; i < len(data) && iter > 0; iter-- {
-		fmt.Println(i, len(data))
 		pat, ret := lp.Language.RootPattern.Cache(data, i)
 		if ret == nil {
 			break
