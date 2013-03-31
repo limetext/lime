@@ -94,7 +94,10 @@ Include: %s
 	return
 }
 
-func (r *Regex) String() string {
+func (r Regex) String() string {
+	if r.re == nil {
+		return "nil"
+	}
 	return r.re.String()
 }
 
@@ -146,7 +149,9 @@ func (r *Regex) UnmarshalJSON(data []byte) error {
 
 func (m MatchObject) fix(add int) {
 	for i := range m {
-		m[i] += add
+		if m[i] != -1 {
+			m[i] += add
+		}
 	}
 }
 
@@ -179,7 +184,7 @@ func (p *Pattern) FirstMatch(data string, pos int) (pat *Pattern, ret MatchObjec
 	startIdx := -1
 	for i := 0; i < len(p.cachedPatterns); {
 		ip, im := p.cachedPatterns[i].Cache(data, pos)
-		if im != nil {
+		if im != nil && im[0] != im[1] {
 			if startIdx < 0 || startIdx > im[0] {
 				startIdx, pat, ret = im[0], ip, im
 				// This match is right at the start, we're not going to find a better pattern than this,

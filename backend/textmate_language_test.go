@@ -75,7 +75,7 @@ func TestTmLanguage(t *testing.T) {
 			if err := ioutil.WriteFile(t3.out, []byte(str), 0644); err != nil {
 				t.Error(err)
 			}
-		} else if diff := util.Diff(str, string(d)); diff != "" {
+		} else if diff := util.Diff(string(d), str); diff != "" {
 			t.Error(diff)
 		}
 	}
