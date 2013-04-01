@@ -159,19 +159,23 @@ func generateWrapper(t reflect.Type, canCreate bool) (ret string) {
 			for j := 1; j <= in; j++ {
 				ret += fmt.Sprintf("\n\t\targ%d %s", j, m.Type.In(j))
 			}
+			r := ""
+			if out > 0 {
+				r = "nil, "
+			}
 			ret += "\n\t)"
 			ret += fmt.Sprintf(`
 					if tu.Size() != %d {
-						return nil, fmt.Errorf("Expected %d arguments but got %%d", tu.Size())
-					}`, in, in)
+						return %sfmt.Errorf("Expected %d arguments but got %%d", tu.Size())
+					}`, in, r, in)
 
 			for j := 1; j <= in; j++ {
 				name := fmt.Sprintf("arg%d", j)
 				msg := fmt.Sprintf("%s.%s() %s", t, m.Name, name)
 				ret += fmt.Sprintf(`
 					if v, err := tu.GetItem(%d); err != nil {
-						return nil, err
-					} else {%s}`, j-1, pytogoconv("v", name, msg, out > 0, m.Type.In(j)))
+						return %serr
+					} else {%s}`, j-1, r, pytogoconv("v", name, msg, out > 0, m.Type.In(j)))
 			}
 		}
 
