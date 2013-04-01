@@ -224,6 +224,14 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
+func (k *KeyBindings) Merge(other *KeyBindings) {
+	// TODO: needs to take care of "overloaded" keybindings
+	for _, b := range other.Bindings {
+		k.Bindings = append(k.Bindings, b)
+	}
+	k.DropLessEqualKeys(0)
+}
+
 func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	ret.keyOff = k.keyOff + 1
 	ki := kp.Index()

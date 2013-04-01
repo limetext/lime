@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"code.google.com/p/log4go"
 	"fmt"
 )
 
@@ -24,19 +25,14 @@ type (
 		ApplicationCommands appcmd
 		TextCommands        textcmd
 		WindowCommands      wndcmd
+		log                 bool
 	}
 )
 
-var ch *commandHandler
-
-func GetCommandHandler() CommandHandler {
-	if ch == nil {
-		ch = &commandHandler{make(appcmd), make(textcmd), make(wndcmd)}
-	}
-	return ch
-}
-
 func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) error {
+	if ch.log {
+		log4go.Debug("RunWindowCommand: %s %v", name, args)
+	}
 	if wc, ok := ch.WindowCommands[name]; ok {
 		return wc.Run(wnd, args)
 	} else {
@@ -45,6 +41,10 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 }
 
 func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) error {
+	if ch.log {
+		log4go.Debug("RunTextCommand: %s %v", name, args)
+	}
+
 	if tc, ok := ch.TextCommands[name]; ok {
 		e := view.BeginEdit()
 		err := tc.Run(view, e, args)
@@ -56,6 +56,10 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 }
 
 func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
+	if ch.log {
+		log4go.Debug("RunTextCommand: %s %v", name, args)
+	}
+
 	if ac, ok := ch.ApplicationCommands[name]; ok {
 		return ac.Run(args)
 	} else {
