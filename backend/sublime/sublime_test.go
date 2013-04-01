@@ -2,6 +2,7 @@ package sublime
 
 import (
 	"github.com/qur/gopy/lib"
+	"lime/backend"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +10,17 @@ import (
 
 func TestSublime(t *testing.T) {
 	py.AddToPath("testdata")
+	subl, err := py.Import("sublime")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if w, err := _windowClass.Alloc(1); err != nil {
+		t.Fatal(err)
+	} else {
+		(w.(*Window)).data = &backend.Window{}
+		subl.AddObject("test_window", w)
+	}
 	if dir, err := os.Open("testdata"); err != nil {
 		t.Error(err)
 	} else if files, err := dir.Readdirnames(0); err != nil {

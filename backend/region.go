@@ -7,7 +7,7 @@ type (
 		A, B int
 	}
 	RegionSet struct {
-		Regions []Region
+		regions []Region
 	}
 )
 
@@ -44,12 +44,21 @@ func (r Region) Clip(other Region) Region {
 }
 
 func (r *RegionSet) adjust(position, delta int) {
-	for i := range r.Regions {
-		if r.Regions[i].A > position {
-			r.Regions[i].A += delta
+	for i := range r.regions {
+		if r.regions[i].A > position {
+			r.regions[i].A += delta
 		}
-		if r.Regions[i].B > position {
-			r.Regions[i].B += delta
+		if r.regions[i].B > position {
+			r.regions[i].B += delta
 		}
 	}
+}
+
+func (r *RegionSet) Add(r2 Region) {
+	// TODO: should be kept in sorted order + merged with any intersecting regions
+	r.regions = append(r.regions, r2)
+}
+
+func (r *RegionSet) Clear() {
+	r.regions = r.regions[0:0]
 }

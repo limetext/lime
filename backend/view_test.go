@@ -19,8 +19,8 @@ func TestView(t *testing.T) {
 		},
 	}
 	for _, ins := range "4321" {
-		for i := range v.selection.Regions {
-			v.Insert(v.selection.Regions[i].Begin(), string(ins))
+		for i := range v.selection.regions {
+			v.Insert(v.selection.regions[i].Begin(), string(ins))
 		}
 	}
 
@@ -40,8 +40,8 @@ func TestView(t *testing.T) {
 		t.Error(v.buffer.data)
 	}
 	for _, ins := range []string{"world", "hello "} {
-		for i := range v.selection.Regions {
-			v.Insert(v.selection.Regions[i].Begin(), ins)
+		for i := range v.selection.regions {
+			v.Insert(v.selection.regions[i].Begin(), ins)
 		}
 	}
 

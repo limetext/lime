@@ -3,6 +3,7 @@ package backend
 type (
 	View struct {
 		HasSettings
+		HasId
 		name      string
 		window    *Window
 		buffer    *Buffer

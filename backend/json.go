@@ -21,14 +21,14 @@ func LoadJSON(data []byte, intf interface{}) error {
 		for _, child := range root.Children {
 			switch child.Name {
 			case "BlockComment", "LineComment", "EndOfFile", "JunkComma":
-				set.Regions = append(set.Regions, Region{child.Range.Start, child.Range.End})
+				set.Add(Region{child.Range.Start, child.Range.End})
 			default:
 				return errors.New("Unhandled node: " + child.Name)
 			}
 		}
 	}
-	for i := range v.selection.Regions {
-		v.Erase(v.selection.Regions[i])
+	for i := range v.selection.regions {
+		v.Erase(v.selection.regions[i])
 	}
 	// TODO(q): Map any line/column errors to the actual file's line/column
 	return sj.Unmarshal([]byte(b.data), intf)

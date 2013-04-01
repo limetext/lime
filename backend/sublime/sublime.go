@@ -13,11 +13,23 @@ func init() {
 		log.Fatal(err)
 	}
 
-	c, err := _regionClass.Create()
-	if err != nil {
-		log.Fatal(err)
+	type class struct {
+		name string
+		c    *py.Class
 	}
-	if err := m.AddObject("Region", c); err != nil {
-		log.Fatal(err)
+	classes := []class{
+		{"Region", &_regionClass},
+		{"RegionSet", &_region_setClass},
+		{"View", &_viewClass},
+		{"Window", &_windowClass},
+	}
+	for _, cl := range classes {
+		c, err := cl.c.Create()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := m.AddObject(cl.name, c); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
