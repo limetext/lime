@@ -27,9 +27,11 @@ func LoadJSON(data []byte, intf interface{}) error {
 			}
 		}
 	}
+	edit := v.BeginEdit()
 	for i := range v.selection.regions {
-		v.Erase(v.selection.regions[i])
+		v.Erase(edit, v.selection.regions[i])
 	}
+	v.EndEdit(edit)
 	// TODO(q): Map any line/column errors to the actual file's line/column
 	return sj.Unmarshal([]byte(b.data), intf)
 }

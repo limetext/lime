@@ -2,7 +2,6 @@ package backend
 
 type (
 	Args    map[string]interface{}
-	Edit    int // TODO(q): Actually implement
 	Command interface {
 		IsEnabled(Args) bool
 		IsVisible(Args) bool

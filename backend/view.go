@@ -10,9 +10,8 @@ type (
 		selection RegionSet
 		undoStack undoStack
 	}
-	undoStack struct {
-		position int
-		actions  []Action
+	Edit struct {
+		compositeAction
 	}
 )
 
@@ -33,48 +32,30 @@ func (v *View) Buffer() *Buffer {
 	return v.buffer
 }
 
-func (v *View) Insert(point int, value string) {
-	v.undoStack.Apply(NewInsertAction(v.buffer, point, value))
+func (v *View) Insert(edit *Edit, point int, value string) {
+	edit.AddExec(NewInsertAction(v.buffer, point, value))
 }
 
-func (v *View) Erase(r Region) {
-	v.undoStack.Apply(NewEraseAction(v.buffer, r))
+func (v *View) Erase(edit *Edit, r Region) {
+	edit.AddExec(NewEraseAction(v.buffer, r))
 }
 
-func (v *View) Replace(r Region, value string) {
-	v.undoStack.Apply(NewReplaceAction(v.buffer, r, value))
+func (v *View) Replace(edit *Edit, r Region, value string) {
+	edit.AddExec(NewReplaceAction(v.buffer, r, value))
 }
 
-func (v *View) Apply(a Action) {
-	v.undoStack.Apply(a)
+func (v *View) BeginEdit() *Edit {
+	return &Edit{}
 }
 
-func (v *View) Undo() {
-	v.undoStack.Undo()
+func (v *View) EndEdit(e *Edit) {
+	v.undoStack.Add(e, true)
 }
 
-func (v *View) Redo() {
-	v.undoStack.Redo()
+func (v *View) Size() int {
+	return v.buffer.Size()
 }
 
-func (us *undoStack) Apply(a Action) {
-	if us.position != len(us.actions) {
-		us.actions = us.actions[0:us.position]
-	}
-	us.actions = append(us.actions, a)
-	us.Redo()
-}
-
-func (us *undoStack) Undo() {
-	if us.position > 0 {
-		us.position--
-		us.actions[us.position].Undo()
-	}
-}
-
-func (us *undoStack) Redo() {
-	if us.position < len(us.actions) {
-		us.actions[us.position].Apply()
-		us.position++
-	}
+func (v *View) Substr(r Region) string {
+	return v.buffer.Substr(r)
 }

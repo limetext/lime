@@ -9,7 +9,9 @@ func TestView(t *testing.T) {
 		w Window
 		v = w.NewView()
 	)
-	v.Insert(0, "abcd")
+	edit := v.BeginEdit()
+	v.Insert(edit, 0, "abcd")
+	v.EndEdit(edit)
 	v.selection = RegionSet{
 		[]Region{
 			{0, 1},
@@ -18,34 +20,63 @@ func TestView(t *testing.T) {
 			{3, 4},
 		},
 	}
+
+	edit = v.BeginEdit()
 	for _, ins := range "4321" {
 		for i := range v.selection.regions {
-			v.Insert(v.selection.regions[i].Begin(), string(ins))
+			v.Insert(edit, v.selection.regions[i].Begin(), string(ins))
 		}
 	}
+	v.EndEdit(edit)
 
 	if v.buffer.data != "1234a1234b1234c1234d" {
 		t.Error(v.buffer.data)
 	}
-	for i := v.undoStack.position - 1; i > 0; i-- {
-		v.undoStack.Undo()
-	}
+	v.undoStack.Undo()
 	if v.buffer.data != "abcd" {
-		t.Error(v.buffer.data)
+		t.Error("expected 'abcd', but got: ", v.buffer.data)
 	}
-	for i := v.undoStack.position; i < len(v.undoStack.actions)-8; i++ {
-		v.undoStack.Redo()
-	}
-	if v.buffer.data != "34a34b34c34d" {
-		t.Error(v.buffer.data)
-	}
-	for _, ins := range []string{"world", "hello "} {
-		for i := range v.selection.regions {
-			v.Insert(v.selection.regions[i].Begin(), ins)
-		}
+	v.undoStack.Redo()
+	if v.buffer.data != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.data)
 	}
 
-	if v.buffer.data != "hello world34ahello world34bhello world34chello world34d" {
+	edit = v.BeginEdit()
+	for _, ins := range []string{"world", "hello "} {
+		for i := range v.selection.regions {
+			v.Insert(edit, v.selection.regions[i].Begin(), ins)
+		}
+	}
+	v.EndEdit(edit)
+
+	if v.buffer.data != "hello world1234ahello world1234bhello world1234chello world1234d" {
+		t.Error(v.buffer.data)
+	}
+	v.undoStack.Undo()
+
+	if v.buffer.data != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.data)
+	}
+	v.undoStack.Undo()
+	if v.buffer.data != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.data)
+	}
+	v.undoStack.Undo()
+	if v.buffer.data != "" {
+		t.Error("expected '', but got: ", v.buffer.data)
+	}
+	v.undoStack.Redo()
+	if v.buffer.data != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.data)
+	}
+
+	v.undoStack.Redo()
+	if v.buffer.data != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.data)
+	}
+
+	v.undoStack.Redo()
+	if v.buffer.data != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(v.buffer.data)
 	}
 }

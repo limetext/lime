@@ -21,6 +21,12 @@ func pyname(in string) string {
 
 func pytype(t reflect.Type) (string, error) {
 	switch t.Kind() {
+	case reflect.Ptr:
+		t = t.Elem()
+		if t.Kind() != reflect.Struct {
+			return "", fmt.Errorf("Only supports struct pointers: ", t.Kind())
+		}
+		fallthrough
 	case reflect.Struct:
 		return "*" + t.Name(), nil
 	case reflect.Int:
@@ -36,6 +42,9 @@ func pyret(ot reflect.Type) (string, error) {
 	switch ot.Kind() {
 	case reflect.Ptr:
 		ot = ot.Elem()
+		if ot.Kind() != reflect.Struct {
+			return "", fmt.Errorf("Only supports struct pointers: ", ot.Kind())
+		}
 		fallthrough
 	case reflect.Struct:
 		return fmt.Sprintf(`
@@ -57,6 +66,8 @@ func pyret(ot reflect.Type) (string, error) {
 			}`, nil
 	case reflect.Int:
 		return "\n\treturn py.NewInt(ret), nil", nil
+	case reflect.String:
+		return "\n\treturn py.NewString(ret)", nil
 	default:
 		return "", fmt.Errorf("Can't handle return type %s", ot.Kind())
 	}
@@ -189,7 +200,7 @@ func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
 		}
 		ret += "\n}\n"
 		methods += ret
-		fmt.Printf("Created method %s.%s\n", t2, m.Name)
+		//fmt.Printf("Created method %s.%s\n", t2, m.Name)
 		continue
 	skip:
 		fmt.Printf("Skipping method %s.%s\n", t2, m.Name)
@@ -294,6 +305,7 @@ func main() {
 	data := [][]string{
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(backend.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&backend.RegionSet{}), false, nil)},
+		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Settings", "Buffer"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, []string{"Settings"})},
 	}

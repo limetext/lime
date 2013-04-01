@@ -35,6 +35,15 @@ func (ca *compositeAction) Undo() {
 	}
 }
 
+func (ca *compositeAction) Add(a Action) {
+	ca.actions = append(ca.actions, a)
+}
+
+func (ca *compositeAction) AddExec(a Action) {
+	ca.Add(a)
+	ca.actions[len(ca.actions)-1].Apply()
+}
+
 func (ia *insertAction) Apply() {
 	ia.buffer.Insert(ia.point, ia.value)
 }
