@@ -5,5 +5,9 @@ backend/json/json_test.go
 backend/plist/plist.go
 backend/plist/plist_test.go
 build/*
-!build/build.go
+!build/*.go
 out.txt
+*.pyc
+backend/sublime/*.go
+!backend/sublime/*_test.go
+!backend/sublime/sublime.go

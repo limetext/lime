@@ -104,6 +104,17 @@ func main() {
 	}
 	buildPeg("../backend/json/json.peg", "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment", "testdata/Default (OSX).sublime-keymap")
 	buildPeg("../backend/plist/plist.peg", "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist", "../../3rdparty/bundles/c.tmbundle/Syntaxes/C.plist", "-dumptree")
+
+	c = exec.Command("go", "run", "python.go")
+	if verbose {
+		fmt.Println(c.Args)
+	}
+	if b, err := c.CombinedOutput(); err != nil {
+		panic(fmt.Sprint(string(b), err))
+	} else if len(b) != 0 {
+		fmt.Println(string(b))
+	}
+
 	tests := []string{"test"}
 	if verbose {
 		tests = append(tests, "-v")
