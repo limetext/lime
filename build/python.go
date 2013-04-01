@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"lime/backend"
+	"os/exec"
 	"reflect"
 	"regexp"
 	"strings"
@@ -33,22 +34,22 @@ func pyret(ot reflect.Type) (ret string) {
 	switch ot.Kind() {
 	case reflect.Struct:
 		return fmt.Sprintf(`
-	pyret, err := %sClass.Alloc(1)
-	if err != nil {
-		return nil, err
-	} else if v2, ok := pyret.(*%s); !ok {
-		return nil, fmt.Errorf("Unable to convert return value to the right type?!: %%s", pyret)
-	} else {
-		v2.data = ret
-		return v2, nil
-	}`, pyname(ot.Name()), ot.Name())
+			pyret, err := %sClass.Alloc(1)
+			if err != nil {
+				return nil, err
+			} else if v2, ok := pyret.(*%s); !ok {
+				return nil, fmt.Errorf("Unable to convert return value to the right type?!: %%s", pyret.Type())
+			} else {
+				v2.data = ret
+				return v2, nil
+			}`, pyname(ot.Name()), ot.Name())
 	case reflect.Bool:
 		return `
-	if ret {
-		return py.True, nil
-	} else {
-		return py.False, nil
-	}`
+			if ret {
+				return py.True, nil
+			} else {
+				return py.False, nil
+			}`
 	case reflect.Int:
 		return "\n\treturn py.NewInt(ret), nil"
 	default:
@@ -68,6 +69,20 @@ func pyacc(ot reflect.Type) string {
 	}
 }
 
+func pytogoconv(in, set, name string, returnsValue bool, t reflect.Type) string {
+	ty := pytype(t)
+	r := ""
+	if returnsValue {
+		r = "nil, "
+	}
+	return fmt.Sprintf(`
+		if v2, ok := %s.(%s); !ok {
+			return %sfmt.Errorf("Expected type %s for %s, not %%s", %s.Type())
+		} else {
+			%s = v2%s
+		}`, in, ty, r, ty, name, in, set, pyacc(t))
+}
+
 func generateWrapper(t reflect.Type, canCreate bool) (ret string) {
 	if t.Kind() != reflect.Struct {
 		panic(t.Kind())
@@ -77,16 +92,42 @@ func generateWrapper(t reflect.Type, canCreate bool) (ret string) {
 		it = "*" + it
 	}
 	ret += fmt.Sprintf(`
-var %sClass = py.Class{
-	Name:    "sublime.%s",
-	Pointer: (*%s)(nil),
-}
+		var %sClass = py.Class{
+			Name:    "sublime.%s",
+			Pointer: (*%s)(nil),
+		}
 
-type %s struct {
-	py.BaseObject
-	data %s
-}
-`, pyname(t.Name()), t.Name(), t.Name(), t.Name(), it)
+		type %s struct {
+			py.BaseObject
+			data %s
+		}
+		`, pyname(t.Name()), t.Name(), t.Name(), t.Name(), it)
+
+	if canCreate {
+		ret += fmt.Sprintf(`
+			func (o *%s) PyInit(args *py.Tuple, kwds *py.Dict) error {
+				if args.Size() > %d {
+					return fmt.Errorf("Expected at most %d arguments")
+				}
+			`, t.Name(), t.NumField(), t.NumField())
+		for i := 0; i < t.NumField(); i++ {
+			f := t.Field(i)
+			ret += fmt.Sprintf(`
+					if args.Size() > %d {
+						if v, err := args.GetItem(%d); err != nil {
+							return err
+						} else {%s
+						}
+					}
+				`, i, i, pytogoconv("v", "o.data."+f.Name, t.Name()+"."+f.Name, false, f.Type))
+		}
+		ret += "\n\treturn nil\n}"
+	} else {
+		ret += fmt.Sprintf(`
+			func (o *%s) PyInit(args *py.Tuple, kwds *py.Dict) error {
+				return fmt.Errorf("Can't initialize type %s")
+			}`, t.Name())
+	}
 
 	for i := 0; i < t.NumMethod(); i++ {
 		var (
@@ -111,31 +152,26 @@ type %s struct {
 			rv = "(py.Object, error)"
 		}
 
-		ret += fmt.Sprintf(`
-func (o *%s) Py%s(%s) %s {`, t.Name(), pyname(m.Name), args, rv)
+		ret += fmt.Sprintf("\nfunc (o *%s) Py%s(%s) %s {", t.Name(), pyname(m.Name), args, rv)
 
 		if in > 0 {
 			ret += "\n\tvar ("
 			for j := 1; j <= in; j++ {
-				ty := pytype(m.Type.In(j))
-				ret += fmt.Sprintf("\n\t\targ%d %s", j, ty)
+				ret += fmt.Sprintf("\n\t\targ%d %s", j, m.Type.In(j))
 			}
 			ret += "\n\t)"
 			ret += fmt.Sprintf(`
-	if tu.Size() != %d {
-		return nil, fmt.Errorf("Expected %d arguments but got %%d", tu.Size())
-	}`, in, in)
+					if tu.Size() != %d {
+						return nil, fmt.Errorf("Expected %d arguments but got %%d", tu.Size())
+					}`, in, in)
 
 			for j := 1; j <= in; j++ {
-				ty := pytype(m.Type.In(j))
+				name := fmt.Sprintf("arg%d", j)
+				msg := fmt.Sprintf("%s.%s() %s", t, m.Name, name)
 				ret += fmt.Sprintf(`
-	if v, err := tu.GetItem(%d); err != nil {
-		return nil, err
-	} else if v2, ok := v.(%s); !ok {
-		return nil, fmt.Errorf("Expected type %s for argument %d, not %%s", v.Type())
-	} else {
-		arg%d = v2
-	}`, j-1, ty, ty, j, j)
+					if v, err := tu.GetItem(%d); err != nil {
+						return nil, err
+					} else {%s}`, j-1, pytogoconv("v", name, msg, out > 0, m.Type.In(j)))
 			}
 		}
 
@@ -147,7 +183,6 @@ func (o *%s) Py%s(%s) %s {`, t.Name(), pyname(m.Name), args, rv)
 					call += ", "
 				}
 				call += fmt.Sprintf("arg%d", j)
-				call += pyacc(m.Type.In(j))
 				call += ")"
 			}
 		} else {
@@ -168,21 +203,16 @@ func (o *%s) Py%s(%s) %s {`, t.Name(), pyname(m.Name), args, rv)
 		f := t.Field(i)
 		if !f.Anonymous {
 			ret += fmt.Sprintf(`
-func (o *%s) PyGet%s() (py.Object, error) {
-	ret := o.data.%s%s
-}
+				func (o *%s) PyGet%s() (py.Object, error) {
+					ret := o.data.%s%s
+				}
 
-func (o *%s) PySet%s(v py.Object) error {
-	if v2, ok := v.(%s); !ok {
-		return fmt.Errorf("Expected type %s not %%s", v.Type())
-	} else {
-		o.data.%s = v2%s
-		return nil
-	}
-}
+				func (o *%s) PySet%s(v py.Object) error {%s
+					return  nil
+				}
 
-`, t.Name(), pyname(f.Name), f.Name, pyret(f.Type),
-				t.Name(), pyname(f.Name), pytype(f.Type), f.Name, f.Name, pyacc(f.Type),
+				`, t.Name(), pyname(f.Name), f.Name, pyret(f.Type),
+				t.Name(), pyname(f.Name), pytogoconv("v", "o.data."+f.Name, t.Name()+"."+f.Name, false, f.Type),
 			)
 		}
 	}
@@ -196,16 +226,23 @@ func main() {
 	}
 	for _, gen := range data {
 		wr := `// This file was generated as part of a build step and shouldn't be manually modified
-package sublime
+			package sublime
 
-import (
-	"fmt"
-	"github.com/qur/gopy/lib"
-	"lime/backend"
-)
-` + gen[1]
+			import (
+				"fmt"
+				"github.com/qur/gopy/lib"
+				"lime/backend"
+			)
+			` + gen[1]
 		if err := ioutil.WriteFile(gen[0], []byte(wr), 0644); err != nil {
 			panic(err)
+		} else {
+			c := exec.Command("go", "fmt", gen[0])
+			if o, err := c.CombinedOutput(); err != nil {
+				panic(err)
+			} else {
+				fmt.Println(string(o))
+			}
 		}
 	}
 }
