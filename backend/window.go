@@ -1,9 +1,5 @@
 package backend
 
-type Editor struct {
-	HasSettings
-}
-
 type Window struct {
 	HasId
 	HasSettings

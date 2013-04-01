@@ -9,15 +9,15 @@ type (
 	}
 	WindowCommand interface {
 		Command
-		Run(Args)
+		Run(*Window, Args) error
 	}
 	TextCommand interface {
 		Command
-		Run(Edit, Args)
+		Run(*View, *Edit, Args) error
 	}
 	ApplicationCommand interface {
 		Command
-		Run(Args)
+		Run(Args) error
 		IsChecked(Args) bool
 	}
 
