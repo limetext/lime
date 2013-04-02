@@ -57,16 +57,23 @@ var (
 
 func findScope(search parser.Range, node *parser.Node, in string) string {
 	idx := sort.Search(len(node.Children), func(i int) bool {
-		return node.Children[i].Range.Start >= search.End || node.Children[i].Range.Contains(search)
+		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
 	})
-	if idx != len(node.Children) {
-		in += " " + node.Name
-		return findScope(search, node.Children[idx], in)
-	} else if node.Range.Contains(search) {
-		return in + " " + node.Name
-	} else {
-		return in
+	for idx < len(node.Children) {
+		c := node.Children[idx]
+		if c.Range.Start > search.End {
+			break
+		}
+		if c.Range.Contains(search) {
+			in += " " + node.Name
+			return findScope(search, node.Children[idx], in)
+		}
+		idx++
 	}
+	if node.Range.Contains(search) {
+		return in + " " + node.Name
+	}
+	return in
 }
 
 func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
@@ -151,13 +158,13 @@ func main() {
 		syntax textmate.Language
 		lp     = textmate.LanguageParser{Language: &syntax}
 	)
-	if d, err := ioutil.ReadFile("../../3rdparty/bundles/monokai.tmbundle/Themes/Monokai.tmTheme"); err != nil {
+	if d, err := ioutil.ReadFile("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
 	} else if err := loaders.LoadPlist(d, &scheme); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
 	}
 
-	if d, err := ioutil.ReadFile("../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"); err != nil {
+	if d, err := ioutil.ReadFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
 		log4go.Error("Unable to load syntax definition: %s", err)
 	} else if err := loaders.LoadPlist(d, &syntax); err != nil {
 		log4go.Error("Unable to load syntax definition: %s", err)
