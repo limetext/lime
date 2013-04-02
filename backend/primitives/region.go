@@ -45,13 +45,17 @@ func (r Region) Clip(other Region) Region {
 
 func (r *RegionSet) Adjust(position, delta int) {
 	for i := range r.regions {
-		if r.regions[i].A > position {
+		if r.regions[i].A >= position {
 			r.regions[i].A += delta
 		}
-		if r.regions[i].B > position {
+		if r.regions[i].B >= position {
 			r.regions[i].B += delta
 		}
 	}
+}
+
+func (r *RegionSet) Substract(r2 Region) {
+	r.Adjust(r2.Begin(), r2.Size())
 }
 
 func (r *RegionSet) Add(r2 Region) {
@@ -69,4 +73,13 @@ func (r *RegionSet) Get(i int) Region {
 
 func (r *RegionSet) Len() int {
 	return len(r.regions)
+}
+
+func (r *RegionSet) Contains(r2 Region) bool {
+	for i := range r.regions {
+		if r.regions[i] == r2 || (r.regions[i].Contains(r2.Begin()) && r.regions[i].Contains(r2.End())) {
+			return true
+		}
+	}
+	return false
 }

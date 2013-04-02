@@ -24,7 +24,6 @@ var (
 		termbox.KeyCtrlF:      backend.KeyPress{Ctrl: true, Key: 'f'},
 		termbox.KeyCtrlG:      backend.KeyPress{Ctrl: true, Key: 'g'},
 		termbox.KeyCtrlH:      backend.KeyPress{Ctrl: true, Key: 'h'},
-		termbox.KeyCtrlI:      backend.KeyPress{Ctrl: true, Key: 'i'},
 		termbox.KeyCtrlJ:      backend.KeyPress{Ctrl: true, Key: 'j'},
 		termbox.KeyCtrlK:      backend.KeyPress{Ctrl: true, Key: 'k'},
 		termbox.KeyCtrlL:      backend.KeyPress{Ctrl: true, Key: 'l'},
@@ -55,6 +54,7 @@ var (
 		termbox.KeyArrowRight: backend.KeyPress{Key: backend.Right},
 		termbox.KeyDelete:     backend.KeyPress{Key: backend.Delete},
 		termbox.KeyEsc:        backend.KeyPress{Key: backend.Escape},
+		termbox.KeyTab:        backend.KeyPress{Key: '\t'},
 	}
 	schemelut = make(map[string][2]termbox.Attribute)
 	defaultBg = termbox.ColorBlack
@@ -83,6 +83,7 @@ func findScope(search parser.Range, node *parser.Node, in string) string {
 }
 
 func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
+	sel := v.Sel()
 	substr := v.Substr(primitives.Region{0, v.Size()})
 	lines := strings.Split(substr, "\n")
 	s, e := 0, len(lines)
@@ -148,8 +149,15 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 					}
 				}
 				lfg, lbg = fg, bg
+
 			} else {
 				fg, bg = lfg, lbg
+			}
+			// TODO(q): It should differ between a proper selection and just the cursor position
+			r := primitives.Region{o, o}
+			if sel.Contains(r) {
+				// TODO(q): It should use the correct colors for selections and the cursor
+				bg = 3
 			}
 			termbox.SetCell(x, y, runes[i], fg, bg)
 		}
@@ -228,7 +236,11 @@ func main() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
-
+	sel := v.Sel()
+	sel.Clear()
+	end := v.Buffer().Size() - 2
+	sel.Add(primitives.Region{end - 40, end - 40})
+	sel.Add(primitives.Region{end - 20, end - 20})
 	for {
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
@@ -241,28 +253,37 @@ func main() {
 		switch ev.Type {
 		case termbox.EventKey:
 			var kp backend.KeyPress
+			var ins rune
+
 			if ev.Ch != 0 {
 				kp.Key = backend.Key(ev.Ch)
-				e := v.BeginEdit()
-				v.Insert(e, v.Size()-1, string(ev.Ch))
-				v.EndEdit(e)
+				ins = ev.Ch
 			} else if v2, ok := lut[ev.Key]; ok {
 				kp = v2
 				switch kp.Key {
-				case backend.Enter:
-					e := v.BeginEdit()
-					v.Insert(e, v.Size()-1, string('\n'))
-					v.EndEdit(e)
+				case '\t':
+					fallthrough
 				case ' ':
-					e := v.BeginEdit()
-					v.Insert(e, v.Size()-1, string(' '))
-					v.EndEdit(e)
+					ins = rune(kp.Key)
+				case backend.Enter:
+					ins = '\n'
 				case backend.Backspace:
 					e := v.BeginEdit()
-					r := v.Size() - 1
-					v.Erase(e, primitives.Region{r - 1, r})
+					for i := 0; i < sel.Len(); i++ {
+						r := sel.Get(i)
+						r.A, r.B = r.Begin()-1, r.End() // ????
+						v.Erase(e, r)
+					}
 					v.EndEdit(e)
 				}
+			}
+			if ins != 0 {
+				e := v.BeginEdit()
+				for i := 0; i < sel.Len(); i++ {
+					r := sel.Get(i)
+					v.Insert(e, r.B, string(ins))
+				}
+				v.EndEdit(e)
 			}
 
 			if ev.Key == termbox.KeyEsc {

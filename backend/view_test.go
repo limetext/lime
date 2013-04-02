@@ -15,17 +15,17 @@ func TestView(t *testing.T) {
 	v.EndEdit(edit)
 	v.selection.Clear()
 	r := []Region{
-		{0, 1},
-		{1, 2},
-		{2, 3},
-		{3, 4},
+		{0, 0},
+		{1, 1},
+		{2, 2},
+		{3, 3},
 	}
 	for _, r2 := range r {
 		v.selection.Add(r2)
 	}
 
 	edit = v.BeginEdit()
-	for _, ins := range "4321" {
+	for _, ins := range "1234" {
 		for i := 0; i < v.selection.Len(); i++ {
 			v.Insert(edit, v.selection.Get(i).Begin(), string(ins))
 		}
@@ -44,8 +44,19 @@ func TestView(t *testing.T) {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
 	}
 
+	v.selection.Clear()
+	r = []Region{
+		{0, 0},
+		{5, 5},
+		{10, 10},
+		{15, 15},
+	}
+	for _, r2 := range r {
+		v.selection.Add(r2)
+	}
+
 	edit = v.BeginEdit()
-	for _, ins := range []string{"world", "hello "} {
+	for _, ins := range []string{"hello ", "world"} {
 		for i := 0; i < v.selection.Len(); i++ {
 			v.Insert(edit, v.selection.Get(i).Begin(), ins)
 		}
