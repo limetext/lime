@@ -1,6 +1,9 @@
 package primitives
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 type (
 	Region struct {
@@ -47,20 +50,39 @@ func (r *RegionSet) Adjust(position, delta int) {
 	for i := range r.regions {
 		if r.regions[i].A >= position {
 			r.regions[i].A += delta
+		} else if diff := position + delta - r.regions[i].A; diff < 0 {
+			r.regions[i].A += diff
 		}
 		if r.regions[i].B >= position {
 			r.regions[i].B += delta
+		} else if diff := position + delta - r.regions[i].B; diff < 0 {
+			r.regions[i].B += diff
+		}
+	}
+	r.flush()
+}
+
+func (r *RegionSet) flush() {
+	sort.Sort(r)
+	for i := 1; i < len(r.regions); i++ {
+		if r.regions[i-1].Contains(r.regions[i].Begin()) {
+			r.regions[i-1] = r.regions[i-1].Cover(r.regions[i])
+			copy(r.regions[i:], r.regions[i+1:])
+			r.regions = r.regions[:len(r.regions)-1]
+		} else {
+			i++
 		}
 	}
 }
 
 func (r *RegionSet) Substract(r2 Region) {
 	r.Adjust(r2.Begin(), r2.Size())
+	r.flush()
 }
 
 func (r *RegionSet) Add(r2 Region) {
-	// TODO: should be kept in sorted order + merged with any intersecting regions
 	r.regions = append(r.regions, r2)
+	r.flush()
 }
 
 func (r *RegionSet) Clear() {
@@ -69,6 +91,13 @@ func (r *RegionSet) Clear() {
 
 func (r *RegionSet) Get(i int) Region {
 	return r.regions[i]
+}
+
+func (r *RegionSet) Less(i, j int) bool {
+	return r.regions[i].Begin() < r.regions[j].Begin()
+}
+func (r *RegionSet) Swap(i, j int) {
+	r.regions[i], r.regions[j] = r.regions[j], r.regions[i]
 }
 
 func (r *RegionSet) Len() int {

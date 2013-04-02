@@ -105,6 +105,11 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 		lfg, lbg  termbox.Attribute
 	)
 
+	tab_size, ok := v.Settings().Get("tab_size", 4).(int)
+	if !ok {
+		tab_size = 4
+	}
+
 	for i := range runes {
 		sub2 += string(runes[i])
 		if runes[i] == '\n' {
@@ -115,7 +120,7 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 			}
 			continue
 		} else if runes[i] == '\t' {
-			add := (x + 1 + 3) &^ 3
+			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
 			for x < add {
 				termbox.SetCell(x, y, ' ', lfg, lbg)
 				x++
@@ -149,7 +154,6 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 					}
 				}
 				lfg, lbg = fg, bg
-
 			} else {
 				fg, bg = lfg, lbg
 			}
@@ -239,7 +243,8 @@ func main() {
 	sel := v.Sel()
 	sel.Clear()
 	end := v.Buffer().Size() - 2
-	sel.Add(primitives.Region{end - 40, end - 40})
+	sel.Add(primitives.Region{end - 24, end - 24})
+	sel.Add(primitives.Region{end - 22, end - 22})
 	sel.Add(primitives.Region{end - 20, end - 20})
 	for {
 		termbox.Clear(defaultFg, defaultBg)
