@@ -102,8 +102,8 @@ func main() {
 	} else if len(b) != 0 {
 		fmt.Println(string(b))
 	}
-	buildPeg("../backend/json/json.peg", "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment", "testdata/Default (OSX).sublime-keymap")
-	buildPeg("../backend/plist/plist.peg", "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist", "../../3rdparty/bundles/c.tmbundle/Syntaxes/C.plist", "-dumptree")
+	buildPeg("../backend/loaders/json/json.peg", "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment", "testdata/Default (OSX).sublime-keymap")
+	buildPeg("../backend/loaders/plist/plist.peg", "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist", "../../../3rdparty/bundles/c.tmbundle/Syntaxes/C.plist", "-dumptree")
 
 	c = exec.Command("go", "run", "python.go")
 	if verbose {

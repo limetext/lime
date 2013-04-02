@@ -3,9 +3,12 @@ package textmate
 import (
 	"code.google.com/p/log4go"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/moovweb/rubex"
 	"github.com/quarnster/parser"
+	"io/ioutil"
+	"lime/backend/loaders"
 	"strconv"
 	"strings"
 )
@@ -24,9 +27,7 @@ type (
 		UnpatchedLanguage
 	}
 
-	LanguageProvider interface {
-		GetLanguage(id string) (*Language, error)
-	}
+	LanguageProvider map[string]*Language
 
 	UnpatchedLanguage struct {
 		FileTypes      []string
@@ -73,9 +74,31 @@ type (
 )
 
 var (
-	Provider LanguageProvider
+	Provider = make(LanguageProvider)
 	failed   = make(map[string]bool)
 )
+
+func (t LanguageProvider) GetLanguage(id string) (*Language, error) {
+	if v, ok := t[id]; !ok {
+		return nil, errors.New("Can't handle id " + id)
+	} else {
+		return v, nil
+	}
+}
+
+func (t LanguageProvider) Load(fn string) error {
+	if d, err := ioutil.ReadFile(fn); err != nil {
+		return fmt.Errorf("Couldn't load file %s: %s", fn, err)
+	} else {
+		var l Language
+		if err := loaders.LoadPlist(d, &l); err != nil {
+			return err
+		} else {
+			t[l.ScopeName] = &l
+		}
+	}
+	return nil
+}
 
 func (p Pattern) String() (ret string) {
 	ret = fmt.Sprintf(`---------------------------------------
@@ -236,8 +259,6 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 		} else if z == '$' {
 			// TODO(q): Implement tmLanguage $ include directives
 			log4go.Warn("Unhandled include directive: %s", p.Include)
-		} else if Provider == nil {
-			log4go.Warn("Include directive %s couldn't be handled as there's no Provider set", p.Include)
 		} else if l, err := Provider.GetLanguage(p.Include); err != nil {
 			if !failed[p.Include] {
 				log4go.Error("Include directive %s failed: %s", p.Include, err)

@@ -1,5 +1,9 @@
 package backend
 
+import (
+	. "lime/backend/primitives"
+)
+
 type (
 	View struct {
 		HasSettings
@@ -9,15 +13,16 @@ type (
 		buffer    *Buffer
 		selection RegionSet
 		undoStack undoStack
+		scratch   bool
 	}
 	Edit struct {
-		compositeAction
+		CompositeAction
 	}
 )
 
 func (v *View) setBuffer(b *Buffer) {
 	v.buffer = b
-	b.callbacks = append(b.callbacks, v.selection.adjust)
+	b.AddCallback(v.selection.Adjust)
 }
 
 func (v *View) Sel() *RegionSet {
@@ -49,7 +54,9 @@ func (v *View) BeginEdit() *Edit {
 }
 
 func (v *View) EndEdit(e *Edit) {
-	v.undoStack.Add(e, true)
+	if !v.scratch {
+		v.undoStack.Add(e, true)
+	}
 }
 
 func (v *View) Size() int {

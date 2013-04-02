@@ -1,5 +1,9 @@
 package backend
 
+import (
+	. "lime/backend/primitives"
+)
+
 type (
 	undoStack struct {
 		position int

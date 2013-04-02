@@ -1,4 +1,4 @@
-package backend
+package primitives
 
 type (
 	Action interface {
@@ -6,7 +6,7 @@ type (
 		Undo()
 	}
 
-	compositeAction struct {
+	CompositeAction struct {
 		actions []Action
 	}
 
@@ -22,24 +22,24 @@ type (
 	}
 )
 
-func (ca *compositeAction) Apply() {
+func (ca *CompositeAction) Apply() {
 	for _, a := range ca.actions {
 		a.Apply()
 	}
 }
 
-func (ca *compositeAction) Undo() {
+func (ca *CompositeAction) Undo() {
 	l := len(ca.actions) - 1
 	for i := range ca.actions {
 		ca.actions[l-i].Undo()
 	}
 }
 
-func (ca *compositeAction) Add(a Action) {
+func (ca *CompositeAction) Add(a Action) {
 	ca.actions = append(ca.actions, a)
 }
 
-func (ca *compositeAction) AddExec(a Action) {
+func (ca *CompositeAction) AddExec(a Action) {
 	ca.Add(a)
 	ca.actions[len(ca.actions)-1].Apply()
 }
@@ -72,7 +72,7 @@ func NewInsertAction(b *Buffer, point int, value string) Action {
 }
 
 func NewReplaceAction(b *Buffer, region Region, value string) Action {
-	return &compositeAction{[]Action{
+	return &CompositeAction{[]Action{
 		NewEraseAction(b, region),
 		NewInsertAction(b, clamp(0, b.Size()-region.Size(), region.Begin()), value),
 	}}

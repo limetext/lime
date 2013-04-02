@@ -2,8 +2,11 @@ package main
 
 import (
 	"code.google.com/p/log4go"
+	"fmt"
 	"github.com/nsf/termbox-go"
 	"lime/backend"
+	"lime/backend/primitives"
+	"strings"
 )
 
 var lut = map[termbox.Key]backend.KeyPress{
@@ -42,15 +45,59 @@ var lut = map[termbox.Key]backend.KeyPress{
 	termbox.KeyCtrl8: backend.KeyPress{Ctrl: true, Key: '8'},
 }
 
+func renderView(sx, sy, w, h int, v *backend.View) {
+	substr := v.Substr(primitives.Region{0, v.Size()})
+	lines := strings.Split(substr, "\n")
+	s, e := 0, len(lines)
+	if e > 1 {
+		e = e - 1
+		if e > h {
+			s = e - h
+		}
+	}
+	lines = lines[s:e]
+	runes := []rune(strings.Join(lines, "\n"))
+	x, y := sx, sy
+	ex, ey := sx+w, sy+h
+	for i := range runes {
+		if runes[i] == '\n' {
+			x = sx
+			y++
+			if y > ey {
+				break
+			}
+			continue
+		}
+		if x < ex {
+			termbox.SetCell(x, y, runes[i], termbox.ColorWhite, termbox.ColorBlack)
+		}
+		x++
+	}
+}
+
 func main() {
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}
-	defer termbox.Close()
-	e := backend.GetEditor()
-	e.LogInput(true)
-	e.LogCommands(true)
+	ed := backend.GetEditor()
+	ed.LogInput(true)
+	ed.LogCommands(true)
+	c := ed.Console()
+	defer func() {
+		termbox.Close()
+		fmt.Println(c.Substr(primitives.Region{0, c.Size()}))
+	}()
+	w := ed.NewWindow()
+	v := w.OpenFile("main.go", 0)
+
 	for {
+		termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)
+		w, h := termbox.Size()
+
+		renderView(0, 0, w, h-3, v)
+		renderView(0, h-3, w, 3, c)
+
+		termbox.Flush()
 		ev := termbox.PollEvent()
 		switch ev.Type {
 		case termbox.EventKey:
@@ -63,7 +110,7 @@ func main() {
 			if ev.Key == termbox.KeyEsc {
 				return
 			}
-			e.HandleInput(kp)
+			ed.HandleInput(kp)
 		}
 	}
 }

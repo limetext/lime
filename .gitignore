@@ -1,9 +1,9 @@
 *.sublime-workspace
 *.sublime-project
-backend/json/json.go
-backend/json/json_test.go
-backend/plist/plist.go
-backend/plist/plist_test.go
+backend/loaders/json/json.go
+backend/loaders/json/json_test.go
+backend/loaders/plist/plist.go
+backend/loaders/plist/plist_test.go
 build/*
 !build/*.go
 out.txt

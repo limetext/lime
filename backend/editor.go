@@ -2,7 +2,10 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"fmt"
 	"io/ioutil"
+	"lime/backend/loaders"
+	. "lime/backend/primitives"
 	"runtime"
 )
 
@@ -13,6 +16,7 @@ type (
 		Version  string
 	}
 	Editor interface {
+		NewWindow() *Window
 		Windows() []*Window
 		ActiveWindow() *Window
 		Info() EditorInfo
@@ -20,6 +24,7 @@ type (
 		LogCommands(bool)
 		CommandHandler() CommandHandler
 		HandleInput(KeyPress)
+		Console() *View
 	}
 	editor struct {
 		windows      []*Window
@@ -27,8 +32,22 @@ type (
 		loginput     bool
 		cmdhandler   commandHandler
 		keyBindings  KeyBindings
+		console      *View
 	}
 )
+
+type myLogWriter struct {
+}
+
+func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
+	c := GetEditor().Console()
+	e := c.BeginEdit()
+	c.Insert(e, c.Size(), fmt.Sprintf("%s: %s\n", rec.Level, rec.Message))
+	c.EndEdit(e)
+}
+
+func (m *myLogWriter) Close() {
+}
 
 var ed *editor
 
@@ -40,7 +59,13 @@ func GetEditor() Editor {
 				TextCommands:        make(textcmd),
 				WindowCommands:      make(wndcmd),
 			},
+			console: &View{
+				buffer:  &Buffer{},
+				scratch: true,
+			},
 		}
+		log4go.Global.Close()
+		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
 		ed.loadKeybindings()
 	}
 	return ed
@@ -52,7 +77,7 @@ func (e *editor) loadKeybindings() {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
 	} else {
 		var bindings KeyBindings
-		if err := LoadJSON(d, &bindings); err != nil {
+		if err := loaders.LoadJSON(d, &bindings); err != nil {
 			log4go.Error(err)
 		} else {
 			log4go.Info("Loaded %s", fn)
@@ -61,12 +86,23 @@ func (e *editor) loadKeybindings() {
 	}
 }
 
+func (e *editor) Console() *View {
+	return e.console
+}
+
 func (e *editor) Windows() []*Window {
 	return e.windows
 }
 
 func (e *editor) ActiveWindow() *Window {
 	return e.activeWindow
+}
+
+func (e *editor) NewWindow() *Window {
+	e.windows = append(e.windows, &Window{})
+	w := e.windows[len(e.windows)-1]
+	e.activeWindow = w
+	return w
 }
 
 func (e *editor) Info() EditorInfo {

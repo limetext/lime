@@ -1,4 +1,4 @@
-package backend
+package primitives
 
 import "fmt"
 
@@ -43,7 +43,7 @@ func (r Region) Clip(other Region) Region {
 	return Region{clamp(other.Begin(), other.End(), r.A), clamp(other.Begin(), other.End(), r.B)}
 }
 
-func (r *RegionSet) adjust(position, delta int) {
+func (r *RegionSet) Adjust(position, delta int) {
 	for i := range r.regions {
 		if r.regions[i].A > position {
 			r.regions[i].A += delta
@@ -61,4 +61,12 @@ func (r *RegionSet) Add(r2 Region) {
 
 func (r *RegionSet) Clear() {
 	r.regions = r.regions[0:0]
+}
+
+func (r *RegionSet) Get(i int) Region {
+	return r.regions[i]
+}
+
+func (r *RegionSet) Len() int {
+	return len(r.regions)
 }

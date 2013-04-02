@@ -1,4 +1,4 @@
-package backend
+package primitives
 
 func min(a, b int) int {
 	if a < b {

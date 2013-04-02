@@ -1,4 +1,4 @@
-package backend
+package primitives
 
 type (
 	Buffer struct {
@@ -8,6 +8,10 @@ type (
 	}
 	BufferChangedCallback func(position, delta int)
 )
+
+func (b *Buffer) AddCallback(cb BufferChangedCallback) {
+	b.callbacks = append(b.callbacks, cb)
+}
 
 func (b *Buffer) Name() string {
 	return b.filename
@@ -37,4 +41,8 @@ func (buf *Buffer) Insert(point int, value string) {
 func (buf *Buffer) Erase(point, length int) {
 	buf.data = buf.data[0:point] + buf.data[point+length:len(buf.data)]
 	buf.notify(point, -length)
+}
+
+func (b *Buffer) Data() string {
+	return b.data
 }

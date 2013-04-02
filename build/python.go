@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"lime/backend"
+	"lime/backend/primitives"
 	"os/exec"
 	"reflect"
 	"regexp"
@@ -303,8 +304,8 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 
 func main() {
 	data := [][]string{
-		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(backend.Region{}), true, nil)},
-		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&backend.RegionSet{}), false, nil)},
+		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
+		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, nil)},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Settings", "Buffer"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, []string{"Settings"})},
@@ -317,6 +318,11 @@ func main() {
 				"fmt"
 				"github.com/qur/gopy/lib"
 				"lime/backend"
+				"lime/backend/primitives"
+			)
+			var (
+				_ = backend.View{}
+				_ = primitives.Region{}
 			)
 			` + gen[1]
 		if err := ioutil.WriteFile(gen[0], []byte(wr), 0644); err != nil {

@@ -1,20 +1,20 @@
-package backend
+package loaders
 
 import (
 	sj "encoding/json"
 	"errors"
-	"lime/backend/json"
+	"lime/backend/loaders/json"
+	. "lime/backend/primitives"
 )
 
 func LoadJSON(data []byte, intf interface{}) error {
 	var (
-		b   = Buffer{data: string(data)}
-		v   View
+		b   = Buffer{}
 		p   json.JSON
-		set = &v.selection
+		set RegionSet
 	)
-	v.setBuffer(&b)
-	if !p.Parse(b.data) {
+	b.Insert(0, string(data))
+	if !p.Parse(string(data)) {
 		return errors.New(p.Error().String())
 	} else {
 		root := p.RootNode()
@@ -27,11 +27,11 @@ func LoadJSON(data []byte, intf interface{}) error {
 			}
 		}
 	}
-	edit := v.BeginEdit()
-	for i := range v.selection.regions {
-		v.Erase(edit, v.selection.regions[i])
+	b.AddCallback(set.Adjust)
+	for i := 0; i < set.Len(); i++ {
+		r := set.Get(i)
+		b.Erase(r.Begin(), r.Size())
 	}
-	v.EndEdit(edit)
 	// TODO(q): Map any line/column errors to the actual file's line/column
-	return sj.Unmarshal([]byte(b.data), intf)
+	return sj.Unmarshal([]byte(b.Substr(Region{0, b.Size()})), intf)
 }

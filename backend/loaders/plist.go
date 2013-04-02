@@ -1,11 +1,11 @@
-package backend
+package loaders
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
 	"github.com/quarnster/parser"
-	"lime/backend/plist"
+	"lime/backend/loaders/plist"
 	"strings"
 )
 
