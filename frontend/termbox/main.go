@@ -57,7 +57,7 @@ var (
 
 func findScope(search parser.Range, node *parser.Node, in string) string {
 	idx := sort.Search(len(node.Children), func(i int) bool {
-		return node.Children[i].Range.Contains(search)
+		return node.Children[i].Range.Start >= search.End || node.Children[i].Range.Contains(search)
 	})
 	if idx != len(node.Children) {
 		in += " " + node.Name
@@ -109,7 +109,6 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 			if scope != lastScope {
 				lastScope = scope
 				na := scope
-				log4go.Debug(scope)
 				for len(na) > 0 {
 					sn := na
 					i := strings.LastIndex(sn, " ")
