@@ -62,3 +62,16 @@ func TestRegionSetflush(t *testing.T) {
 		t.Errorf("Not as expected: %v", r)
 	}
 }
+
+func TestRegionSetAdjust2(t *testing.T) {
+	var r = RegionSet{[]Region{
+		{10, 20},
+		{25, 35},
+	}}
+
+	r.Adjust(43, -25)
+	// This is indeed what ST2 does
+	if !reflect.DeepEqual(r, RegionSet{[]Region{{10, 18}, {18, 18}}}) {
+		t.Errorf("Not as expected: %v", r)
+	}
+}
