@@ -22,3 +22,9 @@
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
 	url = git://github.com/quarnster/termbox-go.git
+[submodule "3rdparty/bundles/TextMate-Themes"]
+	path = 3rdparty/bundles/TextMate-Themes
+	url = git://github.com/filmgirl/TextMate-Themes.git
+[submodule "3rdparty/bundles/GoSublime"]
+	path = 3rdparty/bundles/GoSublime
+	url = git://github.com/DisposaBoy/GoSublime.git
