@@ -3,7 +3,7 @@ package main
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	"github.com/nsf/termbox-go"
+	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	"lime/backend/primitives"
 	"strings"
@@ -69,7 +69,7 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 			continue
 		}
 		if x < ex {
-			termbox.SetCell(x, y, runes[i], termbox.ColorWhite, termbox.ColorBlack)
+			termbox.SetCell(x, y, runes[i], 1, 0)
 		}
 		x++
 	}
@@ -79,10 +79,19 @@ func main() {
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}
+
 	ed := backend.GetEditor()
 	ed.LogInput(true)
 	ed.LogCommands(true)
 	c := ed.Console()
+	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
+		log4go.Error("Unable to use 256 color mode: %s", err)
+	} else {
+		log4go.Debug("Using 256 color mode")
+		pal := make([]termbox.RGB, 256)
+		pal[1] = termbox.RGB{255, 0, 255}
+		termbox.SetColorPalette(pal)
+	}
 	defer func() {
 		termbox.Close()
 		fmt.Println(c.Substr(primitives.Region{0, c.Size()}))
@@ -91,7 +100,7 @@ func main() {
 	v := w.OpenFile("main.go", 0)
 
 	for {
-		termbox.Clear(termbox.ColorBlack, termbox.ColorBlack)
+		termbox.Clear(0, 0)
 		w, h := termbox.Size()
 
 		renderView(0, 0, w, h-3, v)
