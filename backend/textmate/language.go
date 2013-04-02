@@ -304,6 +304,10 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 			}
 			child := &parser.Node{Name: v.Name, Range: ranges[i], P: d}
 			parents[i] = child
+			if i == 0 {
+				parent.Append(child)
+				continue
+			}
 			var p *parser.Node
 			for p == nil {
 				i = parentIndex[i]

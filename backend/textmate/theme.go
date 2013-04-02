@@ -41,7 +41,7 @@ func (c Color) String() string {
 }
 
 func (c *Color) UnmarshalJSON(data []byte) error {
-	i64, err := strconv.ParseInt(string(data[2:len(data)-1]), 16, 32)
+	i64, err := strconv.ParseInt(string(data[2:len(data)-1]), 16, 64)
 	if err != nil {
 		log4go.Warn("Couldn't properly load color from %s: %s", string(data), err)
 	}
