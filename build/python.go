@@ -316,7 +316,7 @@ func main() {
 
 			import (
 				"fmt"
-				"github.com/qur/gopy/lib"
+				"lime/3rdparty/libs/gopy/lib"
 				"lime/backend"
 				"lime/backend/primitives"
 			)

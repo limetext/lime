@@ -1,7 +1,7 @@
 package sublime
 
 import (
-	"github.com/qur/gopy/lib"
+	"lime/3rdparty/libs/gopy/lib"
 	"log"
 )
 

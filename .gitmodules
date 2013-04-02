@@ -13,3 +13,9 @@
 [submodule "3rdparty/bundles/go.tmbundle"]
 	path = 3rdparty/bundles/go.tmbundle
 	url = git://github.com/AlanQuatermain/go-tmbundle.git
+[submodule "3rdparty/libs/gopy"]
+	path = 3rdparty/libs/gopy
+	url = git://github.com/quarnster/gopy.git
+[submodule "3rdparty/libs/rubex"]
+	path = 3rdparty/libs/rubex
+	url = git@github.com:quarnster/rubex.git
