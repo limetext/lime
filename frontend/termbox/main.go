@@ -16,39 +16,45 @@ import (
 
 var (
 	lut = map[termbox.Key]backend.KeyPress{
-		termbox.KeyCtrlA: backend.KeyPress{Ctrl: true, Key: 'a'},
-		termbox.KeyCtrlB: backend.KeyPress{Ctrl: true, Key: 'b'},
-		termbox.KeyCtrlC: backend.KeyPress{Ctrl: true, Key: 'c'},
-		termbox.KeyCtrlD: backend.KeyPress{Ctrl: true, Key: 'd'},
-		termbox.KeyCtrlE: backend.KeyPress{Ctrl: true, Key: 'e'},
-		termbox.KeyCtrlF: backend.KeyPress{Ctrl: true, Key: 'f'},
-		termbox.KeyCtrlG: backend.KeyPress{Ctrl: true, Key: 'g'},
-		termbox.KeyCtrlH: backend.KeyPress{Ctrl: true, Key: 'h'},
-		termbox.KeyCtrlI: backend.KeyPress{Ctrl: true, Key: 'i'},
-		termbox.KeyCtrlJ: backend.KeyPress{Ctrl: true, Key: 'j'},
-		termbox.KeyCtrlK: backend.KeyPress{Ctrl: true, Key: 'k'},
-		termbox.KeyCtrlL: backend.KeyPress{Ctrl: true, Key: 'l'},
-		termbox.KeyCtrlM: backend.KeyPress{Ctrl: true, Key: 'm'},
-		termbox.KeyCtrlN: backend.KeyPress{Ctrl: true, Key: 'n'},
-		termbox.KeyCtrlO: backend.KeyPress{Ctrl: true, Key: 'o'},
-		termbox.KeyCtrlP: backend.KeyPress{Ctrl: true, Key: 'p'},
-		termbox.KeyCtrlQ: backend.KeyPress{Ctrl: true, Key: 'q'},
-		termbox.KeyCtrlR: backend.KeyPress{Ctrl: true, Key: 'r'},
-		termbox.KeyCtrlS: backend.KeyPress{Ctrl: true, Key: 's'},
-		termbox.KeyCtrlT: backend.KeyPress{Ctrl: true, Key: 't'},
-		termbox.KeyCtrlU: backend.KeyPress{Ctrl: true, Key: 'u'},
-		termbox.KeyCtrlV: backend.KeyPress{Ctrl: true, Key: 'v'},
-		termbox.KeyCtrlW: backend.KeyPress{Ctrl: true, Key: 'w'},
-		termbox.KeyCtrlX: backend.KeyPress{Ctrl: true, Key: 'x'},
-		termbox.KeyCtrlY: backend.KeyPress{Ctrl: true, Key: 'y'},
-		termbox.KeyCtrlZ: backend.KeyPress{Ctrl: true, Key: 'z'},
-		termbox.KeyCtrl2: backend.KeyPress{Ctrl: true, Key: '2'},
-		termbox.KeyCtrl3: backend.KeyPress{Ctrl: true, Key: '3'},
-		termbox.KeyCtrl4: backend.KeyPress{Ctrl: true, Key: '4'},
-		termbox.KeyCtrl5: backend.KeyPress{Ctrl: true, Key: '5'},
-		termbox.KeyCtrl6: backend.KeyPress{Ctrl: true, Key: '6'},
-		termbox.KeyCtrl7: backend.KeyPress{Ctrl: true, Key: '7'},
-		termbox.KeyCtrl8: backend.KeyPress{Ctrl: true, Key: '8'},
+		termbox.KeyCtrlA:      backend.KeyPress{Ctrl: true, Key: 'a'},
+		termbox.KeyCtrlB:      backend.KeyPress{Ctrl: true, Key: 'b'},
+		termbox.KeyCtrlC:      backend.KeyPress{Ctrl: true, Key: 'c'},
+		termbox.KeyCtrlD:      backend.KeyPress{Ctrl: true, Key: 'd'},
+		termbox.KeyCtrlE:      backend.KeyPress{Ctrl: true, Key: 'e'},
+		termbox.KeyCtrlF:      backend.KeyPress{Ctrl: true, Key: 'f'},
+		termbox.KeyCtrlG:      backend.KeyPress{Ctrl: true, Key: 'g'},
+		termbox.KeyCtrlH:      backend.KeyPress{Ctrl: true, Key: 'h'},
+		termbox.KeyCtrlI:      backend.KeyPress{Ctrl: true, Key: 'i'},
+		termbox.KeyCtrlJ:      backend.KeyPress{Ctrl: true, Key: 'j'},
+		termbox.KeyCtrlK:      backend.KeyPress{Ctrl: true, Key: 'k'},
+		termbox.KeyCtrlL:      backend.KeyPress{Ctrl: true, Key: 'l'},
+		termbox.KeyCtrlN:      backend.KeyPress{Ctrl: true, Key: 'n'},
+		termbox.KeyCtrlO:      backend.KeyPress{Ctrl: true, Key: 'o'},
+		termbox.KeyCtrlP:      backend.KeyPress{Ctrl: true, Key: 'p'},
+		termbox.KeyCtrlQ:      backend.KeyPress{Ctrl: true, Key: 'q'},
+		termbox.KeyCtrlR:      backend.KeyPress{Ctrl: true, Key: 'r'},
+		termbox.KeyCtrlS:      backend.KeyPress{Ctrl: true, Key: 's'},
+		termbox.KeyCtrlT:      backend.KeyPress{Ctrl: true, Key: 't'},
+		termbox.KeyCtrlU:      backend.KeyPress{Ctrl: true, Key: 'u'},
+		termbox.KeyCtrlV:      backend.KeyPress{Ctrl: true, Key: 'v'},
+		termbox.KeyCtrlW:      backend.KeyPress{Ctrl: true, Key: 'w'},
+		termbox.KeyCtrlX:      backend.KeyPress{Ctrl: true, Key: 'x'},
+		termbox.KeyCtrlY:      backend.KeyPress{Ctrl: true, Key: 'y'},
+		termbox.KeyCtrlZ:      backend.KeyPress{Ctrl: true, Key: 'z'},
+		termbox.KeyCtrl2:      backend.KeyPress{Ctrl: true, Key: '2'},
+		termbox.KeyCtrl4:      backend.KeyPress{Ctrl: true, Key: '4'},
+		termbox.KeyCtrl5:      backend.KeyPress{Ctrl: true, Key: '5'},
+		termbox.KeyCtrl6:      backend.KeyPress{Ctrl: true, Key: '6'},
+		termbox.KeyCtrl7:      backend.KeyPress{Ctrl: true, Key: '7'},
+		termbox.KeyEnter:      backend.KeyPress{Key: backend.Enter},
+		termbox.KeySpace:      backend.KeyPress{Key: ' '},
+		termbox.KeyBackspace2: backend.KeyPress{Key: backend.Backspace},
+		termbox.KeyArrowUp:    backend.KeyPress{Key: backend.Up},
+		termbox.KeyArrowDown:  backend.KeyPress{Key: backend.Down},
+		termbox.KeyArrowLeft:  backend.KeyPress{Key: backend.Left},
+		termbox.KeyArrowRight: backend.KeyPress{Key: backend.Right},
+		termbox.KeyDelete:     backend.KeyPress{Key: backend.Delete},
+		termbox.KeyEsc:        backend.KeyPress{Key: backend.Escape},
 	}
 	schemelut = make(map[string][2]termbox.Attribute)
 	defaultBg = termbox.ColorBlack
@@ -105,6 +111,13 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 			y++
 			if y > ey {
 				break
+			}
+			continue
+		} else if runes[i] == '\t' {
+			add := (x + 1 + 3) &^ 3
+			for x < add {
+				termbox.SetCell(x, y, ' ', lfg, lbg)
+				x++
 			}
 			continue
 		}
@@ -215,12 +228,11 @@ func main() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
-	lp.Parse(v.Buffer().Data())
 
 	for {
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
-
+		lp.Parse(v.Buffer().Data())
 		renderView(0, 0, w, h-3, v, lp.RootNode())
 		renderView(0, h-3, w, 3, c, &parser.Node{Name: "", Range: parser.Range{0, c.Buffer().Size()}})
 
@@ -231,9 +243,28 @@ func main() {
 			var kp backend.KeyPress
 			if ev.Ch != 0 {
 				kp.Key = backend.Key(ev.Ch)
-			} else if v, ok := lut[ev.Key]; ok {
-				kp = v
+				e := v.BeginEdit()
+				v.Insert(e, v.Size()-1, string(ev.Ch))
+				v.EndEdit(e)
+			} else if v2, ok := lut[ev.Key]; ok {
+				kp = v2
+				switch kp.Key {
+				case backend.Enter:
+					e := v.BeginEdit()
+					v.Insert(e, v.Size()-1, string('\n'))
+					v.EndEdit(e)
+				case ' ':
+					e := v.BeginEdit()
+					v.Insert(e, v.Size()-1, string(' '))
+					v.EndEdit(e)
+				case backend.Backspace:
+					e := v.BeginEdit()
+					r := v.Size() - 1
+					v.Erase(e, primitives.Region{r - 1, r})
+					v.EndEdit(e)
+				}
 			}
+
 			if ev.Key == termbox.KeyEsc {
 				return
 			}
