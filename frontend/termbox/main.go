@@ -3,14 +3,12 @@ package main
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	"github.com/quarnster/parser"
 	"io/ioutil"
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	"lime/backend/loaders"
 	"lime/backend/primitives"
 	"lime/backend/textmate"
-	"sort"
 	"strings"
 )
 
@@ -61,28 +59,7 @@ var (
 	defaultFg = termbox.ColorWhite
 )
 
-func findScope(search parser.Range, node *parser.Node, in string) string {
-	idx := sort.Search(len(node.Children), func(i int) bool {
-		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
-	})
-	for idx < len(node.Children) {
-		c := node.Children[idx]
-		if c.Range.Start > search.End {
-			break
-		}
-		if c.Range.Contains(search) {
-			in += " " + node.Name
-			return findScope(search, node.Children[idx], in)
-		}
-		idx++
-	}
-	if node.Range.Contains(search) {
-		return in + " " + node.Name
-	}
-	return in
-}
-
-func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
+func renderView(sx, sy, w, h int, v *backend.View) {
 	sel := v.Sel()
 	substr := v.Substr(primitives.Region{0, v.Size()})
 	lines := strings.Split(substr, "\n")
@@ -131,7 +108,7 @@ func renderView(sx, sy, w, h int, v *backend.View, root *parser.Node) {
 		if x < ex {
 			fg, bg := defaultFg, defaultBg
 			o := off + len(sub2)
-			scope := findScope(parser.Range{o, o + 1}, root, "")
+			scope := v.ScopeName(o)
 			if scope != lastScope {
 				lastScope = scope
 				na := scope
@@ -180,19 +157,11 @@ func main() {
 	c := ed.Console()
 	var (
 		scheme textmate.Theme
-		syntax textmate.Language
-		lp     = textmate.LanguageParser{Language: &syntax}
 	)
 	if d, err := ioutil.ReadFile("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
 	} else if err := loaders.LoadPlist(d, &scheme); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
-	}
-
-	if d, err := ioutil.ReadFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
-		log4go.Error("Unable to load syntax definition: %s", err)
-	} else if err := loaders.LoadPlist(d, &syntax); err != nil {
-		log4go.Error("Unable to load syntax definition: %s", err)
 	}
 
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
@@ -240,6 +209,10 @@ func main() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
+
+	if err := v.SetSyntaxFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
+		log4go.Error("Unable to set syntax file: %s", err)
+	}
 	sel := v.Sel()
 	sel.Clear()
 	end := v.Buffer().Size() - 2
@@ -249,9 +222,8 @@ func main() {
 	for {
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
-		lp.Parse(v.Buffer().Data())
-		renderView(0, 0, w, h-3, v, lp.RootNode())
-		renderView(0, h-3, w, 3, c, &parser.Node{Name: "", Range: parser.Range{0, c.Buffer().Size()}})
+		renderView(0, 0, w, h-3, v)
+		renderView(0, h-3, w, 3, c)
 
 		termbox.Flush()
 		ev := termbox.PollEvent()

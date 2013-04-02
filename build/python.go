@@ -278,6 +278,12 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if !f.Anonymous && f.Name[0] == strings.ToUpper(f.Name[:1])[0] {
+			for _, j := range ignorelist {
+				if f.Name == j {
+					goto skip
+				}
+			}
+
 			if r, err := pyret(f.Type); err != nil {
 				fmt.Printf("Skipping field %s.%s: %s\n", t.Name(), f.Name, err)
 			} else if pygo, err := pytogoconv("v", "o.data."+f.Name, t.Name()+"."+f.Name, false, f.Type); err != nil {
@@ -296,6 +302,7 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 					t.Name(), pyname(f.Name), pygo,
 				)
 			}
+		skip:
 		}
 	}
 
@@ -307,7 +314,7 @@ func main() {
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, nil)},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
-		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Settings", "Buffer"})},
+		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Settings", "Buffer", "Syntax"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, []string{"Settings"})},
 	}
 	for _, gen := range data {
