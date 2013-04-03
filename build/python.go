@@ -34,6 +34,8 @@ func pytype(t reflect.Type) (string, error) {
 		return "*py.Int", nil
 	case reflect.String:
 		return "*py.String", nil
+	case reflect.Bool:
+		return "*py.Bool", nil
 	default:
 		return "", fmt.Errorf("Can't handle type %s", t.Kind())
 	}
@@ -82,6 +84,8 @@ func pyacc(ot reflect.Type) string {
 		return ".Int()"
 	case reflect.String:
 		return ".String()"
+	case reflect.Bool:
+		return ".Bool()"
 	default:
 		panic(ot.Kind())
 	}

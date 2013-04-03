@@ -65,6 +65,7 @@ func GetEditor() Editor {
 				scratch: true,
 			},
 		}
+		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
 		ed.loadKeybindings()
