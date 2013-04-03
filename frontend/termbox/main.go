@@ -79,7 +79,7 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 	sub2 := ""
 	var (
 		lastScope string
-		lfg, lbg  termbox.Attribute
+		lfg, lbg  = defaultFg, defaultBg
 	)
 
 	tab_size, ok := v.Settings().Get("tab_size", 4).(int)
@@ -89,25 +89,11 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 
 	for i := range runes {
 		sub2 += string(runes[i])
-		if runes[i] == '\n' {
-			x = sx
-			y++
-			if y > ey {
-				break
-			}
-			continue
-		} else if runes[i] == '\t' {
-			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
-			for x < add {
-				termbox.SetCell(x, y, ' ', lfg, lbg)
-				x++
-			}
-			continue
-		}
 
 		if x < ex {
-			fg, bg := defaultFg, defaultBg
 			o := off + len(sub2)
+			r := primitives.Region{o, o}
+			fg, bg := lfg, lbg
 			scope := v.ScopeName(o)
 			if scope != lastScope {
 				lastScope = scope
@@ -134,11 +120,33 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 			} else {
 				fg, bg = lfg, lbg
 			}
-			// TODO(q): It should differ between a proper selection and just the cursor position
-			r := primitives.Region{o, o}
 			if sel.Contains(r) {
-				// TODO(q): It should use the correct colors for selections and the cursor
-				bg = 3
+				for _, r2 := range sel.Regions() {
+					if r == r2 {
+						fg |= termbox.AttrUnderline
+						break
+					} else if r2.Contains(o) {
+						fg |= termbox.AttrReverse
+						break
+					}
+				}
+			}
+			if runes[i] == '\t' {
+				add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
+
+				for x < add {
+					termbox.SetCell(x, y, ' ', fg, bg)
+					x++
+				}
+				continue
+			} else if runes[i] == '\n' {
+				termbox.SetCell(x, y, ' ', fg, bg)
+				x = sx
+				y++
+				if y > ey {
+					break
+				}
+				continue
 			}
 			termbox.SetCell(x, y, runes[i], fg, bg)
 		}

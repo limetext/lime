@@ -58,8 +58,12 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 			break
 		}
 	}
-
-	for i := 0; i < sel.Len(); i++ {
+	i := 0
+	for {
+		l := sel.Len()
+		if i >= l {
+			break
+		}
 		r := sel.Get(i)
 		if r.A == r.B && !hasNonEmpty {
 			d := v.buffer.Data()
@@ -79,6 +83,10 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 			}
 		}
 		v.Erase(e, r)
+		if sel.Len() != l {
+			continue
+		}
+		i++
 	}
 	return nil
 }

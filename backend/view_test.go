@@ -159,26 +159,25 @@ func TestErase(t *testing.T) {
 	var (
 		w Window
 		v = w.NewView()
+		s = v.Sel()
 	)
 	edit := v.BeginEdit()
-	v.Insert(edit, 0, "1234abcd1234abcd")
+	v.Insert(edit, 0, "1234abcd5678abcd")
 	v.EndEdit(edit)
-	v.selection.Clear()
-	r := []Region{
-		{4, 7},
-		{12, 15},
-	}
-	for _, r2 := range r {
-		v.selection.Add(r2)
-	}
+	s.Clear()
+	v.Sel().Add(Region{4, 8})
+	v.Sel().Add(Region{12, 16})
 
 	edit = v.BeginEdit()
-	for i := 0; i < v.selection.Len(); i++ {
-		v.Erase(edit, v.selection.Get(i))
+	for i := 0; i < s.Len(); i++ {
+		v.Erase(edit, s.Get(i))
 	}
 	v.EndEdit(edit)
-	if !reflect.DeepEqual(v.Sel().Regions(), []Region{{4, 4}, {9, 9}}) {
-		t.Error(v.Sel())
+	if !reflect.DeepEqual(s.Regions(), []Region{{4, 4}, {8, 8}}) {
+		t.Error(s)
+	}
+	if d := v.buffer.Data(); d != "12345678" {
+		t.Error(d)
 	}
 }
 

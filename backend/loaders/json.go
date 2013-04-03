@@ -36,12 +36,10 @@ func LoadJSON(data []byte, intf interface{}) error {
 		}
 		r := set.Get(i)
 		b.Erase(r.Begin(), r.Size())
-		if l2 := set.Len(); l2 == i {
-			break
+		if l2 := set.Len(); l2 != l {
+			continue
 		}
-		if set.Get(i).Size() == 0 {
-			i++
-		}
+		i++
 	}
 	// TODO(q): Map any line/column errors to the actual file's line/column
 	return sj.Unmarshal([]byte(b.Substr(Region{0, b.Size()})), intf)
