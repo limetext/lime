@@ -270,37 +270,11 @@ func main() {
 		switch ev.Type {
 		case termbox.EventKey:
 			var kp backend.KeyPress
-			var ins rune
 
 			if ev.Ch != 0 {
 				kp.Key = backend.Key(ev.Ch)
-				ins = ev.Ch
 			} else if v2, ok := lut[ev.Key]; ok {
 				kp = v2
-				switch kp.Key {
-				case '\t':
-					fallthrough
-				case ' ':
-					ins = rune(kp.Key)
-				case backend.Enter:
-					ins = '\n'
-				case backend.Backspace:
-					e := v.BeginEdit()
-					for i := 0; i < sel.Len(); i++ {
-						r := sel.Get(i)
-						r.A, r.B = r.Begin()-1, r.End() // ????
-						v.Erase(e, r)
-					}
-					v.EndEdit(e)
-				}
-			}
-			if ins != 0 {
-				e := v.BeginEdit()
-				for i := 0; i < sel.Len(); i++ {
-					r := sel.Get(i)
-					v.Insert(e, r.B, string(ins))
-				}
-				v.EndEdit(e)
 			}
 
 			if ev.Key == termbox.KeyEsc {

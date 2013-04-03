@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"fmt"
 	"github.com/quarnster/parser"
 	"io/ioutil"
 	"lime/backend/loaders"
@@ -22,20 +23,53 @@ type (
 		syntax    textmate.LanguageParser
 	}
 	Edit struct {
-		CompositeAction
+		composite CompositeAction
+		savedSel  RegionSet
+		v         *View
 	}
 )
 
-func (v *View) setBuffer(b *Buffer) {
-	v.buffer = b
-	b.AddCallback(v.selection.Adjust)
-	// TODO(q): Dynamically load the correct syntax file
-	v.syntax.Language = &textmate.Language{}
-	b.AddCallback(v.reparse)
+func newEdit(v *View) *Edit {
+	ret := &Edit{
+		v: v,
+	}
+	for _, r := range v.Sel().Regions() {
+		ret.savedSel.Add(r)
+	}
+	return ret
 }
 
-func (v *View) reparse(a, b int) {
+func (e *Edit) Apply() {
+	e.composite.Apply()
+}
+
+func (e *Edit) Undo() {
+	e.composite.Undo()
+	e.v.Sel().Clear()
+	for _, r := range e.savedSel.Regions() {
+		e.v.Sel().Add(r)
+	}
+}
+
+func (v *View) setBuffer(b *Buffer) error {
+	if v.buffer != nil {
+		return fmt.Errorf("There is already a buffer set")
+	}
+	v.buffer = b
+	// TODO(q): Dynamically load the correct syntax file
+	v.syntax.Language = &textmate.Language{}
+	b.AddCallback(v.flush)
+	return nil
+}
+
+func (v *View) flush(a, b int) {
+	v.selection.Adjust(a, b)
+	// TODO(q): A full reparse every time the buffer changes is overkill.
+	// It would be better if the nodes are just adjusted as appropriate, together with a
+	// minimal parse of the new data
 	v.syntax.Parse(v.buffer.Data())
+	OnModified.Call(v)
+	OnSelectionModified.Call(v)
 }
 
 func (v *View) SetSyntaxFile(f string) error {
@@ -64,19 +98,19 @@ func (v *View) Buffer() *Buffer {
 }
 
 func (v *View) Insert(edit *Edit, point int, value string) {
-	edit.AddExec(NewInsertAction(v.buffer, point, value))
+	edit.composite.AddExec(NewInsertAction(v.buffer, point, value))
 }
 
 func (v *View) Erase(edit *Edit, r Region) {
-	edit.AddExec(NewEraseAction(v.buffer, r))
+	edit.composite.AddExec(NewEraseAction(v.buffer, r))
 }
 
 func (v *View) Replace(edit *Edit, r Region, value string) {
-	edit.AddExec(NewReplaceAction(v.buffer, r, value))
+	edit.composite.AddExec(NewReplaceAction(v.buffer, r, value))
 }
 
 func (v *View) BeginEdit() *Edit {
-	return &Edit{}
+	return newEdit(v)
 }
 
 func (v *View) EndEdit(e *Edit) {

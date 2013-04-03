@@ -34,3 +34,11 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 	OnLoad.Call(v)
 	return v
 }
+
+// TODO(q): ActiveView should return the actual active view
+func (w *Window) ActiveView() *View {
+	if len(w.views) > 0 {
+		return &w.views[0]
+	}
+	return nil
+}

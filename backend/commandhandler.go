@@ -7,12 +7,9 @@ import (
 
 type (
 	CommandHandler interface {
-		UnregisterApplicationCommand(string) error
-		RegisterApplicationCommand(name string, cmd ApplicationCommand) error
-		UnregisterWindowCommand(string) error
-		RegisterWindowCommand(name string, cmd WindowCommand) error
-		UnregisterTextCommand(string) error
-		RegisterTextCommand(name string, cmd TextCommand) error
+		Unregister(string) error
+		Register(name string, cmd Command) error
+		// TODO(q): Do the commands need to be split in separate lists?
 		RunWindowCommand(*Window, string, Args) error
 		RunTextCommand(*View, string, Args) error
 		RunApplicationCommand(string, Args) error
@@ -67,50 +64,41 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	}
 }
 
-func (ch *commandHandler) UnregisterApplicationCommand(name string) error {
+func (ch *commandHandler) Unregister(name string) error {
 	if _, ok := ch.ApplicationCommands[name]; !ok {
-		return fmt.Errorf("%s wasn't a registered command", name)
+		if _, ok := ch.TextCommands[name]; !ok {
+			if _, ok := ch.WindowCommands[name]; !ok {
+				return fmt.Errorf("%s wasn't a registered command", name)
+			} else {
+				ch.WindowCommands[name] = nil
+			}
+		} else {
+			ch.TextCommands[name] = nil
+		}
+	} else {
+		ch.ApplicationCommands[name] = nil
 	}
-	ch.ApplicationCommands[name] = nil
 	return nil
 }
 
-func (ch *commandHandler) RegisterApplicationCommand(name string, cmd ApplicationCommand) error {
-	if _, ok := ch.ApplicationCommands[name]; !ok {
-		return fmt.Errorf("%s is already a registered command", name)
+func (ch *commandHandler) Register(name string, cmd Command) error {
+	if ac, ok := cmd.(ApplicationCommand); ok {
+		if _, ok := ch.ApplicationCommands[name]; ok {
+			return fmt.Errorf("%s is already a registered command", name)
+		}
+		ch.ApplicationCommands[name] = ac
 	}
-	ch.ApplicationCommands[name] = nil
-	return nil
-}
-
-func (ch *commandHandler) UnregisterWindowCommand(name string) error {
-	if _, ok := ch.WindowCommands[name]; !ok {
-		return fmt.Errorf("%s wasn't a registered command", name)
+	if wc, ok := cmd.(WindowCommand); ok {
+		if _, ok := ch.WindowCommands[name]; ok {
+			return fmt.Errorf("%s is already a registered command", name)
+		}
+		ch.WindowCommands[name] = wc
 	}
-	ch.WindowCommands[name] = nil
-	return nil
-}
-
-func (ch *commandHandler) RegisterWindowCommand(name string, cmd WindowCommand) error {
-	if _, ok := ch.WindowCommands[name]; !ok {
-		return fmt.Errorf("%s is already a registered command", name)
+	if tc, ok := cmd.(TextCommand); ok {
+		if _, ok := ch.TextCommands[name]; ok {
+			return fmt.Errorf("%s is already a registered command", name)
+		}
+		ch.TextCommands[name] = tc
 	}
-	ch.WindowCommands[name] = nil
-	return nil
-}
-
-func (ch *commandHandler) UnregisterTextCommand(name string) error {
-	if _, ok := ch.TextCommands[name]; !ok {
-		return fmt.Errorf("%s wasn't a registered command", name)
-	}
-	ch.TextCommands[name] = nil
-	return nil
-}
-
-func (ch *commandHandler) RegisterTextCommand(name string, cmd TextCommand) error {
-	if _, ok := ch.TextCommands[name]; !ok {
-		return fmt.Errorf("%s is already a registered command", name)
-	}
-	ch.TextCommands[name] = nil
 	return nil
 }

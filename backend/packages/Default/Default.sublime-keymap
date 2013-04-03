@@ -1,0 +1,11 @@
+[
+	{ "keys": ["up"], "command": "move", "args": {"by": "lines", "forward": false} },
+	{ "keys": ["down"], "command": "move", "args": {"by": "lines", "forward": true} },
+	{ "keys": ["left"], "command": "move", "args": {"by": "characters", "forward": false} },
+	{ "keys": ["right"], "command": "move", "args": {"by": "characters", "forward": true} },
+	{ "keys": ["backspace"], "command": "left_delete"},
+	{ "keys": ["ctrl+s"], "command": "save"},
+	{ "keys": ["ctrl+z"], "command": "undo"},
+	{ "keys": ["ctrl+r"], "command": "redo"},
+	{ "keys": ["enter"], "command": "insert", "args": {"characters": "\n"}},
+]

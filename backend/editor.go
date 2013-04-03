@@ -71,8 +71,7 @@ func GetEditor() Editor {
 	return ed
 }
 
-func (e *editor) loadKeybindings() {
-	fn := "../../backend/json/testdata/Default (OSX).sublime-keymap"
+func (e *editor) loadKeybinding(fn string) {
 	if d, err := ioutil.ReadFile(fn); err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
 	} else {
@@ -84,6 +83,10 @@ func (e *editor) loadKeybindings() {
 		}
 		e.keyBindings.Merge(&bindings)
 	}
+}
+func (e *editor) loadKeybindings() {
+	// TODO(q): should search for keybindings
+	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
 }
 
 func (e *editor) Console() *View {
@@ -126,7 +129,16 @@ func (e *editor) HandleInput(kp KeyPress) {
 	if possible_actions.Len() == 1 {
 		action := possible_actions.Bindings[0]
 		// TODO: context
-		e.CommandHandler().RunTextCommand(nil, action.Command, action.Args)
+		// TODO: what's the command precedence?
+		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), action.Command, action.Args); err != nil {
+			log4go.Debug("Couldn't run textcommand: %s", err)
+			if err := e.CommandHandler().RunWindowCommand(e.ActiveWindow(), action.Command, action.Args); err != nil {
+				log4go.Debug("Couldn't run windowcommand: %s", err)
+				if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
+					log4go.Debug("Couldn't run applicationcommand: %s", err)
+				}
+			}
+		}
 	}
 }
 

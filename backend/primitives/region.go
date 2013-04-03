@@ -62,6 +62,7 @@ func (r *RegionSet) Adjust(position, delta int) {
 	r.flush()
 }
 
+// TODO(q): There should be a on modified callback on the RegionSet
 func (r *RegionSet) flush() {
 	sort.Sort(r)
 	for i := 1; i < len(r.regions); i++ {
@@ -87,6 +88,7 @@ func (r *RegionSet) Add(r2 Region) {
 
 func (r *RegionSet) Clear() {
 	r.regions = r.regions[0:0]
+	r.flush()
 }
 
 func (r *RegionSet) Get(i int) Region {
@@ -96,6 +98,7 @@ func (r *RegionSet) Get(i int) Region {
 func (r *RegionSet) Less(i, j int) bool {
 	return r.regions[i].Begin() < r.regions[j].Begin()
 }
+
 func (r *RegionSet) Swap(i, j int) {
 	r.regions[i], r.regions[j] = r.regions[j], r.regions[i]
 }
@@ -111,4 +114,8 @@ func (r *RegionSet) Contains(r2 Region) bool {
 		}
 	}
 	return false
+}
+
+func (r *RegionSet) Regions() []Region {
+	return r.regions
 }
