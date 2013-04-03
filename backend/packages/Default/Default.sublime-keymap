@@ -8,5 +8,5 @@
 	{ "keys": ["ctrl+z"], "command": "undo"},
 	{ "keys": ["ctrl+r"], "command": "redo"},
 	{ "keys": ["enter"], "command": "insert", "args": {"characters": "\n"}},
-	{ "keys": ["esc"], "command": "single_selection", "context": [ { "key": "num_selections", "operator": "not_equal", "operand": 1 } ] }
+	{ "keys": ["escape"], "command": "single_selection", "context": [ { "key": "num_selections", "operator": "not_equal", "operand": 1 } ] }
 ]

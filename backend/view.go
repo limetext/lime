@@ -263,5 +263,8 @@ func findScope(search parser.Range, node *parser.Node, in string) string {
 }
 
 func (v *View) ScopeName(point int) string {
+	if v.syntax.Language == nil {
+		return ""
+	}
 	return findScope(parser.Range{point, point + 1}, v.syntax.RootNode(), v.syntax.Language.ScopeName)
 }

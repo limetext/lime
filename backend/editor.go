@@ -2,7 +2,6 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
-	"fmt"
 	"io/ioutil"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
@@ -43,7 +42,7 @@ type myLogWriter struct {
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	c := GetEditor().Console()
 	e := c.BeginEdit()
-	c.Insert(e, c.Size(), fmt.Sprintf("%s: %s\n", rec.Level, rec.Message))
+	c.Insert(e, c.Size(), log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec))
 	c.EndEdit(e)
 }
 
@@ -102,7 +101,6 @@ func (e *editor) loadSetting(fn string) {
 		} else {
 			log4go.Info("Loaded %s", fn)
 		}
-		fmt.Println("settings: ", settings)
 		e.settings.merge(settings)
 	}
 }
