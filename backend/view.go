@@ -127,6 +127,14 @@ func (v *View) Substr(r Region) string {
 	return v.buffer.Substr(r)
 }
 
+func (v *View) SetScratch(s bool) {
+	v.scratch = s
+}
+
+func (v *View) IsScratch() bool {
+	return v.scratch
+}
+
 func findScope(search parser.Range, node *parser.Node, in string) string {
 	idx := sort.Search(len(node.Children), func(i int) bool {
 		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)

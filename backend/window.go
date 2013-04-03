@@ -24,6 +24,7 @@ func (w *Window) NewView() *View {
 
 func (w *Window) OpenFile(filename string, flags int) *View {
 	v := w.NewView()
+	v.SetScratch(true)
 	e := v.BeginEdit()
 	if d, err := ioutil.ReadFile(filename); err != nil {
 		log4go.Error("Couldn't load file %s: %s", filename, err)
@@ -31,6 +32,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 		v.Insert(e, 0, string(d))
 	}
 	v.EndEdit(e)
+	v.SetScratch(false)
 	OnLoad.Call(v)
 	return v
 }
