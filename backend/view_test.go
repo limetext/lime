@@ -6,6 +6,7 @@ import (
 	"github.com/quarnster/completion/util"
 	"io/ioutil"
 	. "lime/backend/primitives"
+	"reflect"
 	"testing"
 )
 
@@ -151,6 +152,33 @@ func TestView(t *testing.T) {
 	v.undoStack.Redo()
 	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(v.buffer.Data())
+	}
+}
+
+func TestErase(t *testing.T) {
+	var (
+		w Window
+		v = w.NewView()
+	)
+	edit := v.BeginEdit()
+	v.Insert(edit, 0, "1234abcd1234abcd")
+	v.EndEdit(edit)
+	v.selection.Clear()
+	r := []Region{
+		{4, 7},
+		{12, 15},
+	}
+	for _, r2 := range r {
+		v.selection.Add(r2)
+	}
+
+	edit = v.BeginEdit()
+	for i := 0; i < v.selection.Len(); i++ {
+		v.Erase(edit, v.selection.Get(i))
+	}
+	v.EndEdit(edit)
+	if !reflect.DeepEqual(v.Sel().Regions(), []Region{{4, 4}, {9, 9}}) {
+		t.Error(v.Sel())
 	}
 }
 

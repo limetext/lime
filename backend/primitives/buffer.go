@@ -39,8 +39,11 @@ func (buf *Buffer) Insert(point int, value string) {
 }
 
 func (buf *Buffer) Erase(point, length int) {
+	if length == 0 {
+		return
+	}
 	buf.data = buf.data[0:point] + buf.data[point+length:len(buf.data)]
-	buf.notify(point, -length)
+	buf.notify(point+length, -length)
 }
 
 func (b *Buffer) Data() string {

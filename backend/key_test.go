@@ -8,7 +8,7 @@ import (
 
 func TestLoadKeyBindings(t *testing.T) {
 	tests := []string{
-		"json/testdata/Default (OSX).sublime-keymap",
+		"loaders/json/testdata/Default (OSX).sublime-keymap",
 		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Linux).sublime-keymap",
 		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
 		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Windows).sublime-keymap",
@@ -20,23 +20,19 @@ func TestLoadKeyBindings(t *testing.T) {
 			var bindings KeyBindings
 			if err := loaders.LoadJSON(d, &bindings); err != nil {
 				t.Error(err)
-			} else {
-				t.Log(bindings)
 			}
 		}
 	}
 }
 
 func TestKeyFilter(t *testing.T) {
-	fn := "json/testdata/Default (OSX).sublime-keymap"
+	fn := "loaders/json/testdata/Default (OSX).sublime-keymap"
 	if d, err := ioutil.ReadFile(fn); err != nil {
-		t.Logf("Couldn't load file %s: %s", fn, err)
+		t.Errorf("Couldn't load file %s: %s", fn, err)
 	} else {
 		var bindings KeyBindings
 		if err := loaders.LoadJSON(d, &bindings); err != nil {
 			t.Error(err)
-		} else {
-			t.Log(bindings)
 		}
 
 		if b2 := bindings.Filter(KeyPress{Key: 'j', Ctrl: true}); b2.Len() != 3 {

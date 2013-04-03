@@ -96,7 +96,12 @@ func (r *RegionSet) Get(i int) Region {
 }
 
 func (r *RegionSet) Less(i, j int) bool {
-	return r.regions[i].Begin() < r.regions[j].Begin()
+	if bi, bj := r.regions[i].Begin(), r.regions[j].Begin(); bi < bj {
+		return true
+	} else if bi == bj {
+		return r.regions[i].End() < r.regions[j].End()
+	}
+	return false
 }
 
 func (r *RegionSet) Swap(i, j int) {
