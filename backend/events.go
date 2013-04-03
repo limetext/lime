@@ -3,6 +3,16 @@ package backend
 type (
 	ViewEventCallback func(v *View)
 	ViewEvent         []ViewEventCallback
+
+	QueryContextReturn   int
+	QueryContextCallback func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn
+	QueryContextEvent    []QueryContextCallback
+)
+
+const (
+	True QueryContextReturn = iota
+	False
+	Unknown
 )
 
 func (ve ViewEvent) Add(cb ViewEventCallback) {
@@ -15,6 +25,20 @@ func (ve ViewEvent) Call(v *View) {
 	}
 }
 
+func (qe QueryContextEvent) Add(cb QueryContextCallback) {
+	qe = append(qe, cb)
+}
+
+func (qe QueryContextEvent) Call(v *View, key, operator string, operand interface{}, match_all bool) QueryContextReturn {
+	for i := range qe {
+		r := qe[i](v, key, operator, operand, match_all)
+		if r != Unknown {
+			return r
+		}
+	}
+	return Unknown
+}
+
 var (
 	OnNew               ViewEvent
 	OnLoad              ViewEvent
@@ -25,4 +49,5 @@ var (
 	OnPostSave          ViewEvent
 	OnModified          ViewEvent
 	OnSelectionModified ViewEvent
+	OnQueryContext      QueryContextEvent
 )
