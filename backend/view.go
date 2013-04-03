@@ -7,7 +7,9 @@ import (
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
 	"lime/backend/textmate"
+	"regexp"
 	"sort"
+	"strings"
 )
 
 type (
@@ -97,8 +99,110 @@ func (v *View) Buffer() *Buffer {
 	return v.buffer
 }
 
-func (v *View) Insert(edit *Edit, point int, value string) {
+func (v *View) RowCol(point int) (row, col int) {
+	lines := strings.Split(v.Buffer().Data()[:point], "\n")
+	if l := len(lines); l == 0 {
+		return 1, 1
+	} else {
+		return l, len(lines[l-1]) + 1
+	}
+}
+
+func (v *View) TextPoint(row, col int) int {
+	lines := strings.Split(v.buffer.Data(), "\n")
+	if row == 0 {
+		return 0
+	}
+	if col == 0 {
+		col = 1
+	}
+	if row == 1 {
+		col -= 1
+	} else if row > len(lines) {
+		return v.Size()
+	}
+	offset := len(strings.Join(lines[:row-1], "\n")) + col
+	return offset
+}
+
+func (v *View) Line(offset int) Region {
+	if offset < 0 {
+		return Region{0, 0}
+	} else if s := v.Size(); offset >= s {
+		return Region{s, s}
+	} else if v.buffer.Data()[offset] == '\n' {
+		return Region{offset, offset}
+	}
+	data := v.buffer.Data()
+	s := offset
+	for s > 0 && data[s-1] != '\n' {
+		s--
+	}
+	e := offset + 1
+	for e < len(data) && data[e] != '\n' {
+		e++
+	}
+	return Region{s, e}
+}
+
+var (
+	vwre1 = regexp.MustCompile(`\b\w*$`)
+	vwre2 = regexp.MustCompile(`^\w*`)
+)
+
+func (v *View) Word(offset int) Region {
+	_, col := v.RowCol(offset)
+	lr := v.Line(offset)
+	line := v.Substr(lr)
+	begin := 0
+	end := len(line)
+
+	if col > len(line) {
+		col = len(line)
+	}
+	if m := vwre1.FindStringIndex(line[:col]); m != nil {
+		begin = m[0]
+	} else {
+		return Region{offset, offset}
+	}
+	if m := vwre2.FindStringIndex(line[begin:]); m != nil {
+		end = begin + m[1]
+	}
+	return Region{lr.Begin() + begin, lr.Begin() + end}
+}
+
+func (v *View) Insert(edit *Edit, point int, value string) int {
+	if t, ok := v.Settings().Get("translate_tabs_to_spaces", false).(bool); ok && t && strings.Contains(value, "\t") {
+		tab_size, ok := v.Settings().Get("tab_size", 4).(int)
+		if !ok {
+			tab_size = 4
+		}
+
+		lines := strings.Split(value, "\n")
+		for i, li := range lines {
+			for {
+				if idx := strings.Index(li, "\t"); idx != -1 {
+					ai := idx
+					if i == 0 {
+						_, col := v.RowCol(point)
+						ai = col
+					}
+					add := 1 + ((ai + (tab_size - 1)) &^ (tab_size - 1))
+					spaces := ""
+					for j := ai; j < add; j++ {
+						spaces += " "
+					}
+					li = li[:idx] + spaces + li[idx+1:]
+					continue
+				}
+				break
+			}
+			lines[i] = li
+		}
+		value = strings.Join(lines, "\n")
+	}
 	edit.composite.AddExec(NewInsertAction(v.buffer, point, value))
+	return len(value)
 }
 
 func (v *View) Erase(edit *Edit, r Region) {

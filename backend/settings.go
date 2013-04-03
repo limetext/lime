@@ -1,8 +1,20 @@
 package backend
 
-type HasSettings struct {
-	settings Settings
-}
+type (
+	HasSettings struct {
+		settings Settings
+	}
+	SettingsInterface interface {
+		Settings() *Settings
+	}
+	OnChangeCallback func()
+	settingsMap      map[string]interface{}
+	Settings         struct {
+		onChangeCallbacks map[string]OnChangeCallback
+		data              settingsMap
+		Parent            SettingsInterface
+	}
+)
 
 func (s *HasSettings) Settings() *Settings {
 	if s.settings.data == nil {
@@ -11,15 +23,8 @@ func (s *HasSettings) Settings() *Settings {
 	return &s.settings
 }
 
-type OnChangeCallback func()
-type settingsMap map[string]interface{}
-type Settings struct {
-	onChangeCallbacks map[string]OnChangeCallback
-	data              settingsMap
-}
-
 func NewSettings() Settings {
-	return Settings{make(map[string]OnChangeCallback), make(settingsMap)}
+	return Settings{make(map[string]OnChangeCallback), make(settingsMap), nil}
 }
 
 func (s *Settings) AddOnChange(key string, cb OnChangeCallback) {
@@ -33,8 +38,12 @@ func (s *Settings) ClearOnChange(key string) {
 func (s *Settings) Get(name string, def ...interface{}) interface{} {
 	if v, ok := s.data[name]; ok {
 		return v
+	} else if s.Parent != nil {
+		return s.Parent.Settings().Get(name, def)
+	} else if len(def) > 0 {
+		return def[0]
 	}
-	return def
+	return nil
 }
 
 func (s *Settings) Set(name string, val interface{}) {

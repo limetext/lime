@@ -38,10 +38,46 @@ func (c *InsertCommand) Run(v *View, e *Edit, args Args) error {
 }
 
 func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
+	trim_space := false
+	tab_size := 4
+	if t, ok := v.Settings().Get("translate_tabs_to_spaces", false).(bool); ok && t {
+		if t, ok := v.Settings().Get("use_tab_stops", true).(bool); ok && t {
+			trim_space = true
+			tab_size, ok = v.Settings().Get("tab_size", 4).(int)
+			if !ok {
+				tab_size = 4
+			}
+		}
+	}
+
 	sel := v.Sel()
+	hasNonEmpty := false
+	for _, r := range sel.Regions() {
+		if !r.Empty() {
+			hasNonEmpty = true
+			break
+		}
+	}
+
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
-		r.A, r.B = r.Begin()-1, r.End()
+		if r.A == r.B && !hasNonEmpty {
+			d := v.buffer.Data()
+			if trim_space {
+				_, col := v.RowCol(r.A)
+				col -= 1
+				prev_col := r.A - (col - (col-tab_size+(tab_size-1))&^(tab_size-1))
+				if prev_col < 0 {
+					prev_col = 0
+				}
+				for r.A > prev_col && d[r.A-1] == ' ' {
+					r.A--
+				}
+			}
+			if r.A == r.B {
+				r.A--
+			}
+		}
 		v.Erase(e, r)
 	}
 	return nil

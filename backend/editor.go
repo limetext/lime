@@ -27,6 +27,7 @@ type (
 		Console() *View
 	}
 	editor struct {
+		HasSettings
 		windows      []*Window
 		activeWindow *Window
 		loginput     bool
@@ -67,6 +68,7 @@ func GetEditor() Editor {
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
 		ed.loadKeybindings()
+		ed.loadSettings()
 	}
 	return ed
 }
@@ -89,6 +91,26 @@ func (e *editor) loadKeybindings() {
 	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
 }
 
+func (e *editor) loadSetting(fn string) {
+	if d, err := ioutil.ReadFile(fn); err != nil {
+		log4go.Error("Couldn't load file %s: %s", fn, err)
+	} else {
+		var settings settingsMap
+		if err := loaders.LoadJSON(d, &settings); err != nil {
+			log4go.Error(err)
+		} else {
+			log4go.Info("Loaded %s", fn)
+		}
+		fmt.Println("settings: ", settings)
+		e.settings.merge(settings)
+	}
+}
+
+func (e *editor) loadSettings() {
+	// TODO(q): should search for settings
+	e.loadSetting("../../backend/packages/Default/Default.sublime-settings")
+}
+
 func (e *editor) Console() *View {
 	return e.console
 }
@@ -104,6 +126,7 @@ func (e *editor) ActiveWindow() *Window {
 func (e *editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
+	w.settings.Parent = e
 	e.activeWindow = w
 	return w
 }

@@ -1,9 +1,66 @@
 package backend
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	. "lime/backend/primitives"
 	"testing"
 )
+
+func TestRowCol(t *testing.T) {
+	var (
+		w Window
+		v = w.NewView()
+	)
+
+	if d, err := ioutil.ReadFile("./testdata/unittest.json"); err != nil {
+		t.Fatal(err)
+	} else {
+		type Test struct {
+			Offset          int
+			Line            int
+			Column          int
+			LineUntilOffset string
+			LineAtOffset    string
+			WordAtOffset    string
+		}
+		var tests []Test
+		if err := json.Unmarshal(d, &tests); err != nil {
+			t.Fatal(err)
+		} else {
+			if d, err := ioutil.ReadFile("./testdata/unittest.cpp"); err != nil {
+				t.Fatal(err)
+			} else {
+				e := v.BeginEdit()
+				v.Insert(e, 0, string(d))
+				v.EndEdit(e)
+			}
+
+			for _, test := range tests {
+				var a Test
+				a.Line, a.Column = v.RowCol(test.Offset)
+				a.LineAtOffset = v.Substr(v.Line(test.Offset))
+				a.WordAtOffset = v.Substr(v.Word(test.Offset))
+				a.Offset = v.TextPoint(test.Line, test.Column)
+				if a.Line != test.Line {
+					t.Errorf("Line mismatch: %d != %d", a.Line, test.Line)
+				}
+				if a.Column != test.Column {
+					t.Errorf("Column mismatch: %d != %d", a.Column, test.Column)
+				}
+				if a.Offset != test.Offset {
+					t.Errorf("Offset mismatch: %d != %d", a.Offset, test.Offset)
+				}
+				if a.LineAtOffset != test.LineAtOffset {
+					t.Errorf("LineAtOffset mismatch: '%s' != '%s'", a.LineAtOffset, test.LineAtOffset)
+				}
+				if a.WordAtOffset != test.WordAtOffset {
+					t.Errorf("WordAtOffset mismatch: '%s' != '%s'", a.WordAtOffset, test.WordAtOffset)
+				}
+			}
+		}
+	}
+}
 
 func TestView(t *testing.T) {
 	var (
