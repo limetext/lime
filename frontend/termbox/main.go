@@ -158,19 +158,57 @@ func main() {
 	var (
 		scheme textmate.Theme
 	)
+
 	if d, err := ioutil.ReadFile("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
 	} else if err := loaders.LoadPlist(d, &scheme); err != nil {
 		log4go.Error("Unable to load colorscheme definition: %s", err)
 	}
 
+	var (
+		palLut  func(col textmate.Color) termbox.Attribute
+		pal     = make([]termbox.RGB, 0, 256)
+		mode256 bool
+	)
+
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
 		log4go.Error("Unable to use 256 color mode: %s", err)
 	} else {
 		log4go.Debug("Using 256 color mode")
-		pal := make([]termbox.RGB, 0, 256)
+		mode256 = true
+	}
 
-		palLut := func(col textmate.Color) termbox.Attribute {
+	if !mode256 {
+		pal = pal[:10] // Not correct, but whatever
+		pal[termbox.ColorBlack] = termbox.RGB{0, 0, 0}
+		pal[termbox.ColorWhite] = termbox.RGB{255, 255, 255}
+		pal[termbox.ColorRed] = termbox.RGB{255, 0, 0}
+		pal[termbox.ColorGreen] = termbox.RGB{0, 255, 0}
+		pal[termbox.ColorBlue] = termbox.RGB{0, 0, 255}
+		pal[termbox.ColorMagenta] = termbox.RGB{255, 0, 255}
+		pal[termbox.ColorYellow] = termbox.RGB{255, 255, 0}
+		pal[termbox.ColorCyan] = termbox.RGB{0, 255, 255}
+
+		diff := func(i, j byte) int {
+			v := int(i) - int(j)
+			if v < 0 {
+				return -v
+			}
+			return v
+		}
+		palLut = func(col textmate.Color) termbox.Attribute {
+			mindist := 10000000
+			mini := 0
+			for i, c := range pal {
+				if dist := diff(c.R, col.R) + diff(c.G, col.G) + diff(c.B, col.B); dist < mindist {
+					mindist = dist
+					mini = i
+				}
+			}
+			return termbox.Attribute(mini)
+		}
+	} else {
+		palLut = func(col textmate.Color) termbox.Attribute {
 			tc := termbox.RGB{col.R, col.G, col.B}
 			for i, c := range pal {
 				if c == tc {
@@ -181,25 +219,27 @@ func main() {
 			pal = append(pal, tc)
 			return termbox.Attribute(l)
 		}
-		for i, s := range scheme.Settings {
-			var (
-				fi = defaultFg
-				bi = defaultBg
-			)
-			if fg, ok := s.Settings["foreground"]; ok {
-				fi = palLut(fg)
-				if i == 0 {
-					defaultFg = fi
-				}
+	}
+	for i, s := range scheme.Settings {
+		var (
+			fi = defaultFg
+			bi = defaultBg
+		)
+		if fg, ok := s.Settings["foreground"]; ok {
+			fi = palLut(fg)
+			if i == 0 {
+				defaultFg = fi
 			}
-			if bg, ok := s.Settings["background"]; ok {
-				bi = palLut(bg)
-				if i == 0 {
-					defaultBg = bi
-				}
-			}
-			schemelut[s.Scope] = [2]termbox.Attribute{fi, bi}
 		}
+		if bg, ok := s.Settings["background"]; ok {
+			bi = palLut(bg)
+			if i == 0 {
+				defaultBg = bi
+			}
+		}
+		schemelut[s.Scope] = [2]termbox.Attribute{fi, bi}
+	}
+	if mode256 {
 		termbox.SetColorPalette(pal)
 	}
 	defer func() {
