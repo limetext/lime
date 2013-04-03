@@ -249,17 +249,19 @@ func findScope(search parser.Range, node *parser.Node, in string) string {
 			break
 		}
 		if c.Range.Contains(search) {
-			in += " " + node.Name
+			if node.Name != " " {
+				in += " " + node.Name
+			}
 			return findScope(search, node.Children[idx], in)
 		}
 		idx++
 	}
-	if node.Range.Contains(search) {
+	if node.Range.Contains(search) && node.Name != "" {
 		return in + " " + node.Name
 	}
 	return in
 }
 
 func (v *View) ScopeName(point int) string {
-	return findScope(parser.Range{point, point + 1}, v.syntax.RootNode(), "")
+	return findScope(parser.Range{point, point + 1}, v.syntax.RootNode(), v.syntax.Language.ScopeName)
 }

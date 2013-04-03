@@ -2,6 +2,8 @@ package backend
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/quarnster/completion/util"
 	"io/ioutil"
 	. "lime/backend/primitives"
 	"testing"
@@ -149,5 +151,41 @@ func TestView(t *testing.T) {
 	v.undoStack.Redo()
 	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(v.buffer.Data())
+	}
+}
+
+func TestScopeName(t *testing.T) {
+	var (
+		w Window
+		v = w.NewView()
+	)
+	const (
+		in      = "textmate/language_test.go"
+		expfile = "./testdata/scopename.res"
+		syntax  = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	)
+	v.SetSyntaxFile(syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		t.Fatal(err)
+	} else {
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		last := ""
+		str := ""
+		for i := 0; i < v.Size(); i++ {
+			if name := v.ScopeName(i); name != last {
+				last = name
+				str += fmt.Sprintf("%d: %s\n", i, name)
+			}
+		}
+		if d, err := ioutil.ReadFile(expfile); err != nil {
+			if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {
+				t.Error(err)
+			}
+		} else if diff := util.Diff(string(d), str); diff != "" {
+			t.Error(diff)
+		}
+
 	}
 }
