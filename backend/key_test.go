@@ -13,9 +13,13 @@ func TestLoadKeyBindings(t *testing.T) {
 		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
 		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Windows).sublime-keymap",
 	}
-	for _, fn := range tests {
+	for i, fn := range tests {
 		if d, err := ioutil.ReadFile(fn); err != nil {
-			t.Errorf("Couldn't load file %s: %s", fn, err)
+			if i == 0 {
+				t.Errorf("Couldn't load file %s: %s", fn, err)
+			} else {
+				t.Logf("Skipping: Couldn't load file %s: %s", fn, err)
+			}
 		} else {
 			var bindings KeyBindings
 			if err := loaders.LoadJSON(d, &bindings); err != nil {
