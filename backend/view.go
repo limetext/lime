@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/quarnster/parser"
 	"io/ioutil"
@@ -16,13 +17,16 @@ type (
 	View struct {
 		HasSettings
 		HasId
-		name      string
-		window    *Window
-		buffer    *Buffer
-		selection RegionSet
-		undoStack undoStack
-		scratch   bool
-		syntax    textmate.LanguageParser
+		name          string
+		window        *Window
+		buffer        *Buffer
+		selection     RegionSet
+		undoStack     undoStack
+		scratch       bool
+		syntax        textmate.LanguageParser
+		lastScopeNode *parser.Node
+		lastScopeBuf  bytes.Buffer
+		lastScopeName string
 	}
 	Edit struct {
 		composite CompositeAction
@@ -70,6 +74,8 @@ func (v *View) flush(a, b int) {
 	// It would be better if the nodes are just adjusted as appropriate, together with a
 	// minimal parse of the new data
 	v.syntax.Parse(v.buffer.Data())
+	v.lastScopeNode = nil
+	v.lastScopeBuf.Reset()
 	OnModified.Call(v)
 	OnSelectionModified.Call(v)
 }
@@ -239,7 +245,7 @@ func (v *View) IsScratch() bool {
 	return v.scratch
 }
 
-func findScope(search parser.Range, node *parser.Node, in string) string {
+func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 	idx := sort.Search(len(node.Children), func(i int) bool {
 		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
 	})
@@ -249,22 +255,41 @@ func findScope(search parser.Range, node *parser.Node, in string) string {
 			break
 		}
 		if c.Range.Contains(search) {
-			if node.Name != " " {
-				in += " " + node.Name
+			if node.Name != " " && node != v.lastScopeNode {
+				v.lastScopeBuf.WriteByte(' ')
+				v.lastScopeBuf.WriteString(node.Name)
 			}
-			return findScope(search, node.Children[idx], in)
+			return v.findScope(search, node.Children[idx])
 		}
 		idx++
 	}
-	if node.Range.Contains(search) && node.Name != "" {
-		return in + " " + node.Name
+	if node != v.lastScopeNode && node.Range.Contains(search) && node.Name != "" {
+		v.lastScopeBuf.WriteByte(' ')
+		v.lastScopeBuf.WriteString(node.Name)
+		return node
 	}
-	return in
+	return nil
 }
 
 func (v *View) ScopeName(point int) string {
 	if v.syntax.Language == nil {
 		return ""
 	}
-	return findScope(parser.Range{point, point + 1}, v.syntax.RootNode(), v.syntax.Language.ScopeName)
+
+	search := parser.Range{point, point + 1}
+	if v.lastScopeNode != nil && v.lastScopeNode.Range.Contains(search) {
+		if len(v.lastScopeNode.Children) != 0 {
+			if no := v.findScope(search, v.lastScopeNode); no != v.lastScopeNode {
+				v.lastScopeNode = no
+				v.lastScopeName = v.lastScopeBuf.String()
+			}
+		}
+	} else {
+		v.lastScopeNode = nil
+		v.lastScopeBuf.Reset()
+		v.lastScopeBuf.WriteString(v.syntax.Language.ScopeName)
+		v.lastScopeNode = v.findScope(search, v.syntax.RootNode())
+		v.lastScopeName = v.lastScopeBuf.String()
+	}
+	return v.lastScopeName
 }

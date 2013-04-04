@@ -6,6 +6,7 @@ import (
 	"github.com/quarnster/completion/util"
 	"io/ioutil"
 	. "lime/backend/primitives"
+	"math/rand"
 	"reflect"
 	"testing"
 )
@@ -214,5 +215,56 @@ func TestScopeName(t *testing.T) {
 			t.Error(diff)
 		}
 
+	}
+}
+
+func BenchmarkScopeNameLinear(b *testing.B) {
+	var (
+		w Window
+		v = w.NewView()
+	)
+	const (
+		in     = "textmate/language_test.go"
+		syntax = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	)
+	b.StopTimer()
+	v.SetSyntaxFile(syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		b.Fatal(err)
+	} else {
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		b.StartTimer()
+		for j := 0; j < b.N; j++ {
+			for i := 0; i < v.Size(); i++ {
+				v.ScopeName(i)
+			}
+		}
+	}
+}
+
+func BenchmarkScopeNameRandom(b *testing.B) {
+	var (
+		w Window
+		v = w.NewView()
+	)
+	const (
+		in     = "textmate/language_test.go"
+		syntax = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	)
+	b.StopTimer()
+	v.SetSyntaxFile(syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		b.Fatal(err)
+	} else {
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		p := rand.Perm(b.N)
+		b.StartTimer()
+		for _, i := range p {
+			v.ScopeName(i)
+		}
 	}
 }
