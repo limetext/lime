@@ -15,7 +15,7 @@ type Window struct {
 func (w *Window) NewView() *View {
 	w.views = append(w.views, View{window: w})
 	v := &w.views[len(w.views)-1]
-	v.settings.Parent = w
+	v.Settings().Parent = w
 	v.setBuffer(&primitives.Buffer{})
 	v.selection.Clear()
 	v.selection.Add(primitives.Region{0, 0})

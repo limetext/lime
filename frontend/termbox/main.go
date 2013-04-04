@@ -10,6 +10,7 @@ import (
 	"lime/backend/primitives"
 	"lime/backend/textmate"
 	"strings"
+	"time"
 )
 
 var (
@@ -57,6 +58,7 @@ var (
 	schemelut = make(map[string][2]termbox.Attribute)
 	defaultBg = termbox.ColorBlack
 	defaultFg = termbox.ColorWhite
+	blink     bool
 )
 
 func renderView(sx, sy, w, h int, v *backend.View) {
@@ -85,6 +87,16 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 	tab_size, ok := v.Settings().Get("tab_size", 4).(int)
 	if !ok {
 		tab_size = 4
+	}
+	caret_style := termbox.AttrUnderline
+	if b, ok := v.Settings().Get("caret_style", "underline").(string); ok {
+		if b == "block" {
+			caret_style = termbox.AttrReverse
+		}
+	}
+	caret_blink := true
+	if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
+		caret_blink = b
 	}
 
 	for i := range runes {
@@ -120,15 +132,19 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 			} else {
 				fg, bg = lfg, lbg
 			}
-			if sel.Contains(r) {
-				for _, r2 := range sel.Regions() {
-					if r == r2 {
-						fg |= termbox.AttrUnderline
-						break
-					} else if r2.Contains(o) {
-						fg |= termbox.AttrReverse
-						break
+			for _, r2 := range sel.Regions() {
+				if r2.B == r.B {
+					if !caret_blink || blink {
+						if r2.Contains(o) {
+							fg |= termbox.AttrReverse
+						} else {
+							fg |= caret_style
+						}
 					}
+					break
+				} else if r2.Contains(o) {
+					fg |= termbox.AttrReverse
+					break
 				}
 			}
 			if runes[i] == '\t' {
@@ -266,29 +282,52 @@ func main() {
 	end := v.Buffer().Size() - 2
 	sel.Add(primitives.Region{end - 24, end - 24})
 	sel.Add(primitives.Region{end - 22, end - 22})
-	sel.Add(primitives.Region{end - 20, end - 20})
+	sel.Add(primitives.Region{end - 16, end - 20})
+	sel.Add(primitives.Region{end - 13, end - 10})
+
+	evchan := make(chan termbox.Event)
+
+	go func() {
+		for {
+			evchan <- termbox.PollEvent()
+		}
+	}()
+
 	for {
+		blink = !blink
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
 		renderView(0, 0, w, h-3, v)
 		renderView(0, h-3, w, 3, c)
 
 		termbox.Flush()
-		ev := termbox.PollEvent()
-		switch ev.Type {
-		case termbox.EventKey:
-			var kp backend.KeyPress
 
-			if ev.Ch != 0 {
-				kp.Key = backend.Key(ev.Ch)
-			} else if v2, ok := lut[ev.Key]; ok {
-				kp = v2
-			}
+		blink_phase := time.Second
+		if p, ok := ed.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
+			blink_phase = time.Duration(float64(time.Second) * p)
+		}
 
-			if ev.Key == termbox.KeyEsc {
-				return
+		select {
+		case ev := <-evchan:
+			switch ev.Type {
+			case termbox.EventKey:
+				var kp backend.KeyPress
+
+				if ev.Ch != 0 {
+					kp.Key = backend.Key(ev.Ch)
+				} else if v2, ok := lut[ev.Key]; ok {
+					kp = v2
+				}
+
+				if ev.Key == termbox.KeyEsc {
+					return
+				}
+				ed.HandleInput(kp)
+				blink = false
 			}
-			ed.HandleInput(kp)
+		case <-time.After(blink_phase / 2):
+			// Divided by two since we're only doing a simple toggle blink
+			// TODO(q): Shouldn't redraw if blink is disabled...
 		}
 	}
 }

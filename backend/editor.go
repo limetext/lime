@@ -24,6 +24,7 @@ type (
 		CommandHandler() CommandHandler
 		HandleInput(KeyPress)
 		Console() *View
+		Settings() *Settings
 	}
 	editor struct {
 		HasSettings
@@ -125,7 +126,7 @@ func (e *editor) ActiveWindow() *Window {
 func (e *editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
-	w.settings.Parent = e
+	w.Settings().Parent = e
 	e.activeWindow = w
 	return w
 }
@@ -160,6 +161,11 @@ func (e *editor) HandleInput(kp KeyPress) {
 					log4go.Debug("Couldn't run applicationcommand: %s", err)
 				}
 			}
+		}
+	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super) {
+		// presume insert
+		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), "insert", Args{"characters": string(kp.Key)}); err != nil {
+			log4go.Debug("Couldn't run textcommand: %s", err)
 		}
 	}
 }

@@ -39,7 +39,7 @@ func (s *Settings) Get(name string, def ...interface{}) interface{} {
 	if v, ok := s.data[name]; ok {
 		return v
 	} else if s.Parent != nil {
-		return s.Parent.Settings().Get(name, def)
+		return s.Parent.Settings().Get(name, def...)
 	} else if len(def) > 0 {
 		return def[0]
 	}
