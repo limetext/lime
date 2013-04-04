@@ -32,7 +32,11 @@ func (c *InsertCommand) Run(v *View, e *Edit, args Args) error {
 	}
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
-		v.Insert(e, r.B, chars)
+		if r.Size() == 0 {
+			v.Insert(e, r.B, chars)
+		} else {
+			v.Replace(e, r, chars)
+		}
 	}
 	return nil
 }

@@ -177,3 +177,50 @@ func TestMove(t *testing.T) {
 		}
 	}
 }
+
+func TestInsert(t *testing.T) {
+	ed := GetEditor()
+
+	w := ed.NewWindow()
+	v := w.NewView()
+	e := v.BeginEdit()
+	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.EndEdit(e)
+
+	type Test struct {
+		in   []Region
+		data string
+		expd string
+		expr []Region
+	}
+
+	tests := []Test{
+		{
+			[]Region{{1, 1}, {3, 3}, {6, 6}},
+			"a",
+			"Haelalo aWorld!\nTest123123\nAbrakadabra\n",
+			[]Region{{2, 2}, {5, 5}, {9, 9}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {6, 9}},
+			"a",
+			"Haelalo ald!\nTest123123\nAbrakadabra\n",
+			[]Region{{2, 2}, {5, 5}, {9, 9}},
+		},
+	}
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		ed.CommandHandler().RunTextCommand(v, "insert", Args{"characters": test.data})
+		if d := v.buffer.Data(); d != test.expd {
+			t.Errorf("Insert test %d failed: %s", i, d)
+		}
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.expr) {
+			t.Errorf("Insert test %d failed: %v", i, sr)
+		}
+		v.undoStack.Undo()
+	}
+
+}
