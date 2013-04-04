@@ -18,7 +18,7 @@
 	url = git://github.com/quarnster/gopy.git
 [submodule "3rdparty/libs/rubex"]
 	path = 3rdparty/libs/rubex
-	url = git@github.com:quarnster/rubex.git
+	url = git://github.com/quarnster/rubex.git
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
 	url = git://github.com/quarnster/termbox-go.git
