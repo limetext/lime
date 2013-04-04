@@ -15,7 +15,7 @@ func TestLoadKeyBindings(t *testing.T) {
 	}
 	for _, fn := range tests {
 		if d, err := ioutil.ReadFile(fn); err != nil {
-			t.Logf("Couldn't load file %s: %s", fn, err)
+			t.Errorf("Couldn't load file %s: %s", fn, err)
 		} else {
 			var bindings KeyBindings
 			if err := loaders.LoadJSON(d, &bindings); err != nil {

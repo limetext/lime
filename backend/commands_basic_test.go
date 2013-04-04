@@ -2,6 +2,7 @@ package backend
 
 import (
 	. "lime/backend/primitives"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -94,5 +95,85 @@ func TestLeftDelete(t *testing.T) {
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
 	if d := v.buffer.Data(); d != "5678" {
 		t.Error(d)
+	}
+}
+
+func TestMove(t *testing.T) {
+	ed := GetEditor()
+
+	w := ed.NewWindow()
+	v := w.NewView()
+	e := v.BeginEdit()
+	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.EndEdit(e)
+
+	type Test struct {
+		in      []Region
+		by      string
+		extend  bool
+		forward bool
+		exp     []Region
+	}
+
+	tests := []Test{
+		{
+			[]Region{{1, 1}, {3, 3}, {6, 6}},
+			"characters",
+			false,
+			true,
+			[]Region{{2, 2}, {4, 4}, {7, 7}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {6, 6}},
+			"characters",
+			false,
+			false,
+			[]Region{{0, 0}, {2, 2}, {5, 5}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {10, 6}},
+			"characters",
+			false,
+			true,
+			[]Region{{2, 2}, {4, 4}, {7, 7}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {10, 6}},
+			"characters",
+			false,
+			false,
+			[]Region{{0, 0}, {2, 2}, {5, 5}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {10, 6}},
+			"characters",
+			true,
+			true,
+			[]Region{{1, 2}, {3, 4}, {10, 7}},
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {10, 6}},
+			"characters",
+			true,
+			false,
+			[]Region{{1, 0}, {3, 2}, {10, 5}},
+		},
+		{
+			[]Region{{1, 3}, {3, 5}, {10, 7}},
+			"characters",
+			true,
+			true,
+			[]Region{{1, 6}, {10, 8}},
+		},
+	}
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		ed.CommandHandler().RunWindowCommand(w, "move", Args{"by": test.by, "extend": test.extend, "forward": test.forward})
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("Move test %d failed: %v", i, sr)
+		}
 	}
 }

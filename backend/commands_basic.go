@@ -117,8 +117,8 @@ func (c *MoveCommand) Run(w *Window, args Args) error {
 			}
 		} else {
 			for i := range r {
-				r[i].A += dir
 				r[i].B += dir
+				r[i].A = r[i].B
 			}
 		}
 		sel.Clear()
