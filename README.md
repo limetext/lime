@@ -11,11 +11,13 @@ As none of the other text editors I've tried come close to the love I had for Su
 - [x] 100% Open source
 - [x] Compatible with Textmate color schemes (which is what ST is using)
 - [x] Compatible with Textmate syntax definitions (which again is what ST is using)
-- [x] Multiple cursors
-- [x] Regression tests (Programming in [Go](http://golang.org) makes it trivial and even fun to write them ;))
+- [ ] Compatible with Textmate snippets
 - [ ] Compatible with Sublime Text's python plugin api. I'll probably never implement this 100%, only the api bits I need for the plugins I use.
 - [ ] Compatible with Sublime Text's keybindings and settings
+- [ ] Compatible with Sublime Text snippets
 - [ ] Sublime Text's Goto anything panel
+- [x] Multiple cursors
+- [x] Regression tests (Programming in [Go](http://golang.org) makes it trivial and even fun to write them ;))
 - [ ] Support for plugging in a custom parser for more advanced syntax highlighting.
 - [ ] Terminal UI (*Maybe* I'll work on a simple non-terminal UI at some point)
 - [ ] Cross platform (It appears to be compiling and running on OSX and Linux last I tried, but needs further validation.)
