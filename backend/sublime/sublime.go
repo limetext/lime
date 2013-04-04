@@ -23,6 +23,7 @@ func init() {
 		{"View", &_viewClass},
 		{"Window", &_windowClass},
 		{"Edit", &_editClass},
+		{"Settings", &_settingsClass},
 	}
 	for _, cl := range classes {
 		c, err := cl.c.Create()

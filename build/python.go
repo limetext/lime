@@ -22,6 +22,8 @@ func pyname(in string) string {
 
 func pytype(t reflect.Type) (string, error) {
 	switch t.Kind() {
+	case reflect.Slice:
+		return "", fmt.Errorf("Can't handle type %s", t.Kind())
 	case reflect.Ptr:
 		t = t.Elem()
 		if t.Kind() != reflect.Struct {
@@ -41,7 +43,7 @@ func pytype(t reflect.Type) (string, error) {
 	}
 }
 
-func pyret(ot reflect.Type) (string, error) {
+func pyretvar(name string, ot reflect.Type) (string, error) {
 	switch ot.Kind() {
 	case reflect.Ptr:
 		ot = ot.Elem()
@@ -51,28 +53,39 @@ func pyret(ot reflect.Type) (string, error) {
 		fallthrough
 	case reflect.Struct:
 		return fmt.Sprintf(`
-			pyret, err := %sClass.Alloc(1)
+			py%s, err = %sClass.Alloc(1)
 			if err != nil {
-				return nil, err
-			} else if v2, ok := pyret.(*%s); !ok {
-				return nil, fmt.Errorf("Unable to convert return value to the right type?!: %%s", pyret.Type())
+			} else if v2, ok := py%s.(*%s); !ok {
+				return nil, fmt.Errorf("Unable to convert return value to the right type?!: %%s", py%s.Type())
 			} else {
-				v2.data = ret
-				return v2, nil
-			}`, pyname(ot.Name()), ot.Name()), nil
+				v2.data = %s
+			}`, name, pyname(ot.Name()), name, ot.Name(), name, name), nil
 	case reflect.Bool:
-		return `
-			if ret {
-				return py.True, nil
+		return fmt.Sprintf(`
+			if %s {
+				py%s = py.True
 			} else {
-				return py.False, nil
-			}`, nil
+				py%s = py.False
+			}`, name, name, name), nil
 	case reflect.Int:
-		return "\n\treturn py.NewInt(ret), nil", nil
+		return fmt.Sprintf("\n\tpy%s = py.NewInt(%s)", name, name), nil
 	case reflect.String:
-		return "\n\treturn py.NewString(ret)", nil
+		return fmt.Sprintf("\n\tpy%s, err = py.NewString(%s)", name, name), nil
 	default:
 		return "", fmt.Errorf("Can't handle return type %s", ot.Kind())
+	}
+}
+
+func pyret(ot reflect.Type) (string, error) {
+	if v, err := pyretvar("ret", ot); err != nil {
+		return "", err
+	} else {
+		return fmt.Sprintf(`
+				var pyret py.Object
+				var err error
+				%s
+				return pyret, err
+				`, v), nil
 	}
 }
 
@@ -132,10 +145,6 @@ func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
 				goto skip
 			}
 		}
-		if out > 1 {
-			fmt.Println("Can't handle out > 1: %d", out)
-			goto skip
-		}
 
 		if in > 0 {
 			args = "tu *py.Tuple, kw *py.Dict"
@@ -193,12 +202,41 @@ func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
 		if m.Name == "String" {
 			ret += "\n\treturn " + call
 		} else if out > 0 {
-			ret += "\n\tret := " + call
-			if r, err := pyret(m.Type.Out(0)); err != nil {
-				fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, err)
-				goto skip
+			ret += "\n\t"
+			for j := 0; j < out; j++ {
+				if j > 0 {
+					ret += ", "
+				}
+				ret += fmt.Sprintf("ret%d", j)
+			}
+			ret += " := " + call
+			ret += "\nvar err error"
+			for j := 0; j < out; j++ {
+				ret += fmt.Sprintf("\nvar pyret%d py.Object\n", j)
+				if r, err := pyretvar(fmt.Sprintf("ret%d", j), m.Type.Out(j)); err != nil {
+					fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, err)
+					goto skip
+				} else {
+					ret += r
+					ret += `
+						if err != nil {
+							// TODO: do the py objs need to be freed?
+							return nil, err
+						}
+						`
+				}
+			}
+			if out == 1 {
+				ret += "\n\treturn pyret0, err"
 			} else {
-				ret += r
+				ret += "\n\treturn py.PackTuple("
+				for j := 0; j < out; j++ {
+					if j > 0 {
+						ret += ", "
+					}
+					ret += fmt.Sprintf("pyret%d", j)
+				}
+				ret += ")"
 			}
 		} else {
 			ret += "\n\t" + call + "\n\treturn py.None, nil"
@@ -318,8 +356,9 @@ func main() {
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, []string{"Less", "Swap", "Adjust"})},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
-		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Settings", "Buffer", "Syntax"})},
-		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, []string{"Settings"})},
+		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax"})},
+		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, nil)},
+		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
 	}
 	for _, gen := range data {
 		wr := `// This file was generated as part of a build step and shouldn't be manually modified
