@@ -224,7 +224,7 @@ func (v *View) BeginEdit() *Edit {
 }
 
 func (v *View) EndEdit(e *Edit) {
-	if !v.scratch {
+	if !v.scratch && e.composite.Len() > 0 {
 		v.undoStack.Add(e, true)
 	}
 }
@@ -292,4 +292,8 @@ func (v *View) ScopeName(point int) string {
 		v.lastScopeName = v.lastScopeBuf.String()
 	}
 	return v.lastScopeName
+}
+
+func (v *View) RunCommand(name string, args Args) {
+	GetEditor().CommandHandler().RunTextCommand(v, name, args)
 }

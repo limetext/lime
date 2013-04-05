@@ -44,6 +44,10 @@ func (ca *CompositeAction) AddExec(a Action) {
 	ca.actions[len(ca.actions)-1].Apply()
 }
 
+func (ca *CompositeAction) Len() int {
+	return len(ca.actions)
+}
+
 func (ia *insertAction) Apply() {
 	ia.buffer.Insert(ia.point, ia.value)
 }

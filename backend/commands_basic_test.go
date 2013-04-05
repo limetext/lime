@@ -171,7 +171,7 @@ func TestMove(t *testing.T) {
 		for _, r := range test.in {
 			v.Sel().Add(r)
 		}
-		ed.CommandHandler().RunWindowCommand(w, "move", Args{"by": test.by, "extend": test.extend, "forward": test.forward})
+		ed.CommandHandler().RunTextCommand(v, "move", Args{"by": test.by, "extend": test.extend, "forward": test.forward})
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
 			t.Errorf("Move test %d failed: %v", i, sr)
 		}

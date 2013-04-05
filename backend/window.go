@@ -45,3 +45,7 @@ func (w *Window) ActiveView() *View {
 	}
 	return nil
 }
+
+func (w *Window) RunCommand(name string, args Args) {
+	GetEditor().CommandHandler().RunWindowCommand(w, name, args)
+}

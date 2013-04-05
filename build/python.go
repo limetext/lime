@@ -105,6 +105,32 @@ func pyacc(ot reflect.Type) string {
 }
 
 func pytogoconv(in, set, name string, returnsValue bool, t reflect.Type) (string, error) {
+	if t.Kind() == reflect.Map && t.Key().Kind() == reflect.String && t.Elem().Kind() == reflect.Interface {
+		return fmt.Sprintf(`
+		if v2, ok := %s.(*py.Dict); !ok {
+			return nil, fmt.Errorf("Expected type *py.Dict for %s, not %%s", %s.Type())
+		} else {
+			if m, err := v2.MapString(); err != nil {
+				return nil, err
+			} else {
+				for k, v := range m {
+					switch t := v.(type) {
+						case *py.Int:
+							%s[k] = t.Int()
+						case *py.Bool:
+							%s[k] = t.Bool()
+						case *py.String:
+							%s[k] = t.String()
+						case *py.Float:
+							%s[k] = t.Float64()
+						default:
+							return nil, fmt.Errorf("Can't set key \"%%s\" with a type of %%s", k, v.Type())
+					}
+				}
+			}
+		}
+`, in, name, in, set, set, set, set), nil
+	}
 	ty, err := pytype(t)
 	if err != nil {
 		return "", err
@@ -167,23 +193,26 @@ func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
 				r = "nil, "
 			}
 			ret += "\n\t)"
-			ret += fmt.Sprintf(`
-					if tu.Size() != %d {
-						return %sfmt.Errorf("Expected %d arguments but got %%d", tu.Size())
-					}`, in, r, in)
 
 			for j := 1; j <= in; j++ {
+				t := m.Type.In(j)
 				name := fmt.Sprintf("arg%d", j)
 				msg := fmt.Sprintf("%s.%s() %s", t2, m.Name, name)
-				pygo, err := pytogoconv("v", name, msg, m.Name != "String", m.Type.In(j))
+				pygo, err := pytogoconv("v", name, msg, m.Name != "String", t)
 				if err != nil {
 					fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, err)
 					goto skip
 				}
-				ret += fmt.Sprintf(`
-					if v, err := tu.GetItem(%d); err != nil {
-						return %serr
-					} else {%s}`, j-1, r, pygo)
+				if t.Kind() == reflect.Map && t.Key().Kind() == reflect.String {
+					ret += fmt.Sprintf(`
+						%s = make(%s)
+						if v, err := tu.GetItem(%d); err == nil {%s}`, name, t, j-1, pygo)
+				} else {
+					ret += fmt.Sprintf(`
+						if v, err := tu.GetItem(%d); err != nil {
+							return %serr
+						} else {%s}`, j-1, r, pygo)
+				}
 			}
 		}
 

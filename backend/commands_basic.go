@@ -95,11 +95,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	return nil
 }
 
-func (c *MoveCommand) Run(w *Window, args Args) error {
-	v := w.ActiveView()
-	if v == nil {
-		return fmt.Errorf("undo: no active view")
-	}
+func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	by, ok := args["by"].(string)
 	if !ok {
 		return fmt.Errorf("move: Missing or invalid 'by' argument: %v", args)
