@@ -82,11 +82,19 @@ class __myfinder:
         if f != None:
             return self.myloader()
 
-
-
 sys.meta_path = [__myfinder()]
 
 def reload_plugin(module):
+    def cmdname(name):
+        if name.endswith("Command"):
+            name = name[:-7]
+        ret = ""
+        for c in name:
+            l = c.lower()
+            if c != l and len(ret) > 0:
+                ret += "_"
+            ret += l
+        return ret
     print "Loading plugin %s" % module
     try:
         module = importlib.import_module(module)
@@ -95,6 +103,7 @@ def reload_plugin(module):
                 continue
 
             try:
+                cmd = cmdname(item[0])
                 if issubclass(item[1], EventListener):
                     def add(inst, listname):
                         toadd = getattr(inst, listname, None)
@@ -105,12 +114,12 @@ def reload_plugin(module):
                     add(inst, "on_load")
                     add(inst, "on_new")
                 elif issubclass(item[1], TextCommand):
-                    sublime.register(item[0], sublime.TextCommandGlue(item[1]))
+                    sublime.register(cmd, sublime.TextCommandGlue(item[1]))
                 elif issubclass(item[1], WindowCommand):
-                    sublime.register(item[0], sublime.WindowCommandGlue(item[1]))
+                    sublime.register(cmd, sublime.WindowCommandGlue(item[1]))
                 elif issubclass(item[1], ApplicationCommand):
-                    sublime.register(item[0], sublime.ApplicationCommandGlue(item[1]))
+                    sublime.register(cmd, sublime.ApplicationCommandGlue(item[1]))
             except:
-                print "Skipping registering %s: %s" % (item[1], sys.exc_info()[1])
+                print "Skipping registering %s: %s" % (cmd, sys.exc_info()[1])
     except:
         traceback.print_exc()

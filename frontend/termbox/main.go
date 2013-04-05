@@ -63,7 +63,7 @@ var (
 
 func renderView(sx, sy, w, h int, v *backend.View) {
 	sel := v.Sel()
-	substr := v.Substr(primitives.Region{0, v.Size()})
+	substr := v.Buffer().Data()
 	lines := strings.Split(substr, "\n")
 	s, e := 0, len(lines)
 	if e > 1 {
@@ -268,7 +268,7 @@ func main() {
 	}
 	defer func() {
 		termbox.Close()
-		fmt.Println(c.Substr(primitives.Region{0, c.Size()}))
+		fmt.Println(c.Buffer().Data())
 	}()
 
 	w := ed.NewWindow()
