@@ -6,9 +6,8 @@ import (
 )
 
 func init() {
-	methods := []py.Method{}
 	py.Initialize()
-	m, err := py.InitModule("sublime", methods)
+	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
 		log.Fatal(err)
 	}

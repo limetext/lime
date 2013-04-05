@@ -147,7 +147,116 @@ func pytogoconv(in, set, name string, returnsValue bool, t reflect.Type) (string
 		}`, in, ty, r, ty, name, in, set, pyacc(t)), nil
 }
 
-func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
+func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) (ret string, err error) {
+	var (
+		args string
+		rv   string
+		in   = m.Type.NumIn() - 1
+		out  = m.Type.NumOut()
+		call string
+	)
+
+	if in > 0 {
+		args = "tu *py.Tuple, kw *py.Dict"
+	}
+	if m.Name == "String" {
+		rv = "string"
+	} else {
+		rv = "(py.Object, error)"
+	}
+
+	ret += fmt.Sprintf("\nfunc %s (%s) %s {", name, args, rv)
+
+	if in > 0 {
+		ret += "\n\tvar ("
+		for j := 1; j <= in; j++ {
+			ret += fmt.Sprintf("\n\t\targ%d %s", j, m.Type.In(j))
+		}
+		r := ""
+		if m.Name != "String" {
+			r = "nil, "
+		}
+		ret += "\n\t)"
+
+		for j := 1; j <= in; j++ {
+			t := m.Type.In(j)
+			name := fmt.Sprintf("arg%d", j)
+			msg := fmt.Sprintf("%s.%s() %s", t2, m.Name, name)
+			pygo, err := pytogoconv("v", name, msg, m.Name != "String", t)
+			if err != nil {
+				return "", err
+			}
+			if t.Kind() == reflect.Map && t.Key().Kind() == reflect.String {
+				ret += fmt.Sprintf(`
+						%s = make(%s)
+						if v, err := tu.GetItem(%d); err == nil {%s}`, name, t, j-1, pygo)
+			} else {
+				ret += fmt.Sprintf(`
+						if v, err := tu.GetItem(%d); err != nil {
+							return %serr
+						} else {%s}`, j-1, r, pygo)
+			}
+		}
+	}
+
+	if in > 0 {
+		call = callobject + m.Name + "("
+		for j := 1; j <= in; j++ {
+			if j > 1 {
+				call += ", "
+			}
+			call += fmt.Sprintf("arg%d", j)
+		}
+		call += ")"
+	} else {
+		call = callobject + m.Name + "()"
+	}
+	if m.Name == "String" {
+		ret += "\n\treturn " + call
+	} else if out > 0 {
+		ret += "\n\t"
+		for j := 0; j < out; j++ {
+			if j > 0 {
+				ret += ", "
+			}
+			ret += fmt.Sprintf("ret%d", j)
+		}
+		ret += " := " + call
+		ret += "\nvar err error"
+		for j := 0; j < out; j++ {
+			ret += fmt.Sprintf("\nvar pyret%d py.Object\n", j)
+			if r, err := pyretvar(fmt.Sprintf("ret%d", j), m.Type.Out(j)); err != nil {
+				return "", err
+			} else {
+				ret += r
+				ret += `
+						if err != nil {
+							// TODO: do the py objs need to be freed?
+							return nil, err
+						}
+						`
+			}
+		}
+		if out == 1 {
+			ret += "\n\treturn pyret0, err"
+		} else {
+			ret += "\n\treturn py.PackTuple("
+			for j := 0; j < out; j++ {
+				if j > 0 {
+					ret += ", "
+				}
+				ret += fmt.Sprintf("pyret%d", j)
+			}
+			ret += ")"
+		}
+	} else {
+		ret += "\n\t" + call + "\n\treturn py.None, nil"
+	}
+	ret += "\n}\n"
+	return
+}
+
+func generatemethodsEx(t reflect.Type, ignorelist []string, callobject string, name func(t reflect.Type, m reflect.Method) string) (methods string) {
 	t2 := t
 	if t.Kind() == reflect.Ptr {
 		t2 = t.Elem()
@@ -155,129 +264,40 @@ func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
 
 	for i := 0; i < t.NumMethod(); i++ {
 		var (
-			ret  string
-			m    = t.Method(i)
-			args string
-			rv   string
-			in   = m.Type.NumIn() - 1
-			out  = m.Type.NumOut()
-			call string
+			m      = t.Method(i)
+			reason string
 		)
+
 		if m.Name[0] != strings.ToUpper(m.Name[:1])[0] {
+			reason = "unexported"
 			goto skip
 		}
 		for _, j := range ignorelist {
 			if m.Name == j {
+				reason = "in skip list"
 				goto skip
 			}
 		}
 
-		if in > 0 {
-			args = "tu *py.Tuple, kw *py.Dict"
-		}
-		if m.Name == "String" {
-			rv = "string"
+		if m, err := generatemethod(m, t2, callobject, name(t2, m)); err != nil {
+			reason = err.Error()
+			goto skip
 		} else {
-			rv = "(py.Object, error)"
+			methods += m
 		}
 
-		ret += fmt.Sprintf("\nfunc (o *%s) Py%s(%s) %s {", t2.Name(), pyname(m.Name), args, rv)
-
-		if in > 0 {
-			ret += "\n\tvar ("
-			for j := 1; j <= in; j++ {
-				ret += fmt.Sprintf("\n\t\targ%d %s", j, m.Type.In(j))
-			}
-			r := ""
-			if m.Name != "String" {
-				r = "nil, "
-			}
-			ret += "\n\t)"
-
-			for j := 1; j <= in; j++ {
-				t := m.Type.In(j)
-				name := fmt.Sprintf("arg%d", j)
-				msg := fmt.Sprintf("%s.%s() %s", t2, m.Name, name)
-				pygo, err := pytogoconv("v", name, msg, m.Name != "String", t)
-				if err != nil {
-					fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, err)
-					goto skip
-				}
-				if t.Kind() == reflect.Map && t.Key().Kind() == reflect.String {
-					ret += fmt.Sprintf(`
-						%s = make(%s)
-						if v, err := tu.GetItem(%d); err == nil {%s}`, name, t, j-1, pygo)
-				} else {
-					ret += fmt.Sprintf(`
-						if v, err := tu.GetItem(%d); err != nil {
-							return %serr
-						} else {%s}`, j-1, r, pygo)
-				}
-			}
-		}
-
-		if in > 0 {
-			call = "o.data." + m.Name + "("
-			for j := 1; j <= in; j++ {
-				if j > 1 {
-					call += ", "
-				}
-				call += fmt.Sprintf("arg%d", j)
-			}
-			call += ")"
-		} else {
-			call = "o.data." + m.Name + "()"
-		}
-		if m.Name == "String" {
-			ret += "\n\treturn " + call
-		} else if out > 0 {
-			ret += "\n\t"
-			for j := 0; j < out; j++ {
-				if j > 0 {
-					ret += ", "
-				}
-				ret += fmt.Sprintf("ret%d", j)
-			}
-			ret += " := " + call
-			ret += "\nvar err error"
-			for j := 0; j < out; j++ {
-				ret += fmt.Sprintf("\nvar pyret%d py.Object\n", j)
-				if r, err := pyretvar(fmt.Sprintf("ret%d", j), m.Type.Out(j)); err != nil {
-					fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, err)
-					goto skip
-				} else {
-					ret += r
-					ret += `
-						if err != nil {
-							// TODO: do the py objs need to be freed?
-							return nil, err
-						}
-						`
-				}
-			}
-			if out == 1 {
-				ret += "\n\treturn pyret0, err"
-			} else {
-				ret += "\n\treturn py.PackTuple("
-				for j := 0; j < out; j++ {
-					if j > 0 {
-						ret += ", "
-					}
-					ret += fmt.Sprintf("pyret%d", j)
-				}
-				ret += ")"
-			}
-		} else {
-			ret += "\n\t" + call + "\n\treturn py.None, nil"
-		}
-		ret += "\n}\n"
-		methods += ret
-		//fmt.Printf("Created method %s.%s\n", t2, m.Name)
 		continue
 	skip:
-		fmt.Printf("Skipping method %s.%s\n", t2, m.Name)
+		fmt.Printf("Skipping method %s.%s: %s\n", t2, m.Name, reason)
 	}
 	return
+
+}
+
+func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
+	return generatemethodsEx(t, ignorelist, "o.data.", func(t2 reflect.Type, m reflect.Method) string {
+		return fmt.Sprintf("\n(o *%s) Py%s", t2.Name(), pyname(m.Name))
+	})
 }
 
 func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret string) {
@@ -381,6 +401,7 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 }
 
 func main() {
+	var sublime_methods = ""
 	data := [][]string{
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, []string{"Less", "Swap", "Adjust"})},
@@ -388,7 +409,18 @@ func main() {
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, nil)},
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
+		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
+			[]string{"Info", "HandleInput", "CommandHandler", "Windows"},
+			"backend.GetEditor().",
+			func(t reflect.Type, m reflect.Method) string {
+				sn := "sublime_" + m.Name
+				sublime_methods += fmt.Sprintf("{Name: \"%s\", Func: %s},\n", pyname(m.Name)[1:], sn)
+				return sn
+			})},
 	}
+	data[len(data)-1][1] += fmt.Sprintf(`var sublime_methods = []py.Method{
+		%s
+	}`, sublime_methods)
 	for _, gen := range data {
 		wr := `// This file was generated as part of a build step and shouldn't be manually modified
 			package sublime
