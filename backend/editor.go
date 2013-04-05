@@ -9,24 +9,7 @@ import (
 )
 
 type (
-	EditorInfo struct {
-		Arch     string
-		Platform string
-		Version  string
-	}
-	Editor interface {
-		NewWindow() *Window
-		Windows() []*Window
-		ActiveWindow() *Window
-		Info() EditorInfo
-		LogInput(bool)
-		LogCommands(bool)
-		CommandHandler() CommandHandler
-		HandleInput(KeyPress)
-		Console() *View
-		Settings() *Settings
-	}
-	editor struct {
+	Editor struct {
 		HasSettings
 		windows      []*Window
 		activeWindow *Window
@@ -43,18 +26,18 @@ type myLogWriter struct {
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	c := GetEditor().Console()
 	e := c.BeginEdit()
-	c.Insert(e, c.Size(), log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec))
+	c.Insert(e, c.Buffer().Size(), log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec))
 	c.EndEdit(e)
 }
 
 func (m *myLogWriter) Close() {
 }
 
-var ed *editor
+var ed *Editor
 
-func GetEditor() Editor {
+func GetEditor() *Editor {
 	if ed == nil {
-		ed = &editor{
+		ed = &Editor{
 			cmdhandler: commandHandler{
 				ApplicationCommands: make(appcmd),
 				TextCommands:        make(textcmd),
@@ -74,7 +57,7 @@ func GetEditor() Editor {
 	return ed
 }
 
-func (e *editor) loadKeybinding(fn string) {
+func (e *Editor) loadKeybinding(fn string) {
 	if d, err := ioutil.ReadFile(fn); err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
 	} else {
@@ -87,12 +70,12 @@ func (e *editor) loadKeybinding(fn string) {
 		e.keyBindings.Merge(&bindings)
 	}
 }
-func (e *editor) loadKeybindings() {
+func (e *Editor) loadKeybindings() {
 	// TODO(q): should search for keybindings
 	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
 }
 
-func (e *editor) loadSetting(fn string) {
+func (e *Editor) loadSetting(fn string) {
 	if d, err := ioutil.ReadFile(fn); err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
 	} else {
@@ -106,24 +89,24 @@ func (e *editor) loadSetting(fn string) {
 	}
 }
 
-func (e *editor) loadSettings() {
+func (e *Editor) loadSettings() {
 	// TODO(q): should search for settings
 	e.loadSetting("../../backend/packages/Default/Default.sublime-settings")
 }
 
-func (e *editor) Console() *View {
+func (e *Editor) Console() *View {
 	return e.console
 }
 
-func (e *editor) Windows() []*Window {
+func (e *Editor) Windows() []*Window {
 	return e.windows
 }
 
-func (e *editor) ActiveWindow() *Window {
+func (e *Editor) ActiveWindow() *Window {
 	return e.activeWindow
 }
 
-func (e *editor) NewWindow() *Window {
+func (e *Editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
 	w.Settings().Parent = e
@@ -131,19 +114,23 @@ func (e *editor) NewWindow() *Window {
 	return w
 }
 
-func (e *editor) Info() EditorInfo {
-	return EditorInfo{
-		runtime.GOARCH,
-		runtime.GOOS,
-		"0",
-	}
+func (e *Editor) Arch() string {
+	return runtime.GOARCH
 }
 
-func (e *editor) CommandHandler() CommandHandler {
+func (e *Editor) Platform() string {
+	return runtime.GOOS
+}
+
+func (e *Editor) Version() string {
+	return "0"
+}
+
+func (e *Editor) CommandHandler() CommandHandler {
 	return &e.cmdhandler
 }
 
-func (e *editor) HandleInput(kp KeyPress) {
+func (e *Editor) HandleInput(kp KeyPress) {
 	if e.loginput {
 		log4go.Debug("Key: %v", kp)
 	}
@@ -170,9 +157,27 @@ func (e *editor) HandleInput(kp KeyPress) {
 	}
 }
 
-func (e *editor) LogInput(l bool) {
+func (e *Editor) LogInput(l bool) {
 	e.loginput = l
 }
-func (e *editor) LogCommands(bool) {
+
+func (e *Editor) LogCommands(bool) {
 	e.cmdhandler.log = true
+}
+
+func (e *Editor) StatusMessage(msg string) {
+	log4go.Info(msg)
+}
+
+func (e *Editor) ErrorMessage(msg string) {
+	log4go.Error(msg)
+}
+
+// TODO(q): Actually show a dialog
+func (e *Editor) MessageDialog(msg string) {
+	log4go.Info(msg)
+}
+
+func (e *Editor) RunCommand(name string, args Args) {
+	e.CommandHandler().RunApplicationCommand(name, args)
 }

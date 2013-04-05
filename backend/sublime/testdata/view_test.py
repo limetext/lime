@@ -1,8 +1,8 @@
 import sys
 import traceback
+import types
 try:
 	import sublime
-
 	v = sublime.test_window.new_view()
 	assert v.id() != sublime.test_window.id()
 	assert sublime.test_window.id() == v.window().id()
@@ -20,15 +20,16 @@ hocus pocus
 	assert v.row_col(20) == (2, 9)
 	assert v.row_col(25) == (3, 3)
 
-
+	assert len(v.sel()) == 1
+	assert len(list(v.sel())) == 1
 	assert v.settings().get("test", "hello") == "hello"
 	v.settings().set("test", 10)
 	assert v.settings().get("test") == 10
-	assert v.sel().get(0) == (46, 46)
+	assert v.sel()[0] == (46, 46)
 	v.run_command("move", {"by":"characters", "forward": True})
-	assert v.sel().get(0) == (47, 47)
+	assert v.sel()[0] == (47, 47)
 	v.run_command("move", {"by":"characters", "forward": False})
-	assert v.sel().get(0) == (46, 46)
+	assert v.sel()[0] == (46, 46)
 except:
 	print sys.exc_info()[1]
 	traceback.print_exc()

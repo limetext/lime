@@ -125,7 +125,7 @@ func (v *View) TextPoint(row, col int) int {
 	if row == 1 {
 		col -= 1
 	} else if row > len(lines) {
-		return v.Size()
+		return v.buffer.Size()
 	}
 	offset := len(strings.Join(lines[:row-1], "\n")) + col
 	return offset
@@ -134,7 +134,7 @@ func (v *View) TextPoint(row, col int) int {
 func (v *View) Line(offset int) Region {
 	if offset < 0 {
 		return Region{0, 0}
-	} else if s := v.Size(); offset >= s {
+	} else if s := v.buffer.Size(); offset >= s {
 		return Region{s, s}
 	} else if v.buffer.Data()[offset] == '\n' {
 		return Region{offset, offset}
@@ -159,7 +159,7 @@ var (
 func (v *View) Word(offset int) Region {
 	_, col := v.RowCol(offset)
 	lr := v.Line(offset)
-	line := v.Substr(lr)
+	line := v.buffer.Substr(lr)
 	begin := 0
 	end := len(line)
 
@@ -227,14 +227,6 @@ func (v *View) EndEdit(e *Edit) {
 	if !v.scratch && e.composite.Len() > 0 {
 		v.undoStack.Add(e, true)
 	}
-}
-
-func (v *View) Size() int {
-	return v.buffer.Size()
-}
-
-func (v *View) Substr(r Region) string {
-	return v.buffer.Substr(r)
 }
 
 func (v *View) SetScratch(s bool) {

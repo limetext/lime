@@ -14,8 +14,13 @@ import (
 var re = regexp.MustCompile(`\p{Lu}`)
 
 func pyname(in string) string {
-	if in == "String" {
+	switch in {
+	case "String":
 		return "Str"
+	case "Len":
+		return "SeqLen"
+	case "Get":
+		return "SeqGet"
 	}
 	return re.ReplaceAllStringFunc(in, func(a string) string { return "_" + strings.ToLower(a) })
 }
@@ -68,7 +73,12 @@ func pyretvar(name string, ot reflect.Type) (string, error) {
 				py%s = py.False
 			}`, name, name, name), nil
 	case reflect.Int:
-		return fmt.Sprintf("\n\tpy%s = py.NewInt(%s)", name, name), nil
+		n := name
+		if ot.Name() != "Int" {
+			n = fmt.Sprintf("int(%s)", name)
+		}
+
+		return fmt.Sprintf("\n\tpy%s = py.NewInt(%s)", name, n), nil
 	case reflect.String:
 		return fmt.Sprintf("\n\tpy%s, err = py.NewString(%s)", name, name), nil
 	default:
@@ -157,16 +167,47 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 	)
 
 	if in > 0 {
-		args = "tu *py.Tuple, kw *py.Dict"
+		args = "tu *py.Tuple"
+	}
+	if m.Name == "Get" && in == 1 && m.Type.In(1).Kind() == reflect.Int && out == 1 {
+		args = "arg0 int64"
 	}
 	if m.Name == "String" {
 		rv = "string"
+	} else if m.Name == "Len" {
+		rv = "int64"
 	} else {
 		rv = "(py.Object, error)"
 	}
 
 	ret += fmt.Sprintf("\nfunc %s (%s) %s {", name, args, rv)
 
+	if m.Name == "Get" && in == 1 && m.Type.In(1).Kind() == reflect.Int && out == 1 {
+		ret += `var (
+				pyret0 py.Object
+				err error
+			)
+			if l := ` + callobject + `Len(); int(arg0) >= l || arg0 < 0 {
+				return nil, py.NewError(py.IndexError, "%d >= %d || %d < 0", arg0, l, arg0)
+			}
+			`
+		ret += "\nret0 := " + callobject + m.Name + "(int(arg0))"
+		if r, err := pyretvar("ret0", m.Type.Out(0)); err != nil {
+			return "", err
+		} else {
+			ret += r
+			ret += `
+						if err != nil {
+							// TODO: do the py objs need to be freed?
+							return nil, err
+						}
+						`
+		}
+		ret += "return pyret0, err\n}\n"
+		return ret, nil
+	} else if m.Name == "Len" {
+		return ret + "return int64(" + callobject + m.Name + "())\n}\n", nil
+	}
 	if in > 0 {
 		ret += "\n\tvar ("
 		for j := 1; j <= in; j++ {
@@ -409,6 +450,17 @@ func main() {
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, nil)},
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
+		{"../backend/sublime/buffer.go", generatemethodsEx(
+			reflect.TypeOf(&primitives.Buffer{}),
+			[]string{"Erase", "Insert"},
+			"o.data.Buffer().",
+			func(t reflect.Type, m reflect.Method) string {
+				mn := pyname(m.Name)
+				if m.Name == "Id" {
+					mn = "_buffer_id"
+				}
+				return "(o *View) Py" + mn
+			})},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
 			[]string{"Info", "HandleInput", "CommandHandler", "Windows"},
 			"backend.GetEditor().",

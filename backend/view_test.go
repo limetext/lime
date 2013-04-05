@@ -43,8 +43,8 @@ func TestRowCol(t *testing.T) {
 			for _, test := range tests {
 				var a Test
 				a.Line, a.Column = v.RowCol(test.Offset)
-				a.LineAtOffset = v.Substr(v.Line(test.Offset))
-				a.WordAtOffset = v.Substr(v.Word(test.Offset))
+				a.LineAtOffset = v.buffer.Substr(v.Line(test.Offset))
+				a.WordAtOffset = v.buffer.Substr(v.Word(test.Offset))
 				a.Offset = v.TextPoint(test.Line, test.Column)
 				if a.Line != test.Line {
 					t.Errorf("Line mismatch: %d != %d", a.Line, test.Line)
@@ -201,7 +201,7 @@ func TestScopeName(t *testing.T) {
 		v.EndEdit(e)
 		last := ""
 		str := ""
-		for i := 0; i < v.Size(); i++ {
+		for i := 0; i < v.buffer.Size(); i++ {
 			if name := v.ScopeName(i); name != last {
 				last = name
 				str += fmt.Sprintf("%d: %s\n", i, name)
@@ -237,7 +237,7 @@ func BenchmarkScopeNameLinear(b *testing.B) {
 		v.EndEdit(e)
 		b.StartTimer()
 		for j := 0; j < b.N; j++ {
-			for i := 0; i < v.Size(); i++ {
+			for i := 0; i < v.buffer.Size(); i++ {
 				v.ScopeName(i)
 			}
 		}

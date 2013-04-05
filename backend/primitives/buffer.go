@@ -2,6 +2,7 @@ package primitives
 
 type (
 	Buffer struct {
+		HasId
 		filename  string
 		data      string
 		callbacks []BufferChangedCallback

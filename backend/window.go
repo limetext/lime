@@ -7,7 +7,7 @@ import (
 )
 
 type Window struct {
-	HasId
+	primitives.HasId
 	HasSettings
 	views []View
 }
