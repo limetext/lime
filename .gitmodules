@@ -28,3 +28,6 @@
 [submodule "3rdparty/bundles/GoSublime"]
 	path = 3rdparty/bundles/GoSublime
 	url = git://github.com/DisposaBoy/GoSublime.git
+[submodule "3rdparty/bundles/Vintageous"]
+	path = 3rdparty/bundles/Vintageous
+	url = git://github.com/quarnster/Vintageous.git

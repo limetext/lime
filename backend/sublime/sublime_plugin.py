@@ -2,7 +2,10 @@ import os
 import os.path
 import inspect
 import traceback
+import imp
 import sublime
+import sys
+import importlib
 
 class __Event:
     def __init__(self):
@@ -46,15 +49,45 @@ class TextCommand(Command):
 class EventListener(object):
     pass
 
-def reload_plugin(filename):
-    print "Loading plugin %s" % filename
-    oldpath = os.getcwd()
-    path = os.path.dirname(os.path.abspath(filename))
+
+def fn(fullname):
+    paths = fullname.split(".")
+    paths = "/".join(paths)
+    for p in sys.path:
+        f = os.path.join(p, paths)
+        if os.path.exists(f):
+            return f
+        f += ".py"
+        if os.path.exists(f):
+            return f
+    return None
+
+class __myfinder:
+    class myloader(object):
+        def load_module(self, fullname):
+            if fullname in sys.modules:
+                return sys.modules[fullname]
+            f = fn(fullname)
+            if not f.endswith(".py"):
+                m = imp.new_module(fullname)
+                m.__path__ = f
+                sys.modules[fullname] = m
+                return m
+            return imp.load_source(fullname, f)
+
+    def find_module(self, fullname, path=None):
+        f = fn(fullname)
+        if f != None:
+            return self.myloader()
+
+
+
+sys.meta_path = [__myfinder()]
+
+def reload_plugin(module):
+    print "Loading plugin %s" % module
     try:
-        os.chdir(path)
-        filename = os.path.relpath(filename, path)
-        module = os.path.splitext(filename)[0]
-        module = __import__(module)
+        module = importlib.import_module(module)
         for item in inspect.getmembers(module):
             if type(EventListener) != type(item[1]):
                 continue
@@ -77,7 +110,5 @@ def reload_plugin(filename):
                     application_commands[item[0]] = item[1]
             except:
                 traceback.print_exc()
-    finally:
-        os.chdir(oldpath)
-
-
+    except:
+        traceback.print_exc()
