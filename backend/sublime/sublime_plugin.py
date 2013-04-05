@@ -30,21 +30,23 @@ class __Event:
 on_load = __Event()
 on_new = __Event()
 
-application_commands = {}
-window_commands = {}
-text_commands = {}
-
 class Command(object):
-    pass
+    def is_enabled(self, args=None):
+        return True
+
+    def is_visible(self, args=None):
+        return True
 
 class ApplicationCommand(Command):
     pass
 
 class WindowCommand(Command):
-    pass
+    def __init__(self, wnd):
+        self.window = wnd
 
 class TextCommand(Command):
-    pass
+    def __init__(self, view):
+        self.view = view
 
 class EventListener(object):
     pass
@@ -103,12 +105,12 @@ def reload_plugin(module):
                     add(inst, "on_load")
                     add(inst, "on_new")
                 elif issubclass(item[1], TextCommand):
-                    text_commands[item[0]] = item[1]
+                    sublime.register(item[0], sublime.TextCommandGlue(item[1]))
                 elif issubclass(item[1], WindowCommand):
-                    window_commands[item[0]] = item[1]
+                    sublime.register(item[0], sublime.WindowCommandGlue(item[1]))
                 elif issubclass(item[1], ApplicationCommand):
-                    application_commands[item[0]] = item[1]
+                    sublime.register(item[0], sublime.ApplicationCommandGlue(item[1]))
             except:
-                traceback.print_exc()
+                print "Skipping registering %s: %s" % (item[1], sys.exc_info()[1])
     except:
         traceback.print_exc()

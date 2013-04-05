@@ -23,6 +23,7 @@ type (
 		TextCommands        textcmd
 		WindowCommands      wndcmd
 		log                 bool
+		verbose             bool
 	}
 )
 
@@ -82,23 +83,32 @@ func (ch *commandHandler) Unregister(name string) error {
 }
 
 func (ch *commandHandler) Register(name string, cmd Command) error {
+	var r = false
 	if ac, ok := cmd.(ApplicationCommand); ok {
 		if _, ok := ch.ApplicationCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)
 		}
+		r = true
 		ch.ApplicationCommands[name] = ac
 	}
 	if wc, ok := cmd.(WindowCommand); ok {
 		if _, ok := ch.WindowCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)
 		}
+		r = true
 		ch.WindowCommands[name] = wc
 	}
 	if tc, ok := cmd.(TextCommand); ok {
 		if _, ok := ch.TextCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)
 		}
+		r = true
 		ch.TextCommands[name] = tc
+	}
+	if !r {
+		return fmt.Errorf("Command wasn't registered in any list: %s", name)
+	} else if ch.verbose {
+		log4go.Debug("Successfully registered command %s", name)
 	}
 	return nil
 }

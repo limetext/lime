@@ -43,6 +43,11 @@ func pytype(t reflect.Type) (string, error) {
 		return "*py.String", nil
 	case reflect.Bool:
 		return "*py.Bool", nil
+	case reflect.Interface:
+		if t.Name() == "Command" {
+			return "backend.Command", nil
+		}
+		fallthrough
 	default:
 		return "", fmt.Errorf("Can't handle type %s", t.Kind())
 	}
@@ -109,6 +114,11 @@ func pyacc(ot reflect.Type) string {
 		return ".String()"
 	case reflect.Bool:
 		return ".Bool()"
+	case reflect.Interface:
+		if ot.Name() == "Command" {
+			return ""
+		}
+		fallthrough
 	default:
 		panic(ot.Kind())
 	}
@@ -254,6 +264,8 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 	}
 	if m.Name == "String" {
 		ret += "\n\treturn " + call
+	} else if out == 1 && m.Type.Out(0).Name() == "error" {
+		ret += "\nreturn py.None, " + call
 	} else if out > 0 {
 		ret += "\n\t"
 		for j := 0; j < out; j++ {
@@ -443,6 +455,12 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 
 func main() {
 	var sublime_methods = ""
+	sn := func(t reflect.Type, m reflect.Method) string {
+		sn := "sublime_" + m.Name
+		sublime_methods += fmt.Sprintf("{Name: \"%s\", Func: %s},\n", pyname(m.Name)[1:], sn)
+		return sn
+	}
+
 	data := [][]string{
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, []string{"Less", "Swap", "Adjust"})},
@@ -461,19 +479,24 @@ func main() {
 				}
 				return "(o *View) Py" + mn
 			})},
+		{"../backend/sublime/commands.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().CommandHandler()),
+			[]string{"RunWindowCommand", "RunTextCommand", "RunApplicationCommand"},
+			"backend.GetEditor().CommandHandler().",
+			sn),
+		},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
 			[]string{"Info", "HandleInput", "CommandHandler", "Windows"},
 			"backend.GetEditor().",
-			func(t reflect.Type, m reflect.Method) string {
-				sn := "sublime_" + m.Name
-				sublime_methods += fmt.Sprintf("{Name: \"%s\", Func: %s},\n", pyname(m.Name)[1:], sn)
-				return sn
-			})},
+			sn),
+		},
 	}
 	data[len(data)-1][1] += fmt.Sprintf(`var sublime_methods = []py.Method{
 		%s
 	}`, sublime_methods)
 	for _, gen := range data {
+		if gen[0] == "" {
+			continue
+		}
 		wr := `// This file was generated as part of a build step and shouldn't be manually modified
 			package sublime
 
@@ -486,6 +509,7 @@ func main() {
 			var (
 				_ = backend.View{}
 				_ = primitives.Region{}
+				_ = fmt.Errorf
 			)
 			` + gen[1]
 		if err := ioutil.WriteFile(gen[0], []byte(wr), 0644); err != nil {

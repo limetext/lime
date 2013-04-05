@@ -5,6 +5,23 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 )
 
+func toPython(r interface{}) (py.Object, error) {
+	switch t := r.(type) {
+	case bool:
+		if t {
+			return py.True, nil
+		} else {
+			return py.False, nil
+		}
+	case int:
+		return py.NewInt(t), nil
+	case string:
+		return py.NewString(t)
+	default:
+		return nil, fmt.Errorf("Can't return type %s from Settings.Get() to python", t)
+	}
+}
+
 func (o *Settings) Py_get(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	var (
 		arg1 string
@@ -28,20 +45,7 @@ func (o *Settings) Py_get(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	} else if r == nil {
 		return py.None, nil
 	}
-	switch t := r.(type) {
-	case bool:
-		if t {
-			return py.True, nil
-		} else {
-			return py.False, nil
-		}
-	case int:
-		return py.NewInt(t), nil
-	case string:
-		return py.NewString(t)
-	default:
-		return nil, fmt.Errorf("Can't return type %s from Settings.Get() to python", t)
-	}
+	return toPython(r)
 }
 
 func (o *Settings) Py_set(tu *py.Tuple, kw *py.Dict) (py.Object, error) {

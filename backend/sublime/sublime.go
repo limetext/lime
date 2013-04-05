@@ -44,6 +44,7 @@ func scanpath(path string, m *py.Module) {
 
 func init() {
 	py.Initialize()
+
 	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
 		log.Fatal(err)
@@ -60,6 +61,9 @@ func init() {
 		{"Window", &_windowClass},
 		{"Edit", &_editClass},
 		{"Settings", &_settingsClass},
+		{"WindowCommandGlue", &_windowCommandGlueClass},
+		{"TextCommandGlue", &_textCommandGlueClass},
+		{"ApplicationCommandGlue", &_applicationCommandGlueClass},
 	}
 	for _, cl := range classes {
 		c, err := cl.c.Create()
