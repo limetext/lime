@@ -60,7 +60,7 @@ var (
 
 func init() {
 	OnQueryContext.Add(func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn {
-		if strings.HasPrefix(key, "setting.") && operator == "" {
+		if strings.HasPrefix(key, "setting.") && operator == "equal" {
 			c, ok := v.Settings().Get(key[8:]).(bool)
 			if c && ok {
 				return True

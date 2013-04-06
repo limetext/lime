@@ -85,6 +85,7 @@ func Init() {
 		{"WindowCommandGlue", &_windowCommandGlueClass},
 		{"TextCommandGlue", &_textCommandGlueClass},
 		{"ApplicationCommandGlue", &_applicationCommandGlueClass},
+		{"OnQueryContextGlue", &_onQueryContextGlueClass},
 	}
 	for _, cl := range classes {
 		c, err := cl.c.Create()

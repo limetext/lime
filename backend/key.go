@@ -127,6 +127,9 @@ type (
 	}
 
 	KeyContext struct {
+		rawKeyContext
+	}
+	rawKeyContext struct {
 		Key, Operator string
 		Operand       interface{}
 		MatchAll      bool `json:"match_all"`
@@ -144,6 +147,19 @@ type (
 		keyOff   int
 	}
 )
+
+func (k *KeyContext) UnmarshalJSON(d []byte) error {
+	if err := json.Unmarshal(d, &k.rawKeyContext); err != nil {
+		return err
+	}
+	if k.Operator == "" {
+		k.Operator = "equal"
+	}
+	if k.Operand == nil {
+		k.Operand = true
+	}
+	return nil
+}
 
 func (k KeyPress) Index() (ret int) {
 	ret = int(k.Key)

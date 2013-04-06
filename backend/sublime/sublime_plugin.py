@@ -7,28 +7,12 @@ import sublime
 import sys
 import importlib
 
-class __Event:
-    def __init__(self):
-        self.__observers = []
-
-    def __call__(self, *args):
-        for observer in self.__observers:
-            try:
-                observer(*args)
-            except:
-                traceback.print_exc()
-
-    def __iadd__(self, observer):
-        self.__observers.append(observer)
-        return self
-
-    def __isub__(self, observer):
-        self.__observers.remove(observer)
-        return self
-
-
-on_load = __Event()
-on_new = __Event()
+sublime.OP_EQUAL = "equal"
+sublime.OP_NOT_EQUAL = "not_equal"
+sublime.OP_NOT_REGEX_CONTAINS = "not_regex_contains"
+sublime.OP_NOT_REGEX_MATCH = "not_regex_match"
+sublime.OP_REGEX_CONTAINS = "regex_contains"
+sublime.OP_REGEX_MATCH = "op_regex_match"
 
 class Command(object):
     def is_enabled(self, args=None):
@@ -114,14 +98,10 @@ def reload_plugin(module):
             try:
                 cmd = cmdname(item[0])
                 if issubclass(item[1], EventListener):
-                    def add(inst, listname):
-                        toadd = getattr(inst, listname, None)
-                        if toadd:
-                            l = eval(listname)
-                            l += toadd
                     inst = item[1]()
-                    add(inst, "on_load")
-                    add(inst, "on_new")
+                    toadd = getattr(inst, "on_query_context", None)
+                    if toadd:
+                        sublime.OnQueryContextGlue(toadd)
                 elif issubclass(item[1], TextCommand):
                     sublime.register(cmd, sublime.TextCommandGlue(item[1]))
                 elif issubclass(item[1], WindowCommand):
