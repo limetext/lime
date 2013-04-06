@@ -9,6 +9,9 @@ import (
 )
 
 func TestSublime(t *testing.T) {
+	ed := backend.GetEditor()
+	w := ed.NewWindow()
+	w.NewView()
 	Init()
 	py.AddToPath("testdata")
 	subl, err := py.Import("sublime")

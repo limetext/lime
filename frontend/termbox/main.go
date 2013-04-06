@@ -179,7 +179,6 @@ func main() {
 	ed := backend.GetEditor()
 	ed.LogInput(true)
 	ed.LogCommands(true)
-	sublime.Init()
 	c := ed.Console()
 	var (
 		scheme textmate.Theme
@@ -295,6 +294,7 @@ func main() {
 		}
 	}()
 
+	sublime.Init()
 	for {
 		blink = !blink
 		termbox.Clear(defaultFg, defaultBg)

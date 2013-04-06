@@ -23,10 +23,12 @@ type (
 		selection     RegionSet
 		undoStack     undoStack
 		scratch       bool
+		overwrite     bool
 		syntax        textmate.LanguageParser
 		lastScopeNode *parser.Node
 		lastScopeBuf  bytes.Buffer
 		lastScopeName string
+		regions       map[string][]Region
 	}
 	Edit struct {
 		composite CompositeAction
@@ -34,6 +36,10 @@ type (
 		v         *View
 	}
 )
+
+func newView(w *Window) *View {
+	return &View{window: w, regions: make(map[string][]Region)}
+}
 
 func newEdit(v *View) *Edit {
 	ret := &Edit{
@@ -237,6 +243,14 @@ func (v *View) IsScratch() bool {
 	return v.scratch
 }
 
+func (v *View) OverwriteStatus() bool {
+	return v.overwrite
+}
+
+func (v *View) SetOverwriteStatus(s bool) {
+	v.overwrite = s
+}
+
 func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 	idx := sort.Search(len(node.Children), func(i int) bool {
 		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
@@ -288,4 +302,16 @@ func (v *View) ScopeName(point int) string {
 
 func (v *View) RunCommand(name string, args Args) {
 	GetEditor().CommandHandler().RunTextCommand(v, name, args)
+}
+
+func (v *View) AddRegions(key string, regions []Region, extras ...interface{}) {
+	v.regions[key] = regions
+}
+
+func (v *View) GetRegions(key string) []Region {
+	return v.regions[key]
+}
+
+func (v *View) EraseRegions(key string) {
+	v.regions[key] = nil
 }

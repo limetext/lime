@@ -9,12 +9,12 @@ import (
 type Window struct {
 	primitives.HasId
 	HasSettings
-	views []View
+	views []*View
 }
 
 func (w *Window) NewView() *View {
-	w.views = append(w.views, View{window: w})
-	v := &w.views[len(w.views)-1]
+	w.views = append(w.views, newView(w))
+	v := w.views[len(w.views)-1]
 	v.Settings().Parent = w
 	v.setBuffer(&primitives.Buffer{})
 	v.selection.Clear()
@@ -41,7 +41,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 // TODO(q): ActiveView should return the actual active view
 func (w *Window) ActiveView() *View {
 	if len(w.views) > 0 {
-		return &w.views[0]
+		return w.views[0]
 	}
 	return nil
 }

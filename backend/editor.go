@@ -96,6 +96,10 @@ func (e *Editor) loadSettings() {
 	e.loadSetting("../../backend/packages/Default/Default.sublime-settings")
 }
 
+func (e *Editor) PackagesPath() string {
+	return "../../3rdparty/bundles/"
+}
+
 func (e *Editor) Console() *View {
 	return e.console
 }
@@ -140,7 +144,6 @@ func (e *Editor) HandleInput(kp KeyPress) {
 	possible_actions := e.keyBindings.Filter(kp)
 	if possible_actions.Len() == 1 {
 		action := possible_actions.Bindings[0]
-		// TODO: context
 		// TODO: what's the command precedence?
 		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), action.Command, action.Args); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)

@@ -1,5 +1,10 @@
 package backend
 
+import (
+	"code.google.com/p/log4go"
+	"strings"
+)
+
 type (
 	ViewEventCallback func(v *View)
 	ViewEvent         []ViewEventCallback
@@ -15,8 +20,8 @@ const (
 	Unknown
 )
 
-func (ve ViewEvent) Add(cb ViewEventCallback) {
-	ve = append(ve, cb)
+func (ve *ViewEvent) Add(cb ViewEventCallback) {
+	*ve = append(*ve, cb)
 }
 
 func (ve ViewEvent) Call(v *View) {
@@ -25,8 +30,8 @@ func (ve ViewEvent) Call(v *View) {
 	}
 }
 
-func (qe QueryContextEvent) Add(cb QueryContextCallback) {
-	qe = append(qe, cb)
+func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
+	*qe = append(*qe, cb)
 }
 
 func (qe QueryContextEvent) Call(v *View, key, operator string, operand interface{}, match_all bool) QueryContextReturn {
@@ -36,6 +41,7 @@ func (qe QueryContextEvent) Call(v *View, key, operator string, operand interfac
 			return r
 		}
 	}
+	log4go.Debug("Unknown context: %s", key)
 	return Unknown
 }
 
@@ -51,3 +57,16 @@ var (
 	OnSelectionModified ViewEvent
 	OnQueryContext      QueryContextEvent
 )
+
+func init() {
+	OnQueryContext.Add(func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn {
+		if strings.HasPrefix(key, "setting.") && operator == "" {
+			c, ok := v.Settings().Get(key[8:]).(bool)
+			if c && ok {
+				return True
+			}
+			return False
+		}
+		return Unknown
+	})
+}

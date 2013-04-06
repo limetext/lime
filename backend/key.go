@@ -238,9 +238,16 @@ func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	idx := sort.Search(k.Len(), func(i int) bool {
 		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
 	})
-
+	// TODO...
+	v := GetEditor().ActiveWindow().ActiveView()
 	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
+		for _, c := range k.Bindings[i].Context {
+			if OnQueryContext.Call(v, c.Key, c.Operator, c.Operand, c.MatchAll) != True {
+				goto skip
+			}
+		}
 		ret.Bindings = append(ret.Bindings, k.Bindings[i])
+	skip:
 	}
 	return
 }

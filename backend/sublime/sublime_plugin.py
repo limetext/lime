@@ -53,12 +53,9 @@ class TextCommand(Command):
             del kwargs['event']
 
         if kwargs:
-            self.run(**kwargs)
+            self.run(edit_token, **kwargs)
         else:
-            self.run()
-
-    def run(self, **kwargs):
-        pass
+            self.run(edit_token)
 
 class EventListener(object):
     pass
@@ -133,5 +130,19 @@ def reload_plugin(module):
                     sublime.register(cmd, sublime.ApplicationCommandGlue(item[1]))
             except:
                 print "Skipping registering %s: %s" % (cmd, sys.exc_info()[1])
+        if "plugin_loaded" in dir(module):
+            module.plugin_loaded()
     except:
         traceback.print_exc()
+
+
+class MyLogger:
+    def write(self, data):
+        v = sublime.console()
+        try:
+            e = v.begin_edit()
+            v.insert(e, v.size(), data)
+        finally:
+            v.end_edit(e)
+
+sys.stdout = sys.stderr = MyLogger()
