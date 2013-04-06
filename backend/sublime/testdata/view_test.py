@@ -17,8 +17,8 @@ simsalabim
 hocus pocus
 """)
 	v.end_edit(e)
-	assert v.row_col(20) == (2, 9)
-	assert v.row_col(25) == (3, 3)
+	assert v.rowcol(20) == (2, 9)
+	assert v.rowcol(25) == (3, 3)
 
 	assert len(v.sel()) == 1
 	assert len(list(v.sel())) == 1

@@ -3,6 +3,8 @@ package sublime
 import (
 	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
+	"lime/backend"
+	"reflect"
 )
 
 func toPython(r interface{}) (py.Object, error) {
@@ -17,8 +19,109 @@ func toPython(r interface{}) (py.Object, error) {
 		return py.NewInt(t), nil
 	case string:
 		return py.NewString(t)
+	case *backend.Edit:
+		pyret0, err := _editClass.Alloc(1)
+		if err != nil {
+			return nil, err
+		} else if v2, ok := pyret0.(*Edit); !ok {
+			return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+		} else {
+			v2.data = t
+			return v2, nil
+		}
+	case *backend.View:
+		pyret0, err := _viewClass.Alloc(1)
+		if err != nil {
+			return nil, err
+		} else if v2, ok := pyret0.(*View); !ok {
+			return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+		} else {
+			v2.data = t
+			return v2, nil
+		}
+	case []interface{}:
+		ret, err := py.NewTuple(int64(len(t)))
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range t {
+			if p, err := toPython(v); err != nil {
+				return nil, err
+			} else if err := ret.SetItem(int64(k), p); err != nil {
+				return nil, err
+			}
+		}
+		return ret, nil
+	case backend.Args:
+		ret, err := py.NewDict()
+		if err != nil {
+			return nil, err
+		}
+		for k, v := range t {
+			if p, err := toPython(v); err != nil {
+				return nil, err
+			} else if err := ret.SetItemString(k, p); err != nil {
+				return nil, err
+			}
+		}
+		return ret, nil
+	case nil:
+		return py.None, nil
 	default:
-		return nil, fmt.Errorf("Can't return type %s from Settings.Get() to python", t)
+		return nil, fmt.Errorf("Can't return type %v from go to python", reflect.TypeOf(t))
+	}
+}
+
+func fromPython(r py.Object) (interface{}, error) {
+	switch t := r.(type) {
+	case *py.NoneObject:
+		return nil, nil
+	case *py.Int:
+		return t.Int(), nil
+	case *py.Bool:
+		return t.Bool(), nil
+	case *py.String:
+		return t.String(), nil
+	case *py.Float:
+		return t.Float64(), nil
+	case *Edit:
+		return t.data, nil
+	case *py.List:
+		g := make([]interface{}, t.Size())
+		for i, r := range t.Slice() {
+			if v, err := fromPython(r); err != nil {
+				return nil, err
+			} else {
+				g[i] = v
+			}
+		}
+		return g, nil
+	case *py.Tuple:
+		g := make([]interface{}, t.Size())
+		for i, r := range t.Slice() {
+			if v, err := fromPython(r); err != nil {
+				return nil, err
+			} else {
+				g[i] = v
+			}
+		}
+		return g, nil
+	case *py.Dict:
+		if ms, err := t.MapString(); err != nil {
+			return nil, err
+		} else {
+			m2 := make(backend.Args)
+			for k, v := range ms {
+				if v2, err := fromPython(v); err != nil {
+					return nil, err
+				} else {
+					m2[k] = v2
+				}
+			}
+			return m2, nil
+		}
+	default:
+		return nil, fmt.Errorf("Cannot convert type %s from python to go", r.Type())
 	}
 }
 
@@ -64,17 +167,10 @@ func (o *Settings) Py_set(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	if v, err := tu.GetItem(1); err != nil {
 		return nil, err
 	} else {
-		switch t := v.(type) {
-		case *py.Int:
-			o.data.Set(arg1, t.Int())
-		case *py.Bool:
-			o.data.Set(arg1, t.Bool())
-		case *py.String:
-			o.data.Set(arg1, t.String())
-		case *py.Float:
-			o.data.Set(arg1, t.Float64())
-		default:
-			return nil, fmt.Errorf("Can't set setting \"%s\" with a type of %s", arg1, v.Type())
+		if v2, err := fromPython(v); err != nil {
+			return nil, err
+		} else {
+			o.data.Set(arg1, v2)
 		}
 	}
 

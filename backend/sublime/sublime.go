@@ -3,12 +3,18 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"lime/3rdparty/libs/gopy/lib"
-	"log"
 	"os"
 	"strings"
 )
 
 func scanpath(path string, m *py.Module) {
+	sys, err := py.Import("sys")
+	if err != nil {
+		log4go.Debug(err)
+	} else {
+		defer sys.Decref()
+	}
+
 	// This should probably be done by the Editor as it needs to scan through for themes, keybinding, settings etc
 	if f, err := os.Open(path); err != nil {
 		log4go.Warn(err)
@@ -32,7 +38,22 @@ func scanpath(path string, m *py.Module) {
 					} else {
 						for _, f := range fi {
 							if fn := f.Name(); strings.HasSuffix(fn, ".py") {
-								m.Base().CallMethod("reload_plugin", "s", dir+"."+fn[:len(fn)-3])
+								//m.Incref()
+								if s, err := py.NewString(dir + "." + fn[:len(fn)-3]); err != nil {
+									log4go.Error(err)
+								} else {
+									if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+										log4go.Error(err)
+									} else if r != nil {
+										r.Decref()
+									}
+									// if i, err := sys.Base().CallMethodObjArgs("getrefcount", s); err != nil {
+									// 	log4go.Error(err)
+									// } else {
+									// 	log4go.Debug("m refs: %d", i.(*py.Int).Int())
+									// 	i.Decref()
+									// }
+								}
 							}
 						}
 					}
@@ -42,12 +63,12 @@ func scanpath(path string, m *py.Module) {
 	}
 }
 
-func init() {
+func Init() {
 	py.Initialize()
 
 	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
-		log.Fatal(err)
+		log4go.Exit(err)
 	}
 
 	type class struct {
@@ -68,19 +89,19 @@ func init() {
 	for _, cl := range classes {
 		c, err := cl.c.Create()
 		if err != nil {
-			log.Fatal(err)
+			log4go.Exit(err)
 		}
 		if err := m.AddObject(cl.name, c); err != nil {
-			log.Fatal(err)
+			log4go.Exit(err)
 		}
 	}
-	py.AddToPath("../packages/")
+	py.AddToPath("../../backend/packages/")
 	py.AddToPath("../../3rdparty/bundles/")
-	py.AddToPath(".")
+	py.AddToPath("../../backend/sublime/")
 	if m, err := py.Import("sublime_plugin"); err != nil {
-		log.Fatal(err)
+		log4go.Exit(err)
 	} else {
-		scanpath("../packages/", m)
+		// scanpath("../packages/", m)
 		scanpath("../../3rdparty/bundles/", m)
 	}
 }

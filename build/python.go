@@ -15,6 +15,8 @@ var re = regexp.MustCompile(`\p{Lu}`)
 
 func pyname(in string) string {
 	switch in {
+	case "RowCol":
+		return "_rowcol"
 	case "String":
 		return "Str"
 	case "Len":
@@ -130,26 +132,13 @@ func pytogoconv(in, set, name string, returnsValue bool, t reflect.Type) (string
 		if v2, ok := %s.(*py.Dict); !ok {
 			return nil, fmt.Errorf("Expected type *py.Dict for %s, not %%s", %s.Type())
 		} else {
-			if m, err := v2.MapString(); err != nil {
+			if v, err := fromPython(v2); err != nil {
 				return nil, err
 			} else {
-				for k, v := range m {
-					switch t := v.(type) {
-						case *py.Int:
-							%s[k] = t.Int()
-						case *py.Bool:
-							%s[k] = t.Bool()
-						case *py.String:
-							%s[k] = t.String()
-						case *py.Float:
-							%s[k] = t.Float64()
-						default:
-							return nil, fmt.Errorf("Can't set key \"%%s\" with a type of %%s", k, v.Type())
-					}
-				}
+				%s = v.(backend.Args)
 			}
 		}
-`, in, name, in, set, set, set, set), nil
+`, in, name, in, set), nil
 	}
 	ty, err := pytype(t)
 	if err != nil {

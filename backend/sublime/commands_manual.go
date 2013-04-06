@@ -62,18 +62,11 @@ func (c *CommandGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 }
 
 func (c *CommandGlue) CreatePyArgs(args backend.Args) (ret *py.Dict, err error) {
-	ret, err = py.NewDict()
-	if err != nil {
-		return
+	if r, err := toPython(args); err != nil {
+		return nil, err
+	} else {
+		return r.(*py.Dict), nil
 	}
-	for k, v := range args {
-		if p, err := toPython(v); err != nil {
-			return nil, err
-		} else if err := ret.SetItemString(k, p); err != nil {
-			return nil, err
-		}
-	}
-	return
 }
 
 func (c *CommandGlue) callBool(name string, args backend.Args) bool {
@@ -115,8 +108,10 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 		return err
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return err
-	} else if _, err := obj.Base().CallMethodObjArgs("run", pye, pyargs); err != nil {
-		return err
+	} else {
+		if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
+			return err
+		}
 	}
 	return nil
 }

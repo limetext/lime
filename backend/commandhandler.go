@@ -84,6 +84,7 @@ func (ch *commandHandler) Unregister(name string) error {
 
 func (ch *commandHandler) Register(name string, cmd Command) error {
 	var r = false
+	log4go.Debug("Want to register %s", name)
 	if ac, ok := cmd.(ApplicationCommand); ok {
 		if _, ok := ch.ApplicationCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)

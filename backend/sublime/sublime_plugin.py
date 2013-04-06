@@ -48,6 +48,18 @@ class TextCommand(Command):
     def __init__(self, view):
         self.view = view
 
+    def run_(self, edit_token, kwargs):
+        if kwargs and 'event' in kwargs:
+            del kwargs['event']
+
+        if kwargs:
+            self.run(**kwargs)
+        else:
+            self.run()
+
+    def run(self, **kwargs):
+        pass
+
 class EventListener(object):
     pass
 

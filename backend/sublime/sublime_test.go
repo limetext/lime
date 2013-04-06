@@ -9,6 +9,7 @@ import (
 )
 
 func TestSublime(t *testing.T) {
+	Init()
 	py.AddToPath("testdata")
 	subl, err := py.Import("sublime")
 	if err != nil {

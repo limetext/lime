@@ -4,7 +4,7 @@ JsonFile       <-    Values EndOfFile?
 Values         <-    Spacing? Value Spacing? (',' Spacing? Value Spacing?)* JunkComma
 Value          <-    (Dictionary / Array / QuotedText / Float / Integer / Boolean / Null)
 Null           <-    "null"
-Dictionary     <-    '{' KeyValuePairs* Spacing? '}'
+Dictionary     <-    '{' KeyValuePairs* Spacing? JunkComma '}'
 Array          <-    '[' Values* Spacing? ']'
 KeyValuePairs  <-    Spacing? KeyValuePair Spacing? (',' Spacing? KeyValuePair Spacing?)*
 KeyValuePair   <-    QuotedText ':' Spacing? Value
@@ -16,7 +16,7 @@ Boolean        <-    "true" / "false"
 Spacing        <-    (Comment / [ \t\n\r])+
 EndOfFile      <-    !.
 
-JunkComma      <-    (',' Spacing)?
+JunkComma      <-    (Spacing? ',' Spacing?)?
 Comment        <-    LineComment / BlockComment
 LineComment    <-    "//" (![\n\r] .)* [\n\r]
 BlockComment   <-    "/*" (!"*/" .)* "*/"

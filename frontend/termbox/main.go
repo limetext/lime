@@ -8,6 +8,7 @@ import (
 	"lime/backend"
 	"lime/backend/loaders"
 	"lime/backend/primitives"
+	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"strings"
 	"time"
@@ -178,6 +179,7 @@ func main() {
 	ed := backend.GetEditor()
 	ed.LogInput(true)
 	ed.LogCommands(true)
+	sublime.Init()
 	c := ed.Console()
 	var (
 		scheme textmate.Theme

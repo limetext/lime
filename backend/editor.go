@@ -42,6 +42,7 @@ func GetEditor() *Editor {
 				ApplicationCommands: make(appcmd),
 				TextCommands:        make(textcmd),
 				WindowCommands:      make(wndcmd),
+				verbose:             true,
 			},
 			console: &View{
 				buffer:  &Buffer{},
@@ -73,6 +74,7 @@ func (e *Editor) loadKeybinding(fn string) {
 func (e *Editor) loadKeybindings() {
 	// TODO(q): should search for keybindings
 	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
+	e.loadKeybinding("../../3rdparty/bundles/Vintageous/Default.sublime-keymap")
 }
 
 func (e *Editor) loadSetting(fn string) {

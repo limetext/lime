@@ -3,6 +3,7 @@ package loaders
 import (
 	sj "encoding/json"
 	"errors"
+	"fmt"
 	"lime/backend/loaders/json"
 	. "lime/backend/primitives"
 )
@@ -15,7 +16,7 @@ func LoadJSON(data []byte, intf interface{}) error {
 	)
 	b.Insert(0, string(data))
 	if !p.Parse(string(data)) {
-		return errors.New(p.Error().String())
+		return fmt.Errorf("%s, %s", p.Error().String(), p.RootNode())
 	} else {
 		root := p.RootNode()
 		for _, child := range root.Children {
