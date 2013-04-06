@@ -57,6 +57,8 @@ func pytype(t reflect.Type) (string, error) {
 
 func pyretvar(name string, ot reflect.Type) (string, error) {
 	switch ot.Kind() {
+	case reflect.Map:
+		return fmt.Sprintf("\npy%s, err = toPython(%s)", name, name), nil
 	case reflect.Ptr:
 		ot = ot.Elem()
 		if ot.Kind() != reflect.Struct {
@@ -459,7 +461,7 @@ func main() {
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
 		{"../backend/sublime/buffer.go", generatemethodsEx(
 			reflect.TypeOf(&primitives.Buffer{}),
-			[]string{"Erase", "Insert"},
+			[]string{"Erase", "Insert", "Substr"},
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := pyname(m.Name)

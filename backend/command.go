@@ -21,7 +21,8 @@ type (
 		IsChecked(Args) bool
 	}
 
-	DefaultCommand struct{}
+	DefaultCommand    struct{}
+	bypassUndoCommand struct{}
 )
 
 func (d *DefaultCommand) IsEnabled(Args) bool {

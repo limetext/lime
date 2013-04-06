@@ -1,5 +1,9 @@
 package primitives
 
+import (
+	"fmt"
+)
+
 type (
 	Action interface {
 		Apply()
@@ -21,6 +25,14 @@ type (
 		region Region
 	}
 )
+
+func (ca CompositeAction) String() string {
+	ret := fmt.Sprintf("%d actions:\n", len(ca.actions))
+	for i := range ca.actions {
+		ret += fmt.Sprintf("\t%s\n", ca.actions[i])
+	}
+	return ret
+}
 
 func (ca *CompositeAction) Apply() {
 	for _, a := range ca.actions {

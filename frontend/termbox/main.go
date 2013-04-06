@@ -274,6 +274,7 @@ func main() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
+	v.Settings().Set("trace", true)
 
 	if err := v.SetSyntaxFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
 		log4go.Error("Unable to set syntax file: %s", err)
@@ -282,9 +283,9 @@ func main() {
 	sel.Clear()
 	end := v.Buffer().Size() - 2
 	sel.Add(primitives.Region{end - 24, end - 24})
-	sel.Add(primitives.Region{end - 22, end - 22})
-	sel.Add(primitives.Region{end - 16, end - 20})
-	sel.Add(primitives.Region{end - 13, end - 10})
+	// sel.Add(primitives.Region{end - 22, end - 22})
+	// sel.Add(primitives.Region{end - 16, end - 20})
+	// sel.Add(primitives.Region{end - 13, end - 10})
 
 	evchan := make(chan termbox.Event)
 
@@ -294,13 +295,14 @@ func main() {
 		}
 	}()
 
+	const console_height = 20
 	sublime.Init()
 	for {
 		blink = !blink
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
-		renderView(0, 0, w, h-3, v)
-		renderView(0, h-3, w, 3, c)
+		renderView(0, 0, w, h-console_height, v)
+		renderView(0, h-console_height, w, console_height, c)
 
 		termbox.Flush()
 

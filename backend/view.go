@@ -2,12 +2,14 @@ package backend
 
 import (
 	"bytes"
+	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/quarnster/parser"
 	"io/ioutil"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
 	"lime/backend/textmate"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -29,26 +31,39 @@ type (
 		lastScopeBuf  bytes.Buffer
 		lastScopeName string
 		regions       map[string][]Region
+		editstack     []*Edit
 	}
 	Edit struct {
-		composite CompositeAction
-		savedSel  RegionSet
-		v         *View
+		invalid    bool
+		composite  CompositeAction
+		savedSel   RegionSet
+		savedCount int
+		command    string
+		args       Args
+		v          *View
+		bypassUndo bool
 	}
 )
 
 func newView(w *Window) *View {
-	return &View{window: w, regions: make(map[string][]Region)}
+	ret := &View{window: w, regions: make(map[string][]Region)}
+	ret.undoStack.mark = -1
+	return ret
 }
 
 func newEdit(v *View) *Edit {
 	ret := &Edit{
-		v: v,
+		v:          v,
+		savedCount: v.buffer.ChangeCount(),
 	}
 	for _, r := range v.Sel().Regions() {
 		ret.savedSel.Add(r)
 	}
 	return ret
+}
+
+func (e *Edit) String() string {
+	return fmt.Sprintf("%s: %v, %v, %v", e.command, e.args, e.bypassUndo, e.composite)
 }
 
 func (e *Edit) Apply() {
@@ -226,13 +241,67 @@ func (v *View) Replace(edit *Edit, r Region, value string) {
 }
 
 func (v *View) BeginEdit() *Edit {
-	return newEdit(v)
+	e := newEdit(v)
+	v.editstack = append(v.editstack, e)
+	if b, ok := v.Settings().Get("trace", false).(bool); b && ok {
+		log4go.Trace("BeginEdit %p", e)
+	}
+	return e
 }
 
 func (v *View) EndEdit(e *Edit) {
-	if !v.scratch && e.composite.Len() > 0 {
-		v.undoStack.Add(e, true)
+	tr := false
+	if b, ok := v.Settings().Get("trace", false).(bool); b && ok {
+		tr = true
+		log4go.Trace("EndEdit %p, %s", e, e.command)
 	}
+	if e.invalid {
+		log4go.Error("This edit has already been invalidated: %v, %v", e, v.editstack)
+		return
+	}
+	i := len(v.editstack) - 1
+	for i := len(v.editstack) - 1; i >= 0; i-- {
+		if v.editstack[i] == e {
+			break
+		}
+	}
+	if i == -1 {
+		log4go.Error("This edit isn't even in the stack... where did it come from? %v, %v", e, v.editstack)
+		return
+	}
+
+	if l := len(v.editstack) - 1; i != l {
+		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, e, v.editstack)
+	}
+	for j := len(v.editstack) - 1; j >= i; j-- {
+		ce := v.editstack[j]
+		ce.invalid = true
+		eq := (reflect.DeepEqual(*v.Sel(), ce.savedSel) && v.buffer.ChangeCount() == ce.savedCount && ce.composite.Len() == 0)
+		if tr {
+			log4go.Trace("%v, %s", eq, ce.command)
+		}
+
+		if !v.scratch && !ce.bypassUndo && !eq {
+			if tr {
+				log4go.Trace("Should be added somewhere %v, %s", eq, ce.command)
+			}
+
+			if i == 0 || j != i {
+				if tr {
+					log4go.Trace("Added to undostack %v, %s", eq, ce.command)
+				}
+				// Presume someone forgot to add it in the j != i case
+				v.undoStack.Add(e, true)
+			} else {
+				if tr {
+					log4go.Trace("Added to parent %v, %s", eq, ce.command)
+				}
+				// This edit belongs to another edit
+				v.editstack[i-1].composite.Add(ce)
+			}
+		}
+	}
+	v.editstack = v.editstack[:i]
 }
 
 func (v *View) SetScratch(s bool) {
@@ -298,6 +367,33 @@ func (v *View) ScopeName(point int) string {
 		v.lastScopeName = v.lastScopeBuf.String()
 	}
 	return v.lastScopeName
+}
+
+func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
+	// TODO: merge history when possible
+	if i := v.undoStack.index(idx, modifying_only); i != -1 {
+		e := v.undoStack.actions[i]
+		return e.command, e.args, 1
+	}
+	return "", nil, 0
+}
+
+func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
+	e := v.BeginEdit()
+	e.command = name
+	t := reflect.TypeOf(cmd)
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	_, e.bypassUndo = t.FieldByName("bypassUndoCommand")
+
+	defer func() {
+		v.EndEdit(e)
+		if r := recover(); r != nil {
+			log4go.Error("Paniced while running text command %s %v: %v", name, args, r)
+		}
+	}()
+	return cmd.Run(v, e, args)
 }
 
 func (v *View) RunCommand(name string, args Args) {

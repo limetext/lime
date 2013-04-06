@@ -3,9 +3,10 @@ package primitives
 type (
 	Buffer struct {
 		HasId
-		filename  string
-		data      string
-		callbacks []BufferChangedCallback
+		changecount int
+		filename    string
+		data        string
+		callbacks   []BufferChangedCallback
 	}
 	BufferChangedCallback func(position, delta int)
 )
@@ -35,6 +36,10 @@ func (buf *Buffer) notify(position, delta int) {
 }
 
 func (buf *Buffer) Insert(point int, value string) {
+	if len(value) == 0 {
+		return
+	}
+	buf.changecount++
 	buf.data = buf.data[0:point] + value + buf.data[point:len(buf.data)]
 	buf.notify(point, len(value))
 }
@@ -43,10 +48,15 @@ func (buf *Buffer) Erase(point, length int) {
 	if length == 0 {
 		return
 	}
+	buf.changecount++
 	buf.data = buf.data[0:point] + buf.data[point+length:len(buf.data)]
 	buf.notify(point+length, -length)
 }
 
 func (b *Buffer) Data() string {
 	return b.data
+}
+
+func (b *Buffer) ChangeCount() int {
+	return b.changecount
 }

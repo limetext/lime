@@ -46,6 +46,15 @@ func (w *Window) ActiveView() *View {
 	return nil
 }
 
+func (w *Window) runCommand(c WindowCommand, name string, args Args) error {
+	defer func() {
+		if r := recover(); r != nil {
+			log4go.Error("Paniced while running window command %s %v: %v", name, args, r)
+		}
+	}()
+	return c.Run(w, args)
+}
+
 func (w *Window) RunCommand(name string, args Args) {
 	GetEditor().CommandHandler().RunWindowCommand(w, name, args)
 }

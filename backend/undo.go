@@ -1,17 +1,18 @@
 package backend
 
 import (
-	. "lime/backend/primitives"
+	"code.google.com/p/log4go"
 )
 
 type (
 	undoStack struct {
 		position int
-		actions  []Action
+		actions  []*Edit
+		mark     int
 	}
 )
 
-func (us *undoStack) Add(a Action, inc bool) {
+func (us *undoStack) Add(a *Edit, inc bool) {
 	if us.position != len(us.actions) {
 		us.actions = us.actions[0:us.position]
 	}
@@ -19,23 +20,56 @@ func (us *undoStack) Add(a Action, inc bool) {
 	if inc {
 		us.position++
 	}
+	log4go.Debug("Added %v, stack is now: %v", a, us)
 }
 
-func (us *undoStack) ApplyAction(a Action) {
-	us.Add(a, false)
-	us.Redo()
-}
-
-func (us *undoStack) Undo() {
-	if us.position > 0 {
-		us.position--
-		us.actions[us.position].Undo()
+func (us *undoStack) index(relative int, modifying_only bool) int {
+	dir := -1
+	i := us.position
+	if relative > 0 {
+		dir = 1
+	} else {
+		i--
+	}
+	relative *= dir
+	for ; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
+		if modifying_only {
+			if us.actions[i].composite.Len() != 0 {
+				relative--
+			}
+		} else {
+			relative--
+		}
+	}
+	if i >= 0 && i < len(us.actions) {
+		return i
+	} else {
+		return -1
 	}
 }
 
-func (us *undoStack) Redo() {
+func (us *undoStack) Undo(hard bool) {
+	if us.position > 0 {
+		to := us.index(0, hard)
+		if to == -1 {
+			to = 0
+		}
+		for us.position > to {
+			us.position--
+			us.actions[us.position].Undo()
+		}
+	}
+}
+
+func (us *undoStack) Redo(hard bool) {
 	if us.position < len(us.actions) {
-		us.actions[us.position].Apply()
-		us.position++
+		to := us.index(1, hard)
+		if to == -1 {
+			to = len(us.actions)
+		}
+		for us.position < to {
+			us.actions[us.position].Apply()
+			us.position++
+		}
 	}
 }

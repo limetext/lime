@@ -32,7 +32,7 @@ class TextCommand(Command):
     def __init__(self, view):
         self.view = view
 
-    def run_(self, edit_token, kwargs):
+    def run__(self, edit_token, kwargs):
         if kwargs and 'event' in kwargs:
             del kwargs['event']
 

@@ -54,6 +54,7 @@ func GetEditor() *Editor {
 		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
 		ed.loadKeybindings()
 		ed.loadSettings()
+		initBasicCommands()
 	}
 	return ed
 }
@@ -145,14 +146,16 @@ func (e *Editor) HandleInput(kp KeyPress) {
 	if possible_actions.Len() == 1 {
 		action := possible_actions.Bindings[0]
 		// TODO: what's the command precedence?
-		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), action.Command, action.Args); err != nil {
-			log4go.Debug("Couldn't run textcommand: %s", err)
+		if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
+			if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), action.Command, action.Args); err != nil {
+				log4go.Debug("Couldn't run textcommand: %s", err)
+			}
+		} else if c := e.cmdhandler.WindowCommands[action.Command]; c != nil {
 			if err := e.CommandHandler().RunWindowCommand(e.ActiveWindow(), action.Command, action.Args); err != nil {
 				log4go.Debug("Couldn't run windowcommand: %s", err)
-				if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
-					log4go.Debug("Couldn't run applicationcommand: %s", err)
-				}
 			}
+		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
+			log4go.Debug("Couldn't run applicationcommand: %s", err)
 		}
 	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super) {
 		// presume insert

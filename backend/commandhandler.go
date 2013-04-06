@@ -29,40 +29,44 @@ type (
 
 func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) error {
 	if ch.log {
-		log4go.Debug("RunWindowCommand: %s %v", name, args)
+		log4go.Info("Running window command: %s %v", name, args)
 	}
-	if wc, ok := ch.WindowCommands[name]; ok {
-		return wc.Run(wnd, args)
-	} else {
-		return fmt.Errorf("No such command registered: %s", name)
+	if c := ch.WindowCommands[name]; c != nil {
+		if err := wnd.runCommand(c, name, args); err != nil && ch.verbose {
+			log4go.Debug("Command execution failed: %s", err)
+		}
 	}
+	return nil
 }
 
 func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) error {
 	if ch.log {
-		log4go.Debug("RunTextCommand: %s %v", name, args)
+		log4go.Info("Running text command: %s %v", name, args)
 	}
-
-	if tc, ok := ch.TextCommands[name]; ok {
-		e := view.BeginEdit()
-		err := tc.Run(view, e, args)
-		view.EndEdit(e)
-		return err
-	} else {
-		return fmt.Errorf("No such command registered: %s", name)
+	if c := ch.TextCommands[name]; c != nil {
+		if err := view.runCommand(c, name, args); err != nil && ch.verbose {
+			log4go.Debug("Command execution failed: %s", err)
+		}
+	} else if w := view.Window(); w != nil {
+		if c := ch.WindowCommands[name]; c != nil {
+			if err := w.runCommand(c, name, args); err != nil && ch.verbose {
+				log4go.Debug("Command execution failed: %s", err)
+			}
+		}
 	}
+	return nil
 }
 
 func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	if ch.log {
-		log4go.Debug("RunTextCommand: %s %v", name, args)
+		log4go.Info("Running application command: %s %v", name, args)
 	}
-
-	if ac, ok := ch.ApplicationCommands[name]; ok {
-		return ac.Run(args)
-	} else {
-		return fmt.Errorf("No such command registered: %s", name)
+	if c := ch.ApplicationCommands[name]; c != nil {
+		if err := c.Run(args); err != nil && ch.verbose {
+			log4go.Debug("Command execution failed: %s", err)
+		}
 	}
+	return nil
 }
 
 func (ch *commandHandler) Unregister(name string) error {

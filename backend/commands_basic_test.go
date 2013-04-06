@@ -113,6 +113,7 @@ func TestMove(t *testing.T) {
 		extend  bool
 		forward bool
 		exp     []Region
+		args    Args
 	}
 
 	tests := []Test{
@@ -122,6 +123,7 @@ func TestMove(t *testing.T) {
 			false,
 			true,
 			[]Region{{2, 2}, {4, 4}, {7, 7}},
+			nil,
 		},
 		{
 			[]Region{{1, 1}, {3, 3}, {6, 6}},
@@ -129,6 +131,7 @@ func TestMove(t *testing.T) {
 			false,
 			false,
 			[]Region{{0, 0}, {2, 2}, {5, 5}},
+			nil,
 		},
 		{
 			[]Region{{1, 1}, {3, 3}, {10, 6}},
@@ -136,6 +139,7 @@ func TestMove(t *testing.T) {
 			false,
 			true,
 			[]Region{{2, 2}, {4, 4}, {7, 7}},
+			nil,
 		},
 		{
 			[]Region{{1, 1}, {3, 3}, {10, 6}},
@@ -143,6 +147,7 @@ func TestMove(t *testing.T) {
 			false,
 			false,
 			[]Region{{0, 0}, {2, 2}, {5, 5}},
+			nil,
 		},
 		{
 			[]Region{{1, 1}, {3, 3}, {10, 6}},
@@ -150,6 +155,7 @@ func TestMove(t *testing.T) {
 			true,
 			true,
 			[]Region{{1, 2}, {3, 4}, {10, 7}},
+			nil,
 		},
 		{
 			[]Region{{1, 1}, {3, 3}, {10, 6}},
@@ -157,6 +163,7 @@ func TestMove(t *testing.T) {
 			true,
 			false,
 			[]Region{{1, 0}, {3, 2}, {10, 5}},
+			nil,
 		},
 		{
 			[]Region{{1, 3}, {3, 5}, {10, 7}},
@@ -164,6 +171,31 @@ func TestMove(t *testing.T) {
 			true,
 			true,
 			[]Region{{1, 6}, {10, 8}},
+			nil,
+		},
+		{
+			[]Region{{1, 1}},
+			"stops",
+			true,
+			true,
+			[]Region{{1, 5}},
+			Args{"word_end": true},
+		},
+		{
+			[]Region{{1, 1}},
+			"stops",
+			false,
+			true,
+			[]Region{{6, 6}},
+			Args{"word_begin": true},
+		},
+		{
+			[]Region{{6, 6}},
+			"stops",
+			false,
+			false,
+			[]Region{{0, 0}},
+			Args{"word_begin": true},
 		},
 	}
 	for i, test := range tests {
@@ -171,10 +203,82 @@ func TestMove(t *testing.T) {
 		for _, r := range test.in {
 			v.Sel().Add(r)
 		}
-		ed.CommandHandler().RunTextCommand(v, "move", Args{"by": test.by, "extend": test.extend, "forward": test.forward})
+		args := Args{"by": test.by, "extend": test.extend, "forward": test.forward}
+		if test.args != nil {
+			for k, v := range test.args {
+				args[k] = v
+			}
+		}
+		ed.CommandHandler().RunTextCommand(v, "move", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
 			t.Errorf("Move test %d failed: %v", i, sr)
 		}
+	}
+}
+
+func TestGlueCmds(t *testing.T) {
+	ed := GetEditor()
+
+	w := ed.NewWindow()
+	v := w.NewView()
+	v.SetScratch(true)
+	e := v.BeginEdit()
+	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.EndEdit(e)
+	v.SetScratch(false)
+	v.RunCommand("mark_undo_groups_for_gluing", nil)
+	v.RunCommand("insert", Args{"characters": "a"})
+	v.RunCommand("insert", Args{"characters": "b"})
+	v.RunCommand("insert", Args{"characters": "c"})
+	v.RunCommand("glue_marked_undo_groups", nil)
+	if v.undoStack.position != 1 {
+		t.Error(v.undoStack.position)
+	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
+	}
+	v.RunCommand("undo", nil)
+	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+		t.Error(d)
+	}
+	v.RunCommand("redo", nil)
+	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
+	}
+	if v.undoStack.position != 1 {
+		t.Error(v.undoStack.position)
+	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
+	}
+	v.RunCommand("undo", nil)
+	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+		t.Error(d)
+	}
+
+	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
+	v.RunCommand("insert", Args{"characters": "a"})
+	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
+	v.RunCommand("insert", Args{"characters": "b"})
+	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
+	v.RunCommand("insert", Args{"characters": "c"})
+	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
+	v.RunCommand("glue_marked_undo_groups", nil)
+	if v.undoStack.position != 1 {
+		t.Error(v.undoStack.position)
+	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
+	}
+	v.RunCommand("undo", nil)
+	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+		t.Error(d)
+	}
+	v.RunCommand("redo", nil)
+	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
+	}
+	if v.undoStack.position != 1 {
+		t.Error(v.undoStack.position)
+	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+		t.Error(d)
 	}
 }
 
@@ -220,7 +324,7 @@ func TestInsert(t *testing.T) {
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.expr) {
 			t.Errorf("Insert test %d failed: %v", i, sr)
 		}
-		v.undoStack.Undo()
+		v.RunCommand("undo", nil)
 	}
 
 }

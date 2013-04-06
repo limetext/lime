@@ -109,7 +109,17 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return err
 	} else {
-		if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
+		if obj.Base().HasAttrString("run_") {
+			// The plugin is probably trying to bypass the undostack...
+			old := v.IsScratch()
+			v.SetScratch(true)
+			log4go.Debug("Discarded: %s", e)
+			v.EndEdit(e)
+			v.SetScratch(old)
+			if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
+				return err
+			}
+		} else if _, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
 			return err
 		}
 	}

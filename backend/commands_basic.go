@@ -3,6 +3,8 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"lime/backend/primitives"
+	"regexp"
 )
 
 type (
@@ -13,14 +15,43 @@ type (
 	LeftDeleteCommand struct {
 		DefaultCommand
 	}
+
+	RightDeleteCommand struct {
+		DefaultCommand
+	}
+
 	MoveCommand struct {
 		DefaultCommand
 	}
 	UndoCommand struct {
 		DefaultCommand
+		bypassUndoCommand
+		hard bool
 	}
 	RedoCommand struct {
 		DefaultCommand
+		hard bool
+		bypassUndoCommand
+	}
+
+	MarkUndoGroupsForGluingCommand struct {
+		DefaultCommand
+		bypassUndoCommand
+	}
+
+	GlueMarkedUndoGroupsCommand struct {
+		DefaultCommand
+		bypassUndoCommand
+	}
+
+	MaybeMarkUndoGroupsForGluingCommand struct {
+		DefaultCommand
+		bypassUndoCommand
+	}
+
+	UnmarkUndoGroupsForGluingCommand struct {
+		DefaultCommand
+		bypassUndoCommand
 	}
 )
 
@@ -95,6 +126,36 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	return nil
 }
 
+func (c *RightDeleteCommand) Run(v *View, e *Edit, args Args) error {
+	sel := v.Sel()
+	hasNonEmpty := false
+	for _, r := range sel.Regions() {
+		if !r.Empty() {
+			hasNonEmpty = true
+			break
+		}
+	}
+	i := 0
+	for {
+		l := sel.Len()
+		if i >= l {
+			break
+		}
+		r := sel.Get(i)
+		if r.A == r.B && !hasNonEmpty {
+			r.B++
+		}
+		v.Erase(e, r)
+		if sel.Len() != l {
+			continue
+		}
+		i++
+	}
+	return nil
+}
+
+var _move_stops_re = regexp.MustCompile(`\b`)
+
 func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	by, ok := args["by"].(string)
 	if !ok {
@@ -102,6 +163,8 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	}
 	extend, ok := args["extend"].(bool)
 	fwd, ok := args["forward"].(bool)
+	word_begin, ok := args["word_begin"].(bool)
+	word_end, ok := args["word_end"].(bool)
 	sel := v.Sel()
 	r := sel.Regions()
 
@@ -121,35 +184,97 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 				r[i].A = r[i].B
 			}
 		}
-		sel.Clear()
+	case "stops":
 		for i := range r {
-			sel.Add(r[i])
+			var next primitives.Region
+			word := v.Word(r[i].B)
+			if word_end && fwd && r[i].B < word.End() {
+				next = word
+			} else if word_begin && !fwd && r[i].B > word.Begin() {
+				next = word
+			} else if fwd {
+				next = v.Word(word.B + 1)
+			} else {
+				next = v.Word(word.A - 1)
+				next = v.Word(next.A - 1)
+			}
+
+			if word_begin {
+				r[i].B = next.A
+			} else if word_end {
+				r[i].B = next.B
+			}
+			if !extend {
+				r[i].A = r[i].B
+			}
 		}
 	default:
 		return fmt.Errorf("move: Unimplemented 'by' action: %s", by)
 	}
-	return nil
-}
-
-func (c *UndoCommand) Run(w *Window, args Args) error {
-	act := w.ActiveView()
-	if act == nil {
-		return fmt.Errorf("undo: no active view")
+	sel.Clear()
+	for i := range r {
+		sel.Add(r[i])
 	}
-	act.undoStack.Undo()
 	return nil
 }
 
-func (c *RedoCommand) Run(w *Window, args Args) error {
-	act := w.ActiveView()
-	if act == nil {
-		return fmt.Errorf("redo: no active view")
+func (c *UndoCommand) Run(v *View, e *Edit, args Args) error {
+	log4go.Debug("Undostack was %d %v", v.undoStack.position, v.undoStack.actions)
+	v.undoStack.Undo(c.hard)
+	log4go.Debug("Undostack is now: %d %v", v.undoStack.position, v.undoStack.actions)
+	return nil
+}
+
+func (c *RedoCommand) Run(v *View, e *Edit, args Args) error {
+	v.undoStack.Redo(c.hard)
+	return nil
+}
+
+func (c *MarkUndoGroupsForGluingCommand) Run(v *View, e *Edit, args Args) error {
+	v.undoStack.mark = v.undoStack.position
+	return nil
+}
+
+func (c *UnmarkUndoGroupsForGluingCommand) Run(v *View, e *Edit, args Args) error {
+	v.undoStack.mark = -1
+	return nil
+}
+
+func (c *GlueMarkedUndoGroupsCommand) Run(v *View, e *Edit, args Args) error {
+	if l, p := v.undoStack.position-v.undoStack.mark, v.undoStack.mark; p != -1 && (l-p) > 1 {
+		e.command = "sequence"
+		e.bypassUndo = true
+		type entry struct {
+			name string
+			args Args
+		}
+		entries := make([]entry, v.undoStack.position-v.undoStack.mark)
+		for i := range entries {
+			a := v.undoStack.actions[i+v.undoStack.mark]
+			entries[i].name = a.command
+			entries[i].args = a.args
+			e.composite.Add(a)
+		}
+		v.undoStack.position = v.undoStack.mark
+		v.undoStack.actions = v.undoStack.actions[:v.undoStack.mark+1]
+		e.args = make(Args)
+		e.args["commands"] = entries
+		v.undoStack.Add(e, true)
+		log4go.Debug("Undostack is now: %v, edit is: %v", v.undoStack, e)
 	}
-	act.undoStack.Redo()
+	v.undoStack.mark = -1
 	return nil
 }
 
-func init() {
+func (c *MaybeMarkUndoGroupsForGluingCommand) Run(v *View, e *Edit, args Args) error {
+	if v.undoStack.mark == -1 {
+		v.undoStack.mark = v.undoStack.position
+		log4go.Debug("Mark at %d %v", v.undoStack.mark, v.undoStack)
+	}
+	return nil
+}
+
+func initBasicCommands() {
 	log4go.Debug("Registering commands...")
 	e := GetEditor()
 	type Cmd struct {
@@ -159,9 +284,16 @@ func init() {
 	cmds := []Cmd{
 		{"insert", &InsertCommand{}},
 		{"left_delete", &LeftDeleteCommand{}},
+		{"right_delete", &RightDeleteCommand{}},
 		{"move", &MoveCommand{}},
-		{"undo", &UndoCommand{}},
-		{"redo", &RedoCommand{}},
+		{"undo", &UndoCommand{hard: true}},
+		{"redo", &RedoCommand{hard: true}},
+		{"soft_undo", &UndoCommand{}},
+		{"soft_redo", &RedoCommand{}},
+		{"mark_undo_groups_for_gluing", &MarkUndoGroupsForGluingCommand{}},
+		{"glue_marked_undo_groups", &GlueMarkedUndoGroupsCommand{}},
+		{"maybe_mark_undo_groups_for_gluing", &MaybeMarkUndoGroupsForGluingCommand{}},
+		{"unmark_undo_groups_for_gluing", &UnmarkUndoGroupsForGluingCommand{}},
 	}
 	for i := range cmds {
 		if err := e.CommandHandler().Register(cmds[i].name, cmds[i].cmd); err != nil {
