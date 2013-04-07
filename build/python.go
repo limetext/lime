@@ -57,6 +57,8 @@ func pytype(t reflect.Type) (string, error) {
 
 func pyretvar(name string, ot reflect.Type) (string, error) {
 	switch ot.Kind() {
+	case reflect.Slice:
+		fallthrough
 	case reflect.Map:
 		return fmt.Sprintf("\npy%s, err = toPython(%s)", name, name), nil
 	case reflect.Ptr:

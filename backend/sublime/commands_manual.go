@@ -133,7 +133,7 @@ func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
 		return err
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
 		return err
-	} else if _, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
+	} else if _, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
 		return err
 	}
 	return nil

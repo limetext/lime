@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -20,6 +21,15 @@ const (
 	Backspace   = 0x0008
 	Delete      = 0x007F
 	KeypadEnter = '\n'
+)
+
+const (
+	OpEqual Op = iota
+	OpNotEqual
+	OpRegexMatch
+	OpNotRegexMatch
+	OpRegexContains
+	OpNotRegexContains
 )
 
 const (
@@ -125,14 +135,15 @@ type (
 		Key                     Key
 		Shift, Super, Alt, Ctrl bool
 	}
-
+	Op         int
 	KeyContext struct {
 		rawKeyContext
 	}
 	rawKeyContext struct {
-		Key, Operator string
-		Operand       interface{}
-		MatchAll      bool `json:"match_all"`
+		Key      string
+		Operator Op
+		Operand  interface{}
+		MatchAll bool `json:"match_all"`
 	}
 
 	KeyBinding struct {
@@ -148,12 +159,32 @@ type (
 	}
 )
 
+func (k *Op) UnmarshalJSON(d []byte) error {
+	var tmp string
+	if err := json.Unmarshal(d, &tmp); err != nil {
+		return err
+	}
+	switch tmp {
+	default:
+		*k = OpEqual
+	case "not_equal":
+		*k = OpNotEqual
+	case "regex_match":
+		*k = OpRegexMatch
+	case "not_regex_match":
+		*k = OpNotRegexMatch
+	case "regex_contains":
+		*k = OpRegexContains
+	case "not_regex_contains":
+		*k = OpNotRegexContains
+	}
+
+	return nil
+}
+
 func (k *KeyContext) UnmarshalJSON(d []byte) error {
 	if err := json.Unmarshal(d, &k.rawKeyContext); err != nil {
 		return err
-	}
-	if k.Operator == "" {
-		k.Operator = "equal"
 	}
 	if k.Operand == nil {
 		k.Operand = true
@@ -178,6 +209,14 @@ func (k KeyPress) Index() (ret int) {
 	return
 }
 
+func (k *KeyPress) fix() {
+	lower := Key(unicode.ToLower(rune(k.Key)))
+	if lower != k.Key {
+		k.Shift = true
+		k.Key = lower
+	}
+}
+
 func (k *KeyPress) UnmarshalJSON(d []byte) error {
 	combo := strings.Split(string(d[1:len(d)-1]), "+")
 	for _, c := range combo {
@@ -195,15 +234,13 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 			if v, ok := keylut[lower]; ok {
 				k.Key = v
 			} else {
-				r := []Key(lower)
+				r := []Key(c)
 				if len(r) != 1 {
 					log4go.Warn("Unknown key value with %d bytes: %s", len(c), c)
 					return nil
 				}
-				if lower != c {
-					k.Shift = true
-				}
-				k.Key = r[0]
+				k.Key = Key(c[0])
+				k.fix()
 			}
 		}
 	}
@@ -249,12 +286,13 @@ func (k *KeyBindings) Merge(other *KeyBindings) {
 }
 
 func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
+	kp.fix()
 	ret.keyOff = k.keyOff + 1
 	ki := kp.Index()
 	idx := sort.Search(k.Len(), func(i int) bool {
 		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
 	})
-	// TODO...
+	// TODO?
 	v := GetEditor().ActiveWindow().ActiveView()
 	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
 		for _, c := range k.Bindings[i].Context {

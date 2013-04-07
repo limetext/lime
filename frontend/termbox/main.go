@@ -95,6 +95,13 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 			caret_style = termbox.AttrReverse
 		}
 	}
+	if b, ok := v.Settings().Get("inverse_caret_state", false).(bool); !b && ok {
+		if caret_style == termbox.AttrReverse {
+			caret_style = termbox.AttrUnderline
+		} else {
+			caret_style = termbox.AttrReverse
+		}
+	}
 	caret_blink := true
 	if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
 		caret_blink = b
@@ -177,7 +184,7 @@ func main() {
 	}
 
 	ed := backend.GetEditor()
-	ed.LogInput(true)
+	//ed.LogInput(true)
 	ed.LogCommands(true)
 	c := ed.Console()
 	var (
@@ -321,9 +328,11 @@ func main() {
 					kp.Key = backend.Key(ev.Ch)
 				} else if v2, ok := lut[ev.Key]; ok {
 					kp = v2
+				} else {
+					break
 				}
 
-				if ev.Key == termbox.KeyEsc {
+				if ev.Key == termbox.KeyCtrlQ {
 					return
 				}
 				ed.HandleInput(kp)

@@ -19,6 +19,8 @@ func toPython(r interface{}) (py.Object, error) {
 		return py.NewInt(t), nil
 	case string:
 		return py.NewString(t)
+	case float64:
+		return py.NewFloat(t)
 	case *backend.Edit:
 		pyret0, err := _editClass.Alloc(1)
 		if err != nil {
@@ -34,6 +36,16 @@ func toPython(r interface{}) (py.Object, error) {
 		if err != nil {
 			return nil, err
 		} else if v2, ok := pyret0.(*View); !ok {
+			return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+		} else {
+			v2.data = t
+			return v2, nil
+		}
+	case *backend.Window:
+		pyret0, err := _windowClass.Alloc(1)
+		if err != nil {
+			return nil, err
+		} else if v2, ok := pyret0.(*Window); !ok {
 			return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
 		} else {
 			v2.data = t
@@ -68,6 +80,23 @@ func toPython(r interface{}) (py.Object, error) {
 	case nil:
 		return py.None, nil
 	default:
+		switch t := reflect.ValueOf(r); t.Kind() {
+		case reflect.Int:
+			return toPython(int(t.Int()))
+		case reflect.Slice:
+			ret, err := py.NewList(int64(t.Len()))
+			if err != nil {
+				return nil, err
+			}
+			for i := 0; i < t.Len(); i++ {
+				if p, err := toPython(t.Index(i).Interface()); err != nil {
+					return nil, err
+				} else if err := ret.SetItem(int64(i), p); err != nil {
+					return nil, err
+				}
+			}
+			return ret, nil
+		}
 		return nil, fmt.Errorf("Can't return type %v from go to python", reflect.TypeOf(t))
 	}
 }
@@ -85,6 +114,8 @@ func fromPython(r py.Object) (interface{}, error) {
 	case *py.Float:
 		return t.Float64(), nil
 	case *Edit:
+		return t.data, nil
+	case *Region:
 		return t.data, nil
 	case *py.List:
 		g := make([]interface{}, t.Size())

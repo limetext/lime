@@ -23,6 +23,11 @@ type (
 	MoveCommand struct {
 		DefaultCommand
 	}
+
+	MoveToCommand struct {
+		DefaultCommand
+	}
+
 	UndoCommand struct {
 		DefaultCommand
 		bypassUndoCommand
@@ -154,6 +159,46 @@ func (c *RightDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	return nil
 }
 
+func move_action(v *View, extend bool, transform func(r primitives.Region) int) {
+	sel := v.Sel()
+	r := sel.Regions()
+	for i := range r {
+		r[i].B = transform(r[i])
+		if !extend {
+			r[i].A = r[i].B
+		}
+	}
+	sel.Clear()
+	for i := range r {
+		sel.Add(r[i])
+	}
+}
+
+func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
+	to, _ := args["to"].(string)
+	extend, _ := args["extend"].(bool)
+
+	switch to {
+	case "eol":
+		move_action(v, extend, func(r primitives.Region) int {
+			line := v.Line(r.B)
+			return line.B
+		})
+	case "bol":
+		move_action(v, extend, func(r primitives.Region) int {
+			line := v.Line(r.B)
+			return line.A
+		})
+	case "eof":
+		move_action(v, extend, func(r primitives.Region) int {
+			return v.buffer.Size()
+		})
+	default:
+		return fmt.Errorf("move_to: Unimplemented 'to' action: %s", to)
+	}
+	return nil
+}
+
 var _move_stops_re = regexp.MustCompile(`\b`)
 
 func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
@@ -165,8 +210,6 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	fwd, ok := args["forward"].(bool)
 	word_begin, ok := args["word_begin"].(bool)
 	word_end, ok := args["word_end"].(bool)
-	sel := v.Sel()
-	r := sel.Regions()
 
 	switch by {
 	case "characters":
@@ -174,23 +217,16 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 		if !fwd {
 			dir = -1
 		}
-		if extend {
-			for i := range r {
-				r[i].B = r[i].B + dir
-			}
-		} else {
-			for i := range r {
-				r[i].B += dir
-				r[i].A = r[i].B
-			}
-		}
+		move_action(v, extend, func(r primitives.Region) int {
+			return r.B + dir
+		})
 	case "stops":
-		for i := range r {
+		move_action(v, extend, func(r primitives.Region) int {
 			var next primitives.Region
-			word := v.Word(r[i].B)
-			if word_end && fwd && r[i].B < word.End() {
+			word := v.Word(r.B)
+			if word_end && fwd && r.B < word.End() {
 				next = word
-			} else if word_begin && !fwd && r[i].B > word.Begin() {
+			} else if word_begin && !fwd && r.B > word.Begin() {
 				next = word
 			} else if fwd {
 				next = v.Word(word.B + 1)
@@ -200,28 +236,20 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 			}
 
 			if word_begin {
-				r[i].B = next.A
+				return next.A
 			} else if word_end {
-				r[i].B = next.B
+				return next.B
 			}
-			if !extend {
-				r[i].A = r[i].B
-			}
-		}
+			return r.B
+		})
 	default:
 		return fmt.Errorf("move: Unimplemented 'by' action: %s", by)
-	}
-	sel.Clear()
-	for i := range r {
-		sel.Add(r[i])
 	}
 	return nil
 }
 
 func (c *UndoCommand) Run(v *View, e *Edit, args Args) error {
-	log4go.Debug("Undostack was %d %v", v.undoStack.position, v.undoStack.actions)
 	v.undoStack.Undo(c.hard)
-	log4go.Debug("Undostack is now: %d %v", v.undoStack.position, v.undoStack.actions)
 	return nil
 }
 
@@ -260,7 +288,6 @@ func (c *GlueMarkedUndoGroupsCommand) Run(v *View, e *Edit, args Args) error {
 		e.args = make(Args)
 		e.args["commands"] = entries
 		v.undoStack.Add(e, true)
-		log4go.Debug("Undostack is now: %v, edit is: %v", v.undoStack, e)
 	}
 	v.undoStack.mark = -1
 	return nil
@@ -269,7 +296,6 @@ func (c *GlueMarkedUndoGroupsCommand) Run(v *View, e *Edit, args Args) error {
 func (c *MaybeMarkUndoGroupsForGluingCommand) Run(v *View, e *Edit, args Args) error {
 	if v.undoStack.mark == -1 {
 		v.undoStack.mark = v.undoStack.position
-		log4go.Debug("Mark at %d %v", v.undoStack.mark, v.undoStack)
 	}
 	return nil
 }
@@ -286,6 +312,7 @@ func initBasicCommands() {
 		{"left_delete", &LeftDeleteCommand{}},
 		{"right_delete", &RightDeleteCommand{}},
 		{"move", &MoveCommand{}},
+		{"move_to", &MoveToCommand{}},
 		{"undo", &UndoCommand{hard: true}},
 		{"redo", &RedoCommand{hard: true}},
 		{"soft_undo", &UndoCommand{}},

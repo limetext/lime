@@ -50,3 +50,44 @@ func (o *View) Py_substr(tu *py.Tuple) (py.Object, error) {
 
 	return pyret0, err
 }
+
+func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
+	var (
+		arg1 string
+		arg2 []primitives.Region
+	)
+	if tu.Size() < 2 {
+		return nil, fmt.Errorf("Not the expected argument size: %d", tu.Size())
+	}
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*py.String); !ok {
+			return nil, fmt.Errorf("Expected type *py.String for backend.View.AddRegions() arg1, not %s", v.Type())
+		} else {
+			arg1 = v2.String()
+		}
+	}
+
+	if v, err := tu.GetItem(1); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*py.List); !ok {
+			return nil, fmt.Errorf("Expected type *py.List for backend.View.AddRegions() arg2, not %s", v.Type())
+		} else {
+			d := v2.Slice()
+			arg2 = make([]primitives.Region, len(d))
+			for i, o := range d {
+				if v, err := fromPython(o); err != nil {
+					return nil, err
+				} else if v2, ok := v.(primitives.Region); !ok {
+					return nil, fmt.Errorf("Expected non-region item in list passed to backend.View.AddRegions(): %s", o.Type())
+				} else {
+					arg2[i] = v2
+				}
+			}
+		}
+	}
+	o.data.AddRegions(arg1, arg2)
+	return py.None, nil
+}

@@ -1,9 +1,5 @@
 package backend
 
-import (
-	"code.google.com/p/log4go"
-)
-
 type (
 	undoStack struct {
 		position int
@@ -20,7 +16,6 @@ func (us *undoStack) Add(a *Edit, inc bool) {
 	if inc {
 		us.position++
 	}
-	log4go.Debug("Added %v, stack is now: %v", a, us)
 }
 
 func (us *undoStack) index(relative int, modifying_only bool) int {

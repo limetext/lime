@@ -10,7 +10,7 @@ type (
 	ViewEvent         []ViewEventCallback
 
 	QueryContextReturn   int
-	QueryContextCallback func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn
+	QueryContextCallback func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn
 	QueryContextEvent    []QueryContextCallback
 )
 
@@ -34,7 +34,7 @@ func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
 	*qe = append(*qe, cb)
 }
 
-func (qe QueryContextEvent) Call(v *View, key, operator string, operand interface{}, match_all bool) QueryContextReturn {
+func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 	for i := range qe {
 		r := qe[i](v, key, operator, operand, match_all)
 		if r != Unknown {
@@ -59,8 +59,8 @@ var (
 )
 
 func init() {
-	OnQueryContext.Add(func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn {
-		if strings.HasPrefix(key, "setting.") && operator == "equal" {
+	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
+		if strings.HasPrefix(key, "setting.") && operator == OpEqual {
 			c, ok := v.Settings().Get(key[8:]).(bool)
 			if c && ok {
 				return True

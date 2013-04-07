@@ -47,6 +47,7 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(map[string][]Region)}
+	ret.Settings().Set("is_widget", false)
 	ret.undoStack.mark = -1
 	return ret
 }
@@ -172,6 +173,16 @@ func (v *View) Line(offset int) Region {
 	return Region{s, e}
 }
 
+func (v *View) FullLine(offset int) Region {
+	r := v.Line(offset)
+	d := v.buffer.Data()
+	s := v.buffer.Size()
+	for r.B < s && (d[r.B] == '\r' || d[r.B] == '\n') {
+		r.B++
+	}
+	return r
+}
+
 var (
 	vwre1 = regexp.MustCompile(`\b\w*$`)
 	vwre2 = regexp.MustCompile(`^\w*`)
@@ -243,18 +254,10 @@ func (v *View) Replace(edit *Edit, r Region, value string) {
 func (v *View) BeginEdit() *Edit {
 	e := newEdit(v)
 	v.editstack = append(v.editstack, e)
-	if b, ok := v.Settings().Get("trace", false).(bool); b && ok {
-		log4go.Trace("BeginEdit %p", e)
-	}
 	return e
 }
 
 func (v *View) EndEdit(e *Edit) {
-	tr := false
-	if b, ok := v.Settings().Get("trace", false).(bool); b && ok {
-		tr = true
-		log4go.Trace("EndEdit %p, %s", e, e.command)
-	}
 	if e.invalid {
 		log4go.Error("This edit has already been invalidated: %v, %v", e, v.editstack)
 		return
@@ -277,25 +280,12 @@ func (v *View) EndEdit(e *Edit) {
 		ce := v.editstack[j]
 		ce.invalid = true
 		eq := (reflect.DeepEqual(*v.Sel(), ce.savedSel) && v.buffer.ChangeCount() == ce.savedCount && ce.composite.Len() == 0)
-		if tr {
-			log4go.Trace("%v, %s", eq, ce.command)
-		}
 
 		if !v.scratch && !ce.bypassUndo && !eq {
-			if tr {
-				log4go.Trace("Should be added somewhere %v, %s", eq, ce.command)
-			}
-
 			if i == 0 || j != i {
-				if tr {
-					log4go.Trace("Added to undostack %v, %s", eq, ce.command)
-				}
 				// Presume someone forgot to add it in the j != i case
 				v.undoStack.Add(e, true)
 			} else {
-				if tr {
-					log4go.Trace("Added to parent %v, %s", eq, ce.command)
-				}
 				// This edit belongs to another edit
 				v.editstack[i-1].composite.Add(ce)
 			}

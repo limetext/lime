@@ -44,7 +44,7 @@ func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	return nil
 }
 
-func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key, operator string, operand interface{}, match_all bool) backend.QueryContextReturn {
+func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operator backend.Op, operand interface{}, match_all bool) backend.QueryContextReturn {
 	if pv, err := toPython(v); err != nil {
 		log4go.Error(err)
 	} else if pk, err := toPython(key); err != nil {

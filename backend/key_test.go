@@ -52,7 +52,7 @@ func TestKeyFilter2(t *testing.T) {
 	w := ed.NewWindow()
 	w.NewView()
 	enable := "test1"
-	OnQueryContext.Add(func(v *View, key string, operator string, operand interface{}, match_all bool) QueryContextReturn {
+	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 		t.Log("Querying for", key)
 		if key == enable {
 			return True

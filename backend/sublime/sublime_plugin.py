@@ -7,12 +7,15 @@ import sublime
 import sys
 import importlib
 
-sublime.OP_EQUAL = "equal"
-sublime.OP_NOT_EQUAL = "not_equal"
-sublime.OP_NOT_REGEX_CONTAINS = "not_regex_contains"
-sublime.OP_NOT_REGEX_MATCH = "not_regex_match"
-sublime.OP_REGEX_CONTAINS = "regex_contains"
-sublime.OP_REGEX_MATCH = "op_regex_match"
+sublime.OP_EQUAL = 0
+sublime.OP_NOT_EQUAL = 1
+sublime.OP_REGEX_MATCH = 2
+sublime.OP_NOT_REGEX_MATCH = 3
+sublime.OP_REGEX_CONTAINS = 4
+sublime.OP_NOT_REGEX_CONTAINS = 5
+def __hack(a, b):
+    print "set_timeout not implemented"
+sublime.set_timeout = __hack
 
 class Command(object):
     def is_enabled(self, args=None):
@@ -27,6 +30,15 @@ class ApplicationCommand(Command):
 class WindowCommand(Command):
     def __init__(self, wnd):
         self.window = wnd
+
+    def run_(self, kwargs):
+        if kwargs and 'event' in kwargs:
+            del kwargs['event']
+
+        if kwargs:
+            self.run(**kwargs)
+        else:
+            self.run()
 
 class TextCommand(Command):
     def __init__(self, view):

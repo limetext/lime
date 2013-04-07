@@ -157,7 +157,7 @@ func (e *Editor) HandleInput(kp KeyPress) {
 		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
 			log4go.Debug("Couldn't run applicationcommand: %s", err)
 		}
-	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super) {
+	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super && kp.Key != Escape) {
 		// presume insert
 		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), "insert", Args{"characters": string(kp.Key)}); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)
