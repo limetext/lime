@@ -3,6 +3,7 @@ package sublime
 import (
 	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
+	"lime/backend"
 	"lime/backend/primitives"
 )
 
@@ -34,7 +35,7 @@ func (v *View) Py_show(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 			arg1 = v2.data
 		}
 	}
-	v.data.Show(arg1)
+	backend.GetEditor().Frontend().Show(v.data, arg1)
 	py.None.Incref()
 	return py.None, nil
 }
@@ -163,4 +164,53 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 	}
 
 	return py.PackTuple(pyret0, pyret1, pyret2)
+}
+
+func (o *View) Py_run_command(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 string
+		arg2 backend.Args
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*py.String); !ok {
+			return nil, fmt.Errorf("Expected type *py.String for backend.View.RunCommand() arg1, not %s", v.Type())
+		} else {
+			arg1 = v2.String()
+		}
+	}
+	arg2 = make(backend.Args)
+	if v, err := tu.GetItem(1); err == nil {
+		if v2, ok := v.(*py.Dict); !ok {
+			return nil, fmt.Errorf("Expected type *py.Dict for backend.View.RunCommand() arg2, not %s", v.Type())
+		} else {
+			if v, err := fromPython(v2); err != nil {
+				return nil, err
+			} else {
+				arg2 = v.(backend.Args)
+			}
+		}
+	}
+	backend.GetEditor().CommandHandler().RunTextCommand(o.data, arg1, arg2)
+	py.None.Incref()
+	return py.None, nil
+}
+
+func (o *View) Py_visible_region() (py.Object, error) {
+	ret0 := backend.GetEditor().Frontend().VisibleRegion(o.data)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = _regionClass.Alloc(1)
+	if err != nil {
+	} else if v2, ok := pyret0.(*Region); !ok {
+		return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+	} else {
+		v2.data = ret0
+	}
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
 }

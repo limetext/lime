@@ -163,6 +163,7 @@ func TestView(t *testing.T) {
 }
 
 func TestUndoRedoCommands(t *testing.T) {
+	ch := GetEditor().CommandHandler()
 	var (
 		w Window
 		v = w.NewView()
@@ -192,11 +193,11 @@ func TestUndoRedoCommands(t *testing.T) {
 	if v.buffer.Data() != "1234a1234b1234c1234d" {
 		t.Error(v.buffer.Data())
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if v.buffer.Data() != "abcd" {
 		t.Error("expected 'abcd', but got: ", v.buffer.Data())
 	}
-	v.RunCommand("redo", nil)
+	ch.RunTextCommand(v, "redo", nil)
 	if v.buffer.Data() != "1234a1234b1234c1234d" {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
 	}
@@ -223,16 +224,16 @@ func TestUndoRedoCommands(t *testing.T) {
 	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(v.buffer.Data())
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 
 	if v.buffer.Data() != "1234a1234b1234c1234d" {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if v.buffer.Data() != "abcd" {
 		t.Error("expected 'abcd', but got: ", v.buffer.Data())
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if v.buffer.Data() != "" {
 		t.Error("expected '', but got: ", v.buffer.Data())
 	}

@@ -218,7 +218,7 @@ func TestMove(t *testing.T) {
 
 func TestGlueCmds(t *testing.T) {
 	ed := GetEditor()
-
+	ch := ed.CommandHandler()
 	w := ed.NewWindow()
 	v := w.NewView()
 	v.SetScratch(true)
@@ -226,21 +226,21 @@ func TestGlueCmds(t *testing.T) {
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
 	v.SetScratch(false)
-	v.RunCommand("mark_undo_groups_for_gluing", nil)
-	v.RunCommand("insert", Args{"characters": "a"})
-	v.RunCommand("insert", Args{"characters": "b"})
-	v.RunCommand("insert", Args{"characters": "c"})
-	v.RunCommand("glue_marked_undo_groups", nil)
+	ch.RunTextCommand(v, "mark_undo_groups_for_gluing", nil)
+	ch.RunTextCommand(v, "insert", Args{"characters": "a"})
+	ch.RunTextCommand(v, "insert", Args{"characters": "b"})
+	ch.RunTextCommand(v, "insert", Args{"characters": "c"})
+	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
 	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
-	v.RunCommand("redo", nil)
+	ch.RunTextCommand(v, "redo", nil)
 	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
@@ -249,29 +249,29 @@ func TestGlueCmds(t *testing.T) {
 	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 
-	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
-	v.RunCommand("insert", Args{"characters": "a"})
-	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
-	v.RunCommand("insert", Args{"characters": "b"})
-	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
-	v.RunCommand("insert", Args{"characters": "c"})
-	v.RunCommand("maybe_mark_undo_groups_for_gluing", nil)
-	v.RunCommand("glue_marked_undo_groups", nil)
+	ch.RunTextCommand(v, "maybe_mark_undo_groups_for_gluing", nil)
+	ch.RunTextCommand(v, "insert", Args{"characters": "a"})
+	ch.RunTextCommand(v, "maybe_mark_undo_groups_for_gluing", nil)
+	ch.RunTextCommand(v, "insert", Args{"characters": "b"})
+	ch.RunTextCommand(v, "maybe_mark_undo_groups_for_gluing", nil)
+	ch.RunTextCommand(v, "insert", Args{"characters": "c"})
+	ch.RunTextCommand(v, "maybe_mark_undo_groups_for_gluing", nil)
+	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
 	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
-	v.RunCommand("undo", nil)
+	ch.RunTextCommand(v, "undo", nil)
 	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
-	v.RunCommand("redo", nil)
+	ch.RunTextCommand(v, "redo", nil)
 	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
@@ -284,7 +284,7 @@ func TestGlueCmds(t *testing.T) {
 
 func TestInsert(t *testing.T) {
 	ed := GetEditor()
-
+	ch := ed.CommandHandler()
 	w := ed.NewWindow()
 	v := w.NewView()
 	e := v.BeginEdit()
@@ -324,7 +324,7 @@ func TestInsert(t *testing.T) {
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.expr) {
 			t.Errorf("Insert test %d failed: %v", i, sr)
 		}
-		v.RunCommand("undo", nil)
+		ch.RunTextCommand(v, "undo", nil)
 	}
 
 }

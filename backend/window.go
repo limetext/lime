@@ -50,7 +50,3 @@ func (w *Window) runCommand(c WindowCommand, name string, args Args) error {
 	}()
 	return c.Run(w, args)
 }
-
-func (w *Window) RunCommand(name string, args Args) {
-	GetEditor().CommandHandler().RunWindowCommand(w, name, args)
-}

@@ -308,11 +308,11 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
 	if !ok {
 		return fmt.Errorf("scroll_lines: Missing or invalid 'amount' argument: %v", args)
 	}
-
-	r, _ := v.RowCol(v.VisibleRegion().Begin())
+	fe := GetEditor().Frontend()
+	r, _ := v.RowCol(fe.VisibleRegion(v).Begin())
 	r -= amount
 	r = v.TextPoint(r, 1)
-	v.Show(primitives.Region{r, r})
+	fe.Show(v, primitives.Region{r, r})
 	return nil
 }
 

@@ -396,10 +396,6 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	return cmd.Run(v, e, args)
 }
 
-func (v *View) RunCommand(name string, args Args) {
-	GetEditor().CommandHandler().RunTextCommand(v, name, args)
-}
-
 func (v *View) AddRegions(key string, regions []Region, extras ...interface{}) {
 	v.regions[key] = regions
 }
@@ -410,12 +406,4 @@ func (v *View) GetRegions(key string) []Region {
 
 func (v *View) EraseRegions(key string) {
 	v.regions[key] = nil
-}
-
-func (v *View) Show(r Region) {
-	GetEditor().frontend.Show(v, r)
-}
-
-func (v *View) VisibleRegion() Region {
-	return GetEditor().frontend.VisibleRegion(v)
 }
