@@ -14,7 +14,7 @@ func TestLoadTheme(t *testing.T) {
 		out string
 	}
 	tests := []Test{
-		{"../../3rdparty/bundles/monokai.tmbundle/Themes/Monokai.tmTheme", "testdata/Monokai.tmTheme"},
+		{"testdata/Monokai.tmTheme", "testdata/Monokai.tmTheme.res"},
 	}
 	for _, test := range tests {
 		if d, err := ioutil.ReadFile(test.in); err != nil {

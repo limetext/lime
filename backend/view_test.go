@@ -285,8 +285,8 @@ func TestScopeName(t *testing.T) {
 	)
 	const (
 		in      = "textmate/language_test.go"
-		expfile = "./testdata/scopename.res"
-		syntax  = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+		expfile = "testdata/scopename.res"
+		syntax  = "textmate/testdata/Go.tmLanguage"
 	)
 	v.SetSyntaxFile(syntax)
 	if d, err := ioutil.ReadFile(in); err != nil {
@@ -321,7 +321,7 @@ func BenchmarkScopeNameLinear(b *testing.B) {
 	)
 	const (
 		in     = "textmate/language_test.go"
-		syntax = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+		syntax = "textmate/testdata/Go.tmLanguage"
 	)
 	b.StopTimer()
 	v.SetSyntaxFile(syntax)
@@ -347,7 +347,7 @@ func BenchmarkScopeNameRandom(b *testing.B) {
 	)
 	const (
 		in     = "textmate/language_test.go"
-		syntax = "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+		syntax = "textmate/testdata/Go.tmLanguage"
 	)
 	b.StopTimer()
 	v.SetSyntaxFile(syntax)

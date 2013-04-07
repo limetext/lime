@@ -9,9 +9,9 @@ import (
 
 func TestTmLanguage(t *testing.T) {
 	files := []string{
-		"../../3rdparty/bundles/property-list.tmbundle/Syntaxes/Property List (XML).tmLanguage",
-		"../../3rdparty/bundles/xml.tmbundle/Syntaxes/XML.plist",
-		"../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage",
+		"testdata/Property List (XML).tmLanguage",
+		"testdata/XML.plist",
+		"testdata/Go.tmLanguage",
 	}
 	for _, fn := range files {
 		if err := Provider.Load(fn); err != nil {
@@ -26,7 +26,7 @@ func TestTmLanguage(t *testing.T) {
 	}
 	tests := []test{
 		{
-			"../../3rdparty/bundles/property-list.tmbundle/Syntaxes/Property List (XML).tmLanguage",
+			"testdata/Property List (XML).tmLanguage",
 			"testdata/plist.tmlang",
 			"text.xml.plist",
 		},
