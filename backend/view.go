@@ -371,6 +371,7 @@ func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args A
 func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	e := v.BeginEdit()
 	e.command = name
+	e.args = args
 	t := reflect.TypeOf(cmd)
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()

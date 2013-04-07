@@ -91,3 +91,53 @@ func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	o.data.AddRegions(arg1, arg2)
 	return py.None, nil
 }
+
+func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 int
+		arg2 bool
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*py.Int); !ok {
+			return nil, fmt.Errorf("Expected type *py.Int for backend.View.CommandHistory() arg1, not %s", v.Type())
+		} else {
+			arg1 = v2.Int()
+		}
+	}
+	if v, err := tu.GetItem(1); err == nil {
+		if v2, ok := v.(*py.Bool); !ok {
+			return nil, fmt.Errorf("Expected type *py.Bool for backend.View.CommandHistory() arg2, not %s", v.Type())
+		} else {
+			arg2 = v2.Bool()
+		}
+	}
+	ret0, ret1, ret2 := o.data.CommandHistory(arg1, arg2)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = py.NewString(ret0)
+	if err != nil {
+		// TODO: do the py objs need to be freed?
+		return nil, err
+	}
+
+	var pyret1 py.Object
+
+	pyret1, err = toPython(ret1)
+	if err != nil {
+		// TODO: do the py objs need to be freed?
+		return nil, err
+	}
+
+	var pyret2 py.Object
+
+	pyret2 = py.NewInt(int(ret2))
+	if err != nil {
+		// TODO: do the py objs need to be freed?
+		return nil, err
+	}
+
+	return py.PackTuple(pyret0, pyret1, pyret2)
+}
