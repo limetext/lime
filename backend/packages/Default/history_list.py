@@ -1,2 +1,2 @@
 def get_jump_history():
-    return Note
+    return None

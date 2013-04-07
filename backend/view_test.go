@@ -223,7 +223,7 @@ func TestScopeName(t *testing.T) {
 		v = w.NewView()
 	)
 	const (
-		in      = "textmate/language_test.go"
+		in      = "textmate/testdata/main.go"
 		expfile = "testdata/scopename.res"
 		syntax  = "textmate/testdata/Go.tmLanguage"
 	)

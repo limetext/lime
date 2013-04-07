@@ -31,8 +31,8 @@ func TestTmLanguage(t *testing.T) {
 			"text.xml.plist",
 		},
 		{
-			"language_test.go",
-			"testdata/go.tmlang",
+			"testdata/main.go",
+			"testdata/main.go.res",
 			"source.go",
 		},
 	}
