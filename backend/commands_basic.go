@@ -111,7 +111,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 		if r.A == r.B && !hasNonEmpty {
 			d := v.buffer.Data()
 			if trim_space {
-				_, col := v.RowCol(r.A)
+				_, col := v.Buffer().RowCol(r.A)
 				col -= 1
 				prev_col := r.A - (col - (col-tab_size+(tab_size-1))&^(tab_size-1))
 				if prev_col < 0 {
@@ -184,12 +184,12 @@ func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
 	switch to {
 	case "eol":
 		move_action(v, extend, func(r primitives.Region) int {
-			line := v.Line(r.B)
+			line := v.Buffer().Line(r.B)
 			return line.B
 		})
 	case "bol":
 		move_action(v, extend, func(r primitives.Region) int {
-			line := v.Line(r.B)
+			line := v.Buffer().Line(r.B)
 			return line.A
 		})
 	case "eof":
@@ -226,16 +226,16 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	case "stops":
 		move_action(v, extend, func(r primitives.Region) int {
 			var next primitives.Region
-			word := v.Word(r.B)
+			word := v.Buffer().Word(r.B)
 			if word_end && fwd && r.B < word.End() {
 				next = word
 			} else if word_begin && !fwd && r.B > word.Begin() {
 				next = word
 			} else if fwd {
-				next = v.Word(word.B + 1)
+				next = v.Buffer().Word(word.B + 1)
 			} else {
-				next = v.Word(word.A - 1)
-				next = v.Word(next.A - 1)
+				next = v.Buffer().Word(word.A - 1)
+				next = v.Buffer().Word(next.A - 1)
 			}
 
 			if word_begin {
@@ -309,9 +309,9 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
 		return fmt.Errorf("scroll_lines: Missing or invalid 'amount' argument: %v", args)
 	}
 	fe := GetEditor().Frontend()
-	r, _ := v.RowCol(fe.VisibleRegion(v).Begin())
+	r, _ := v.Buffer().RowCol(fe.VisibleRegion(v).Begin())
 	r -= amount
-	r = v.TextPoint(r, 1)
+	r = v.Buffer().TextPoint(r, 1)
 	fe.Show(v, primitives.Region{r, r})
 	return nil
 }
