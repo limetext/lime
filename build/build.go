@@ -146,4 +146,15 @@ func main() {
 		}
 		fmt.Print(line)
 	}
+	c.Wait()
+	for line := range sc {
+		fmt.Print(line)
+	}
+	for line := range ec {
+		fmt.Print(line)
+	}
+
+	if !c.ProcessState.Success() {
+		os.Exit(-1)
+	}
 }
