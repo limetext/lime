@@ -62,11 +62,19 @@ var (
 	blink     bool
 )
 
-func renderView(sx, sy, w, h int, v *backend.View) {
+const console_height = 20
+
+type tbfe struct {
+	visibleregion map[*backend.View]primitives.Region
+}
+
+func (t *tbfe) renderView(sx, sy, w, h int, v *backend.View) {
 	sel := v.Sel()
 	substr := v.Buffer().Data()
+	vr := t.VisibleRegion(v)
 	lines := strings.Split(substr, "\n")
-	s, e := 0, len(lines)
+	s, _ := v.RowCol(vr.Begin())
+	e, _ := v.RowCol(vr.End())
 	if e > 1 {
 		e = e - 1
 		if e > h {
@@ -178,12 +186,49 @@ func renderView(sx, sy, w, h int, v *backend.View) {
 	}
 }
 
-func main() {
-	if err := termbox.Init(); err != nil {
-		log4go.Exit(err)
-	}
+func (t *tbfe) clip(v *backend.View, r primitives.Region) primitives.Region {
+	s, _ := v.RowCol(r.Begin())
+	e, _ := v.RowCol(r.End())
 
+	_, h := termbox.Size()
+	h -= console_height
+	if e-s > h {
+		e = s + h
+	}
+	if e2, _ := v.RowCol(v.TextPoint(e, 1)); e2 < e {
+		e = e2
+	}
+	if e-s < h {
+		s = e - h
+	}
+	if s < 1 {
+		s = 1
+	}
+	r.A = v.Line(v.TextPoint(s, 1)).A
+	r.B = v.Line(v.TextPoint(e, 1)).B
+	return r
+}
+
+func (t *tbfe) Show(v *backend.View, r primitives.Region) {
+	t.visibleregion[v] = t.clip(v, primitives.Region{r.Begin(), v.Buffer().Size()})
+}
+
+func (t *tbfe) VisibleRegion(v *backend.View) primitives.Region {
+	if r, ok := t.visibleregion[v]; ok {
+		return r
+	} else {
+		t.Show(v, primitives.Region{0, 0})
+		return t.visibleregion[v]
+	}
+}
+
+func (t *tbfe) scroll(b *primitives.Buffer, pos, delta int) {
+	t.Show(backend.GetEditor().Console(), primitives.Region{b.Size(), b.Size()})
+}
+
+func (t *tbfe) loop() {
 	ed := backend.GetEditor()
+	ed.SetFrontend(t)
 	//ed.LogInput(true)
 	ed.LogCommands(true)
 	c := ed.Console()
@@ -282,6 +327,7 @@ func main() {
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
 	v.Settings().Set("trace", true)
+	c.Buffer().AddCallback(t.scroll)
 
 	if err := v.SetSyntaxFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
 		log4go.Error("Unable to set syntax file: %s", err)
@@ -302,14 +348,14 @@ func main() {
 		}
 	}()
 
-	const console_height = 20
 	sublime.Init()
 	for {
 		blink = !blink
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
-		renderView(0, 0, w, h-console_height, v)
-		renderView(0, h-console_height, w, console_height, c)
+
+		t.renderView(0, 0, w, h-console_height, v)
+		t.renderView(0, h-console_height, w, console_height, c)
 
 		termbox.Flush()
 
@@ -343,4 +389,14 @@ func main() {
 			// TODO(q): Shouldn't redraw if blink is disabled...
 		}
 	}
+}
+
+func main() {
+	if err := termbox.Init(); err != nil {
+		log4go.Exit(err)
+	}
+
+	var t tbfe
+	t.visibleregion = make(map[*backend.View]primitives.Region)
+	t.loop()
 }

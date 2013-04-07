@@ -11,8 +11,10 @@ func toPython(r interface{}) (py.Object, error) {
 	switch t := r.(type) {
 	case bool:
 		if t {
+			py.True.Incref()
 			return py.True, nil
 		} else {
+			py.False.Incref()
 			return py.False, nil
 		}
 	case int:
@@ -58,8 +60,10 @@ func toPython(r interface{}) (py.Object, error) {
 		}
 		for k, v := range t {
 			if p, err := toPython(v); err != nil {
+				ret.Decref()
 				return nil, err
 			} else if err := ret.SetItem(int64(k), p); err != nil {
+				ret.Decref()
 				return nil, err
 			}
 		}
@@ -71,13 +75,17 @@ func toPython(r interface{}) (py.Object, error) {
 		}
 		for k, v := range t {
 			if p, err := toPython(v); err != nil {
+				ret.Decref()
 				return nil, err
 			} else if err := ret.SetItemString(k, p); err != nil {
+				p.Decref()
+				ret.Decref()
 				return nil, err
 			}
 		}
 		return ret, nil
 	case nil:
+		py.None.Incref()
 		return py.None, nil
 	default:
 		switch t := reflect.ValueOf(r); t.Kind() {
@@ -90,8 +98,10 @@ func toPython(r interface{}) (py.Object, error) {
 			}
 			for i := 0; i < t.Len(); i++ {
 				if p, err := toPython(t.Index(i).Interface()); err != nil {
+					ret.Decref()
 					return nil, err
 				} else if err := ret.SetItem(int64(i), p); err != nil {
+					ret.Decref()
 					return nil, err
 				}
 			}

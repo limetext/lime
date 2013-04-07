@@ -1,9 +1,11 @@
 package sublime
 
 import (
-	"code.google.com/p/log4go"
+	//	"code.google.com/p/log4go"
+	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
+	"lime/backend/primitives"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +13,9 @@ import (
 
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
-	log4go.Global.AddFilter("stdout", log4go.DEBUG, log4go.NewConsoleLogWriter())
+	ed.Console().Buffer().AddCallback(func(b *primitives.Buffer, pos, delta int) {
+		fmt.Printf("%s", b.Data()[pos:pos+delta])
+	})
 	w := ed.NewWindow()
 	w.NewView()
 	Init()

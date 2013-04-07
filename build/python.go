@@ -258,7 +258,7 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 	if m.Name == "String" {
 		ret += "\n\treturn " + call
 	} else if out == 1 && m.Type.Out(0).Name() == "error" {
-		ret += "\nreturn py.None, " + call
+		ret += "\npy.None.Incref()\nreturn py.None, " + call
 	} else if out > 0 {
 		ret += "\n\t"
 		for j := 0; j < out; j++ {
@@ -275,17 +275,17 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 				return "", err
 			} else {
 				ret += r
-				ret += `
-						if err != nil {
-							// TODO: do the py objs need to be freed?
-							return nil, err
-						}
-						`
+				ret += "\nif err != nil {"
+				for k := 0; k < j; k++ {
+					ret += fmt.Sprintf("\npyret%d.Decref()", k)
+				}
+				ret += "\nreturn nil, err\n}"
 			}
 		}
 		if out == 1 {
 			ret += "\n\treturn pyret0, err"
 		} else {
+			// TODO: does PackTuple take ownership of the objects?
 			ret += "\n\treturn py.PackTuple("
 			for j := 0; j < out; j++ {
 				if j > 0 {
@@ -296,7 +296,7 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 			ret += ")"
 		}
 	} else {
-		ret += "\n\t" + call + "\n\treturn py.None, nil"
+		ret += "\n\t" + call + "\n\tpy.None.Incref()\n\treturn py.None, nil"
 	}
 	ret += "\n}\n"
 	return
@@ -458,7 +458,7 @@ func main() {
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, []string{"Less", "Swap", "Adjust"})},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
-		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax", "CommandHistory"})},
+		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax", "CommandHistory", "Show"})},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, nil)},
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
 		{"../backend/sublime/buffer.go", generatemethodsEx(
@@ -478,7 +478,7 @@ func main() {
 			sn),
 		},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
-			[]string{"Info", "HandleInput", "CommandHandler", "Windows"},
+			[]string{"Info", "HandleInput", "CommandHandler", "Windows", "SetFrontend"},
 			"backend.GetEditor().",
 			sn),
 		},

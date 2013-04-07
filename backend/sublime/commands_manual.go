@@ -56,7 +56,6 @@ func (c *CommandGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	} else {
 		c.inner = v
 	}
-	// TODO: look into ref counting convention
 	c.inner.Incref()
 	return nil
 }
@@ -103,8 +102,11 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	if pyv, err := toPython(v); err != nil {
 		return err
 	} else if pye, err := toPython(e); err != nil {
+		pyv.Decref()
 		return err
 	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
+		pyv.Decref()
+		pye.Decref()
 		return err
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return err
@@ -130,6 +132,7 @@ func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
 	if pyw, err := toPython(w); err != nil {
 		return err
 	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
+		pyw.Decref()
 		return err
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
 		return err

@@ -8,7 +8,7 @@ type (
 		data        string
 		callbacks   []BufferChangedCallback
 	}
-	BufferChangedCallback func(position, delta int)
+	BufferChangedCallback func(buf *Buffer, position, delta int)
 )
 
 func (b *Buffer) AddCallback(cb BufferChangedCallback) {
@@ -31,7 +31,7 @@ func (buf *Buffer) Substr(r Region) string {
 
 func (buf *Buffer) notify(position, delta int) {
 	for i := range buf.callbacks {
-		buf.callbacks[i](position, delta)
+		buf.callbacks[i](buf, position, delta)
 	}
 }
 

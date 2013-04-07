@@ -28,7 +28,9 @@ func LoadJSON(data []byte, intf interface{}) error {
 			}
 		}
 	}
-	b.AddCallback(set.Adjust)
+	b.AddCallback(func(b *Buffer, pos, delta int) {
+		set.Adjust(pos, delta)
+	})
 	i := 0
 	for {
 		l := set.Len()

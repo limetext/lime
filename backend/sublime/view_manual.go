@@ -12,11 +12,30 @@ func (v *View) Py_has_non_empty_selection_region() (py.Object, error) {
 			return py.True, nil
 		}
 	}
+	py.False.Incref()
 	return py.False, nil
 }
 
 func (v *View) Py_show(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
-	//TODO
+	var (
+		arg1 primitives.Region
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*Region); !ok {
+			if v2, ok := v.(*py.Int); !ok {
+				return nil, fmt.Errorf("Expected type *Region or *Int for primitives.Buffer.Substr() arg1, not %s", v.Type())
+			} else {
+				arg1.A = v2.Int()
+				arg1.B = arg1.A + 1
+			}
+		} else {
+			arg1 = v2.data
+		}
+	}
+	v.data.Show(arg1)
+	py.None.Incref()
 	return py.None, nil
 }
 
@@ -89,6 +108,7 @@ func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 		}
 	}
 	o.data.AddRegions(arg1, arg2)
+	py.None.Incref()
 	return py.None, nil
 }
 
@@ -127,6 +147,7 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 
 	pyret1, err = toPython(ret1)
 	if err != nil {
+		pyret0.Decref()
 		// TODO: do the py objs need to be freed?
 		return nil, err
 	}
@@ -135,6 +156,8 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 
 	pyret2 = py.NewInt(int(ret2))
 	if err != nil {
+		pyret0.Decref()
+		pyret1.Decref()
 		// TODO: do the py objs need to be freed?
 		return nil, err
 	}

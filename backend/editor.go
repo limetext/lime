@@ -17,11 +17,15 @@ type (
 		cmdhandler   commandHandler
 		keyBindings  KeyBindings
 		console      *View
+		frontend     Frontend
+	}
+	Frontend interface {
+		VisibleRegion(v *View) Region
+		Show(v *View, r Region)
+	}
+	myLogWriter struct {
 	}
 )
-
-type myLogWriter struct {
-}
 
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	c := GetEditor().Console()
@@ -57,6 +61,10 @@ func GetEditor() *Editor {
 		initBasicCommands()
 	}
 	return ed
+}
+
+func (e *Editor) SetFrontend(f Frontend) {
+	e.frontend = f
 }
 
 func (e *Editor) loadKeybinding(fn string) {

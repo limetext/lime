@@ -11,6 +11,7 @@ import (
 	"lime/backend/textmate"
 	"reflect"
 	"regexp"
+	"runtime/debug"
 	"sort"
 	"strings"
 )
@@ -86,7 +87,9 @@ func (v *View) setBuffer(b *Buffer) error {
 	v.buffer = b
 	// TODO(q): Dynamically load the correct syntax file
 	v.syntax.Language = &textmate.Language{}
-	b.AddCallback(v.flush)
+	b.AddCallback(func(_ *Buffer, a, b int) {
+		v.flush(a, b)
+	})
 	return nil
 }
 
@@ -128,6 +131,11 @@ func (v *View) Buffer() *Buffer {
 }
 
 func (v *View) RowCol(point int) (row, col int) {
+	if point < 0 {
+		point = 0
+	} else if l := v.buffer.Size(); point > l {
+		point = l
+	}
 	lines := strings.Split(v.Buffer().Data()[:point], "\n")
 	if l := len(lines); l == 0 {
 		return 1, 1
@@ -138,7 +146,7 @@ func (v *View) RowCol(point int) (row, col int) {
 
 func (v *View) TextPoint(row, col int) int {
 	lines := strings.Split(v.buffer.Data(), "\n")
-	if row == 0 {
+	if row < 1 || len(lines) == 0 {
 		return 0
 	}
 	if col == 0 {
@@ -146,7 +154,8 @@ func (v *View) TextPoint(row, col int) int {
 	}
 	if row == 1 {
 		col -= 1
-	} else if row > len(lines) {
+	}
+	if row > len(lines) {
 		return v.buffer.Size()
 	}
 	offset := len(strings.Join(lines[:row-1], "\n")) + col
@@ -381,7 +390,7 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	defer func() {
 		v.EndEdit(e)
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running text command %s %v: %v", name, args, r)
+			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
 		}
 	}()
 	return cmd.Run(v, e, args)
@@ -401,4 +410,12 @@ func (v *View) GetRegions(key string) []Region {
 
 func (v *View) EraseRegions(key string) {
 	v.regions[key] = nil
+}
+
+func (v *View) Show(r Region) {
+	GetEditor().frontend.Show(v, r)
+}
+
+func (v *View) VisibleRegion() Region {
+	return GetEditor().frontend.VisibleRegion(v)
 }

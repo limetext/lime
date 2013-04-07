@@ -38,7 +38,10 @@ type (
 		hard bool
 		bypassUndoCommand
 	}
-
+	ScrollLinesCommand struct {
+		DefaultCommand
+		bypassUndoCommand
+	}
 	MarkUndoGroupsForGluingCommand struct {
 		DefaultCommand
 		bypassUndoCommand
@@ -300,6 +303,19 @@ func (c *MaybeMarkUndoGroupsForGluingCommand) Run(v *View, e *Edit, args Args) e
 	return nil
 }
 
+func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
+	amount, ok := args["amount"].(int)
+	if !ok {
+		return fmt.Errorf("scroll_lines: Missing or invalid 'amount' argument: %v", args)
+	}
+
+	r, _ := v.RowCol(v.VisibleRegion().Begin())
+	r -= amount
+	r = v.TextPoint(r, 1)
+	v.Show(primitives.Region{r, r})
+	return nil
+}
+
 func initBasicCommands() {
 	log4go.Debug("Registering commands...")
 	e := GetEditor()
@@ -321,6 +337,7 @@ func initBasicCommands() {
 		{"glue_marked_undo_groups", &GlueMarkedUndoGroupsCommand{}},
 		{"maybe_mark_undo_groups_for_gluing", &MaybeMarkUndoGroupsForGluingCommand{}},
 		{"unmark_undo_groups_for_gluing", &UnmarkUndoGroupsForGluingCommand{}},
+		{"scroll_lines", &ScrollLinesCommand{}},
 	}
 	for i := range cmds {
 		if err := e.CommandHandler().Register(cmds[i].name, cmds[i].cmd); err != nil {

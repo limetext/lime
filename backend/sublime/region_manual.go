@@ -14,8 +14,10 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 	switch t := other.(type) {
 	case *Region:
 		if o.data == t.data {
+			py.True.Incref()
 			return py.True, nil
 		}
+		py.False.Incref()
 		return py.False, nil
 	case *py.Tuple:
 		if s := t.Size(); s != 2 {
@@ -32,8 +34,10 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 		} else {
 			r2 := primitives.Region{a2.Int(), b2.Int()}
 			if r2 == o.data {
+				py.True.Incref()
 				return py.True, nil
 			}
+			py.False.Incref()
 			return py.False, nil
 		}
 	default:

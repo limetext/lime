@@ -36,7 +36,6 @@ func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	} else {
 		c.inner = v
 	}
-	// TODO: look into ref counting convention
 	c.inner.Incref()
 	c.Incref()
 

@@ -64,6 +64,12 @@ func TestRowCol(t *testing.T) {
 			}
 		}
 	}
+	if r, c := v.RowCol(-1); r != 1 || c != 1 {
+		t.Errorf("These should be 1 %d, %d", r, c)
+	}
+	if r, c := v.RowCol(v.buffer.Size() + 10); c != 1 {
+		t.Errorf("Column should be 1 %d, %d", r, c)
+	}
 }
 
 func TestView(t *testing.T) {
