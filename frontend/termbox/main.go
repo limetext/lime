@@ -65,7 +65,23 @@ var (
 const console_height = 20
 
 type tbfe struct {
-	visibleregion map[*backend.View]primitives.Region
+	visibleregion  map[*backend.View]primitives.Region
+	status_message string
+	active_window  *backend.Window
+}
+
+func (t *tbfe) ActiveWindow() *backend.Window {
+	return t.active_window
+}
+
+func (t *tbfe) ActiveView(w *backend.Window) *backend.View {
+	if w == nil {
+		return nil
+	}
+	if v := w.Views(); len(v) > 0 {
+		return v[0]
+	}
+	return nil
 }
 
 func (t *tbfe) renderView(sx, sy, w, h int, v *backend.View) {
@@ -222,6 +238,24 @@ func (t *tbfe) VisibleRegion(v *backend.View) primitives.Region {
 	}
 }
 
+func (t *tbfe) StatusMessage(msg string) {
+	t.status_message = msg
+}
+
+func (t *tbfe) ErrorMessage(msg string) {
+	log4go.Error(msg)
+}
+
+// TODO(q): Actually show a dialog
+func (t *tbfe) MessageDialog(msg string) {
+	log4go.Info(msg)
+}
+
+// TODO(q): Actually show a dialog
+func (t *tbfe) OkCancelDialog(msg, ok string) {
+	log4go.Info(msg, ok)
+}
+
 func (t *tbfe) scroll(b *primitives.Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), primitives.Region{b.Size(), b.Size()})
 }
@@ -230,7 +264,7 @@ func (t *tbfe) loop() {
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
 	//ed.LogInput(true)
-	ed.LogCommands(true)
+	//ed.LogCommands(true)
 	c := ed.Console()
 	var (
 		scheme textmate.Theme
@@ -325,6 +359,7 @@ func (t *tbfe) loop() {
 	}()
 
 	w := ed.NewWindow()
+	t.active_window = w
 	v := w.OpenFile("main.go", 0)
 	v.Settings().Set("trace", true)
 	c.Buffer().AddCallback(t.scroll)
@@ -355,8 +390,11 @@ func (t *tbfe) loop() {
 		w, h := termbox.Size()
 
 		t.renderView(0, 0, w, h-console_height, v)
-		t.renderView(0, h-console_height, w, console_height, c)
-
+		t.renderView(0, h-(console_height), w, (console_height - 1), c)
+		runes := []rune(t.status_message)
+		for i := 0; i < w && i < len(runes); i++ {
+			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
+		}
 		termbox.Flush()
 
 		blink_phase := time.Second

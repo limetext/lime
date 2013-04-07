@@ -11,21 +11,47 @@ import (
 type (
 	Editor struct {
 		HasSettings
-		windows      []*Window
-		activeWindow *Window
-		loginput     bool
-		cmdhandler   commandHandler
-		keyBindings  KeyBindings
-		console      *View
-		frontend     Frontend
+		windows                   []*Window
+		loginput                  bool
+		cmdhandler                commandHandler
+		keyBindings, lastBindings KeyBindings
+		console                   *View
+		frontend                  Frontend
 	}
 	Frontend interface {
+		ActiveWindow() *Window
+		ActiveView(*Window) *View
 		VisibleRegion(v *View) Region
 		Show(v *View, r Region)
+		StatusMessage(string)
+		ErrorMessage(string)
+		MessageDialog(string)
+		OkCancelDialog(msg string, okname string)
 	}
 	myLogWriter struct {
 	}
+	DummyFrontend struct{}
 )
+
+func (h *DummyFrontend) ActiveWindow() *Window {
+	if w := GetEditor().Windows(); len(w) > 0 {
+		return w[0]
+	}
+	return nil
+}
+
+func (h *DummyFrontend) ActiveView(w *Window) *View {
+	if v := w.Views(); len(v) > 0 {
+		return v[0]
+	}
+	return nil
+}
+func (h *DummyFrontend) StatusMessage(msg string)      {}
+func (h *DummyFrontend) ErrorMessage(msg string)       {}
+func (h *DummyFrontend) MessageDialog(msg string)      {}
+func (h *DummyFrontend) OkCancelDialog(string, string) {}
+func (h *DummyFrontend) Show(v *View, r Region)        {}
+func (h *DummyFrontend) VisibleRegion(v *View) Region  { return Region{} }
 
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	c := GetEditor().Console()
@@ -48,6 +74,7 @@ func GetEditor() *Editor {
 				WindowCommands:      make(wndcmd),
 				verbose:             true,
 			},
+			frontend: &DummyFrontend{},
 			console: &View{
 				buffer:  &Buffer{},
 				scratch: true,
@@ -61,6 +88,10 @@ func GetEditor() *Editor {
 		initBasicCommands()
 	}
 	return ed
+}
+
+func (e *Editor) Frontend() Frontend {
+	return e.frontend
 }
 
 func (e *Editor) SetFrontend(f Frontend) {
@@ -117,15 +148,10 @@ func (e *Editor) Windows() []*Window {
 	return e.windows
 }
 
-func (e *Editor) ActiveWindow() *Window {
-	return e.activeWindow
-}
-
 func (e *Editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
 	w.Settings().Parent = e
-	e.activeWindow = w
 	return w
 }
 
@@ -149,17 +175,27 @@ func (e *Editor) HandleInput(kp KeyPress) {
 	if e.loginput {
 		log4go.Debug("Key: %v", kp)
 	}
-	// TODO: multi-stage keys
-	possible_actions := e.keyBindings.Filter(kp)
+	e.lastBindings.DropLessEqualKeys(e.lastBindings.keyOff)
+	if e.lastBindings.Len() == 0 {
+		e.lastBindings = e.keyBindings
+	}
+	possible_actions := e.lastBindings.Filter(kp)
+	e.lastBindings = possible_actions
+
+	// TODO?
+	wnd := e.Frontend().ActiveWindow()
+	v := e.Frontend().ActiveView(wnd)
+	possible_actions = possible_actions.FilterContext(v)
+
 	if possible_actions.Len() == 1 {
 		action := possible_actions.Bindings[0]
 		// TODO: what's the command precedence?
 		if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
-			if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), action.Command, action.Args); err != nil {
+			if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
 				log4go.Debug("Couldn't run textcommand: %s", err)
 			}
 		} else if c := e.cmdhandler.WindowCommands[action.Command]; c != nil {
-			if err := e.CommandHandler().RunWindowCommand(e.ActiveWindow(), action.Command, action.Args); err != nil {
+			if err := e.CommandHandler().RunWindowCommand(wnd, action.Command, action.Args); err != nil {
 				log4go.Debug("Couldn't run windowcommand: %s", err)
 			}
 		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
@@ -167,7 +203,7 @@ func (e *Editor) HandleInput(kp KeyPress) {
 		}
 	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super && kp.Key != Escape) {
 		// presume insert
-		if err := e.CommandHandler().RunTextCommand(e.ActiveWindow().ActiveView(), "insert", Args{"characters": string(kp.Key)}); err != nil {
+		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(kp.Key)}); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)
 		}
 	}
@@ -179,19 +215,6 @@ func (e *Editor) LogInput(l bool) {
 
 func (e *Editor) LogCommands(bool) {
 	e.cmdhandler.log = true
-}
-
-func (e *Editor) StatusMessage(msg string) {
-	log4go.Info(msg)
-}
-
-func (e *Editor) ErrorMessage(msg string) {
-	log4go.Error(msg)
-}
-
-// TODO(q): Actually show a dialog
-func (e *Editor) MessageDialog(msg string) {
-	log4go.Info(msg)
 }
 
 func (e *Editor) RunCommand(name string, args Args) {

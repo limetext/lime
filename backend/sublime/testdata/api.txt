@@ -1,0 +1,254 @@
+ApplicationCommandGlue        : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+Edit                          : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+OP_EQUAL                      : <type 'int'>
+OP_NOT_EQUAL                  : <type 'int'>
+OP_NOT_REGEX_CONTAINS         : <type 'int'>
+OP_NOT_REGEX_MATCH            : <type 'int'>
+OP_REGEX_CONTAINS             : <type 'int'>
+OP_REGEX_MATCH                : <type 'int'>
+OnQueryContextGlue            : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+Region                        : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__eq__
+	__format__
+	__ge__
+	__getattribute__
+	__gt__
+	__hash__
+	__init__
+	__le__
+	__lt__
+	__ne__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+	a
+	b
+	begin
+	clip
+	contains
+	cover
+	empty
+	end
+	size
+RegionSet                     : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__getitem__
+	__hash__
+	__init__
+	__len__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+	add
+	clear
+	contains
+	regions
+	substract
+Settings                      : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+	clear_on_change
+	erase
+	get
+	set
+TextCommandGlue               : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+View                          : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+	add_regions
+	begin_edit
+	buffer_id
+	change_count
+	command_history
+	data
+	end_edit
+	erase
+	erase_regions
+	full_line
+	get_regions
+	has_non_empty_selection_region
+	id
+	insert
+	is_scratch
+	line
+	name
+	overwrite_status
+	replace
+	rowcol
+	run_command
+	scope_name
+	sel
+	set_overwrite_status
+	set_scratch
+	settings
+	show
+	size
+	substr
+	text_point
+	visible_region
+	window
+	word
+Window                        : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+	active_view
+	id
+	new_view
+	open_file
+	run_command
+	settings
+	views
+WindowCommandGlue             : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
+__doc__                       : <type 'NoneType'>
+__name__                      : <type 'str'>
+__package__                   : <type 'NoneType'>
+active_window                 : <type 'builtin_function_or_method'>
+arch                          : <type 'builtin_function_or_method'>
+console                       : <type 'builtin_function_or_method'>
+error_message                 : <type 'builtin_function_or_method'>
+log_commands                  : <type 'builtin_function_or_method'>
+log_input                     : <type 'builtin_function_or_method'>
+message_dialog                : <type 'builtin_function_or_method'>
+new_window                    : <type 'builtin_function_or_method'>
+ok_cancel_dialog              : <type 'builtin_function_or_method'>
+packages_path                 : <type 'builtin_function_or_method'>
+platform                      : <type 'builtin_function_or_method'>
+register                      : <type 'builtin_function_or_method'>
+run_command                   : <type 'builtin_function_or_method'>
+set_timeout                   : <type 'function'>
+settings                      : <type 'builtin_function_or_method'>
+status_message                : <type 'builtin_function_or_method'>
+test_window                   : <type 'sublime.Window'>
+unregister                    : <type 'builtin_function_or_method'>
+version                       : <type 'builtin_function_or_method'>

@@ -23,6 +23,10 @@ func (w *Window) NewView() *View {
 	return v
 }
 
+func (w *Window) Views() []*View {
+	return w.views
+}
+
 func (w *Window) OpenFile(filename string, flags int) *View {
 	v := w.NewView()
 	v.SetScratch(true)
@@ -36,14 +40,6 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 	v.SetScratch(false)
 	OnLoad.Call(v)
 	return v
-}
-
-// TODO(q): ActiveView should return the actual active view
-func (w *Window) ActiveView() *View {
-	if len(w.views) > 0 {
-		return w.views[0]
-	}
-	return nil
 }
 
 func (w *Window) runCommand(c WindowCommand, name string, args Args) error {

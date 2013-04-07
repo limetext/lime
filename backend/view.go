@@ -268,7 +268,7 @@ func (v *View) BeginEdit() *Edit {
 
 func (v *View) EndEdit(e *Edit) {
 	if e.invalid {
-		log4go.Error("This edit has already been invalidated: %v, %v", e, v.editstack)
+		log4go.Fine("This edit has already been invalidated: %v, %v", e, v.editstack)
 		return
 	}
 	i := len(v.editstack) - 1

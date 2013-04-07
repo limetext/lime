@@ -260,12 +260,15 @@ func (k *KeyBindings) Swap(i, j int) {
 }
 
 func (k *KeyBindings) DropLessEqualKeys(count int) {
-	for i := 0; i < len(k.Bindings); i++ {
+	for i := 0; i < len(k.Bindings); {
 		if len(k.Bindings[i].Keys) <= count {
-			k.Bindings[i] = k.Bindings[len(k.Bindings)]
+			k.Bindings[i] = k.Bindings[len(k.Bindings)-1]
 			k.Bindings = k.Bindings[:len(k.Bindings)-1]
+		} else {
+			i++
 		}
 	}
+	// TODO: Apparently Sublime does NOT sort keybindings and the ordering does matter. Need to investigate
 	sort.Sort(k)
 }
 
@@ -279,6 +282,7 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 
 func (k *KeyBindings) Merge(other *KeyBindings) {
 	// TODO: needs to take care of "overloaded" keybindings
+	// TODO: what is the order really? Newer on top?
 	for _, b := range other.Bindings {
 		k.Bindings = append(k.Bindings, b)
 	}
@@ -292,9 +296,14 @@ func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	idx := sort.Search(k.Len(), func(i int) bool {
 		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
 	})
-	// TODO?
-	v := GetEditor().ActiveWindow().ActiveView()
 	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
+		ret.Bindings = append(ret.Bindings, k.Bindings[i])
+	}
+	return
+}
+
+func (k *KeyBindings) FilterContext(v *View) (ret KeyBindings) {
+	for i := range k.Bindings {
 		for _, c := range k.Bindings[i].Context {
 			if OnQueryContext.Call(v, c.Key, c.Operator, c.Operand, c.MatchAll) != True {
 				goto skip

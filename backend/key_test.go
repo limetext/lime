@@ -50,7 +50,7 @@ func TestKeyFilter(t *testing.T) {
 func TestKeyFilter2(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
-	w.NewView()
+	v := w.NewView()
 	enable := "test1"
 	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 		t.Log("Querying for", key)
@@ -67,7 +67,9 @@ func TestKeyFilter2(t *testing.T) {
 		if err := loaders.LoadJSON(d, &bindings); err != nil {
 			t.Error(err)
 		}
-		if b2 := bindings.Filter(KeyPress{Key: 'i'}); b2.Len() != 1 || b2.Bindings[0].Context[0].Key != enable {
+		b2 := bindings.Filter(KeyPress{Key: 'i'})
+		b2 = b2.FilterContext(v)
+		if b2.Len() != 1 || b2.Bindings[0].Context[0].Key != enable {
 			t.Error(b2)
 		}
 	}

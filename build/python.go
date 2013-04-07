@@ -302,7 +302,7 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 	return
 }
 
-func generatemethodsEx(t reflect.Type, ignorelist []string, callobject string, name func(t reflect.Type, m reflect.Method) string) (methods string) {
+func generatemethodsEx(t reflect.Type, ignorefunc func(name string) bool, callobject string, name func(t reflect.Type, m reflect.Method) string) (methods string) {
 	t2 := t
 	if t.Kind() == reflect.Ptr {
 		t2 = t.Elem()
@@ -318,11 +318,9 @@ func generatemethodsEx(t reflect.Type, ignorelist []string, callobject string, n
 			reason = "unexported"
 			goto skip
 		}
-		for _, j := range ignorelist {
-			if m.Name == j {
-				reason = "in skip list"
-				goto skip
-			}
+		if ignorefunc != nil && ignorefunc(m.Name) {
+			reason = "in skip list"
+			goto skip
 		}
 
 		if m, err := generatemethod(m, t2, callobject, name(t2, m)); err != nil {
@@ -340,13 +338,13 @@ func generatemethodsEx(t reflect.Type, ignorelist []string, callobject string, n
 
 }
 
-func generatemethods(t reflect.Type, ignorelist []string) (methods string) {
-	return generatemethodsEx(t, ignorelist, "o.data.", func(t2 reflect.Type, m reflect.Method) string {
+func generatemethods(t reflect.Type, ignorefunc func(name string) bool) (methods string) {
+	return generatemethodsEx(t, ignorefunc, "o.data.", func(t2 reflect.Type, m reflect.Method) string {
 		return fmt.Sprintf("\n(o *%s) Py%s", t2.Name(), pyname(m.Name))
 	})
 }
 
-func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret string) {
+func generateWrapper(ptr reflect.Type, canCreate bool, ignorefunc func(name string) bool) (ret string) {
 	t := ptr
 	if t.Kind() == reflect.Ptr {
 		t = ptr.Elem()
@@ -408,17 +406,15 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorelist []string) (ret
 			}`, t.Name(), t.Name())
 	}
 	ret += cons
-	ret += generatemethods(ptr, ignorelist)
+	ret += generatemethods(ptr, ignorefunc)
 	if ptr.Kind() != reflect.Struct {
-		ret += generatemethods(t, ignorelist)
+		ret += generatemethods(t, ignorefunc)
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if !f.Anonymous && f.Name[0] == strings.ToUpper(f.Name[:1])[0] {
-			for _, j := range ignorelist {
-				if f.Name == j {
-					goto skip
-				}
+			if ignorefunc != nil && ignorefunc(f.Name) {
+				goto skip
 			}
 
 			if r, err := pyret(f.Type); err != nil {
@@ -453,17 +449,16 @@ func main() {
 		sublime_methods += fmt.Sprintf("{Name: \"%s\", Func: %s},\n", pyname(m.Name)[1:], sn)
 		return sn
 	}
-
 	data := [][]string{
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
-		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, []string{"Less", "Swap", "Adjust"})},
-		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, []string{"Apply", "Undo"})},
-		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, []string{"Buffer", "Syntax", "CommandHistory", "Show"})},
+		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust").MatchString)},
+		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
+		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show").MatchString)},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, nil)},
-		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, []string{"Parent", "Set", "Get"})},
-		{"../backend/sublime/buffer.go", generatemethodsEx(
+		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
+		{"../backend/sublime/view_buffer.go", generatemethodsEx(
 			reflect.TypeOf(&primitives.Buffer{}),
-			[]string{"Erase", "Insert", "Substr"},
+			regexp.MustCompile("Erase|Insert|Substr").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := pyname(m.Name)
@@ -473,12 +468,17 @@ func main() {
 				return "(o *View) Py" + mn
 			})},
 		{"../backend/sublime/commands.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().CommandHandler()),
-			[]string{"RunWindowCommand", "RunTextCommand", "RunApplicationCommand"},
+			regexp.MustCompile("RunWindowCommand|RunTextCommand|RunApplicationCommand").MatchString,
 			"backend.GetEditor().CommandHandler().",
 			sn),
 		},
+		{"../backend/sublime/frontend.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().Frontend()),
+			regexp.MustCompile("Show|VisibleRegion|ActiveView").MatchString,
+			"backend.GetEditor().Frontend().",
+			sn),
+		},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
-			[]string{"Info", "HandleInput", "CommandHandler", "Windows", "SetFrontend"},
+			regexp.MustCompile("Info|HandleInput|CommandHandler|Windows|Frontend").MatchString,
 			"backend.GetEditor().",
 			sn),
 		},

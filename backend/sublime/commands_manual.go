@@ -115,7 +115,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 			// The plugin is probably trying to bypass the undostack...
 			old := v.IsScratch()
 			v.SetScratch(true)
-			log4go.Debug("Discarded: %s", e)
+			log4go.Finest("Discarded: %s", e)
 			v.EndEdit(e)
 			v.SetScratch(old)
 			if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
