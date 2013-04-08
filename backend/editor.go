@@ -108,7 +108,7 @@ func (e *Editor) loadKeybinding(fn string) {
 		} else {
 			log4go.Info("Loaded %s", fn)
 		}
-		e.keyBindings.Merge(&bindings)
+		e.keyBindings.merge(&bindings)
 	}
 }
 func (e *Editor) loadKeybindings() {
@@ -175,20 +175,18 @@ func (e *Editor) HandleInput(kp KeyPress) {
 	if e.loginput {
 		log4go.Debug("Key: %v", kp)
 	}
-	e.lastBindings.DropLessEqualKeys(e.lastBindings.keyOff)
-	if e.lastBindings.Len() == 0 {
+	if e.lastBindings.keyOff == 0 {
 		e.lastBindings = e.keyBindings
 	}
+try_again:
 	possible_actions := e.lastBindings.Filter(kp)
 	e.lastBindings = possible_actions
 
 	// TODO?
 	wnd := e.Frontend().ActiveWindow()
 	v := e.Frontend().ActiveView(wnd)
-	possible_actions = possible_actions.FilterContext(v)
 
-	if possible_actions.Len() == 1 {
-		action := possible_actions.Bindings[0]
+	if action := possible_actions.Action(v); action != nil {
 		// TODO: what's the command precedence?
 		if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
 			if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
@@ -201,9 +199,12 @@ func (e *Editor) HandleInput(kp KeyPress) {
 		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
 			log4go.Debug("Couldn't run applicationcommand: %s", err)
 		}
-	} else if possible_actions.Len() == 0 && possible_actions.keyOff == 1 && (!kp.Ctrl && !kp.Alt && !kp.Super && kp.Key != Escape) {
-		// presume insert
-		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(kp.Key)}); err != nil {
+	} else if possible_actions.keyOff > 1 {
+		e.lastBindings = e.keyBindings
+		goto try_again
+	} else if kp.IsCharacter() {
+		log4go.Debug("kp: %v, pos: %v, ro: %v", kp, possible_actions)
+		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)
 		}
 	}

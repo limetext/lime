@@ -1,2 +1,8 @@
-def get_jump_history():
-    return None
+class Hack:
+    def push_selection(self, a):
+        print "push_selection not implemented"
+        pass
+
+def get_jump_history(a):
+    print "get_jum_history not implemented"
+    return Hack()

@@ -52,6 +52,14 @@ const (
 	Home
 	End
 	Break
+	Any Key = unicode.MaxRune
+)
+
+const (
+	shift = (1 << (29 - iota))
+	ctrl
+	alt
+	super
 )
 
 var keylut = map[string]Key{
@@ -90,6 +98,7 @@ var keylut = map[string]Key{
 	"plus":          '+',
 	"minus":         '-',
 	"equals":        '=',
+	"<character>":   Any,
 }
 
 var rkeylut = map[Key]string{
@@ -127,6 +136,7 @@ var rkeylut = map[Key]string{
 	'+':       "plus",
 	'-':       "minus",
 	'=':       "equals",
+	Any:       "<character>",
 }
 
 type (
@@ -147,10 +157,11 @@ type (
 	}
 
 	KeyBinding struct {
-		Keys    []KeyPress
-		Command string
-		Args    map[string]interface{}
-		Context []KeyContext
+		Keys     []KeyPress
+		Command  string
+		Args     Args
+		Context  []KeyContext
+		priority int
 	}
 
 	KeyBindings struct {
@@ -195,18 +206,22 @@ func (k *KeyContext) UnmarshalJSON(d []byte) error {
 func (k KeyPress) Index() (ret int) {
 	ret = int(k.Key)
 	if k.Shift {
-		ret += 1 << 30
+		ret += shift
 	}
 	if k.Alt {
-		ret += 1 << 29
+		ret += alt
 	}
 	if k.Ctrl {
-		ret += 1 << 28
+		ret += ctrl
 	}
 	if k.Super {
-		ret += 1 << 27
+		ret += super
 	}
 	return
+}
+
+func (k KeyPress) IsCharacter() bool {
+	return unicode.IsPrint(rune(k.Key)) && !k.Super && !k.Ctrl
 }
 
 func (k *KeyPress) fix() {
@@ -268,7 +283,6 @@ func (k *KeyBindings) DropLessEqualKeys(count int) {
 			i++
 		}
 	}
-	// TODO: Apparently Sublime does NOT sort keybindings and the ordering does matter. Need to investigate
 	sort.Sort(k)
 }
 
@@ -276,40 +290,55 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 	if err := json.Unmarshal(d, &k.Bindings); err != nil {
 		return err
 	}
+	for i := range k.Bindings {
+		k.Bindings[i].priority = i
+	}
 	k.DropLessEqualKeys(0)
 	return nil
 }
 
-func (k *KeyBindings) Merge(other *KeyBindings) {
-	// TODO: needs to take care of "overloaded" keybindings
+func (k *KeyBindings) merge(other *KeyBindings) {
 	// TODO: what is the order really? Newer on top?
-	for _, b := range other.Bindings {
-		k.Bindings = append(k.Bindings, b)
-	}
+	k.Bindings = append(k.Bindings, other.Bindings...)
 	k.DropLessEqualKeys(0)
 }
 
-func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
-	kp.fix()
-	ret.keyOff = k.keyOff + 1
-	ki := kp.Index()
+func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
 	idx := sort.Search(k.Len(), func(i int) bool {
 		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
 	})
 	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
 		ret.Bindings = append(ret.Bindings, k.Bindings[i])
 	}
+}
+
+func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
+	kp.fix()
+	k.DropLessEqualKeys(k.keyOff)
+	ret.keyOff = k.keyOff + 1
+	ki := kp.Index()
+
+	k.filter(ki, &ret)
+
+	if kp.IsCharacter() {
+		k.filter(int(Any), &ret)
+	}
 	return
 }
 
-func (k *KeyBindings) FilterContext(v *View) (ret KeyBindings) {
+func (k *KeyBindings) Action(v *View) (kb *KeyBinding) {
 	for i := range k.Bindings {
+		if len(k.Bindings[i].Keys) > k.keyOff {
+			continue
+		}
 		for _, c := range k.Bindings[i].Context {
 			if OnQueryContext.Call(v, c.Key, c.Operator, c.Operand, c.MatchAll) != True {
 				goto skip
 			}
 		}
-		ret.Bindings = append(ret.Bindings, k.Bindings[i])
+		if kb == nil || kb.priority < k.Bindings[i].priority {
+			kb = k.Bindings[i]
+		}
 	skip:
 	}
 	return

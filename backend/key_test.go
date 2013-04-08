@@ -68,9 +68,43 @@ func TestKeyFilter2(t *testing.T) {
 			t.Error(err)
 		}
 		b2 := bindings.Filter(KeyPress{Key: 'i'})
-		b2 = b2.FilterContext(v)
-		if b2.Len() != 1 || b2.Bindings[0].Context[0].Key != enable {
-			t.Error(b2)
+		a := b2.Action(v)
+		if a.Context[0].Key != enable {
+			t.Error(b2, a)
+		}
+	}
+}
+
+func TestVintageous(t *testing.T) {
+	fn := "testdata/Vintageous.sublime-keymap"
+	ed := GetEditor()
+	w := ed.NewWindow()
+	v := w.NewView()
+	v.Settings().Set("command_mode", true)
+
+	OnQueryContext.Add(func(v *View, key string, op Op, operand interface{}, match_all bool) QueryContextReturn {
+		if key == "vi_has_action" {
+			return True
+		}
+		return Unknown
+	})
+
+	if d, err := ioutil.ReadFile(fn); err != nil {
+		t.Errorf("Couldn't load file %s: %s", fn, err)
+	} else {
+		var bindings KeyBindings
+		if err := loaders.LoadJSON(d, &bindings); err != nil {
+			t.Error(err)
+		}
+		t.Log(bindings)
+
+		b2 := bindings.Filter(KeyPress{Key: 'g'})
+		if a := b2.Action(v); a == nil || a.Command != "set_action" {
+			t.Error(a)
+		}
+		b2 = b2.Filter(KeyPress{Key: 'g'})
+		if a := b2.Action(v); a == nil || a.Command != "set_motion" {
+			t.Error(a)
 		}
 	}
 }

@@ -192,6 +192,10 @@ func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
 			line := v.Buffer().Line(r.B)
 			return line.A
 		})
+	case "bof":
+		move_action(v, extend, func(r primitives.Region) int {
+			return 0
+		})
 	case "eof":
 		move_action(v, extend, func(r primitives.Region) int {
 			return v.buffer.Size()
