@@ -50,7 +50,7 @@ func TestKeyFilter(t *testing.T) {
 func TestKeyFilter2(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	enable := "test1"
 	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 		t.Log("Querying for", key)
@@ -79,7 +79,7 @@ func TestVintageous(t *testing.T) {
 	fn := "testdata/Vintageous.sublime-keymap"
 	ed := GetEditor()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	v.Settings().Set("command_mode", true)
 
 	OnQueryContext.Add(func(v *View, key string, op Op, operand interface{}, match_all bool) QueryContextReturn {

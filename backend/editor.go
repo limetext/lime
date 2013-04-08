@@ -17,6 +17,7 @@ type (
 		keyBindings, lastBindings KeyBindings
 		console                   *View
 		frontend                  Frontend
+		clipboard                 string
 	}
 	Frontend interface {
 		ActiveWindow() *Window
@@ -220,4 +221,12 @@ func (e *Editor) LogCommands(bool) {
 
 func (e *Editor) RunCommand(name string, args Args) {
 	e.CommandHandler().RunApplicationCommand(name, args)
+}
+
+func (e *Editor) SetClipboard(n string) {
+	e.clipboard = n
+}
+
+func (e *Editor) GetClipboard() string {
+	return e.clipboard
 }

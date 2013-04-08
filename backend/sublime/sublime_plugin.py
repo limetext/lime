@@ -61,7 +61,7 @@ def fn(fullname):
     paths = fullname.split(".")
     paths = "/".join(paths)
     for p in sys.path:
-        f = os.path.join(p, paths)
+        f = os.path.abspath(os.path.join(p, paths))
         if os.path.exists(f):
             return f
         f += ".py"
@@ -76,6 +76,7 @@ class __myfinder:
                 return sys.modules[fullname]
             f = fn(fullname)
             if not f.endswith(".py"):
+                print "new module: %s" %f
                 m = imp.new_module(fullname)
                 m.__path__ = f
                 sys.modules[fullname] = m
@@ -84,10 +85,10 @@ class __myfinder:
 
     def find_module(self, fullname, path=None):
         f = fn(fullname)
-        if f != None:
+        if f != None and "/lime/" in f: # TODO
             return self.myloader()
 
-sys.meta_path = [__myfinder()]
+sys.meta_path.append(__myfinder())
 
 def reload_plugin(module):
     def cmdname(name):
@@ -114,6 +115,10 @@ def reload_plugin(module):
                     toadd = getattr(inst, "on_query_context", None)
                     if toadd:
                         sublime.OnQueryContextGlue(toadd)
+                    for name in ["on_load"]: #TODO
+                        toadd = getattr(inst, name, None)
+                        if toadd:
+                            sublime.ViewEventGlue(toadd, name)
                 elif issubclass(item[1], TextCommand):
                     sublime.register(cmd, sublime.TextCommandGlue(item[1]))
                 elif issubclass(item[1], WindowCommand):

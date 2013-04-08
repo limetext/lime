@@ -11,6 +11,7 @@ import (
 	"lime/backend/primitives"
 	"os"
 	"path/filepath"
+	//"strings"
 	"testing"
 )
 
@@ -20,9 +21,16 @@ func TestSublime(t *testing.T) {
 		fmt.Printf("%s", b.Data()[pos:pos+delta])
 	})
 	w := ed.NewWindow()
-	w.NewView()
+	w.NewFile()
 	Init()
 	py.AddToPath("testdata")
+	py.AddToPath("testdata/plugins")
+	if m, err := py.Import("sublime_plugin"); err != nil {
+		t.Fatal(err)
+	} else {
+		scanpath("testdata/", m)
+	}
+
 	subl, err := py.Import("sublime")
 	if err != nil {
 		t.Fatal(err)
@@ -96,4 +104,23 @@ func TestSublime(t *testing.T) {
 	} else if diff := util.Diff(string(d), buf.String()); diff != "" {
 		t.Error(diff)
 	}
+	ed.LogCommands(true)
+	tests := []string{
+		"registers",
+		"state",
+		//		"marks",
+		"settings",
+	}
+
+	for _, test := range tests {
+		ed.CommandHandler().RunWindowCommand(w, "vintage_ex_run_data_file_based_tests", backend.Args{"suite_name": test})
+	}
+	// for _, w := range ed.Windows() {
+	// 	for _, v := range w.Views() {
+	// 		if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
+	// 			continue
+	// 		}
+	// 		t.Log(v.Buffer())
+	// 	}
+	// }
 }

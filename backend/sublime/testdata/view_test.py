@@ -3,7 +3,7 @@ import traceback
 import types
 try:
 	import sublime
-	v = sublime.test_window.new_view()
+	v = sublime.test_window.new_file()
 	assert v.id() != sublime.test_window.id()
 	assert sublime.test_window.id() == v.window().id()
 	assert v.size() == 0

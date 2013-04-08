@@ -18,6 +18,10 @@ var (
 		Name:    "sublime.OnQueryContextGlue",
 		Pointer: (*OnQueryContextGlue)(nil),
 	}
+	_viewEventGlueClass = py.Class{
+		Name:    "sublime.ViewEventGlue",
+		Pointer: (*ViewEventGlue)(nil),
+	}
 )
 
 type (
@@ -25,7 +29,56 @@ type (
 		py.BaseObject
 		inner py.Object
 	}
+	ViewEventGlue struct {
+		py.BaseObject
+		inner py.Object
+	}
 )
+
+var evmap = map[string]*backend.ViewEvent{
+	"on_modified":    &backend.OnModified,
+	"on_activated":   &backend.OnActivated,
+	"on_deactivated": &backend.OnDeactivated,
+	"on_load":        &backend.OnLoad,
+	"on_new":         &backend.OnNew,
+	"on_pre_save":    &backend.OnPreSave,
+	"on_post_save":   &backend.OnPostSave,
+}
+
+func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
+	if args.Size() != 2 {
+		return fmt.Errorf("Expected 2 arguments not %d", args.Size())
+	}
+	if v, err := args.GetItem(0); err != nil {
+		return err
+	} else {
+		c.inner = v
+	}
+	if v, err := args.GetItem(1); err != nil {
+		return err
+	} else if v2, ok := v.(*py.String); !ok {
+		return fmt.Errorf("Second argument not a string: %v", v)
+	} else {
+		ev := evmap[v2.String()]
+		if ev == nil {
+			return fmt.Errorf("Unknown event: %s", v2)
+		}
+		ev.Add(c.onEvent)
+		c.inner.Incref()
+		c.Incref()
+	}
+	return nil
+}
+
+func (c *ViewEventGlue) onEvent(v *backend.View) {
+	if pv, err := toPython(v); err != nil {
+		log4go.Error(err)
+	} else if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
+		log4go.Error(err)
+	} else {
+		ret.Decref()
+	}
+}
 
 func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	if args.Size() != 1 {

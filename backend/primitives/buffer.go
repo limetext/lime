@@ -9,6 +9,7 @@ type (
 	Buffer struct {
 		HasId
 		changecount int
+		name        string
 		filename    string
 		data        string
 		callbacks   []BufferChangedCallback
@@ -20,8 +21,20 @@ func (b *Buffer) AddCallback(cb BufferChangedCallback) {
 	b.callbacks = append(b.callbacks, cb)
 }
 
+func (b *Buffer) SetName(n string) {
+	b.name = n
+}
+
 func (b *Buffer) Name() string {
+	return b.name
+}
+
+func (b *Buffer) FileName() string {
 	return b.filename
+}
+
+func (b *Buffer) SetFileName(n string) {
+	b.filename = n
 }
 
 func (b *Buffer) Size() int {

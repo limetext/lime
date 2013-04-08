@@ -13,6 +13,48 @@ var (
 	_ = fmt.Errorf
 )
 
+func (o *Window) Py_open_file(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 string
+		arg2 int
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*py.String); !ok {
+			return nil, fmt.Errorf("Expected type *py.String for backend.Window.OpenFile() arg1, not %s", v.Type())
+		} else {
+			arg1 = v2.String()
+		}
+	}
+	if tu.Size() > 1 {
+		if v, err := tu.GetItem(1); err != nil {
+			return nil, err
+		} else {
+			if v2, ok := v.(*py.Int); !ok {
+				return nil, fmt.Errorf("Expected type *py.Int for backend.Window.OpenFile() arg2, not %s", v.Type())
+			} else {
+				arg2 = v2.Int()
+			}
+		}
+	}
+	ret0 := o.data.OpenFile(arg1, arg2)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = _viewClass.Alloc(1)
+	if err != nil {
+	} else if v2, ok := pyret0.(*View); !ok {
+		return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+	} else {
+		v2.data = ret0
+	}
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
 func (o *Window) Py_active_view() (py.Object, error) {
 	ret0 := backend.GetEditor().Frontend().ActiveView(o.data)
 	var err error

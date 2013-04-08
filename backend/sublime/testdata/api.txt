@@ -170,6 +170,7 @@ View                          : <type 'type'>
 	end_edit
 	erase
 	erase_regions
+	file_name
 	full_line
 	get_regions
 	has_non_empty_selection_region
@@ -184,6 +185,7 @@ View                          : <type 'type'>
 	run_command
 	scope_name
 	sel
+	set_name
 	set_overwrite_status
 	set_scratch
 	settings
@@ -194,6 +196,22 @@ View                          : <type 'type'>
 	visible_region
 	window
 	word
+ViewEventGlue                 : <type 'type'>
+	__class__
+	__delattr__
+	__doc__
+	__format__
+	__getattribute__
+	__hash__
+	__init__
+	__new__
+	__reduce__
+	__reduce_ex__
+	__repr__
+	__setattr__
+	__sizeof__
+	__str__
+	__subclasshook__
 Window                        : <type 'type'>
 	__class__
 	__delattr__
@@ -212,7 +230,7 @@ Window                        : <type 'type'>
 	__subclasshook__
 	active_view
 	id
-	new_view
+	new_file
 	open_file
 	run_command
 	settings
@@ -240,6 +258,7 @@ active_window                 : <type 'builtin_function_or_method'>
 arch                          : <type 'builtin_function_or_method'>
 console                       : <type 'builtin_function_or_method'>
 error_message                 : <type 'builtin_function_or_method'>
+get_clipboard                 : <type 'builtin_function_or_method'>
 log_commands                  : <type 'builtin_function_or_method'>
 log_input                     : <type 'builtin_function_or_method'>
 message_dialog                : <type 'builtin_function_or_method'>
@@ -249,6 +268,7 @@ packages_path                 : <type 'builtin_function_or_method'>
 platform                      : <type 'builtin_function_or_method'>
 register                      : <type 'builtin_function_or_method'>
 run_command                   : <type 'builtin_function_or_method'>
+set_clipboard                 : <type 'builtin_function_or_method'>
 set_timeout                   : <type 'function'>
 settings                      : <type 'builtin_function_or_method'>
 status_message                : <type 'builtin_function_or_method'>

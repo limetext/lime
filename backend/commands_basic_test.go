@@ -14,7 +14,7 @@ Goodbye world
 `
 	ed := GetEditor()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	e := v.BeginEdit()
 	v.Insert(e, 0, data)
 	v.EndEdit(e)
@@ -83,7 +83,7 @@ Goodbye worl
 func TestLeftDelete(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	e := v.BeginEdit()
 	v.Insert(e, 0, "12345678")
 	v.EndEdit(e)
@@ -102,7 +102,7 @@ func TestMove(t *testing.T) {
 	ed := GetEditor()
 
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
@@ -220,7 +220,7 @@ func TestGlueCmds(t *testing.T) {
 	ed := GetEditor()
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	v.SetScratch(true)
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
@@ -286,7 +286,7 @@ func TestInsert(t *testing.T) {
 	ed := GetEditor()
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
@@ -349,7 +349,7 @@ func TestScrollLines(t *testing.T) {
 	ed.SetFrontend(&fe)
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
-	v := w.NewView()
+	v := w.NewFile()
 	e := v.BeginEdit()
 	for i := 0; i < 10; i++ {
 		v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")

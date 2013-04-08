@@ -12,7 +12,7 @@ type Window struct {
 	views []*View
 }
 
-func (w *Window) NewView() *View {
+func (w *Window) NewFile() *View {
 	w.views = append(w.views, newView(w))
 	v := w.views[len(w.views)-1]
 	v.Settings().Parent = w
@@ -28,9 +28,10 @@ func (w *Window) Views() []*View {
 }
 
 func (w *Window) OpenFile(filename string, flags int) *View {
-	v := w.NewView()
+	v := w.NewFile()
 	v.SetScratch(true)
 	e := v.BeginEdit()
+	v.Buffer().SetFileName(filename)
 	if d, err := ioutil.ReadFile(filename); err != nil {
 		log4go.Error("Couldn't load file %s: %s", filename, err)
 	} else {

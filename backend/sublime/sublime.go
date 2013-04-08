@@ -24,7 +24,7 @@ func scanpath(path string, m *py.Module) {
 			log4go.Warn(err)
 		} else {
 			for _, dir := range dirs {
-				if dir != "Vintageous" && dir != "Default" {
+				if dir != "Vintageous" && dir != "Default" && dir != "plugins" {
 					// TODO obviously
 					continue
 				}
@@ -86,6 +86,7 @@ func Init() {
 		{"TextCommandGlue", &_textCommandGlueClass},
 		{"ApplicationCommandGlue", &_applicationCommandGlueClass},
 		{"OnQueryContextGlue", &_onQueryContextGlueClass},
+		{"ViewEventGlue", &_viewEventGlueClass},
 	}
 	for _, cl := range classes {
 		c, err := cl.c.Create()

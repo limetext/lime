@@ -13,7 +13,7 @@ import (
 func TestView(t *testing.T) {
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 	)
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "abcd")
@@ -104,7 +104,7 @@ func TestUndoRedoCommands(t *testing.T) {
 	ch := GetEditor().CommandHandler()
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 	)
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "abcd")
@@ -194,7 +194,7 @@ func TestUndoRedoCommands(t *testing.T) {
 func TestErase(t *testing.T) {
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 		s = v.Sel()
 	)
 	edit := v.BeginEdit()
@@ -220,7 +220,7 @@ func TestErase(t *testing.T) {
 func TestScopeName(t *testing.T) {
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 	)
 	const (
 		in      = "textmate/testdata/main.go"
@@ -263,7 +263,7 @@ func TestScopeName(t *testing.T) {
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 	)
 	const (
 		in     = "textmate/language_test.go"
@@ -289,7 +289,7 @@ func BenchmarkScopeNameLinear(b *testing.B) {
 func BenchmarkScopeNameRandom(b *testing.B) {
 	var (
 		w Window
-		v = w.NewView()
+		v = w.NewFile()
 	)
 	const (
 		in     = "textmate/language_test.go"

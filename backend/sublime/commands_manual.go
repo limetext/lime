@@ -52,7 +52,7 @@ func (c *CommandGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 		return fmt.Errorf("Expected only 1 argument not %d", args.Size())
 	}
 	if v, err := args.GetItem(0); err != nil {
-		return err
+		return pyError(err)
 	} else {
 		c.inner = v
 	}
@@ -98,18 +98,27 @@ func (c *CommandGlue) Description(args backend.Args) string {
 	return ""
 }
 
+func pyError(err error) error {
+	if m, err := py.Import("sys"); err == nil {
+		defer m.Decref()
+		if i, err := m.Dict().GetItemString("last_traceback"); err == nil {
+			log4go.Debug("%v", i)
+		}
+	}
+	return err
+}
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
 	if pyv, err := toPython(v); err != nil {
-		return err
+		return pyError(err)
 	} else if pye, err := toPython(e); err != nil {
 		pyv.Decref()
-		return err
+		return pyError(err)
 	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
 		pyv.Decref()
 		pye.Decref()
-		return err
+		return pyError(err)
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
-		return err
+		return pyError(err)
 	} else {
 		if obj.Base().HasAttrString("run_") {
 			// The plugin is probably trying to bypass the undostack...
@@ -119,36 +128,41 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 			v.EndEdit(e)
 			v.SetScratch(old)
 			if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
-				return err
+				return pyError(err)
 			}
 		} else if _, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
-			return err
+			return pyError(err)
 		}
 	}
 	return nil
 }
 
 func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
+	log4go.Debug("WindowCommand: %v", args)
 	if pyw, err := toPython(w); err != nil {
-		return err
+		return pyError(err)
 	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
 		pyw.Decref()
-		return err
+		return pyError(err)
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
-		return err
-	} else if _, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
-		return err
+		return pyError(err)
+	} else {
+		if obj != nil {
+			if _, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
+				return pyError(err)
+			}
+		}
 	}
 	return nil
 }
 
 func (c *ApplicationCommandGlue) Run(args backend.Args) error {
 	if pyargs, err := c.CreatePyArgs(args); err != nil {
-		return err
+		return pyError(err)
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
-		return err
+		return pyError(err)
 	} else if _, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
-		return err
+		return pyError(err)
 	}
 	return nil
 }
