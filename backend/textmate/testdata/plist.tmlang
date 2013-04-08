@@ -1,4 +1,4 @@
-0-27717: ""
+0-27717: "text.xml.plist"
 	0-38: "meta.tag.preprocessor.xml"
 		0-2: "punctuation.definition.tag.xml" - Data: "<?"
 		2-5: "entity.name.tag.xml" - Data: "xml"

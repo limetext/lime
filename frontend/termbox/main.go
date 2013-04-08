@@ -140,6 +140,7 @@ func (t *tbfe) renderView(sx, sy, w, h int, v *backend.View) {
 			fg, bg := lfg, lbg
 			scope := v.ScopeName(o)
 			if scope != lastScope {
+				fg, bg = defaultFg, defaultBg
 				lastScope = scope
 				na := scope
 				for len(na) > 0 {
@@ -369,8 +370,8 @@ func (t *tbfe) loop() {
 	}
 	sel := v.Sel()
 	sel.Clear()
-	end := v.Buffer().Size() - 2
-	sel.Add(primitives.Region{end - 24, end - 24})
+	//	end := v.Buffer().Size() - 2
+	sel.Add(primitives.Region{0, 0})
 	// sel.Add(primitives.Region{end - 22, end - 22})
 	// sel.Add(primitives.Region{end - 16, end - 20})
 	// sel.Add(primitives.Region{end - 13, end - 10})

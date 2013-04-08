@@ -272,7 +272,6 @@ func (v *View) ScopeName(point int) string {
 	} else {
 		v.lastScopeNode = nil
 		v.lastScopeBuf.Reset()
-		v.lastScopeBuf.WriteString(v.syntax.Language.ScopeName)
 		v.lastScopeNode = v.findScope(search, v.syntax.RootNode())
 		v.lastScopeName = v.lastScopeBuf.String()
 	}

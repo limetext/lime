@@ -236,11 +236,18 @@ func TestScopeName(t *testing.T) {
 		v.EndEdit(e)
 		last := ""
 		str := ""
+		lasti := 0
 		for i := 0; i < v.buffer.Size(); i++ {
 			if name := v.ScopeName(i); name != last {
+				if last != "" {
+					str += fmt.Sprintf("%d-%d: %s\n", lasti, i, last)
+					lasti = i
+				}
 				last = name
-				str += fmt.Sprintf("%d: %s\n", i, name)
 			}
+		}
+		if i := v.Buffer().Size(); lasti != i {
+			str += fmt.Sprintf("%d-%d: %s\n", lasti, i, last)
 		}
 		if d, err := ioutil.ReadFile(expfile); err != nil {
 			if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {

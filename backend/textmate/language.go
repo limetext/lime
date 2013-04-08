@@ -121,7 +121,7 @@ func (r Regex) String() string {
 	if r.re == nil {
 		return "nil"
 	}
-	return r.re.String()
+	return fmt.Sprintf("%s   // %d, %d", r.re.String(), r.lastIndex, r.lastFound)
 }
 
 func (r *RootPattern) String() (ret string) {
@@ -394,12 +394,22 @@ func (lp *LanguageParser) RootNode() *parser.Node {
 
 func (lp *LanguageParser) Parse(data string) bool {
 	d := &dp{data}
-	lp.root = parser.Node{P: d}
+	lp.root = parser.Node{P: d, Name: lp.Language.ScopeName}
 	iter := maxiter
 	for i := 0; i < len(data) && iter > 0; iter-- {
 		pat, ret := lp.Language.RootPattern.Cache(data, i)
+		nl := strings.IndexAny(data[i:], "\n\r")
+
+		if nl != -1 {
+			nl += i
+		}
 		if ret == nil {
 			break
+		} else if nl > 0 && nl <= ret[0] {
+			i = nl
+			for i < len(data) && (data[i] == '\n' || data[i] == '\r') {
+				i++
+			}
 		} else {
 			n := pat.CreateNode(data, i, d, ret)
 			lp.root.Append(n)
