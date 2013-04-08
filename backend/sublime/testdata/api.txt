@@ -80,8 +80,11 @@ Region                        : <type 'type'>
 	clip
 	contains
 	cover
+	covers
 	empty
 	end
+	intersection
+	intersects
 	size
 RegionSet                     : <type 'type'>
 	__class__

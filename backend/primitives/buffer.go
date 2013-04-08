@@ -30,7 +30,7 @@ func (b *Buffer) Size() int {
 
 func (buf *Buffer) Substr(r Region) string {
 	l := len(buf.data)
-	a, b := clamp(0, l, r.Begin()), clamp(0, l, r.End())
+	a, b := Clamp(0, l, r.Begin()), Clamp(0, l, r.End())
 	return string(buf.data[a:b])
 }
 

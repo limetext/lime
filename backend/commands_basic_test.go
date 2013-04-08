@@ -326,5 +326,48 @@ func TestInsert(t *testing.T) {
 		}
 		ch.RunTextCommand(v, "undo", nil)
 	}
+}
 
+type scfe struct {
+	DummyFrontend
+	show Region
+}
+
+func (f *scfe) VisibleRegion(v *View) Region {
+	s := v.Buffer().Line(v.Buffer().TextPoint(3*3, 1))
+	e := v.Buffer().Line(v.Buffer().TextPoint(6*3, 1))
+	return Region{s.Begin(), e.End()}
+}
+
+func (f *scfe) Show(v *View, r Region) {
+	f.show = r
+}
+
+func TestScrollLines(t *testing.T) {
+	var fe scfe
+	ed := GetEditor()
+	ed.SetFrontend(&fe)
+	ch := ed.CommandHandler()
+	w := ed.NewWindow()
+	v := w.NewView()
+	e := v.BeginEdit()
+	for i := 0; i < 10; i++ {
+		v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	}
+	v.EndEdit(e)
+	ch.RunTextCommand(v, "scroll_lines", Args{"amount": 0})
+
+	if c := v.Buffer().Line(v.Buffer().TextPoint(3*3, 1)); fe.show.Begin() != c.Begin() {
+		t.Errorf("Expected %v, but got %v", c, fe.show)
+	}
+
+	ch.RunTextCommand(v, "scroll_lines", Args{"amount": 1})
+	if c := v.Buffer().Line(v.Buffer().TextPoint(3*3-1, 1)); fe.show.Begin() != c.Begin() {
+		t.Errorf("Expected %v, but got %v", c, fe.show)
+	}
+	t.Log(fe.VisibleRegion(v), v.Buffer().Line(v.Buffer().TextPoint(6*3+1, 1)))
+	ch.RunTextCommand(v, "scroll_lines", Args{"amount": -1})
+	if c := v.Buffer().Line(v.Buffer().TextPoint(6*3+1, 1)); fe.show.Begin() != c.Begin() {
+		t.Errorf("Expected %v, but got %v", c, fe.show)
+	}
 }

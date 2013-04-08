@@ -7,7 +7,7 @@ import (
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	"lime/backend/loaders"
-	"lime/backend/primitives"
+	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"strings"
@@ -64,8 +64,13 @@ var (
 
 const console_height = 20
 
+type layout struct {
+	x, y          int
+	width, height int
+	visible       Region
+}
 type tbfe struct {
-	visibleregion  map[*backend.View]primitives.Region
+	layout         map[*backend.View]layout
 	status_message string
 	active_window  *backend.Window
 }
@@ -84,20 +89,21 @@ func (t *tbfe) ActiveView(w *backend.Window) *backend.View {
 	return nil
 }
 
-func (t *tbfe) renderView(sx, sy, w, h int, v *backend.View) {
+func (t *tbfe) renderView(v *backend.View) {
+	lay := t.layout[v]
+	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
 	sel := v.Sel()
 	substr := v.Buffer().Data()
 	vr := t.VisibleRegion(v)
 	lines := strings.Split(substr, "\n")
 	s, _ := v.Buffer().RowCol(vr.Begin())
 	e, _ := v.Buffer().RowCol(vr.End())
-	if e > 1 {
-		e = e - 1
-		if e > h {
-			s = e - h
-		}
-	}
+	s--
+	e--
 	off := len(strings.Join(lines[:s], "\n"))
+	if s == 0 {
+		off -= 1
+	}
 	lines = lines[s:e]
 	runes := []rune(strings.Join(lines, "\n"))
 	x, y := sx, sy
@@ -134,108 +140,134 @@ func (t *tbfe) renderView(sx, sy, w, h int, v *backend.View) {
 	for i := range runes {
 		sub2 += string(runes[i])
 
-		if x < ex {
-			o := off + len(sub2)
-			r := primitives.Region{o, o}
-			fg, bg := lfg, lbg
-			scope := v.ScopeName(o)
-			if scope != lastScope {
-				fg, bg = defaultFg, defaultBg
-				lastScope = scope
-				na := scope
-				for len(na) > 0 {
-					sn := na
-					i := strings.LastIndex(sn, " ")
-					if i != -1 {
-						sn = sn[i+1:]
-					}
-					if c, ok := schemelut[sn]; ok {
-						fg, bg = c[0], c[1]
-						break
-					}
-					if i2 := strings.LastIndex(na, "."); i2 == -1 {
-						break
-					} else if i > i2 {
-						na = na[:i]
+		o := off + len(sub2)
+		r := Region{o, o}
+		fg, bg := lfg, lbg
+		scope := v.ScopeName(o)
+		if scope != lastScope {
+			fg, bg = defaultFg, defaultBg
+			lastScope = scope
+			na := scope
+			for len(na) > 0 {
+				sn := na
+				i := strings.LastIndex(sn, " ")
+				if i != -1 {
+					sn = sn[i+1:]
+				}
+				if c, ok := schemelut[sn]; ok {
+					fg, bg = c[0], c[1]
+					break
+				}
+				if i2 := strings.LastIndex(na, "."); i2 == -1 {
+					break
+				} else if i > i2 {
+					na = na[:i]
+				} else {
+					na = strings.TrimSpace(na[:i2])
+				}
+			}
+			lfg, lbg = fg, bg
+		} else {
+			fg, bg = lfg, lbg
+		}
+		for _, r2 := range sel.Regions() {
+			if r2.B == r.B {
+				if !caret_blink || blink {
+					if r2.Contains(o) {
+						fg |= termbox.AttrReverse
 					} else {
-						na = strings.TrimSpace(na[:i2])
+						fg |= caret_style
 					}
 				}
-				lfg, lbg = fg, bg
-			} else {
-				fg, bg = lfg, lbg
+				break
+			} else if r2.Contains(o) {
+				fg |= termbox.AttrReverse
+				break
 			}
-			for _, r2 := range sel.Regions() {
-				if r2.B == r.B {
-					if !caret_blink || blink {
-						if r2.Contains(o) {
-							fg |= termbox.AttrReverse
-						} else {
-							fg |= caret_style
-						}
-					}
-					break
-				} else if r2.Contains(o) {
-					fg |= termbox.AttrReverse
-					break
-				}
-			}
-			if runes[i] == '\t' {
-				add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
-
-				for x < add {
+		}
+		if runes[i] == '\t' {
+			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
+			for x < add {
+				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
-					x++
 				}
-				continue
-			} else if runes[i] == '\n' {
-				termbox.SetCell(x, y, ' ', fg, bg)
-				x = sx
-				y++
-				if y > ey {
-					break
-				}
-				continue
+				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
+				x++
 			}
+			continue
+		} else if runes[i] == '\n' {
+			if x < ex {
+				termbox.SetCell(x, y, ' ', fg, bg)
+			}
+			x = sx
+			y++
+			if y > ey {
+				break
+			}
+			continue
+		}
+		if x < ex {
 			termbox.SetCell(x, y, runes[i], fg, bg)
 		}
 		x++
 	}
 }
 
-func (t *tbfe) clip(v *backend.View, r primitives.Region) primitives.Region {
-	s, _ := v.Buffer().RowCol(r.Begin())
-	e, _ := v.Buffer().RowCol(r.End())
-
-	_, h := termbox.Size()
-	h -= console_height
+func (t *tbfe) clip(v *backend.View, s, e int) (r Region) {
+	h := t.layout[v].height
 	if e-s > h {
 		e = s + h
+	} else if e-s < h {
+		s = e - h
 	}
 	if e2, _ := v.Buffer().RowCol(v.Buffer().TextPoint(e, 1)); e2 < e {
 		e = e2
 	}
-	if e-s < h {
-		s = e - h
-	}
 	if s < 1 {
-		s = 1
+		s += h
 	}
+	e = s + h
+
 	r.A = v.Buffer().Line(v.Buffer().TextPoint(s, 1)).A
 	r.B = v.Buffer().Line(v.Buffer().TextPoint(e, 1)).B
+
 	return r
 }
 
-func (t *tbfe) Show(v *backend.View, r primitives.Region) {
-	t.visibleregion[v] = t.clip(v, primitives.Region{r.Begin(), v.Buffer().Size()})
+func (t *tbfe) Show(v *backend.View, r Region) {
+	if !t.layout[v].visible.Covers(r) {
+		l := t.layout[v]
+		lv := l.visible
+		s1, _ := v.Buffer().RowCol(lv.Begin())
+		e1, _ := v.Buffer().RowCol(lv.End())
+		s2, _ := v.Buffer().RowCol(r.Begin())
+		e2, _ := v.Buffer().RowCol(r.End())
+
+		r1 := Region{s1, e1}
+		r2 := Region{s2, e2}
+
+		r3 := r1.Cover(r2)
+		diff := 0
+		if d1, d2 := Abs(r1.Begin()-r3.Begin()), Abs(r1.End()-r3.End()); d1 > d2 {
+			diff = r3.Begin() - r1.Begin()
+		} else {
+			diff = r3.End() - r1.End()
+		}
+		r3.A = r1.Begin() + diff
+		r3.B = r1.End() + diff
+
+		r3 = t.clip(v, r3.A, r3.B)
+		l.visible = r3
+		t.layout[v] = l
+	}
 }
 
-func (t *tbfe) VisibleRegion(v *backend.View) primitives.Region {
-	if r, ok := t.visibleregion[v]; ok {
-		return r
+func (t *tbfe) VisibleRegion(v *backend.View) Region {
+	if r, ok := t.layout[v]; ok {
+		return r.visible
 	} else {
-		t.Show(v, primitives.Region{0, 0})
-		return t.visibleregion[v]
+		t.Show(v, Region{0, 0})
+		return t.layout[v].visible
 	}
 }
 
@@ -257,8 +289,8 @@ func (t *tbfe) OkCancelDialog(msg, ok string) {
 	log4go.Info(msg, ok)
 }
 
-func (t *tbfe) scroll(b *primitives.Buffer, pos, delta int) {
-	t.Show(backend.GetEditor().Console(), primitives.Region{b.Size(), b.Size()})
+func (t *tbfe) scroll(b *Buffer, pos, delta int) {
+	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
 func (t *tbfe) loop() {
@@ -371,10 +403,10 @@ func (t *tbfe) loop() {
 	sel := v.Sel()
 	sel.Clear()
 	//	end := v.Buffer().Size() - 2
-	sel.Add(primitives.Region{0, 0})
-	// sel.Add(primitives.Region{end - 22, end - 22})
-	// sel.Add(primitives.Region{end - 16, end - 20})
-	// sel.Add(primitives.Region{end - 13, end - 10})
+	sel.Add(Region{0, 0})
+	// sel.Add(Region{end - 22, end - 22})
+	// sel.Add(Region{end - 16, end - 20})
+	// sel.Add(Region{end - 13, end - 10})
 
 	evchan := make(chan termbox.Event)
 
@@ -384,19 +416,31 @@ func (t *tbfe) loop() {
 		}
 	}()
 
-	sublime.Init()
-	for {
-		blink = !blink
-		termbox.Clear(defaultFg, defaultBg)
+	{
 		w, h := termbox.Size()
+		t.layout[v] = layout{0, 0, w, h - console_height, Region{}}
+		t.Show(v, Region{1, 1})
+		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}}
+	}
 
-		t.renderView(0, 0, w, h-console_height, v)
-		t.renderView(0, h-(console_height), w, (console_height - 1), c)
-		runes := []rune(t.status_message)
-		for i := 0; i < w && i < len(runes); i++ {
-			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
+	sublime.Init()
+	lastrender := time.Now()
+	render := false
+	for {
+		if timed := time.Since(lastrender) > (time.Millisecond * 15); timed || render {
+			lastrender = time.Now()
+			termbox.Clear(defaultFg, defaultBg)
+			w, h := termbox.Size()
+
+			for v := range t.layout {
+				t.renderView(v)
+			}
+			runes := []rune(t.status_message)
+			for i := 0; i < w && i < len(runes); i++ {
+				termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
+			}
+			termbox.Flush()
 		}
-		termbox.Flush()
 
 		blink_phase := time.Second
 		if p, ok := ed.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
@@ -421,9 +465,11 @@ func (t *tbfe) loop() {
 					return
 				}
 				ed.HandleInput(kp)
-				blink = false
+				blink = true
+				render = false
 			}
 		case <-time.After(blink_phase / 2):
+			blink = !blink
 			// Divided by two since we're only doing a simple toggle blink
 			// TODO(q): Shouldn't redraw if blink is disabled...
 		}
@@ -436,6 +482,6 @@ func main() {
 	}
 
 	var t tbfe
-	t.visibleregion = make(map[*backend.View]primitives.Region)
+	t.layout = make(map[*backend.View]layout)
 	t.loop()
 }
