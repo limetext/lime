@@ -143,7 +143,7 @@ func (v *View) Insert(edit *Edit, point int, value string) int {
 					ai := idx
 					if i == 0 {
 						_, col := v.buffer.RowCol(point)
-						ai = col
+						ai = col + 1
 					}
 					add := 1 + ((ai + (tab_size - 1)) &^ (tab_size - 1))
 					spaces := ""

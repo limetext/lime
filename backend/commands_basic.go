@@ -112,7 +112,6 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 			d := v.buffer.Data()
 			if trim_space {
 				_, col := v.Buffer().RowCol(r.A)
-				col -= 1
 				prev_col := r.A - (col - (col-tab_size+(tab_size-1))&^(tab_size-1))
 				if prev_col < 0 {
 					prev_col = 0
@@ -322,7 +321,7 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
 		r, _ = v.Buffer().RowCol(vr.End() - 1)
 		r -= amount
 	}
-	r = v.Buffer().TextPoint(r, 1)
+	r = v.Buffer().TextPoint(r, 0)
 	fe.Show(v, primitives.Region{r, r})
 	return nil
 }

@@ -87,27 +87,24 @@ func (b *Buffer) RowCol(point int) (row, col int) {
 	}
 	lines := strings.Split(b.data[:point], "\n")
 	if l := len(lines); l == 0 {
-		return 1, 1
+		return 0, 0
 	} else {
-		return l, len(lines[l-1]) + 1
+		return l - 1, len(lines[l-1])
 	}
 }
 
 func (b *Buffer) TextPoint(row, col int) int {
 	lines := strings.Split(b.data, "\n")
-	if row < 1 || len(lines) == 0 {
+	if row < 0 || len(lines) == 0 {
 		return 0
-	}
-	if col == 0 {
-		col = 1
-	}
-	if row == 1 {
-		col -= 1
 	}
 	if row > len(lines) {
 		return b.Size()
 	}
-	offset := len(strings.Join(lines[:row-1], "\n")) + col
+	if row == 0 {
+		col--
+	}
+	offset := len(strings.Join(lines[:row], "\n")) + col + 1
 	return offset
 }
 
@@ -153,10 +150,10 @@ func (b *Buffer) Word(offset int) Region {
 	begin := 0
 	end := len(line)
 
-	if col > len(line) {
-		col = len(line)
+	if col >= len(line) {
+		col = len(line) - 1
 	}
-	if m := vwre1.FindStringIndex(line[:col]); m != nil {
+	if m := vwre1.FindStringIndex(line[:col+1]); m != nil {
 		begin = m[0]
 	} else {
 		return Region{offset, offset}

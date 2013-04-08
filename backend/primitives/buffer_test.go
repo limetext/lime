@@ -29,34 +29,34 @@ func TestRowCol(t *testing.T) {
 				b.Insert(0, string(d))
 			}
 
-			for _, test := range tests {
+			for i, test := range tests {
 				var a Test
 				a.Line, a.Column = b.RowCol(test.Offset)
 				a.LineAtOffset = b.Substr(b.Line(test.Offset))
 				a.WordAtOffset = b.Substr(b.Word(test.Offset))
 				a.Offset = b.TextPoint(test.Line, test.Column)
 				if a.Line != test.Line {
-					t.Errorf("Line mismatch: %d != %d", a.Line, test.Line)
+					t.Errorf("%d Line mismatch: %d != %d", i, a.Line, test.Line)
 				}
 				if a.Column != test.Column {
-					t.Errorf("Column mismatch: %d != %d", a.Column, test.Column)
+					t.Errorf("%d Column mismatch: %d != %d", i, a.Column, test.Column)
 				}
 				if a.Offset != test.Offset {
-					t.Errorf("Offset mismatch: %d != %d", a.Offset, test.Offset)
+					t.Errorf("%d Offset mismatch: %d != %d", i, a.Offset, test.Offset)
 				}
 				if a.LineAtOffset != test.LineAtOffset {
-					t.Errorf("LineAtOffset mismatch: '%s' != '%s'", a.LineAtOffset, test.LineAtOffset)
+					t.Errorf("%d LineAtOffset mismatch: '%s' != '%s'", i, a.LineAtOffset, test.LineAtOffset)
 				}
 				if a.WordAtOffset != test.WordAtOffset {
-					t.Errorf("WordAtOffset mismatch: '%s' != '%s'", a.WordAtOffset, test.WordAtOffset)
+					t.Errorf("%d WordAtOffset mismatch: '%s' != '%s'", i, a.WordAtOffset, test.WordAtOffset)
 				}
 			}
 		}
 	}
-	if r, c := b.RowCol(-1); r != 1 || c != 1 {
+	if r, c := b.RowCol(-1); r != 0 || c != 0 {
 		t.Errorf("These should be 1 %d, %d", r, c)
 	}
-	if r, c := b.RowCol(b.Size() + 10); c != 1 {
+	if r, c := b.RowCol(b.Size() + 10); c != 0 {
 		t.Errorf("Column should be 1 %d, %d", r, c)
 	}
 }

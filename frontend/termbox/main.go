@@ -98,8 +98,6 @@ func (t *tbfe) renderView(v *backend.View) {
 	lines := strings.Split(substr, "\n")
 	s, _ := v.Buffer().RowCol(vr.Begin())
 	e, _ := v.Buffer().RowCol(vr.End())
-	s--
-	e--
 	off := len(strings.Join(lines[:s], "\n"))
 	if s == 0 {
 		off -= 1
@@ -220,16 +218,16 @@ func (t *tbfe) clip(v *backend.View, s, e int) (r Region) {
 	} else if e-s < h {
 		s = e - h
 	}
-	if e2, _ := v.Buffer().RowCol(v.Buffer().TextPoint(e, 1)); e2 < e {
+	if e2, _ := v.Buffer().RowCol(v.Buffer().TextPoint(e, 0)); e2 < e {
 		e = e2
 	}
-	if s < 1 {
+	if s < 0 {
 		s += h
 	}
 	e = s + h
 
-	r.A = v.Buffer().Line(v.Buffer().TextPoint(s, 1)).A
-	r.B = v.Buffer().Line(v.Buffer().TextPoint(e, 1)).B
+	r.A = v.Buffer().Line(v.Buffer().TextPoint(s, 0)).A
+	r.B = v.Buffer().Line(v.Buffer().TextPoint(e, 0)).B
 
 	return r
 }
@@ -419,7 +417,7 @@ func (t *tbfe) loop() {
 	{
 		w, h := termbox.Size()
 		t.layout[v] = layout{0, 0, w, h - console_height, Region{}}
-		t.Show(v, Region{1, 1})
+		t.Show(v, Region{0, 0})
 		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}}
 	}
 
