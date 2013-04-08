@@ -50,7 +50,7 @@ func (r Region) Clip(other Region) Region {
 }
 
 func (r Region) Intersects(other Region) bool {
-	return r == other || r.Contains(other.Begin()) || r.Contains(other.End()) || other.Contains(r.Begin()) || other.Contains(r.End())
+	return r == other || r.Contains(other.Begin()) || other.Contains(r.Begin())
 }
 
 func (r Region) Intersection(other Region) Region {

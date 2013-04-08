@@ -134,6 +134,9 @@ def reload_plugin(module):
 
 
 class MyLogger:
+    def flush(self):
+        pass
+
     def write(self, data):
         v = sublime.console()
         try:

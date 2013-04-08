@@ -73,10 +73,13 @@ func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 func (c *ViewEventGlue) onEvent(v *backend.View) {
 	if pv, err := toPython(v); err != nil {
 		log4go.Error(err)
-	} else if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
-		log4go.Error(err)
 	} else {
-		ret.Decref()
+		log4go.Debug("onEvent: %v, %v, %v", c, c.inner, pv)
+		if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
+			log4go.Error(err)
+		} else if ret != nil {
+			ret.Decref()
+		}
 	}
 }
 
@@ -109,14 +112,17 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 		log4go.Error(err)
 	} else if ret, err := c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
 		log4go.Error(err)
-	} else if r2, ok := ret.(*py.Bool); ok {
-		if r2.Bool() {
-			return backend.True
+	} else if ret != nil {
+		defer ret.Decref()
+		if r2, ok := ret.(*py.Bool); ok {
+			if r2.Bool() {
+				return backend.True
+			} else {
+				return backend.False
+			}
 		} else {
-			return backend.False
+			log4go.Debug("other: %v", ret)
 		}
-	} else {
-		log4go.Debug("other: %v", ret)
 	}
 	return backend.Unknown
 }

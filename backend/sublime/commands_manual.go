@@ -73,8 +73,11 @@ func (c *CommandGlue) callBool(name string, args backend.Args) bool {
 		log4go.Error(err)
 	} else if r, err := c.CallMethodObjArgs(name, pyargs); err != nil {
 		log4go.Error(err)
-	} else if r, ok := r.(*py.Bool); ok {
-		return r.Bool()
+	} else {
+		defer r.Decref()
+		if r, ok := r.(*py.Bool); ok {
+			return r.Bool()
+		}
 	}
 	return true
 }
@@ -121,6 +124,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return pyError(err)
 	} else {
+		defer obj.Decref()
 		if obj.Base().HasAttrString("run_") {
 			// The plugin is probably trying to bypass the undostack...
 			old := v.IsScratch()
@@ -128,11 +132,15 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 			log4go.Finest("Discarded: %s", e)
 			v.EndEdit(e)
 			v.SetScratch(old)
-			if _, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
+			if ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
 				return pyError(err)
+			} else {
+				ret.Decref()
 			}
-		} else if _, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
+		} else if ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
 			return pyError(err)
+		} else {
+			ret.Decref()
 		}
 	}
 	return nil
@@ -148,10 +156,11 @@ func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
 		return pyError(err)
 	} else {
-		if obj != nil {
-			if _, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
-				return pyError(err)
-			}
+		defer obj.Decref()
+		if ret, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
+			return pyError(err)
+		} else {
+			ret.Decref()
 		}
 	}
 	return nil
@@ -162,8 +171,13 @@ func (c *ApplicationCommandGlue) Run(args backend.Args) error {
 		return pyError(err)
 	} else if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
 		return pyError(err)
-	} else if _, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
-		return pyError(err)
+	} else {
+		defer obj.Decref()
+		if ret, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
+			return pyError(err)
+		} else {
+			ret.Decref()
+		}
 	}
 	return nil
 }

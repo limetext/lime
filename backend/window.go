@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/log4go"
 	"io/ioutil"
 	"lime/backend/primitives"
+	"runtime/debug"
 )
 
 type Window struct {
@@ -46,7 +47,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 func (w *Window) runCommand(c WindowCommand, name string, args Args) error {
 	defer func() {
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running window command %s %v: %v", name, args, r)
+			log4go.Error("Paniced while running window command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
 		}
 	}()
 	return c.Run(w, args)

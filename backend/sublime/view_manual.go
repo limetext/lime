@@ -8,6 +8,10 @@ import (
 	"lime/backend/primitives"
 )
 
+var _ = log4go.Error
+
+type Refcounted py.Object
+
 func (v *View) Py_has_non_empty_selection_region() (py.Object, error) {
 	for _, r := range v.data.Sel().Regions() {
 		if !r.Empty() {
@@ -144,7 +148,12 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 
 	var pyret1 py.Object
 
-	pyret1, err = toPython(ret1)
+	// Sublime compatibility
+	if len(ret1) == 0 {
+		pyret1, err = toPython(nil)
+	} else {
+		pyret1, err = toPython(ret1)
+	}
 	if err != nil {
 		pyret0.Decref()
 		// TODO: do the py objs need to be freed?
@@ -210,18 +219,4 @@ func (o *View) Py_visible_region() (py.Object, error) {
 		return nil, err
 	}
 	return pyret0, err
-}
-
-func (o *View) PySetAttr(attr string, obj py.Object) error {
-	if sys, err := py.Import("sys"); err == nil {
-		defer sys.Decref()
-		if a, e := o.GetAttrString(attr); e == nil {
-			defer a.Decref()
-			if o2, err := sys.Base().CallMethodObjArgs("getrefcount", a); err == nil {
-				log4go.Debug("%s, %v, %v, %v", attr, obj, o2, a)
-				defer o2.Decref()
-			}
-		}
-	}
-	return o.SetAttrString(attr, obj)
 }

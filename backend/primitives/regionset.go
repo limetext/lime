@@ -24,7 +24,7 @@ func (r *RegionSet) Adjust(position, delta int) {
 func (r *RegionSet) flush() {
 	sort.Sort(r)
 	for i := 1; i < len(r.regions); i++ {
-		if r.regions[i-1] == r.regions[i] || r.regions[i-1].Contains(r.regions[i].Begin()) {
+		if r.regions[i-1] == r.regions[i] || r.regions[i-1].Intersects(r.regions[i]) {
 			r.regions[i-1] = r.regions[i-1].Cover(r.regions[i])
 			copy(r.regions[i:], r.regions[i+1:])
 			r.regions = r.regions[:len(r.regions)-1]

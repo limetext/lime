@@ -106,7 +106,7 @@ func TestSublime(t *testing.T) {
 	}
 	ed.LogCommands(true)
 	tests := []string{
-		//"state",
+		"state",
 		"registers",
 		"settings",
 		//"marks",
