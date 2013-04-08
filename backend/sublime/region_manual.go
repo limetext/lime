@@ -7,13 +7,13 @@ import (
 )
 
 func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
-	if op != py.EQ {
-		return nil, fmt.Errorf("Can only do EQ compares")
+	if op != py.EQ && op != py.NE {
+		return nil, fmt.Errorf("Can only do EQ and NE compares")
 	}
-
+	var o2 primitives.Region
 	switch t := other.(type) {
 	case *Region:
-		return toPython(o.data == t.data)
+		o2 = t.data
 	case *py.Tuple:
 		if s := t.Size(); s != 2 {
 			return nil, fmt.Errorf("Invalid tuple size: %d != 2", s)
@@ -27,10 +27,14 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 		} else if b2, ok := b.(*py.Int); !ok {
 			return nil, fmt.Errorf("Can only compare with int tuples and other regions")
 		} else {
-			r2 := primitives.Region{a2.Int(), b2.Int()}
-			return toPython(o.data == r2)
+			o2 = primitives.Region{a2.Int(), b2.Int()}
 		}
 	default:
 		return nil, fmt.Errorf("Can only compare with int tuples and other regions")
+	}
+	if op == py.EQ {
+		return toPython(o.data == o2)
+	} else {
+		return toPython(o.data != o2)
 	}
 }
