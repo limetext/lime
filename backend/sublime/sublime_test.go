@@ -11,7 +11,7 @@ import (
 	"lime/backend/primitives"
 	"os"
 	"path/filepath"
-	//"strings"
+	"strings"
 	"testing"
 )
 
@@ -106,21 +106,23 @@ func TestSublime(t *testing.T) {
 	}
 	ed.LogCommands(true)
 	tests := []string{
+		//"state",
 		"registers",
-		"state",
-		//		"marks",
 		"settings",
+		//"marks",
 	}
 
 	for _, test := range tests {
 		ed.CommandHandler().RunWindowCommand(w, "vintage_ex_run_data_file_based_tests", backend.Args{"suite_name": test})
 	}
-	// for _, w := range ed.Windows() {
-	// 	for _, v := range w.Views() {
-	// 		if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
-	// 			continue
-	// 		}
-	// 		t.Log(v.Buffer())
-	// 	}
-	// }
+	for _, w := range ed.Windows() {
+		for _, v := range w.Views() {
+			if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
+				continue
+			}
+			if strings.Index(v.Buffer().Data(), "FAILED") != -1 {
+				t.Error(v.Buffer())
+			}
+		}
+	}
 }

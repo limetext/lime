@@ -100,6 +100,5 @@ func (o *Window) Py_run_command(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 	backend.GetEditor().CommandHandler().RunWindowCommand(o.data, arg1, arg2)
-	py.None.Incref()
-	return py.None, nil
+	return toPython(nil)
 }

@@ -27,74 +27,8 @@ func pyname(in string) string {
 	return re.ReplaceAllStringFunc(in, func(a string) string { return "_" + strings.ToLower(a) })
 }
 
-func pytype(t reflect.Type) (string, error) {
-	switch t.Kind() {
-	case reflect.Slice:
-		return "", fmt.Errorf("Can't handle type %s", t.Kind())
-	case reflect.Ptr:
-		t = t.Elem()
-		if t.Kind() != reflect.Struct {
-			return "", fmt.Errorf("Only supports struct pointers: ", t.Kind())
-		}
-		fallthrough
-	case reflect.Struct:
-		return "*" + t.Name(), nil
-	case reflect.Int:
-		return "*py.Int", nil
-	case reflect.String:
-		return "*py.String", nil
-	case reflect.Bool:
-		return "*py.Bool", nil
-	case reflect.Interface:
-		if t.Name() == "Command" {
-			return "backend.Command", nil
-		}
-		fallthrough
-	default:
-		return "", fmt.Errorf("Can't handle type %s", t.Kind())
-	}
-}
-
 func pyretvar(name string, ot reflect.Type) (string, error) {
-	switch ot.Kind() {
-	case reflect.Slice:
-		fallthrough
-	case reflect.Map:
-		return fmt.Sprintf("\npy%s, err = toPython(%s)", name, name), nil
-	case reflect.Ptr:
-		ot = ot.Elem()
-		if ot.Kind() != reflect.Struct {
-			return "", fmt.Errorf("Only supports struct pointers: ", ot.Kind())
-		}
-		fallthrough
-	case reflect.Struct:
-		return fmt.Sprintf(`
-			py%s, err = %sClass.Alloc(1)
-			if err != nil {
-			} else if v2, ok := py%s.(*%s); !ok {
-				return nil, fmt.Errorf("Unable to convert return value to the right type?!: %%s", py%s.Type())
-			} else {
-				v2.data = %s
-			}`, name, pyname(ot.Name()), name, ot.Name(), name, name), nil
-	case reflect.Bool:
-		return fmt.Sprintf(`
-			if %s {
-				py%s = py.True
-			} else {
-				py%s = py.False
-			}`, name, name, name), nil
-	case reflect.Int:
-		n := name
-		if ot.Name() != "Int" {
-			n = fmt.Sprintf("int(%s)", name)
-		}
-
-		return fmt.Sprintf("\n\tpy%s = py.NewInt(%s)", name, n), nil
-	case reflect.String:
-		return fmt.Sprintf("\n\tpy%s, err = py.NewString(%s)", name, name), nil
-	default:
-		return "", fmt.Errorf("Can't handle return type %s", ot.Kind())
-	}
+	return fmt.Sprintf("\npy%s, err = toPython(%s)", name, name), nil
 }
 
 func pyret(ot reflect.Type) (string, error) {
@@ -110,54 +44,32 @@ func pyret(ot reflect.Type) (string, error) {
 	}
 }
 
-func pyacc(ot reflect.Type) string {
-	switch ot.Kind() {
-	case reflect.Ptr, reflect.Struct:
-		return ".data"
-	case reflect.Int:
-		return ".Int()"
-	case reflect.String:
-		return ".String()"
-	case reflect.Bool:
-		return ".Bool()"
-	case reflect.Interface:
-		if ot.Name() == "Command" {
-			return ""
-		}
-		fallthrough
+func typename(t reflect.Type) string {
+	switch t.Kind() {
+	case reflect.Slice:
+		return "[]" + typename(t.Elem())
+	case reflect.Ptr:
+		return "*" + typename(t.Elem())
 	default:
-		panic(ot.Kind())
+		return t.String()
 	}
 }
-
 func pytogoconv(in, set, name string, returnsValue bool, t reflect.Type) (string, error) {
-	if t.Kind() == reflect.Map && t.Key().Kind() == reflect.String && t.Elem().Kind() == reflect.Interface {
-		return fmt.Sprintf(`
-		if v2, ok := %s.(*py.Dict); !ok {
-			return nil, fmt.Errorf("Expected type *py.Dict for %s, not %%s", %s.Type())
-		} else {
-			if v, err := fromPython(v2); err != nil {
-				return nil, err
-			} else {
-				%s = v.(backend.Args)
-			}
-		}
-`, in, name, in, set), nil
-	}
-	ty, err := pytype(t)
-	if err != nil {
-		return "", err
-	}
 	r := ""
 	if returnsValue {
 		r = "nil, "
 	}
+	ty := typename(t)
 	return fmt.Sprintf(`
-		if v2, ok := %s.(%s); !ok {
-			return %sfmt.Errorf("Expected type %s for %s, not %%s", %s.Type())
+		if v3, err2 := fromPython(%s);  err2 != nil {
+			return %serr2
 		} else {
-			%s = v2%s
-		}`, in, ty, r, ty, name, in, set, pyacc(t)), nil
+	 		if v2, ok := v3.(%s); !ok {
+	 			return %sfmt.Errorf("Expected type %s for %s, not %%s", %s.Type())
+	 		} else {
+	 			%s = v2
+	 		}
+	 	}`, in, r, ty, r, ty, name, in, set), nil
 }
 
 func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) (ret string, err error) {
@@ -258,7 +170,12 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 	if m.Name == "String" {
 		ret += "\n\treturn " + call
 	} else if out == 1 && m.Type.Out(0).Name() == "error" {
-		ret += "\npy.None.Incref()\nreturn py.None, " + call
+		ret += fmt.Sprintf(`
+			if err := %s; err != nil {
+				return nil, err
+			} else {
+				return toPython(nil)
+			}`, call)
 	} else if out > 0 {
 		ret += "\n\t"
 		for j := 0; j < out; j++ {
@@ -296,7 +213,7 @@ func generatemethod(m reflect.Method, t2 reflect.Type, callobject, name string) 
 			ret += ")"
 		}
 	} else {
-		ret += "\n\t" + call + "\n\tpy.None.Incref()\n\treturn py.None, nil"
+		ret += "\n\t" + call + "\n\treturn toPython(nil)"
 	}
 	ret += "\n}\n"
 	return
@@ -453,12 +370,12 @@ func main() {
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
 		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust").MatchString)},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
-		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show").MatchString)},
+		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show|AddRegions").MatchString)},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile").MatchString)},
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
 		{"../backend/sublime/view_buffer.go", generatemethodsEx(
 			reflect.TypeOf(&primitives.Buffer{}),
-			regexp.MustCompile("Erase|Insert|Substr|SetFile").MatchString,
+			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := pyname(m.Name)

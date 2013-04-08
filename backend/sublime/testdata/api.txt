@@ -125,6 +125,7 @@ Settings                      : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
+	add_on_change
 	clear_on_change
 	erase
 	get

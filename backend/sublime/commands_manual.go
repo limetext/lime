@@ -99,12 +99,13 @@ func (c *CommandGlue) Description(args backend.Args) string {
 }
 
 func pyError(err error) error {
-	if m, err := py.Import("sys"); err == nil {
-		defer m.Decref()
-		if i, err := m.Dict().GetItemString("last_traceback"); err == nil {
-			log4go.Debug("%v", i)
-		}
-	}
+	// if m, err := py.Import("sys"); err == nil {
+	// 	defer m.Decref()
+	// 	if i, err := m.Dict().GetItemString("last_traceback"); err == nil {
+	// 		defer i.Decref()
+	// 		log4go.Debug("%v", i)
+	// 	}
+	// }
 	return err
 }
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {

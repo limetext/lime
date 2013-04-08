@@ -1,6 +1,7 @@
 package sublime
 
 import (
+	"code.google.com/p/log4go"
 	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
@@ -10,11 +11,10 @@ import (
 func (v *View) Py_has_non_empty_selection_region() (py.Object, error) {
 	for _, r := range v.data.Sel().Regions() {
 		if !r.Empty() {
-			return py.True, nil
+			return toPython(true)
 		}
 	}
-	py.False.Incref()
-	return py.False, nil
+	return toPython(false)
 }
 
 func (v *View) Py_show(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
@@ -36,8 +36,7 @@ func (v *View) Py_show(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 		}
 	}
 	backend.GetEditor().Frontend().Show(v.data, arg1)
-	py.None.Incref()
-	return py.None, nil
+	return toPython(nil)
 }
 
 func (o *View) Py_substr(tu *py.Tuple) (py.Object, error) {
@@ -109,8 +108,7 @@ func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 		}
 	}
 	o.data.AddRegions(arg1, arg2)
-	py.None.Incref()
-	return py.None, nil
+	return toPython(nil)
 }
 
 func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
@@ -193,8 +191,7 @@ func (o *View) Py_run_command(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 	backend.GetEditor().CommandHandler().RunTextCommand(o.data, arg1, arg2)
-	py.None.Incref()
-	return py.None, nil
+	return toPython(nil)
 }
 
 func (o *View) Py_visible_region() (py.Object, error) {
@@ -213,4 +210,18 @@ func (o *View) Py_visible_region() (py.Object, error) {
 		return nil, err
 	}
 	return pyret0, err
+}
+
+func (o *View) PySetAttr(attr string, obj py.Object) error {
+	if sys, err := py.Import("sys"); err == nil {
+		defer sys.Decref()
+		if a, e := o.GetAttrString(attr); e == nil {
+			defer a.Decref()
+			if o2, err := sys.Base().CallMethodObjArgs("getrefcount", a); err == nil {
+				log4go.Debug("%s, %v, %v, %v", attr, obj, o2, a)
+				defer o2.Decref()
+			}
+		}
+	}
+	return o.SetAttrString(attr, obj)
 }
