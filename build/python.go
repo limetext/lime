@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 	"lime/backend"
 	"lime/backend/primitives"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -359,7 +361,31 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorefunc func(name stri
 	return
 }
 
+const path = "../backend/sublime"
+
+var keep = regexp.MustCompile(`^(.+(_test|_manual)\.go|.+\.py)$`)
+
+func cleanup() {
+	f, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	if fi, err := f.Readdir(0); err != nil {
+		panic(err)
+	} else {
+		for _, f := range fi {
+			if !f.IsDir() && !keep.MatchString(f.Name()) {
+				fn := filepath.Join(path, f.Name())
+				fmt.Println("removing", fn)
+				os.Remove(fn)
+			}
+		}
+	}
+}
+
 func main() {
+	cleanup()
 	var sublime_methods = ""
 	sn := func(t reflect.Type, m reflect.Method) string {
 		sn := "sublime_" + m.Name
@@ -429,7 +455,7 @@ func main() {
 			if o, err := c.CombinedOutput(); err != nil {
 				panic(err)
 			} else {
-				fmt.Println(string(o))
+				fmt.Printf("%s", string(o))
 			}
 		}
 	}
