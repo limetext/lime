@@ -381,19 +381,27 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 }
 
 type dp struct {
-	data string
+	data []rune
 }
 
 func (d *dp) Data(a, b int) string {
-	return d.data[a:b]
+	return string(d.data[a:b])
 }
 
 func (lp *LanguageParser) RootNode() *parser.Node {
 	return &lp.root
 }
 
+func (lp *LanguageParser) patch(lut []int, node *parser.Node) {
+	node.Range.Start = lut[node.Range.Start]
+	node.Range.End = lut[node.Range.End]
+	for _, child := range node.Children {
+		lp.patch(lut, child)
+	}
+}
+
 func (lp *LanguageParser) Parse(data string) bool {
-	d := &dp{data}
+	d := &dp{[]rune(data)}
 	lp.root = parser.Node{P: d, Name: lp.Language.ScopeName}
 	iter := maxiter
 	for i := 0; i < len(data) && iter > 0; iter-- {
@@ -418,5 +426,12 @@ func (lp *LanguageParser) Parse(data string) bool {
 		}
 	}
 	lp.root.UpdateRange()
+	lut := make([]int, len(data))
+	j := 0
+	for i := range data {
+		lut[i] = j
+		j++
+	}
+	lp.patch(lut, &lp.root)
 	return true
 }

@@ -35,6 +35,11 @@ func TestTmLanguage(t *testing.T) {
 			"testdata/main.go.res",
 			"source.go",
 		},
+		{
+			"testdata/utf.go",
+			"testdata/utf.go.res",
+			"source.go",
+		},
 	}
 	for _, t3 := range tests {
 		l, err := Provider.GetLanguage(t3.syn)

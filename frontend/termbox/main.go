@@ -107,7 +107,6 @@ func (t *tbfe) renderView(v *backend.View) {
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
-	sub2 := ""
 	var (
 		lastScope string
 		lfg, lbg  = defaultFg, defaultBg
@@ -136,9 +135,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	}
 
 	for i := range runes {
-		sub2 += string(runes[i])
-
-		o := off + len(sub2)
+		o := off + i + 1
 		r := Region{o, o}
 		fg, bg := lfg, lbg
 		scope := v.ScopeName(o)
