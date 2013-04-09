@@ -34,9 +34,10 @@ Once go is installed and set up properly a rough draft is (please submit a pull 
 
 ```
 go get code.google.com/p/log4go github.com/quarster/parser github.com/quarnster/completion
-sudo apt-get install libonig-dev python-dev (on Linux)
-brew install oniguruma (on OSX)
+sudo apt-get install libonig-dev python3-dev (on Linux)
+brew install oniguruma python3 (on OSX)
 git clone --recursive git@github.com:quarnster/lime.git
+cd lime/3rdparty/libs/gopy/lib (Tweak cgo.go as appropriate with the help of python3-config --cflags and python3-config --libs)
 cd lime/build
 go run build.go
 cd ../frontend/termbox

@@ -220,3 +220,39 @@ func (o *View) Py_visible_region() (py.Object, error) {
 	}
 	return pyret0, err
 }
+
+func (o *View) Py_line(tu *py.Tuple) (py.Object, error) {
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if _, ok := v.(*Region); ok {
+			return o.lines(tu)
+		} else {
+			return o.line(tu)
+		}
+	}
+}
+
+func (o *View) Py_full_line(tu *py.Tuple) (py.Object, error) {
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if _, ok := v.(*Region); ok {
+			return o.fulllines(tu)
+		} else {
+			return o.fullline(tu)
+		}
+	}
+}
+
+func (o *View) Py_word(tu *py.Tuple) (py.Object, error) {
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if _, ok := v.(*Region); ok {
+			return o.words(tu)
+		} else {
+			return o.word(tu)
+		}
+	}
+}

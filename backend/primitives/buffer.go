@@ -141,6 +141,14 @@ func (b *Buffer) Line(offset int) Region {
 	return Region{s, e}
 }
 
+// Returns a region that starts at the first character in a line
+// and ends with the last character in a (possibly different) line
+func (b *Buffer) Lines(r Region) Region {
+	s := b.Line(r.Begin())
+	e := b.Line(r.End())
+	return Region{s.Begin(), e.End()}
+}
+
 func (b *Buffer) FullLine(offset int) Region {
 	r := b.Line(offset)
 	d := b.data
@@ -149,6 +157,14 @@ func (b *Buffer) FullLine(offset int) Region {
 		r.B++
 	}
 	return r
+}
+
+// Returns a region that starts at the first character in a line
+// and ends with the line break in a (possibly different) line
+func (b *Buffer) FullLines(r Region) Region {
+	s := b.FullLine(r.Begin())
+	e := b.FullLine(r.End())
+	return Region{s.Begin(), e.End()}
 }
 
 var (
@@ -175,4 +191,12 @@ func (b *Buffer) Word(offset int) Region {
 		end = begin + m[1]
 	}
 	return Region{lr.Begin() + begin, lr.Begin() + end}
+}
+
+// Returns a region that starts at the first character in a word
+// and ends with the last character in a (possibly different) word
+func (b *Buffer) Words(r Region) Region {
+	s := b.Word(r.Begin())
+	e := b.Word(r.End())
+	return Region{s.Begin(), e.End()}
 }

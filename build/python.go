@@ -404,11 +404,16 @@ func main() {
 			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
-				mn := pyname(m.Name)
-				if m.Name == "Id" {
-					mn = "_buffer_id"
+				mn := ""
+				switch m.Name {
+				case "Line", "Lines", "FullLine", "FullLines", "Words", "Word":
+					mn = strings.ToLower(m.Name)
+				case "Id":
+					mn = "Py_buffer_id"
+				default:
+					mn = "Py" + pyname(m.Name)
 				}
-				return "(o *View) Py" + mn
+				return "(o *View) " + mn
 			})},
 		{"../backend/sublime/commands.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().CommandHandler()),
 			regexp.MustCompile("RunWindowCommand|RunTextCommand|RunApplicationCommand").MatchString,
