@@ -1,11 +1,18 @@
-ApplicationCommandGlue        : <type 'type'>
+ApplicationCommandGlue        : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -14,14 +21,21 @@ ApplicationCommandGlue        : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Edit                          : <type 'type'>
+Edit                          : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -30,20 +44,27 @@ Edit                          : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-OP_EQUAL                      : <type 'int'>
-OP_NOT_EQUAL                  : <type 'int'>
-OP_NOT_REGEX_CONTAINS         : <type 'int'>
-OP_NOT_REGEX_MATCH            : <type 'int'>
-OP_REGEX_CONTAINS             : <type 'int'>
-OP_REGEX_MATCH                : <type 'int'>
-OnQueryContextGlue            : <type 'type'>
+OP_EQUAL                      : <class 'int'>
+OP_NOT_EQUAL                  : <class 'int'>
+OP_NOT_REGEX_CONTAINS         : <class 'int'>
+OP_NOT_REGEX_MATCH            : <class 'int'>
+OP_REGEX_CONTAINS             : <class 'int'>
+OP_REGEX_MATCH                : <class 'int'>
+OnQueryContextGlue            : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -52,9 +73,10 @@ OnQueryContextGlue            : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Region                        : <type 'type'>
+Region                        : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
 	__eq__
 	__format__
@@ -86,16 +108,23 @@ Region                        : <type 'type'>
 	intersection
 	intersects
 	size
-RegionSet                     : <type 'type'>
+RegionSet                     : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
 	__getitem__
+	__gt__
 	__hash__
 	__init__
+	__le__
 	__len__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -109,14 +138,21 @@ RegionSet                     : <type 'type'>
 	contains
 	regions
 	substract
-Settings                      : <type 'type'>
+Settings                      : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -131,14 +167,21 @@ Settings                      : <type 'type'>
 	get
 	id
 	set
-TextCommandGlue               : <type 'type'>
+TextCommandGlue               : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -147,14 +190,21 @@ TextCommandGlue               : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-View                          : <type 'type'>
+View                          : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -168,7 +218,6 @@ View                          : <type 'type'>
 	buffer_id
 	change_count
 	command_history
-	data
 	end_edit
 	erase
 	erase_regions
@@ -198,14 +247,21 @@ View                          : <type 'type'>
 	visible_region
 	window
 	word
-ViewEventGlue                 : <type 'type'>
+ViewEventGlue                 : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -214,14 +270,21 @@ ViewEventGlue                 : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Window                        : <type 'type'>
+Window                        : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -237,14 +300,21 @@ Window                        : <type 'type'>
 	run_command
 	settings
 	views
-WindowCommandGlue             : <type 'type'>
+WindowCommandGlue             : <class 'type'>
 	__class__
 	__delattr__
+	__dir__
 	__doc__
+	__eq__
 	__format__
+	__ge__
 	__getattribute__
+	__gt__
 	__hash__
 	__init__
+	__le__
+	__lt__
+	__ne__
 	__new__
 	__reduce__
 	__reduce_ex__
@@ -253,27 +323,27 @@ WindowCommandGlue             : <type 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-__doc__                       : <type 'NoneType'>
-__name__                      : <type 'str'>
-__package__                   : <type 'NoneType'>
-active_window                 : <type 'builtin_function_or_method'>
-arch                          : <type 'builtin_function_or_method'>
-console                       : <type 'builtin_function_or_method'>
-error_message                 : <type 'builtin_function_or_method'>
-get_clipboard                 : <type 'builtin_function_or_method'>
-log_commands                  : <type 'builtin_function_or_method'>
-log_input                     : <type 'builtin_function_or_method'>
-message_dialog                : <type 'builtin_function_or_method'>
-new_window                    : <type 'builtin_function_or_method'>
-ok_cancel_dialog              : <type 'builtin_function_or_method'>
-packages_path                 : <type 'builtin_function_or_method'>
-platform                      : <type 'builtin_function_or_method'>
-register                      : <type 'builtin_function_or_method'>
-run_command                   : <type 'builtin_function_or_method'>
-set_clipboard                 : <type 'builtin_function_or_method'>
-set_timeout                   : <type 'function'>
-settings                      : <type 'builtin_function_or_method'>
-status_message                : <type 'builtin_function_or_method'>
-test_window                   : <type 'sublime.Window'>
-unregister                    : <type 'builtin_function_or_method'>
-version                       : <type 'builtin_function_or_method'>
+__doc__                       : <class 'NoneType'>
+__name__                      : <class 'str'>
+__package__                   : <class 'NoneType'>
+active_window                 : <class 'builtin_function_or_method'>
+arch                          : <class 'builtin_function_or_method'>
+console                       : <class 'builtin_function_or_method'>
+error_message                 : <class 'builtin_function_or_method'>
+get_clipboard                 : <class 'builtin_function_or_method'>
+log_commands                  : <class 'builtin_function_or_method'>
+log_input                     : <class 'builtin_function_or_method'>
+message_dialog                : <class 'builtin_function_or_method'>
+new_window                    : <class 'builtin_function_or_method'>
+ok_cancel_dialog              : <class 'builtin_function_or_method'>
+packages_path                 : <class 'builtin_function_or_method'>
+platform                      : <class 'builtin_function_or_method'>
+register                      : <class 'builtin_function_or_method'>
+run_command                   : <class 'builtin_function_or_method'>
+set_clipboard                 : <class 'builtin_function_or_method'>
+set_timeout                   : <class 'function'>
+settings                      : <class 'builtin_function_or_method'>
+status_message                : <class 'builtin_function_or_method'>
+test_window                   : <class 'sublime.Window'>
+unregister                    : <class 'builtin_function_or_method'>
+version                       : <class 'builtin_function_or_method'>

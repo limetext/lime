@@ -11,7 +11,7 @@ type (
 		changecount int
 		name        string
 		filename    string
-		data        string
+		data        []rune
 		callbacks   []BufferChangedCallback
 	}
 	BufferChangedCallback func(buf *Buffer, position, delta int)
@@ -53,12 +53,21 @@ func (buf *Buffer) notify(position, delta int) {
 	}
 }
 
-func (buf *Buffer) Insert(point int, value string) {
-	if len(value) == 0 {
+func (buf *Buffer) Insert(point int, svalue string) {
+	if len(svalue) == 0 {
 		return
 	}
+	value := []rune(svalue)
+	req := len(buf.data) + len(value)
+	if cap(buf.data) < req {
+		n := make([]rune, len(buf.data), req)
+		copy(n, buf.data)
+		buf.data = n
+	}
+	copy(buf.data[point+len(value):cap(buf.data)], buf.data[point:len(buf.data)])
+	copy(buf.data[point:cap(buf.data)], value)
+	buf.data = buf.data[:req]
 	buf.changecount++
-	buf.data = buf.data[0:point] + value + buf.data[point:len(buf.data)]
 	buf.notify(point, len(value))
 }
 
@@ -67,11 +76,15 @@ func (buf *Buffer) Erase(point, length int) {
 		return
 	}
 	buf.changecount++
-	buf.data = buf.data[0:point] + buf.data[point+length:len(buf.data)]
+	buf.data = append(buf.data[0:point], buf.data[point+length:len(buf.data)]...)
 	buf.notify(point+length, -length)
 }
 
-func (b *Buffer) Data() string {
+func (b *Buffer) String() string {
+	return string(b.data)
+}
+
+func (b *Buffer) Runes() []rune {
 	return b.data
 }
 
@@ -85,16 +98,16 @@ func (b *Buffer) RowCol(point int) (row, col int) {
 	} else if l := b.Size(); point > l {
 		point = l
 	}
-	lines := strings.Split(b.data[:point], "\n")
+	lines := strings.Split(string(b.data[:point]), "\n")
 	if l := len(lines); l == 0 {
 		return 0, 0
 	} else {
-		return l - 1, len(lines[l-1])
+		return l - 1, len([]rune(lines[l-1]))
 	}
 }
 
 func (b *Buffer) TextPoint(row, col int) int {
-	lines := strings.Split(b.data, "\n")
+	lines := strings.Split(string(b.data), "\n")
 	if row < 0 || len(lines) == 0 {
 		return 0
 	}
@@ -104,7 +117,7 @@ func (b *Buffer) TextPoint(row, col int) int {
 	if row == 0 {
 		col--
 	}
-	offset := len(strings.Join(lines[:row], "\n")) + col + 1
+	offset := len([]rune(strings.Join(lines[:row], "\n"))) + col + 1
 	return offset
 }
 

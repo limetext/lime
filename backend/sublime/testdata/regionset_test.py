@@ -10,6 +10,6 @@ try:
 		ok = True
 	assert ok
 except:
-	print sys.exc_info()[1]
+	print(sys.exc_info()[1])
 	traceback.print_exc()
 	raise

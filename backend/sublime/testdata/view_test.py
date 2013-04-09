@@ -1,3 +1,4 @@
+# coding=utf-8
 import sys
 import traceback
 import types
@@ -8,9 +9,9 @@ try:
 	assert sublime.test_window.id() == v.window().id()
 	assert v.size() == 0
 	e = v.begin_edit()
-	v.insert(e, 0, "hello world")
+	v.insert(e, 0, "hellå world")
 	v.end_edit(e)
-	assert v.substr(sublime.Region(0, v.size())) == "hello world"
+	assert v.substr(sublime.Region(0, v.size())) == "hellå world"
 	e = v.begin_edit()
 	v.insert(e, 0, """abrakadabra
 simsalabim
@@ -31,6 +32,6 @@ hocus pocus
 	v.run_command("move", {"by":"characters", "forward": False})
 	assert v.sel()[0] == (46, 46)
 except:
-	print sys.exc_info()[1]
+	print(sys.exc_info()[1])
 	traceback.print_exc()
 	raise

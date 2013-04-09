@@ -37,16 +37,16 @@ func TestView(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error(v.buffer.String())
 	}
 	v.undoStack.Undo(true)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 
 	v.selection.Clear()
@@ -68,35 +68,35 @@ func TestView(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "hello world1234ahello world1234bhello world1234chello world1234d" {
+		t.Error(v.buffer.String())
 	}
 	v.undoStack.Undo(true)
 
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 	v.undoStack.Undo(true)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 	v.undoStack.Undo(true)
-	if v.buffer.Data() != "" {
-		t.Error("expected '', but got: ", v.buffer.Data())
+	if v.buffer.String() != "" {
+		t.Error("expected '', but got: ", v.buffer.String())
 	}
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "hello world1234ahello world1234bhello world1234chello world1234d" {
+		t.Error(v.buffer.String())
 	}
 }
 
@@ -128,16 +128,16 @@ func TestUndoRedoCommands(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error(v.buffer.String())
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 	ch.RunTextCommand(v, "redo", nil)
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 
 	v.selection.Clear()
@@ -159,35 +159,35 @@ func TestUndoRedoCommands(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "hello world1234ahello world1234bhello world1234chello world1234d" {
+		t.Error(v.buffer.String())
 	}
 	ch.RunTextCommand(v, "undo", nil)
 
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if v.buffer.Data() != "" {
-		t.Error("expected '', but got: ", v.buffer.Data())
+	if v.buffer.String() != "" {
+		t.Error("expected '', but got: ", v.buffer.String())
 	}
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "abcd" {
-		t.Error("expected 'abcd', but got: ", v.buffer.Data())
+	if v.buffer.String() != "abcd" {
+		t.Error("expected 'abcd', but got: ", v.buffer.String())
 	}
 
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "1234a1234b1234c1234d" {
-		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.Data())
+	if v.buffer.String() != "1234a1234b1234c1234d" {
+		t.Error("expected '1234a1234b1234c1234d', but got: ", v.buffer.String())
 	}
 
 	v.undoStack.Redo(true)
-	if v.buffer.Data() != "hello world1234ahello world1234bhello world1234chello world1234d" {
-		t.Error(v.buffer.Data())
+	if v.buffer.String() != "hello world1234ahello world1234bhello world1234chello world1234d" {
+		t.Error(v.buffer.String())
 	}
 }
 
@@ -212,7 +212,7 @@ func TestErase(t *testing.T) {
 	if !reflect.DeepEqual(s.Regions(), []Region{{4, 4}, {8, 8}}) {
 		t.Error(s)
 	}
-	if d := v.buffer.Data(); d != "12345678" {
+	if d := v.buffer.String(); d != "12345678" {
 		t.Error(d)
 	}
 }

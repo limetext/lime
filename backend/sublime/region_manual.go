@@ -22,12 +22,12 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 			return nil, err
 		} else if b, err := t.GetItem(1); err != nil {
 			return nil, err
-		} else if a2, ok := a.(*py.Int); !ok {
+		} else if a2, ok := a.(*py.Long); !ok {
 			return nil, fmt.Errorf("Can only compare with int tuples and other regions")
-		} else if b2, ok := b.(*py.Int); !ok {
+		} else if b2, ok := b.(*py.Long); !ok {
 			return nil, fmt.Errorf("Can only compare with int tuples and other regions")
 		} else {
-			o2 = primitives.Region{a2.Int(), b2.Int()}
+			o2 = primitives.Region{int(a2.Int64()), int(b2.Int64())}
 		}
 	default:
 		return nil, fmt.Errorf("Can only compare with int tuples and other regions")

@@ -24,15 +24,15 @@ Goodbye world
 	v.Sel().Add(Region{16, 16})
 	v.Sel().Add(Region{30, 30})
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
-	if v.Buffer().Data() != `Hello worl
+	if v.Buffer().String() != `Hello worl
 Tes
 Goodbye worl
 ` {
-		t.Error(v.Buffer().Data())
+		t.Error(v.Buffer().String())
 	}
 	ed.CommandHandler().RunTextCommand(v, "insert", Args{"characters": "a"})
-	if d := v.Buffer().Data(); d != "Hello worla\nTesa\nGoodbye worla\n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if d := v.Buffer().String(); d != "Hello worla\nTesa\nGoodbye worla\n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
@@ -40,44 +40,61 @@ Goodbye worl
 
 	v.Settings().Set("translate_tabs_to_spaces", true)
 	ed.CommandHandler().RunTextCommand(v, "insert", Args{"characters": "\t"})
-	if v.Buffer().Data() != "Hello worla \nTesa    \nGoodbye worla   \n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if v.Buffer().String() != "Hello worla \nTesa    \nGoodbye worla   \n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
 	}
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
-	if d := v.Buffer().Data(); d != "Hello worla\nTesa\nGoodbye worla\n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if d := v.Buffer().String(); d != "Hello worla\nTesa\nGoodbye worla\n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
 	}
 
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
-	if d := v.Buffer().Data(); d != "Hello worl\nTes\nGoodbye worl\n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if d := v.Buffer().String(); d != "Hello worl\nTes\nGoodbye worl\n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
 	}
 
 	ed.CommandHandler().RunTextCommand(v, "insert", Args{"characters": "\t"})
-	if d := v.Buffer().Data(); d != "Hello worl  \nTes \nGoodbye worl    \n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if d := v.Buffer().String(); d != "Hello worl  \nTes \nGoodbye worl    \n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
 	}
 
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
-	if v.Buffer().Data() != "Hello worl\nTes\nGoodbye worl\n" {
-		lines := strings.Split(v.Buffer().Data(), "\n")
+	if v.Buffer().String() != "Hello worl\nTes\nGoodbye worl\n" {
+		lines := strings.Split(v.Buffer().String(), "\n")
 		for _, l := range lines {
 			t.Errorf("%d: '%s'", len(l), l)
 		}
 	}
 
+	v.Buffer().Erase(0, len(v.Buffer().String()))
+	v.Buffer().Insert(0, "€þıœəßðĸʒ×ŋµåäö𝄞")
+	orig := "€þıœəßðĸʒ×ŋµåäö𝄞"
+	if d := v.Buffer().String(); d != orig {
+		t.Errorf("%s\n\t%v\n\t%v", d, []byte(d), []byte(orig))
+	} else {
+		t.Logf("ref %s\n\t%v\n\t%v", d, []byte(d), []byte(orig))
+	}
+	v.Sel().Clear()
+	v.Sel().Add(Region{3, 3})
+	v.Sel().Add(Region{6, 6})
+	v.Sel().Add(Region{9, 9})
+	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
+	exp := "€þœəðĸ×ŋµåäö𝄞"
+	if d := v.Buffer().String(); d != exp {
+		t.Errorf("%s\n\t%v\n\t%v", d, []byte(d), []byte(exp))
+	}
 }
 
 func TestLeftDelete(t *testing.T) {
@@ -93,7 +110,7 @@ func TestLeftDelete(t *testing.T) {
 	v.Sel().Add(Region{3, 3})
 	v.Sel().Add(Region{4, 4})
 	ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
-	if d := v.buffer.Data(); d != "5678" {
+	if d := v.buffer.String(); d != "5678" {
 		t.Error(d)
 	}
 }
@@ -233,24 +250,24 @@ func TestGlueCmds(t *testing.T) {
 	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
-	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "redo", nil)
-	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
-	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 
@@ -264,20 +281,20 @@ func TestGlueCmds(t *testing.T) {
 	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
-	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "redo", nil)
-	if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	if v.undoStack.position != 1 {
 		t.Error(v.undoStack.position)
-	} else if d := v.Buffer().Data(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().String(); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 }
@@ -311,6 +328,12 @@ func TestInsert(t *testing.T) {
 			"Haelalo ald!\nTest123123\nAbrakadabra\n",
 			[]Region{{2, 2}, {5, 5}, {9, 9}},
 		},
+		{
+			[]Region{{1, 1}, {3, 3}, {6, 9}},
+			"€þıœəßðĸʒ×ŋµåäö𝄞",
+			"H€þıœəßðĸʒ×ŋµåäö𝄞el€þıœəßðĸʒ×ŋµåäö𝄞lo €þıœəßðĸʒ×ŋµåäö𝄞ld!\nTest123123\nAbrakadabra\n",
+			[]Region{{17, 17}, {35, 35}, {54, 54}},
+		},
 	}
 	for i, test := range tests {
 		v.Sel().Clear()
@@ -318,7 +341,7 @@ func TestInsert(t *testing.T) {
 			v.Sel().Add(r)
 		}
 		ed.CommandHandler().RunTextCommand(v, "insert", Args{"characters": test.data})
-		if d := v.buffer.Data(); d != test.expd {
+		if d := v.buffer.String(); d != test.expd {
 			t.Errorf("Insert test %d failed: %s", i, d)
 		}
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.expr) {

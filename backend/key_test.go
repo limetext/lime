@@ -9,9 +9,9 @@ import (
 func TestLoadKeyBindings(t *testing.T) {
 	tests := []string{
 		"loaders/json/testdata/Default (OSX).sublime-keymap",
-		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Linux).sublime-keymap",
-		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
-		"/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Windows).sublime-keymap",
+		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Linux).sublime-keymap",
+		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Windows).sublime-keymap",
 	}
 	for i, fn := range tests {
 		if d, err := ioutil.ReadFile(fn); err != nil {

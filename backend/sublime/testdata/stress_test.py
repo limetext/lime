@@ -15,6 +15,6 @@ try:
         assert v.sel()[0] == (0, 0)
 
 except:
-    print sys.exc_info()[1]
+    print(sys.exc_info()[1])
     traceback.print_exc()
     raise

@@ -39,7 +39,7 @@ func scanpath(path string, m *py.Module) {
 						for _, f := range fi {
 							if fn := f.Name(); strings.HasSuffix(fn, ".py") {
 								//m.Incref()
-								if s, err := py.NewString(dir + "." + fn[:len(fn)-3]); err != nil {
+								if s, err := py.NewUnicode(dir + "." + fn[:len(fn)-3]); err != nil {
 									log4go.Error(err)
 								} else {
 									if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
@@ -50,7 +50,7 @@ func scanpath(path string, m *py.Module) {
 									// if i, err := sys.Base().CallMethodObjArgs("getrefcount", s); err != nil {
 									// 	log4go.Error(err)
 									// } else {
-									// 	log4go.Debug("m refs: %d", i.(*py.Int).Int())
+									// 	log4go.Debug("m refs: %d", i.(*py.Long).Int64())
 									// 	i.Decref()
 									// }
 								}
@@ -68,7 +68,7 @@ func Init() {
 
 	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
-		log4go.Exit(err)
+		panic(err)
 	}
 
 	type class struct {
@@ -91,17 +91,17 @@ func Init() {
 	for _, cl := range classes {
 		c, err := cl.c.Create()
 		if err != nil {
-			log4go.Exit(err)
+			panic(err)
 		}
 		if err := m.AddObject(cl.name, c); err != nil {
-			log4go.Exit(err)
+			panic(err)
 		}
 	}
 	py.AddToPath("../../backend/packages/")
 	py.AddToPath("../../3rdparty/bundles/")
 	py.AddToPath("../../backend/sublime/")
 	if m, err := py.Import("sublime_plugin"); err != nil {
-		log4go.Exit(err)
+		panic(err)
 	} else {
 		// scanpath("../packages/", m)
 		scanpath("../../3rdparty/bundles/", m)

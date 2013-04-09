@@ -14,7 +14,7 @@ sublime.OP_NOT_REGEX_MATCH = 3
 sublime.OP_REGEX_CONTAINS = 4
 sublime.OP_NOT_REGEX_CONTAINS = 5
 def __hack(a, b):
-    print "set_timeout not implemented"
+    print("set_timeout not implemented")
 sublime.set_timeout = __hack
 
 class Command(object):
@@ -76,7 +76,7 @@ class __myfinder:
                 return sys.modules[fullname]
             f = fn(fullname)
             if not f.endswith(".py"):
-                print "new module: %s" %f
+                print("new module: %s" %f)
                 m = imp.new_module(fullname)
                 m.__path__ = f
                 sys.modules[fullname] = m
@@ -101,7 +101,7 @@ def reload_plugin(module):
                 ret += "_"
             ret += l
         return ret
-    print "Loading plugin %s" % module
+    print("Loading plugin %s" % module)
     try:
         module = importlib.import_module(module)
         for item in inspect.getmembers(module):
@@ -126,7 +126,7 @@ def reload_plugin(module):
                 elif issubclass(item[1], ApplicationCommand):
                     sublime.register(cmd, sublime.ApplicationCommandGlue(item[1]))
             except:
-                print "Skipping registering %s: %s" % (cmd, sys.exc_info()[1])
+                print("Skipping registering %s: %s" % (cmd, sys.exc_info()[1]))
         if "plugin_loaded" in dir(module):
             module.plugin_loaded()
     except:

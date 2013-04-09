@@ -27,9 +27,11 @@ func toPython(r interface{}) (py.Object, error) {
 			return py.False, nil
 		}
 	case int:
-		return py.NewInt(t), nil
+		return py.NewLong(int64(t)), nil
+	case int64:
+		return py.NewLong(t), nil
 	case string:
-		return py.NewString(t)
+		return py.NewUnicode(t)
 	case float64:
 		return py.NewFloat(t)
 	case *backend.Settings:
@@ -143,7 +145,7 @@ func toPython(r interface{}) (py.Object, error) {
 	default:
 		switch t := reflect.ValueOf(r); t.Kind() {
 		case reflect.Int:
-			return toPython(int(t.Int()))
+			return toPython(t.Int())
 		case reflect.Slice:
 			ret, err := py.NewList(int64(t.Len()))
 			if err != nil {
@@ -168,11 +170,11 @@ func fromPython(r py.Object) (interface{}, error) {
 	switch t := r.(type) {
 	case *py.NoneObject:
 		return nil, nil
-	case *py.Int:
-		return t.Int(), nil
+	case *py.Long:
+		return int(t.Int64()), nil
 	case *py.Bool:
 		return t.Bool(), nil
-	case *py.String:
+	case *py.Unicode:
 		return t.String(), nil
 	case *py.Float:
 		return t.Float64(), nil

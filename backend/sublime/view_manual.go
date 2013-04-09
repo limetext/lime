@@ -29,10 +29,10 @@ func (v *View) Py_show(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 		return nil, err
 	} else {
 		if v2, ok := v.(*Region); !ok {
-			if v2, ok := v.(*py.Int); !ok {
+			if v2, ok := v.(*py.Long); !ok {
 				return nil, fmt.Errorf("Expected type *Region or *Int for primitives.Buffer.Substr() arg1, not %s", v.Type())
 			} else {
-				arg1.A = v2.Int()
+				arg1.A = int(v2.Int64())
 				arg1.B = arg1.A + 1
 			}
 		} else {
@@ -51,10 +51,10 @@ func (o *View) Py_substr(tu *py.Tuple) (py.Object, error) {
 		return nil, err
 	} else {
 		if v2, ok := v.(*Region); !ok {
-			if v2, ok := v.(*py.Int); !ok {
+			if v2, ok := v.(*py.Long); !ok {
 				return nil, fmt.Errorf("Expected type *Region or *Int for primitives.Buffer.Substr() arg1, not %s", v.Type())
 			} else {
-				arg1.A = v2.Int()
+				arg1.A = int(v2.Int64())
 				arg1.B = arg1.A + 1
 			}
 		} else {
@@ -65,7 +65,7 @@ func (o *View) Py_substr(tu *py.Tuple) (py.Object, error) {
 	var err error
 	var pyret0 py.Object
 
-	pyret0, err = py.NewString(ret0)
+	pyret0, err = py.NewUnicode(ret0)
 	if err != nil {
 		// TODO: do the py objs need to be freed?
 		return nil, err
@@ -85,8 +85,8 @@ func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.View.AddRegions() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.View.AddRegions() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}
@@ -123,10 +123,10 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.Int); !ok {
-			return nil, fmt.Errorf("Expected type *py.Int for backend.View.CommandHistory() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Long); !ok {
+			return nil, fmt.Errorf("Expected type *py.Long for backend.View.CommandHistory() arg1, not %s", v.Type())
 		} else {
-			arg1 = v2.Int()
+			arg1 = int(v2.Int64())
 		}
 	}
 	if v, err := tu.GetItem(1); err == nil {
@@ -140,7 +140,7 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 	var err error
 	var pyret0 py.Object
 
-	pyret0, err = py.NewString(ret0)
+	pyret0, err = py.NewUnicode(ret0)
 	if err != nil {
 		// TODO: do the py objs need to be freed?
 		return nil, err
@@ -162,7 +162,7 @@ func (o *View) Py_command_history(tu *py.Tuple) (py.Object, error) {
 
 	var pyret2 py.Object
 
-	pyret2 = py.NewInt(int(ret2))
+	pyret2 = py.NewLong(int64(ret2))
 	if err != nil {
 		pyret0.Decref()
 		pyret1.Decref()
@@ -181,8 +181,8 @@ func (o *View) Py_run_command(tu *py.Tuple) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.View.RunCommand() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.View.RunCommand() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}

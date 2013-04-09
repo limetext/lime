@@ -93,7 +93,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	lay := t.layout[v]
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
 	sel := v.Sel()
-	substr := v.Buffer().Data()
+	substr := v.Buffer().String()
 	vr := t.VisibleRegion(v)
 	lines := strings.Split(substr, "\n")
 	s, _ := v.Buffer().RowCol(vr.Begin())
@@ -386,7 +386,7 @@ func (t *tbfe) loop() {
 	}
 	defer func() {
 		termbox.Close()
-		fmt.Println(c.Buffer().Data())
+		fmt.Println(c.Buffer().String())
 	}()
 
 	w := ed.NewWindow()

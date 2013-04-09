@@ -17,7 +17,7 @@ type (
 	insertAction struct {
 		buffer *Buffer
 		point  int
-		value  string
+		value  []rune
 	}
 
 	eraseAction struct {
@@ -61,7 +61,7 @@ func (ca *CompositeAction) Len() int {
 }
 
 func (ia *insertAction) Apply() {
-	ia.buffer.Insert(ia.point, ia.value)
+	ia.buffer.Insert(ia.point, string(ia.value))
 }
 
 func (ia *insertAction) Undo() {
@@ -70,7 +70,7 @@ func (ia *insertAction) Undo() {
 
 func (ea *eraseAction) Apply() {
 	ea.region = ea.region.Clip(Region{0, ea.buffer.Size()})
-	ea.value = ea.buffer.Substr(ea.region)
+	ea.value = []rune(ea.buffer.Substr(ea.region))
 	ea.point = ea.region.Begin()
 	ea.insertAction.Undo()
 }
@@ -84,7 +84,7 @@ func NewEraseAction(b *Buffer, region Region) Action {
 }
 
 func NewInsertAction(b *Buffer, point int, value string) Action {
-	return &insertAction{b, Clamp(0, len(b.data), point), value}
+	return &insertAction{b, Clamp(0, len(b.data), point), []rune(value)}
 }
 
 func NewReplaceAction(b *Buffer, region Region, value string) Action {

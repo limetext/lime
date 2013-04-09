@@ -109,7 +109,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 		}
 		r := sel.Get(i)
 		if r.A == r.B && !hasNonEmpty {
-			d := v.buffer.Data()
+			d := v.buffer.Runes()
 			if trim_space {
 				_, col := v.Buffer().RowCol(r.A)
 				prev_col := r.A - (col - (col-tab_size+(tab_size-1))&^(tab_size-1))

@@ -21,8 +21,8 @@ func (o *Window) Py_open_file(tu *py.Tuple) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.Window.OpenFile() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.Window.OpenFile() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}
@@ -31,10 +31,10 @@ func (o *Window) Py_open_file(tu *py.Tuple) (py.Object, error) {
 		if v, err := tu.GetItem(1); err != nil {
 			return nil, err
 		} else {
-			if v2, ok := v.(*py.Int); !ok {
-				return nil, fmt.Errorf("Expected type *py.Int for backend.Window.OpenFile() arg2, not %s", v.Type())
+			if v2, ok := v.(*py.Long); !ok {
+				return nil, fmt.Errorf("Expected type *py.Long for backend.Window.OpenFile() arg2, not %s", v.Type())
 			} else {
-				arg2 = v2.Int()
+				arg2 = int(v2.Int64())
 			}
 		}
 	}
@@ -81,8 +81,8 @@ func (o *Window) Py_run_command(tu *py.Tuple) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.Window.RunCommand() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.Window.RunCommand() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}

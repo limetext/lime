@@ -56,7 +56,7 @@ func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	}
 	if v, err := args.GetItem(1); err != nil {
 		return err
-	} else if v2, ok := v.(*py.String); !ok {
+	} else if v2, ok := v.(*py.Unicode); !ok {
 		return fmt.Errorf("Second argument not a string: %v", v)
 	} else {
 		ev := evmap[v2.String()]

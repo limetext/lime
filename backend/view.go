@@ -97,7 +97,7 @@ func (v *View) flush(a, b int) {
 	// TODO(q): A full reparse every time the buffer changes is overkill.
 	// It would be better if the nodes are just adjusted as appropriate, together with a
 	// minimal parse of the new data
-	v.syntax.Parse(v.buffer.Data())
+	v.syntax.Parse(v.buffer.String())
 	v.lastScopeNode = nil
 	v.lastScopeBuf.Reset()
 	OnModified.Call(v)
@@ -112,7 +112,7 @@ func (v *View) SetSyntaxFile(f string) error {
 		return err
 	} else {
 		v.syntax.Language = &lang
-		v.syntax.Parse(v.buffer.Data())
+		v.syntax.Parse(v.buffer.String())
 	}
 	return nil
 }

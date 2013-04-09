@@ -13,8 +13,8 @@ func (o *Settings) Py_get(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.Settings.Get() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.Settings.Get() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}
@@ -37,8 +37,8 @@ func (o *Settings) Py_set(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 	if v, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		if v2, ok := v.(*py.String); !ok {
-			return nil, fmt.Errorf("Expected type *py.String for backend.Settings.Set() arg1, not %s", v.Type())
+		if v2, ok := v.(*py.Unicode); !ok {
+			return nil, fmt.Errorf("Expected type *py.Unicode for backend.Settings.Set() arg1, not %s", v.Type())
 		} else {
 			arg1 = v2.String()
 		}

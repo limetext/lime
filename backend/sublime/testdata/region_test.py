@@ -34,6 +34,6 @@ try:
 	r3 = sublime.Region(3, 2)
 	assert r3.begin() == 2 and r3.end() == 3
 except:
-	print sys.exc_info()[1]
+	print(sys.exc_info()[1])
 	traceback.print_exc()
 	raise

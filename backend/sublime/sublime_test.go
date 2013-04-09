@@ -18,7 +18,7 @@ import (
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
 	ed.Console().Buffer().AddCallback(func(b *primitives.Buffer, pos, delta int) {
-		t.Logf("%s", b.Data()[pos:pos+delta])
+		t.Logf("%s", string(b.Runes()[pos:pos+delta]))
 	})
 	w := ed.NewWindow()
 	w.NewFile()
@@ -123,7 +123,7 @@ func TestSublime(t *testing.T) {
 			if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
 				continue
 			}
-			if strings.Index(v.Buffer().Data(), "FAILED") != -1 {
+			if strings.Index(v.Buffer().String(), "FAILED") != -1 {
 				t.Error(v.Buffer())
 			}
 		}

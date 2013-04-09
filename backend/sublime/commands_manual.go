@@ -95,7 +95,7 @@ func (c *CommandGlue) Description(args backend.Args) string {
 		log4go.Error(err)
 	} else if r, err := c.CallMethodObjArgs("description", pyargs); err != nil {
 		log4go.Error(err)
-	} else if r, ok := r.(*py.String); ok {
+	} else if r, ok := r.(*py.Unicode); ok {
 		return r.String()
 	}
 	return ""
