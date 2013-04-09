@@ -426,12 +426,14 @@ func (lp *LanguageParser) Parse(data string) bool {
 		}
 	}
 	lp.root.UpdateRange()
-	lut := make([]int, len(data))
-	j := 0
-	for i := range data {
-		lut[i] = j
-		j++
+	if len(data) != 0 {
+		lut := make([]int, len(data))
+		j := 0
+		for i := range data {
+			lut[i] = j
+			j++
+		}
+		lp.patch(lut, &lp.root)
 	}
-	lp.patch(lut, &lp.root)
 	return true
 }
