@@ -254,14 +254,14 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 			if p2, ok := p.owner.Repository[key]; ok {
 				pat, ret = p2.Cache(data, pos)
 			} else {
-				log4go.Error("Not found in repository: %s", p.Include)
+				log4go.Warn("Not found in repository: %s", p.Include)
 			}
 		} else if z == '$' {
 			// TODO(q): Implement tmLanguage $ include directives
 			log4go.Warn("Unhandled include directive: %s", p.Include)
 		} else if l, err := Provider.GetLanguage(p.Include); err != nil {
 			if !failed[p.Include] {
-				log4go.Error("Include directive %s failed: %s", p.Include, err)
+				log4go.Warn("Include directive %s failed: %s", p.Include, err)
 			}
 			failed[p.Include] = true
 		} else {

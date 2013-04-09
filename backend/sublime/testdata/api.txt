@@ -129,6 +129,7 @@ Settings                      : <type 'type'>
 	clear_on_change
 	erase
 	get
+	id
 	set
 TextCommandGlue               : <type 'type'>
 	__class__

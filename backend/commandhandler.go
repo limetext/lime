@@ -30,6 +30,8 @@ type (
 func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) error {
 	if ch.log {
 		log4go.Info("Running window command: %s %v", name, args)
+	} else {
+		log4go.Fine("Running window command: %s %v", name, args)
 	}
 	if c := ch.WindowCommands[name]; c != nil {
 		if err := wnd.runCommand(c, name, args); err != nil && ch.verbose {
@@ -42,6 +44,8 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) error {
 	if ch.log {
 		log4go.Info("Running text command: %s %v", name, args)
+	} else {
+		log4go.Fine("Running text command: %s %v", name, args)
 	}
 	if c := ch.TextCommands[name]; c != nil {
 		if err := view.runCommand(c, name, args); err != nil && ch.verbose {
@@ -60,6 +64,8 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	if ch.log {
 		log4go.Info("Running application command: %s %v", name, args)
+	} else {
+		log4go.Fine("Running application command: %s %v", name, args)
 	}
 	if c := ch.ApplicationCommands[name]; c != nil {
 		if err := c.Run(args); err != nil && ch.verbose {

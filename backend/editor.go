@@ -152,7 +152,7 @@ func (e *Editor) Windows() []*Window {
 func (e *Editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
-	w.Settings().Parent = e
+	w.Settings().SetParent(e)
 	return w
 }
 
