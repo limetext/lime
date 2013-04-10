@@ -112,7 +112,7 @@ func TestSublime(t *testing.T) {
 		"constants",
 		"registers",
 		"cmd_data",
-		//"marks",
+		"marks",
 	}
 
 	for _, test := range tests {
