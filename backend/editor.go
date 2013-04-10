@@ -86,7 +86,7 @@ func GetEditor() *Editor {
 		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
 		ed.loadKeybindings()
 		ed.loadSettings()
-		initBasicCommands()
+		//		initBasicCommands()
 	}
 	return ed
 }

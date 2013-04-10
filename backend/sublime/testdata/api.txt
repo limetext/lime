@@ -165,6 +165,7 @@ Settings                      : <class 'type'>
 	clear_on_change
 	erase
 	get
+	has
 	id
 	set
 TextCommandGlue               : <class 'type'>

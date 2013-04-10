@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
+	_ "lime/backend/commands"
 	"lime/backend/primitives"
 	"os"
 	"path/filepath"

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
+	_ "lime/backend/commands"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
 	"lime/backend/sublime"
@@ -293,7 +294,7 @@ func (t *tbfe) loop() {
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
 	//ed.LogInput(true)
-	//ed.LogCommands(true)
+	ed.LogCommands(true)
 	c := ed.Console()
 	var (
 		scheme textmate.Theme

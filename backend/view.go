@@ -23,7 +23,7 @@ type (
 		window        *Window
 		buffer        *Buffer
 		selection     RegionSet
-		undoStack     undoStack
+		undoStack     UndoStack
 		scratch       bool
 		overwrite     bool
 		syntax        textmate.LanguageParser
@@ -48,7 +48,6 @@ type (
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(map[string][]Region)}
 	ret.Settings().Set("is_widget", false)
-	ret.undoStack.mark = -1
 	return ret
 }
 
@@ -204,7 +203,7 @@ func (v *View) EndEdit(e *Edit) {
 		if !v.scratch && !ce.bypassUndo && !eq {
 			if i == 0 || j != i {
 				// Presume someone forgot to add it in the j != i case
-				v.undoStack.Add(e, true)
+				v.undoStack.Add(e)
 			} else {
 				// This edit belongs to another edit
 				v.editstack[i-1].composite.Add(ce)
@@ -295,7 +294,7 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	_, e.bypassUndo = t.FieldByName("bypassUndoCommand")
+	_, e.bypassUndo = t.FieldByName("BypassUndoCommand")
 
 	defer func() {
 		v.EndEdit(e)
@@ -316,4 +315,8 @@ func (v *View) GetRegions(key string) []Region {
 
 func (v *View) EraseRegions(key string) {
 	v.regions[key] = nil
+}
+
+func (v *View) UndoStack() *UndoStack {
+	return &v.undoStack
 }

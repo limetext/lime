@@ -73,6 +73,11 @@ func (s *Settings) Set(name string, val interface{}) {
 	s.onChange()
 }
 
+func (s *Settings) Has(name string) bool {
+	_, ok := s.data[name]
+	return ok
+}
+
 func (s *Settings) onChange() {
 	for _, v := range s.onChangeCallbacks {
 		v()
@@ -80,7 +85,7 @@ func (s *Settings) onChange() {
 }
 
 func (s *Settings) Erase(name string) {
-	s.data[name] = nil
+	delete(s.data, name)
 }
 
 func (s *Settings) merge(other settingsMap) {
