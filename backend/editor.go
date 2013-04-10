@@ -172,7 +172,7 @@ func (e *Editor) CommandHandler() CommandHandler {
 
 func (e *Editor) HandleInput(kp KeyPress) {
 	if e.loginput {
-		log4go.Debug("Key: %v", kp)
+		log4go.Info("Key: %v", kp)
 	}
 	if e.lastBindings.keyOff == 0 {
 		e.lastBindings = e.keyBindings
@@ -202,7 +202,7 @@ try_again:
 		e.lastBindings = e.keyBindings
 		goto try_again
 	} else if kp.IsCharacter() {
-		log4go.Debug("kp: %v, pos: %v, ro: %v", kp, possible_actions)
+		log4go.Finest("kp: %v, pos: %v", kp, possible_actions)
 		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)
 		}

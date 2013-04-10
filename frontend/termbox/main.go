@@ -287,6 +287,7 @@ func (t *tbfe) OkCancelDialog(msg, ok string) {
 }
 
 func (t *tbfe) scroll(b *Buffer, pos, delta int) {
+	//fmt.Printf(string(b.Runes()[pos : pos+delta]))
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
@@ -294,7 +295,7 @@ func (t *tbfe) loop() {
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
 	//ed.LogInput(true)
-	ed.LogCommands(true)
+	//ed.LogCommands(true)
 	c := ed.Console()
 	var (
 		scheme textmate.Theme
@@ -383,7 +384,9 @@ func (t *tbfe) loop() {
 	if mode256 {
 		termbox.SetColorPalette(pal)
 	}
+	evchan := make(chan termbox.Event, 10)
 	defer func() {
+		close(evchan)
 		termbox.Close()
 		fmt.Println(c.Buffer().String())
 	}()
@@ -405,8 +408,6 @@ func (t *tbfe) loop() {
 	// sel.Add(Region{end - 16, end - 20})
 	// sel.Add(Region{end - 13, end - 10})
 
-	evchan := make(chan termbox.Event)
-
 	go func() {
 		for {
 			evchan <- termbox.PollEvent()
@@ -415,16 +416,17 @@ func (t *tbfe) loop() {
 
 	{
 		w, h := termbox.Size()
-		t.layout[v] = layout{0, 0, w, h - console_height, Region{}, 0}
+		t.layout[v] = layout{0, 0, w, h - console_height, Region{0, v.Buffer().Size()}, 0}
 		t.Show(v, Region{0, 0})
 		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
 	}
 
 	sublime.Init()
+	_ = sublime.Init
 	lastrender := time.Now()
 	render := false
 	for {
-		if timed := time.Since(lastrender) > (time.Millisecond * 15); timed || render {
+		if timed := time.Since(lastrender) > (time.Millisecond * 30); timed || render {
 			lastrender = time.Now()
 			termbox.Clear(defaultFg, defaultBg)
 			w, h := termbox.Size()
@@ -447,6 +449,9 @@ func (t *tbfe) loop() {
 		select {
 		case ev := <-evchan:
 			switch ev.Type {
+			case termbox.EventError:
+				log4go.Debug("error occured")
+				return
 			case termbox.EventKey:
 				var kp backend.KeyPress
 

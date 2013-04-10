@@ -6,6 +6,7 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	"lime/backend/primitives"
+	"time"
 )
 
 var (
@@ -74,7 +75,17 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	if pv, err := toPython(v); err != nil {
 		log4go.Error(err)
 	} else {
-		log4go.Debug("onEvent: %v, %v, %v", c, c.inner, pv)
+		defer pv.Decref()
+		log4go.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
+		interrupt := true
+		defer func() { interrupt = false }()
+		go func() {
+			<-time.After(time.Second * 5)
+			if interrupt {
+				py.SetInterrupt()
+			}
+		}()
+
 		if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
 			log4go.Error(err)
 		} else if ret != nil {
@@ -100,29 +111,60 @@ func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 }
 
 func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operator backend.Op, operand interface{}, match_all bool) backend.QueryContextReturn {
-	if pv, err := toPython(v); err != nil {
+	var (
+		pv, pk, po, poa, pm, ret py.Object
+		err                      error
+	)
+	if pv, err = toPython(v); err != nil {
 		log4go.Error(err)
-	} else if pk, err := toPython(key); err != nil {
+		return backend.Unknown
+	}
+	defer pv.Decref()
+	if pk, err = toPython(key); err != nil {
 		log4go.Error(err)
-	} else if po, err := toPython(operator); err != nil {
+		return backend.Unknown
+	}
+	defer pk.Decref()
+
+	if po, err = toPython(operator); err != nil {
 		log4go.Error(err)
-	} else if poa, err := toPython(operand); err != nil {
+		return backend.Unknown
+	}
+	defer po.Decref()
+	if poa, err = toPython(operand); err != nil {
 		log4go.Error(err)
-	} else if pm, err := toPython(match_all); err != nil {
+		return backend.Unknown
+	}
+	if pm, err = toPython(match_all); err != nil {
 		log4go.Error(err)
-	} else if ret, err := c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
-		log4go.Error(err)
-	} else if ret != nil {
-		defer ret.Decref()
-		if r2, ok := ret.(*py.Bool); ok {
-			if r2.Bool() {
-				return backend.True
-			} else {
-				return backend.False
-			}
-		} else {
-			log4go.Debug("other: %v", ret)
+		return backend.Unknown
+	}
+	defer pm.Decref()
+	interrupt := true
+	defer func() { interrupt = false }()
+	go func() {
+		<-time.After(time.Second * 5)
+		if interrupt {
+			py.SetInterrupt()
 		}
+	}()
+
+	if ret, err = c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
+		log4go.Error(err)
+		return backend.Unknown
+	}
+
+	//	if ret != nil {
+	log4go.Fine("onQueryContext: %v, %v", pv, ret.Base())
+	defer ret.Decref()
+	if r2, ok := ret.(*py.Bool); ok {
+		if r2.Bool() {
+			return backend.True
+		} else {
+			return backend.False
+		}
+	} else {
+		log4go.Fine("other: %v", ret)
 	}
 	return backend.Unknown
 }

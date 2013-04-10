@@ -6,6 +6,7 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	"lime/backend/primitives"
+	"time"
 )
 
 var (
@@ -69,9 +70,17 @@ func (c *CommandGlue) CreatePyArgs(args backend.Args) (ret *py.Dict, err error) 
 }
 
 func (c *CommandGlue) callBool(name string, args backend.Args) bool {
-	if pyargs, err := c.CreatePyArgs(args); err != nil {
+	var (
+		pyargs, r py.Object
+		err       error
+	)
+	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		log4go.Error(err)
-	} else if r, err := c.CallMethodObjArgs(name, pyargs); err != nil {
+		return false
+	}
+	defer pyargs.Decref()
+
+	if r, err = c.CallMethodObjArgs(name, pyargs); err != nil {
 		log4go.Error(err)
 	} else {
 		defer r.Decref()
@@ -91,12 +100,23 @@ func (c *CommandGlue) IsVisible(args backend.Args) bool {
 }
 
 func (c *CommandGlue) Description(args backend.Args) string {
-	if pyargs, err := c.CreatePyArgs(args); err != nil {
+	var (
+		pyargs, r py.Object
+		err       error
+	)
+	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		log4go.Error(err)
-	} else if r, err := c.CallMethodObjArgs("description", pyargs); err != nil {
+		return ""
+	}
+	defer pyargs.Decref()
+
+	if r, err = c.CallMethodObjArgs("description", pyargs); err != nil {
 		log4go.Error(err)
-	} else if r, ok := r.(*py.Unicode); ok {
-		return r.String()
+	} else {
+		defer r.Decref()
+		if r, ok := r.(*py.Unicode); ok {
+			return r.String()
+		}
 	}
 	return ""
 }
@@ -112,64 +132,109 @@ func pyError(err error) error {
 	return err
 }
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
-	if pyv, err := toPython(v); err != nil {
+	var (
+		pyv, pye, pyargs, obj py.Object
+		err                   error
+	)
+	if pyv, err = toPython(v); err != nil {
 		return pyError(err)
-	} else if pye, err := toPython(e); err != nil {
-		pyv.Decref()
+	}
+	defer pyv.Decref()
+	if pye, err = toPython(e); err != nil {
 		return pyError(err)
-	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
-		pyv.Decref()
-		pye.Decref()
+	}
+	defer pye.Decref()
+	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		return pyError(err)
-	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
+	}
+	defer pyargs.Decref()
+	if obj, err = c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return pyError(err)
-	} else {
-		defer obj.Decref()
-		if obj.Base().HasAttrString("run_") {
-			// The plugin is probably trying to bypass the undostack...
-			old := v.IsScratch()
-			v.SetScratch(true)
-			log4go.Finest("Discarded: %s", e)
-			v.EndEdit(e)
-			v.SetScratch(old)
-			if ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
-				return pyError(err)
-			} else {
-				ret.Decref()
-			}
-		} else if ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
+	}
+	defer obj.Decref()
+	interrupt := true
+	defer func() { interrupt = false }()
+	go func() {
+		<-time.After(time.Second * 5)
+		if interrupt {
+			py.SetInterrupt()
+		}
+	}()
+	if obj.Base().HasAttrString("run_") {
+		// The plugin is probably trying to bypass the undostack...
+		old := v.IsScratch()
+		v.SetScratch(true)
+		log4go.Finest("Discarded: %s", e)
+		v.EndEdit(e)
+		v.SetScratch(old)
+		if ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
 			return pyError(err)
 		} else {
 			ret.Decref()
 		}
+	} else if ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
+		return pyError(err)
+	} else {
+		ret.Decref()
 	}
 	return nil
 }
 
 func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
+	var (
+		pyw, pyargs, obj py.Object
+		err              error
+	)
 	log4go.Debug("WindowCommand: %v", args)
-	if pyw, err := toPython(w); err != nil {
+	if pyw, err = toPython(w); err != nil {
 		return pyError(err)
-	} else if pyargs, err := c.CreatePyArgs(args); err != nil {
-		pyw.Decref()
+	}
+	defer pyw.Decref()
+
+	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		return pyError(err)
-	} else if obj, err := c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
+	}
+	defer pyargs.Decref()
+	interrupt := true
+	defer func() { interrupt = false }()
+	go func() {
+		<-time.After(time.Second * 5)
+		if interrupt {
+			py.SetInterrupt()
+		}
+	}()
+
+	if obj, err = c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
+		return pyError(err)
+	}
+	defer obj.Decref()
+	if ret, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
 		return pyError(err)
 	} else {
-		defer obj.Decref()
-		if ret, err := obj.Base().CallMethodObjArgs("run_", pyargs); err != nil {
-			return pyError(err)
-		} else {
-			ret.Decref()
-		}
+		ret.Decref()
 	}
 	return nil
 }
 
 func (c *ApplicationCommandGlue) Run(args backend.Args) error {
-	if pyargs, err := c.CreatePyArgs(args); err != nil {
+	var (
+		pyargs py.Object
+		err    error
+	)
+	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		return pyError(err)
-	} else if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
+	}
+	defer pyargs.Decref()
+	interrupt := true
+	defer func() { interrupt = false }()
+	go func() {
+		<-time.After(time.Second * 5)
+		if interrupt {
+			py.SetInterrupt()
+		}
+	}()
+
+	if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
 		return pyError(err)
 	} else {
 		defer obj.Decref()

@@ -41,7 +41,7 @@ func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand inter
 			return r
 		}
 	}
-	log4go.Debug("Unknown context: %s", key)
+	log4go.Fine("Unknown context: %s", key)
 	return Unknown
 }
 
