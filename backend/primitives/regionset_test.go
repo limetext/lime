@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// Verified against ST3
 func TestRegionSetAdjust(t *testing.T) {
 	var r = RegionSet{[]Region{
 		{10, 20},
@@ -45,6 +46,7 @@ func TestRegionSetAdjust(t *testing.T) {
 	}
 }
 
+// Verified against ST3
 func TestRegionSetflush(t *testing.T) {
 	var r RegionSet
 	r.Add(Region{10, 20})
@@ -61,8 +63,15 @@ func TestRegionSetflush(t *testing.T) {
 	if !reflect.DeepEqual(r, RegionSet{[]Region{{2, 10}, {10, 23}}}) {
 		t.Errorf("Not as expected: %v", r)
 	}
+	r.Clear()
+	r.Add(Region{10, 10})
+	r.Add(Region{10, 11})
+	if !reflect.DeepEqual(r, RegionSet{[]Region{{10, 11}}}) {
+		t.Errorf("Not as expected: %v", r)
+	}
 }
 
+// Verified against ST3
 func TestRegionSetAdjust2(t *testing.T) {
 	var r = RegionSet{[]Region{
 		{10, 20},
@@ -70,7 +79,6 @@ func TestRegionSetAdjust2(t *testing.T) {
 	}}
 
 	r.Adjust(43, -25)
-	// This is indeed what ST2 does
 	if !reflect.DeepEqual(r, RegionSet{[]Region{{10, 18}, {18, 18}}}) {
 		t.Errorf("Not as expected: %v", r)
 	}

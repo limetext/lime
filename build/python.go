@@ -398,10 +398,10 @@ func main() {
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show|AddRegions").MatchString)},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile").MatchString)},
-		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&backend.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
+		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&primitives.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
 		{"../backend/sublime/view_buffer.go", generatemethodsEx(
 			reflect.TypeOf(&primitives.Buffer{}),
-			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes").MatchString,
+			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := ""

@@ -34,7 +34,7 @@ func toPython(r interface{}) (py.Object, error) {
 		return py.NewUnicode(t)
 	case float64:
 		return py.NewFloat(t)
-	case *backend.Settings:
+	case *primitives.Settings:
 		pyret0, err := _settingsClass.Alloc(1)
 		if err != nil {
 			return nil, err

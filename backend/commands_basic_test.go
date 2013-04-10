@@ -228,7 +228,7 @@ func TestMove(t *testing.T) {
 		}
 		ed.CommandHandler().RunTextCommand(v, "move", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Move test %d failed: %v", i, sr)
+			t.Errorf("Move test %d failed: %v, %+v", i, sr, test)
 		}
 	}
 }

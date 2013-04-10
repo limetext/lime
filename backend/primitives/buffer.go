@@ -8,6 +8,7 @@ import (
 type (
 	Buffer struct {
 		HasId
+		HasSettings
 		changecount int
 		name        string
 		filename    string
@@ -126,15 +127,13 @@ func (b *Buffer) Line(offset int) Region {
 		return Region{0, 0}
 	} else if s := b.Size(); offset >= s {
 		return Region{s, s}
-	} else if b.data[offset] == '\n' {
-		return Region{offset, offset}
 	}
 	data := b.data
 	s := offset
 	for s > 0 && data[s-1] != '\n' {
 		s--
 	}
-	e := offset + 1
+	e := offset
 	for e < len(data) && data[e] != '\n' {
 		e++
 	}
@@ -153,7 +152,10 @@ func (b *Buffer) FullLine(offset int) Region {
 	r := b.Line(offset)
 	d := b.data
 	s := b.Size()
-	for r.B < s && (d[r.B] == '\r' || d[r.B] == '\n') {
+	for r.B < s && (d[r.B] != '\r' && d[r.B] != '\n') {
+		r.B++
+	}
+	if r.B != b.Size() {
 		r.B++
 	}
 	return r
@@ -174,23 +176,55 @@ var (
 
 func (b *Buffer) Word(offset int) Region {
 	_, col := b.RowCol(offset)
-	lr := b.Line(offset)
-	line := b.Substr(lr)
-	begin := 0
-	end := len(line)
+	lr := b.FullLine(offset)
+
+	line := b.data[lr.Begin():lr.End()]
+	if len(line) == 0 {
+		return Region{offset, offset}
+	}
+
+	seps := "./\\()\"'-:,.;<>~!@#$%^&*|+=[]{}`~?"
+	if v, ok := b.Settings().Get("word_separators", seps).(string); ok {
+		seps = v
+	}
+	spacing := " \n\t\r"
+	eseps := seps + spacing
 
 	if col >= len(line) {
 		col = len(line) - 1
 	}
-	if m := vwre1.FindStringIndex(line[:col+1]); m != nil {
-		begin = m[0]
-	} else {
-		return Region{offset, offset}
+	last := true
+	li := 0
+	ls := false
+	lc := 0
+	for i, r := range line {
+		cur := strings.ContainsRune(eseps, r)
+		cs := r == ' '
+		if !cs {
+			lc = i
+		}
+		if last != cur || ls != cs {
+			ls = cs
+			r := Region{li, i}
+			if r.Contains(col) && i != 0 {
+				r.A, r.B = r.A+lr.Begin(), r.B+lr.Begin()
+				if !(r.B == offset && last) {
+					return r
+				}
+			}
+			li = i
+			last = cur
+		}
 	}
-	if m := vwre2.FindStringIndex(line[begin:]); m != nil {
-		end = begin + m[1]
+	r := Region{lr.Begin() + li, lr.End()}
+	lc += lr.Begin()
+	if lc != offset && !strings.ContainsRune(spacing, b.data[r.A]) {
+		r.B = lc
 	}
-	return Region{lr.Begin() + begin, lr.Begin() + end}
+	if r.A == offset && r.B == r.A+1 {
+		r.B--
+	}
+	return r
 }
 
 // Returns a region that starts at the first character in a word

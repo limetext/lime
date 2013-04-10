@@ -26,7 +26,7 @@ func (r Region) End() int {
 }
 
 func (r Region) Contains(point int) bool {
-	return point >= r.Begin() && point < r.End()
+	return point >= r.Begin() && point <= r.End()
 }
 
 func (r Region) Covers(r2 Region) bool {
@@ -50,13 +50,16 @@ func (r Region) Clip(other Region) Region {
 }
 
 func (r Region) Intersects(other Region) bool {
-	return r == other || r.Contains(other.Begin()) || other.Contains(r.Begin())
+	return r == other || r.Intersection(other).Size() > 0
 }
 
-func (r Region) Intersection(other Region) Region {
-	if r.Intersects(other) {
-		return Region{Max(r.Begin(), other.Begin()), Min(r.End(), other.End())}
+func (r Region) Intersection(other Region) (ret Region) {
+	if r.Contains(other.Begin()) || other.Contains(r.Begin()) {
+		r2 := Region{Max(r.Begin(), other.Begin()), Min(r.End(), other.End())}
+		if r2.Size() != 0 {
+			ret = r2
+		}
 	}
 
-	return Region{}
+	return ret
 }

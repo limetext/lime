@@ -1,8 +1,7 @@
-package backend
+package primitives
 
 import (
 	"fmt"
-	"lime/backend/primitives"
 )
 
 type (
@@ -15,7 +14,7 @@ type (
 	OnChangeCallback func()
 	settingsMap      map[string]interface{}
 	Settings         struct {
-		primitives.HasId
+		HasId
 		onChangeCallbacks map[string]OnChangeCallback
 		data              settingsMap
 		parent            SettingsInterface

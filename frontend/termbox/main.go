@@ -68,6 +68,7 @@ type layout struct {
 	x, y          int
 	width, height int
 	visible       Region
+	lastUpdate    int
 }
 type tbfe struct {
 	layout         map[*backend.View]layout
@@ -136,7 +137,6 @@ func (t *tbfe) renderView(v *backend.View) {
 
 	for i := range runes {
 		o := off + i + 1
-		r := Region{o, o}
 		fg, bg := lfg, lbg
 		scope := v.ScopeName(o)
 		if scope != lastScope {
@@ -166,18 +166,17 @@ func (t *tbfe) renderView(v *backend.View) {
 			fg, bg = lfg, lbg
 		}
 		for _, r2 := range sel.Regions() {
-			if r2.B == r.B {
-				if !caret_blink || blink {
-					if r2.Contains(o) {
-						fg |= termbox.AttrReverse
-					} else {
+			if r2.Contains(o) {
+				if r2.Size() == 0 {
+					if !caret_blink || blink {
 						fg |= caret_style
 					}
+					break
+				} else if r2.Contains(o + 1) {
+					// TODO: selection color
+					fg |= termbox.AttrReverse
+					break
 				}
-				break
-			} else if r2.Contains(o) {
-				fg |= termbox.AttrReverse
-				break
 			}
 		}
 		if runes[i] == '\t' {
@@ -208,7 +207,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	}
 }
 
-func (t *tbfe) clip(v *backend.View, s, e int) (r Region) {
+func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	h := t.layout[v].height
 	if e-s > h {
 		e = s + h
@@ -223,10 +222,8 @@ func (t *tbfe) clip(v *backend.View, s, e int) (r Region) {
 	}
 	e = s + h
 
-	r.A = v.Buffer().Line(v.Buffer().TextPoint(s, 0)).A
-	r.B = v.Buffer().Line(v.Buffer().TextPoint(e, 0)).B
-
-	return r
+	r := Region{v.Buffer().TextPoint(s, 0), v.Buffer().TextPoint(e, 0)}
+	return v.Buffer().Lines(r)
 }
 
 func (t *tbfe) Show(v *backend.View, r Region) {
@@ -259,6 +256,10 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 
 func (t *tbfe) VisibleRegion(v *backend.View) Region {
 	if r, ok := t.layout[v]; ok {
+		if r.lastUpdate != v.Buffer().ChangeCount() {
+			t.Show(v, r.visible)
+			return t.layout[v].visible
+		}
 		return r.visible
 	} else {
 		t.Show(v, Region{0, 0})
@@ -413,9 +414,9 @@ func (t *tbfe) loop() {
 
 	{
 		w, h := termbox.Size()
-		t.layout[v] = layout{0, 0, w, h - console_height, Region{}}
+		t.layout[v] = layout{0, 0, w, h - console_height, Region{}, 0}
 		t.Show(v, Region{0, 0})
-		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}}
+		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
 	}
 
 	sublime.Init()

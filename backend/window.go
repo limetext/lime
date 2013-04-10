@@ -9,7 +9,7 @@ import (
 
 type Window struct {
 	primitives.HasId
-	HasSettings
+	primitives.HasSettings
 	views []*View
 }
 

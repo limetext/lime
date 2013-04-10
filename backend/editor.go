@@ -122,13 +122,11 @@ func (e *Editor) loadSetting(fn string) {
 	if d, err := ioutil.ReadFile(fn); err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
 	} else {
-		var settings settingsMap
-		if err := loaders.LoadJSON(d, &settings); err != nil {
+		if err := loaders.LoadJSON(d, e.Settings()); err != nil {
 			log4go.Error(err)
 		} else {
 			log4go.Info("Loaded %s", fn)
 		}
-		e.settings.merge(settings)
 	}
 }
 
