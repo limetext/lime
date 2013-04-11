@@ -3,6 +3,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"time"
 )
 
 type (
@@ -28,6 +29,8 @@ type (
 )
 
 func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) error {
+	p := Prof.Enter("wc")
+	defer p.Exit()
 	if ch.log {
 		log4go.Info("Running window command: %s %v", name, args)
 	} else {
@@ -42,6 +45,9 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 }
 
 func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) error {
+	p := Prof.Enter("tc")
+	defer p.Exit()
+	t := time.Now()
 	if ch.log {
 		log4go.Info("Running text command: %s %v", name, args)
 	} else {
@@ -58,10 +64,15 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 			}
 		}
 	}
+	if ch.log {
+		log4go.Info("Ran text command: %s %s", name, time.Since(t))
+	}
 	return nil
 }
 
 func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
+	p := Prof.Enter("ac")
+	defer p.Exit()
 	if ch.log {
 		log4go.Info("Running application command: %s %v", name, args)
 	} else {

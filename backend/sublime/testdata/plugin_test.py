@@ -5,6 +5,7 @@ try:
     v.run_command("test_text")
     assert v.substr(sublime.Region(0, v.size())) == "hello"
     v.run_command("undo")
+    print(v.sel()[0])
     assert v.sel()[0] == (0, 0)
     v = sublime.test_window.active_view()
     sublime.test_window.run_command("test_window")

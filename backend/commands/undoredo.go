@@ -6,12 +6,10 @@ import (
 
 type (
 	UndoCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 		hard bool
 	}
 	RedoCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 		hard bool
 	}

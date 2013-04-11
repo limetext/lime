@@ -313,6 +313,9 @@ func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
 }
 
 func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
+	p := Prof.Enter("key.filter")
+	defer p.Exit()
+
 	kp.fix()
 	k.DropLessEqualKeys(k.keyOff)
 	ret.keyOff = k.keyOff + 1
@@ -327,6 +330,9 @@ func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 }
 
 func (k *KeyBindings) Action(v *View) (kb *KeyBinding) {
+	p := Prof.Enter("key.action")
+	defer p.Exit()
+
 	for i := range k.Bindings {
 		if len(k.Bindings[i].Keys) > k.keyOff {
 			continue

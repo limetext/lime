@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"io/ioutil"
+	"lime/3rdparty/libs/gopy/lib"
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	_ "lime/backend/commands"
@@ -11,9 +12,14 @@ import (
 	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
+	"runtime"
 	"strings"
 	"time"
 )
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+}
 
 var (
 	lut = map[termbox.Key]backend.KeyPress{
@@ -92,20 +98,15 @@ func (t *tbfe) ActiveView(w *backend.Window) *backend.View {
 }
 
 func (t *tbfe) renderView(v *backend.View) {
+	p := backend.Prof.Enter("render")
+	defer p.Exit()
+
 	lay := t.layout[v]
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
 	sel := v.Sel()
-	substr := v.Buffer().String()
 	vr := t.VisibleRegion(v)
-	lines := strings.Split(substr, "\n")
-	s, _ := v.Buffer().RowCol(vr.Begin())
-	e, _ := v.Buffer().RowCol(vr.End())
-	off := len(strings.Join(lines[:s], "\n"))
-	if s == 0 {
-		off -= 1
-	}
-	lines = lines[s:e]
-	runes := []rune(strings.Join(lines, "\n"))
+	substr := v.Buffer().Substr(vr)
+	runes := []rune(substr)
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
@@ -137,7 +138,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	}
 
 	for i := range runes {
-		o := off + i + 1
+		o := vr.Begin() + i + 1
 		fg, bg := lfg, lbg
 		scope := v.ScopeName(o)
 		if scope != lastScope {
@@ -209,6 +210,8 @@ func (t *tbfe) renderView(v *backend.View) {
 }
 
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
+	p := backend.Prof.Enter("clip")
+	defer p.Exit()
 	h := t.layout[v].height
 	if e-s > h {
 		e = s + h
@@ -229,8 +232,12 @@ func (t *tbfe) clip(v *backend.View, s, e int) Region {
 
 func (t *tbfe) Show(v *backend.View, r Region) {
 	if !t.layout[v].visible.Covers(r) {
+		p := backend.Prof.Enter("show")
+		defer p.Exit()
+
 		l := t.layout[v]
 		lv := l.visible
+
 		s1, _ := v.Buffer().RowCol(lv.Begin())
 		e1, _ := v.Buffer().RowCol(lv.End())
 		s2, _ := v.Buffer().RowCol(r.Begin())
@@ -294,8 +301,8 @@ func (t *tbfe) scroll(b *Buffer, pos, delta int) {
 func (t *tbfe) loop() {
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
-	//ed.LogInput(true)
-	//ed.LogCommands(true)
+	ed.LogInput(true)
+	ed.LogCommands(true)
 	c := ed.Console()
 	var (
 		scheme textmate.Theme
@@ -384,11 +391,12 @@ func (t *tbfe) loop() {
 	if mode256 {
 		termbox.SetColorPalette(pal)
 	}
-	evchan := make(chan termbox.Event, 10)
+	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
 		termbox.Close()
-		fmt.Println(c.Buffer().String())
+		//fmt.Println(c.Buffer().String())
+		fmt.Println(backend.Prof)
 	}()
 
 	w := ed.NewWindow()
@@ -416,8 +424,8 @@ func (t *tbfe) loop() {
 
 	{
 		w, h := termbox.Size()
-		t.layout[v] = layout{0, 0, w, h - console_height, Region{0, v.Buffer().Size()}, 0}
-		t.Show(v, Region{0, 0})
+		t.layout[v] = layout{0, 0, w, h - console_height, Region{}, 0}
+		t.Show(v, Region{1, 1})
 		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
 	}
 
@@ -425,8 +433,20 @@ func (t *tbfe) loop() {
 	_ = sublime.Init
 	lastrender := time.Now()
 	render := false
+	og, err := py.Import("objgraph")
+	if err != nil {
+		log4go.Debug(err)
+		return
+	}
+	gr, err := og.Dict().GetItemString("show_growth")
+	if err != nil {
+		log4go.Debug(err)
+		return
+	}
 	for {
-		if timed := time.Since(lastrender) > (time.Millisecond * 30); timed || render {
+		p := backend.Prof.Enter("mainloop")
+
+		if timed := time.Since(lastrender) > (time.Millisecond * 15); timed || render {
 			lastrender = time.Now()
 			termbox.Clear(defaultFg, defaultBg)
 			w, h := termbox.Size()
@@ -446,8 +466,12 @@ func (t *tbfe) loop() {
 			blink_phase = time.Duration(float64(time.Second) * p)
 		}
 
+		timer := time.NewTimer(blink_phase / 2)
 		select {
 		case ev := <-evchan:
+			mp := backend.Prof.Enter("evchan")
+			limit := 1
+		loop:
 			switch ev.Type {
 			case termbox.EventError:
 				log4go.Debug("error occured")
@@ -466,15 +490,28 @@ func (t *tbfe) loop() {
 				if ev.Key == termbox.KeyCtrlQ {
 					return
 				}
+				log4go.Debug("Before")
+				gr.Base().CallFunctionObjArgs()
 				ed.HandleInput(kp)
+				log4go.Debug("After")
+				gr.Base().CallFunctionObjArgs()
 				blink = true
 				render = false
 			}
-		case <-time.After(blink_phase / 2):
+			if len(evchan) > 0 && false {
+				limit--
+				ev = <-evchan
+				goto loop
+			}
+			mp.Exit()
+		case <-timer.C:
+			// 	// case <-time.After(blink_phase / 2):
 			blink = !blink
-			// Divided by two since we're only doing a simple toggle blink
-			// TODO(q): Shouldn't redraw if blink is disabled...
+			// 	// 	// Divided by two since we're only doing a simple toggle blink
+			// 	// 	// TODO(q): Shouldn't redraw if blink is disabled...
 		}
+		timer.Stop()
+		p.Exit()
 	}
 }
 

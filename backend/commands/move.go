@@ -16,7 +16,6 @@ type (
 	}
 
 	ScrollLinesCommand struct {
-		DefaultCommand
 		BypassUndoCommand
 	}
 )
@@ -123,7 +122,18 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 }
 
 func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
-	amount, ok := args["amount"].(int)
+	var amount int
+	a, ok := args["amount"]
+	switch t := a.(type) {
+	case int:
+		amount = t
+	case int64:
+		amount = int(t)
+	case float64:
+		amount = int(t)
+	default:
+		ok = false
+	}
 	if !ok {
 		return fmt.Errorf("scroll_lines: Missing or invalid 'amount' argument: %v", args)
 	}

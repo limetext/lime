@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const chunk_size = 256 * 1024
+
 type (
 	Buffer struct {
 		HasId
@@ -61,12 +63,17 @@ func (buf *Buffer) Insert(point int, svalue string) {
 	value := []rune(svalue)
 	req := len(buf.data) + len(value)
 	if cap(buf.data) < req {
-		n := make([]rune, len(buf.data), req)
+		alloc := (req + chunk_size - 1) &^ (chunk_size - 1)
+		n := make([]rune, len(buf.data), alloc)
 		copy(n, buf.data)
 		buf.data = n
 	}
-	copy(buf.data[point+len(value):cap(buf.data)], buf.data[point:len(buf.data)])
-	copy(buf.data[point:cap(buf.data)], value)
+	if point == len(buf.data) {
+		copy(buf.data[point:req], value)
+	} else {
+		copy(buf.data[point+len(value):cap(buf.data)], buf.data[point:len(buf.data)])
+		copy(buf.data[point:req], value)
+	}
 	buf.data = buf.data[:req]
 	buf.changecount++
 	buf.notify(point, len(value))

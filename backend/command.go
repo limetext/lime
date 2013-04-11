@@ -6,6 +6,7 @@ type (
 		IsEnabled(Args) bool
 		IsVisible(Args) bool
 		Description(Args) string
+		BypassUndo() bool
 	}
 	WindowCommand interface {
 		Command
@@ -23,8 +24,14 @@ type (
 
 	DefaultCommand struct{}
 	// Use with caution..
-	BypassUndoCommand struct{}
+	BypassUndoCommand struct {
+		DefaultCommand
+	}
 )
+
+func (d *DefaultCommand) BypassUndo() bool {
+	return false
+}
 
 func (d *DefaultCommand) IsEnabled(Args) bool {
 	return true
@@ -36,4 +43,8 @@ func (d *DefaultCommand) IsVisible(Args) bool {
 
 func (d *DefaultCommand) Description(Args) string {
 	return "TODO"
+}
+
+func (b *BypassUndoCommand) BypassUndo() bool {
+	return true
 }

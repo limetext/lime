@@ -27,6 +27,7 @@ type (
 		scratch       bool
 		overwrite     bool
 		syntax        textmate.LanguageParser
+		lastParse     int
 		lastScopeNode *parser.Node
 		lastScopeBuf  bytes.Buffer
 		lastScopeName string
@@ -47,6 +48,7 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(map[string][]Region)}
+	ret.lastParse = -1
 	ret.Settings().Set("is_widget", false)
 	return ret
 }
@@ -92,12 +94,11 @@ func (v *View) setBuffer(b *Buffer) error {
 }
 
 func (v *View) flush(a, b int) {
+	e := Prof.Enter("view.flush")
+	defer e.Exit()
 	v.selection.Adjust(a, b)
-	// TODO(q): A full reparse every time the buffer changes is overkill.
-	// It would be better if the nodes are just adjusted as appropriate, together with a
-	// minimal parse of the new data
-	v.syntax.Parse(v.buffer.String())
 	v.lastScopeNode = nil
+	v.lastParse = -1
 	v.lastScopeBuf.Reset()
 	OnModified.Call(v)
 	OnSelectionModified.Call(v)
@@ -260,6 +261,14 @@ func (v *View) ScopeName(point int) string {
 		return ""
 	}
 
+	if v.lastParse != v.buffer.ChangeCount() {
+		// TODO(q): A full reparse every time the buffer changes is overkill.
+		// It would be better if the nodes are just adjusted as appropriate, together with a
+		// minimal parse of the new data
+		v.syntax.Parse(v.buffer.String())
+		v.lastParse = v.buffer.ChangeCount()
+	}
+
 	search := parser.Range{point, point + 1}
 	if v.lastScopeNode != nil && v.lastScopeNode.Range.Contains(search) {
 		if len(v.lastScopeNode.Children) != 0 {
@@ -290,11 +299,7 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	e := v.BeginEdit()
 	e.command = name
 	e.args = args
-	t := reflect.TypeOf(cmd)
-	for t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	_, e.bypassUndo = t.FieldByName("BypassUndoCommand")
+	e.bypassUndo = cmd.BypassUndo()
 
 	defer func() {
 		v.EndEdit(e)
@@ -302,6 +307,8 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
 		}
 	}()
+	p := Prof.Enter("view.cmd")
+	defer p.Exit()
 	return cmd.Run(v, e, args)
 }
 

@@ -6,7 +6,7 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	"lime/backend/primitives"
-	"time"
+	//"time"
 )
 
 var (
@@ -77,14 +77,14 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	} else {
 		defer pv.Decref()
 		log4go.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
-		interrupt := true
-		defer func() { interrupt = false }()
-		go func() {
-			<-time.After(time.Second * 5)
-			if interrupt {
-				py.SetInterrupt()
-			}
-		}()
+		// interrupt := true
+		// defer func() { interrupt = false }()
+		// go func() {
+		// 	<-time.After(time.Second * 5)
+		// 	if interrupt {
+		// 		py.SetInterrupt()
+		// 	}
+		// }()
 
 		if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
 			log4go.Error(err)
@@ -120,6 +120,7 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 		return backend.Unknown
 	}
 	defer pv.Decref()
+
 	if pk, err = toPython(key); err != nil {
 		log4go.Error(err)
 		return backend.Unknown
@@ -131,32 +132,35 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 		return backend.Unknown
 	}
 	defer po.Decref()
+
 	if poa, err = toPython(operand); err != nil {
 		log4go.Error(err)
 		return backend.Unknown
 	}
+	defer poa.Decref()
+
 	if pm, err = toPython(match_all); err != nil {
 		log4go.Error(err)
 		return backend.Unknown
 	}
 	defer pm.Decref()
-	interrupt := true
-	defer func() { interrupt = false }()
-	go func() {
-		<-time.After(time.Second * 5)
-		if interrupt {
-			py.SetInterrupt()
-		}
-	}()
+	// interrupt := true
+	// defer func() { interrupt = false }()
+	// go func() {
+	// 	<-time.After(time.Second * 5)
+	// 	if interrupt {
+	// 		py.SetInterrupt()
+	// 	}
+	// }()
 
 	if ret, err = c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
 		log4go.Error(err)
 		return backend.Unknown
 	}
+	defer ret.Decref()
 
 	//	if ret != nil {
 	log4go.Fine("onQueryContext: %v, %v", pv, ret.Base())
-	defer ret.Decref()
 	if r2, ok := ret.(*py.Bool); ok {
 		if r2.Bool() {
 			return backend.True

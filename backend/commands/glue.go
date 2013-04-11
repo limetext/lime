@@ -9,22 +9,18 @@ const lime_cmd_mark = "lime.cmd.mark"
 
 type (
 	MarkUndoGroupsForGluingCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 	}
 
 	GlueMarkedUndoGroupsCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 	}
 
 	MaybeMarkUndoGroupsForGluingCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 	}
 
 	UnmarkUndoGroupsForGluingCommand struct {
-		backend.DefaultCommand
 		backend.BypassUndoCommand
 	}
 )

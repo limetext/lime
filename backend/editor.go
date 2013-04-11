@@ -2,6 +2,7 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"fmt"
 	"io/ioutil"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
@@ -55,9 +56,13 @@ func (h *DummyFrontend) Show(v *View, r Region)        {}
 func (h *DummyFrontend) VisibleRegion(v *View) Region  { return Region{} }
 
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
+	p := Prof.Enter("log")
+	defer p.Exit()
 	c := GetEditor().Console()
+	fl := log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec)
+	f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(fl), fl)
 	e := c.BeginEdit()
-	c.Insert(e, c.Buffer().Size(), log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec))
+	c.Insert(e, c.Buffer().Size(), f)
 	c.EndEdit(e)
 }
 
@@ -171,6 +176,9 @@ func (e *Editor) CommandHandler() CommandHandler {
 }
 
 func (e *Editor) HandleInput(kp KeyPress) {
+	p := Prof.Enter("hi")
+	defer p.Exit()
+
 	if e.loginput {
 		log4go.Info("Key: %v", kp)
 	}
@@ -186,6 +194,7 @@ try_again:
 	v := e.Frontend().ActiveView(wnd)
 
 	if action := possible_actions.Action(v); action != nil {
+		p2 := Prof.Enter("hi.perform")
 		// TODO: what's the command precedence?
 		if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
 			if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
@@ -198,14 +207,17 @@ try_again:
 		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
 			log4go.Debug("Couldn't run applicationcommand: %s", err)
 		}
+		p2.Exit()
 	} else if possible_actions.keyOff > 1 {
 		e.lastBindings = e.keyBindings
 		goto try_again
 	} else if kp.IsCharacter() {
+		p2 := Prof.Enter("hi.character")
 		log4go.Finest("kp: %v, pos: %v", kp, possible_actions)
 		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
 			log4go.Debug("Couldn't run textcommand: %s", err)
 		}
+		p2.Exit()
 	}
 }
 

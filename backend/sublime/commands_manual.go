@@ -6,7 +6,8 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	"lime/backend/primitives"
-	"time"
+
+//	"time"
 )
 
 var (
@@ -47,6 +48,10 @@ type (
 		CommandGlue
 	}
 )
+
+func (c *CommandGlue) BypassUndo() bool {
+	return false
+}
 
 func (c *CommandGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	if args.Size() != 1 {
@@ -132,6 +137,8 @@ func pyError(err error) error {
 	return err
 }
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
+	p0 := backend.Prof.Enter("tc.run")
+	defer p0.Exit()
 	var (
 		pyv, pye, pyargs, obj py.Object
 		err                   error
@@ -140,31 +147,37 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 		return pyError(err)
 	}
 	defer pyv.Decref()
+
 	if pye, err = toPython(e); err != nil {
 		return pyError(err)
 	}
 	defer pye.Decref()
+
 	if pyargs, err = c.CreatePyArgs(args); err != nil {
 		return pyError(err)
 	}
 	defer pyargs.Decref()
+
+	init := backend.Prof.Enter("tc.init")
 	if obj, err = c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return pyError(err)
 	}
 	defer obj.Decref()
-	interrupt := true
-	defer func() { interrupt = false }()
-	go func() {
-		<-time.After(time.Second * 5)
-		if interrupt {
-			py.SetInterrupt()
-		}
-	}()
+	init.Exit()
+	// interrupt := true
+	// defer func() { interrupt = false }()
+	// go func() {
+	// 	<-time.After(time.Second * 5)
+	// 	if interrupt {
+	// 		py.SetInterrupt()
+	// 	}
+	// }()
+	exec := backend.Prof.Enter("tc.exec")
 	if obj.Base().HasAttrString("run_") {
 		// The plugin is probably trying to bypass the undostack...
 		old := v.IsScratch()
 		v.SetScratch(true)
-		log4go.Finest("Discarded: %s", e)
+		//		log4go.Finest("Discarded: %s", e)
 		v.EndEdit(e)
 		v.SetScratch(old)
 		if ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
@@ -177,6 +190,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	} else {
 		ret.Decref()
 	}
+	exec.Exit()
 	return nil
 }
 
@@ -195,14 +209,14 @@ func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
 		return pyError(err)
 	}
 	defer pyargs.Decref()
-	interrupt := true
-	defer func() { interrupt = false }()
-	go func() {
-		<-time.After(time.Second * 5)
-		if interrupt {
-			py.SetInterrupt()
-		}
-	}()
+	// interrupt := true
+	// defer func() { interrupt = false }()
+	// go func() {
+	// 	<-time.After(time.Second * 5)
+	// 	if interrupt {
+	// 		py.SetInterrupt()
+	// 	}
+	// }()
 
 	if obj, err = c.inner.Base().CallFunctionObjArgs(pyw); err != nil {
 		return pyError(err)
@@ -225,14 +239,14 @@ func (c *ApplicationCommandGlue) Run(args backend.Args) error {
 		return pyError(err)
 	}
 	defer pyargs.Decref()
-	interrupt := true
-	defer func() { interrupt = false }()
-	go func() {
-		<-time.After(time.Second * 5)
-		if interrupt {
-			py.SetInterrupt()
-		}
-	}()
+	// interrupt := true
+	// defer func() { interrupt = false }()
+	// go func() {
+	// 	<-time.After(time.Second * 5)
+	// 	if interrupt {
+	// 		py.SetInterrupt()
+	// 	}
+	// }()
 
 	if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
 		return pyError(err)

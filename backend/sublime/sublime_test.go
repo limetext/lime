@@ -1,8 +1,8 @@
 package sublime
 
 import (
-	//	"code.google.com/p/log4go"
 	"bytes"
+	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/quarnster/completion/util"
 	"io/ioutil"
@@ -43,6 +43,21 @@ func TestSublime(t *testing.T) {
 		(w.(*Window)).data = &backend.Window{}
 		subl.AddObject("test_window", w)
 	}
+
+	og, err := py.Import("objgraph")
+	if err != nil {
+		log4go.Debug(err)
+		return
+	}
+	gr, err := og.Dict().GetItemString("show_growth")
+	if err != nil {
+		log4go.Debug(err)
+		return
+	}
+
+	log4go.Debug("Before")
+	gr.Base().CallFunctionObjArgs()
+
 	if dir, err := os.Open("testdata"); err != nil {
 		t.Error(err)
 	} else if files, err := dir.Readdirnames(0); err != nil {
@@ -129,4 +144,26 @@ func TestSublime(t *testing.T) {
 			}
 		}
 	}
+	log4go.Debug("After")
+	gr.Base().CallFunctionObjArgs()
+
+	var v *backend.View
+	for _, v2 := range w.Views() {
+		if v == nil || v2.Buffer().Size() > v.Buffer().Size() {
+			v = v2
+		}
+	}
+
+	// log4go.Debug("Before")
+	// gr.Base().CallFunctionObjArgs()
+	// for i := 0; i < 500; i++ {
+	// 	ed.CommandHandler().RunTextCommand(v, "set_motion", backend.Args{"motion": "vi_j"})
+	// }
+	// for i := 0; i < 500; i++ {
+	// 	ed.CommandHandler().RunTextCommand(v, "set_motion", backend.Args{"motion": "vi_k"})
+	// }
+
+	// log4go.Debug("After")
+	// gr.Base().CallFunctionObjArgs()
+
 }

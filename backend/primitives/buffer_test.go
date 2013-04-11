@@ -3,10 +3,11 @@ package primitives
 import (
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"testing"
 )
 
-func TestRowCol(t *testing.T) {
+func TestRowColLineWord(t *testing.T) {
 	var b Buffer
 	if d, err := ioutil.ReadFile("./testdata/unittest.json"); err != nil {
 		t.Fatal(err)
@@ -87,4 +88,105 @@ func TestSomething(t *testing.T) {
 	t.Log(b.Word(7))
 	t.Log(b.Word(11))
 	t.Log(b.Word(12))
+}
+
+func fill(data []rune) {
+	for i := range data {
+		data[i] = rune(rand.Int())
+	}
+}
+
+func testbuffer() *Buffer {
+	var buf Buffer
+	buf.data = make([]rune, 1024*1024)
+	fill(buf.data)
+	return &buf
+}
+
+func BenchmarkSubstr(b *testing.B) {
+	b.StopTimer()
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Substr(buf.Word(r[i]))
+	}
+}
+
+func BenchmarkSubstrRunes(b *testing.B) {
+	b.StopTimer()
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		rr := buf.Word(r[i])
+		_ = buf.data[rr.A:rr.B]
+	}
+}
+
+func BenchmarkWord(b *testing.B) {
+	b.StopTimer()
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Word(r[i])
+	}
+}
+
+func BenchmarkLine(b *testing.B) {
+	b.StopTimer()
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Line(r[i])
+	}
+}
+
+func BenchmarkRowCol(b *testing.B) {
+	b.StopTimer()
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.RowCol(r[i])
+	}
+}
+
+func BenchmarkBufferInsertRand(b *testing.B) {
+	b.StopTimer()
+	data := make([]rune, 1024)
+	fill(data)
+	sdata := string(data)
+	r := rand.Perm(b.N)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Insert(r[i], sdata)
+	}
+}
+
+func BenchmarkBufferInsertBegin(b *testing.B) {
+	b.StopTimer()
+	data := make([]rune, 1024)
+	fill(data)
+	sdata := string(data)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Insert(0, sdata)
+	}
+}
+
+func BenchmarkBufferInsertEnd(b *testing.B) {
+	b.StopTimer()
+	data := make([]rune, 1024)
+	fill(data)
+	sdata := string(data)
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Insert(buf.Size(), sdata)
+	}
 }
