@@ -1,23 +1,29 @@
 package primitives
 
 import (
-	"regexp"
 	"strings"
 )
 
-const chunk_size = 256 * 1024
-
 type (
+	BufferInterface interface {
+		Size() int
+		SubstrR(r Region) []rune
+		Insert(point int, data []rune)
+		Erase(point, length int)
+		Index(int) rune
+	}
+	BufferChangedCallback func(buf *Buffer, position, delta int)
+
 	Buffer struct {
 		HasId
 		HasSettings
+		NaiveBuffer
+		//node
 		changecount int
 		name        string
 		filename    string
-		data        []rune
 		callbacks   []BufferChangedCallback
 	}
-	BufferChangedCallback func(buf *Buffer, position, delta int)
 )
 
 func (b *Buffer) AddCallback(cb BufferChangedCallback) {
@@ -40,16 +46,6 @@ func (b *Buffer) SetFileName(n string) {
 	b.filename = n
 }
 
-func (b *Buffer) Size() int {
-	return len(b.data)
-}
-
-func (buf *Buffer) Substr(r Region) string {
-	l := len(buf.data)
-	a, b := Clamp(0, l, r.Begin()), Clamp(0, l, r.End())
-	return string(buf.data[a:b])
-}
-
 func (buf *Buffer) notify(position, delta int) {
 	for i := range buf.callbacks {
 		buf.callbacks[i](buf, position, delta)
@@ -61,20 +57,7 @@ func (buf *Buffer) Insert(point int, svalue string) {
 		return
 	}
 	value := []rune(svalue)
-	req := len(buf.data) + len(value)
-	if cap(buf.data) < req {
-		alloc := (req + chunk_size - 1) &^ (chunk_size - 1)
-		n := make([]rune, len(buf.data), alloc)
-		copy(n, buf.data)
-		buf.data = n
-	}
-	if point == len(buf.data) {
-		copy(buf.data[point:req], value)
-	} else {
-		copy(buf.data[point+len(value):cap(buf.data)], buf.data[point:len(buf.data)])
-		copy(buf.data[point:req], value)
-	}
-	buf.data = buf.data[:req]
+	buf.NaiveBuffer.Insert(point, value)
 	buf.changecount++
 	buf.notify(point, len(value))
 }
@@ -84,49 +67,24 @@ func (buf *Buffer) Erase(point, length int) {
 		return
 	}
 	buf.changecount++
-	buf.data = append(buf.data[0:point], buf.data[point+length:len(buf.data)]...)
+	buf.NaiveBuffer.Erase(point, length)
 	buf.notify(point+length, -length)
 }
 
+func (b *Buffer) Substr(r Region) string {
+	return string(b.SubstrR(r))
+}
+
 func (b *Buffer) String() string {
-	return string(b.data)
+	return b.Substr(Region{0, b.Size()})
 }
 
 func (b *Buffer) Runes() []rune {
-	return b.data
+	return b.SubstrR(Region{0, b.Size()})
 }
 
 func (b *Buffer) ChangeCount() int {
 	return b.changecount
-}
-
-func (b *Buffer) RowCol(point int) (row, col int) {
-	if point < 0 {
-		point = 0
-	} else if l := b.Size(); point > l {
-		point = l
-	}
-	lines := strings.Split(string(b.data[:point]), "\n")
-	if l := len(lines); l == 0 {
-		return 0, 0
-	} else {
-		return l - 1, len([]rune(lines[l-1]))
-	}
-}
-
-func (b *Buffer) TextPoint(row, col int) int {
-	lines := strings.Split(string(b.data), "\n")
-	if row < 0 || len(lines) == 0 {
-		return 0
-	}
-	if row > len(lines) {
-		return b.Size()
-	}
-	if row == 0 {
-		col--
-	}
-	offset := len([]rune(strings.Join(lines[:row], "\n"))) + col + 1
-	return offset
 }
 
 func (b *Buffer) Line(offset int) Region {
@@ -135,14 +93,31 @@ func (b *Buffer) Line(offset int) Region {
 	} else if s := b.Size(); offset >= s {
 		return Region{s, s}
 	}
-	data := b.data
-	s := offset
-	for s > 0 && data[s-1] != '\n' {
+	soffset := offset
+sloop:
+	o := Clamp(0, soffset, soffset-32)
+	sub := b.SubstrR(Region{o, soffset})
+	s := soffset
+	for s > o && sub[s-o-1] != '\n' {
 		s--
 	}
-	e := offset
-	for e < len(data) && data[e] != '\n' {
+	if s == o && o > 0 && sub[0] != '\n' {
+		soffset = o
+		goto sloop
+	}
+
+	l := b.Size()
+	eoffset := offset
+eloop:
+	o = Clamp(eoffset, l, eoffset+32)
+	sub = b.SubstrR(Region{eoffset, o})
+	e := eoffset
+	for e < o && sub[e-eoffset] != '\n' {
 		e++
+	}
+	if e == o && o < l && sub[o-eoffset-1] != '\n' {
+		eoffset = o
+		goto eloop
 	}
 	return Region{s, e}
 }
@@ -157,9 +132,11 @@ func (b *Buffer) Lines(r Region) Region {
 
 func (b *Buffer) FullLine(offset int) Region {
 	r := b.Line(offset)
-	d := b.data
 	s := b.Size()
-	for r.B < s && (d[r.B] != '\r' && d[r.B] != '\n') {
+	for r.B < s {
+		if i := b.Index(r.B); i == '\r' || i == '\n' {
+			break
+		}
 		r.B++
 	}
 	if r.B != b.Size() {
@@ -176,16 +153,11 @@ func (b *Buffer) FullLines(r Region) Region {
 	return Region{s.Begin(), e.End()}
 }
 
-var (
-	vwre1 = regexp.MustCompile(`\b\w*$`)
-	vwre2 = regexp.MustCompile(`^\w*`)
-)
-
 func (b *Buffer) Word(offset int) Region {
 	_, col := b.RowCol(offset)
 	lr := b.FullLine(offset)
 
-	line := b.data[lr.Begin():lr.End()]
+	line := b.SubstrR(lr)
 	if len(line) == 0 {
 		return Region{offset, offset}
 	}
@@ -225,7 +197,7 @@ func (b *Buffer) Word(offset int) Region {
 	}
 	r := Region{lr.Begin() + li, lr.End()}
 	lc += lr.Begin()
-	if lc != offset && !strings.ContainsRune(spacing, b.data[r.A]) {
+	if lc != offset && !strings.ContainsRune(spacing, b.Index(r.A)) {
 		r.B = lc
 	}
 	if r.A == offset && r.B == r.A+1 {
@@ -240,4 +212,38 @@ func (b *Buffer) Words(r Region) Region {
 	s := b.Word(r.Begin())
 	e := b.Word(r.End())
 	return Region{s.Begin(), e.End()}
+}
+
+func (b *Buffer) RowCol(point int) (row, col int) {
+	if point < 0 {
+		point = 0
+	} else if l := b.Size(); point > l {
+		point = l
+	}
+
+	sub := b.SubstrR(Region{0, point})
+	for _, r := range sub {
+		if r == '\n' {
+			row++
+			col = 0
+		} else {
+			col++
+		}
+	}
+	return
+}
+
+func (b *Buffer) TextPoint(row, col int) (i int) {
+	if row == 0 && col == 0 {
+		return 0
+	}
+	for l := b.Size(); row >= 0 && i < l; {
+		fl := b.FullLine(i)
+		row--
+		if row < 0 {
+			return i + col
+		}
+		i += fl.Size()
+	}
+	return i
 }

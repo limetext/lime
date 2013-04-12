@@ -40,7 +40,7 @@ func TestRowColLineWord(t *testing.T) {
 				a.WordAtOffset = b.Word(test.Offset)
 				a.FullLineAtOffset = b.FullLine(test.Offset)
 				a.Offset = b.TextPoint(test.Line, test.Column)
-				//				t.Log(a)
+				t.Log(a)
 				if a.Line != test.Line {
 					failed++
 					t.Logf("%d Line mismatch: %d != %d", i, a.Line, test.Line)
@@ -94,15 +94,49 @@ func fill(data []rune) {
 	s := int('a')
 	e := int('z')
 	l := int(e - s)
+	const (
+		max_word = 12
+		max_line = 256
+		min_word = 6
+		min_line = 10
+	)
+	var (
+		word_size, line_size int
+	)
+
 	for i := range data {
-		data[i] = rune(s + (rand.Int() % l))
+		if word_size <= 0 {
+			word_size = min_word + rand.Intn(max_word-min_word)
+			data[i] = ' '
+		} else if line_size <= 0 {
+			line_size = min_line + rand.Intn(max_line-min_line)
+			data[i] = '\n'
+		} else {
+			data[i] = rune(s + (rand.Int() % l))
+		}
+		word_size--
+		line_size--
 	}
 }
 
 const (
 	testbuffer_size = 1024 * 1024
 	testinsert_size = 1
+	test_rndpoints  = 128
 )
+
+func benchptsinit(b *testing.B) (*Buffer, []int) {
+	b.StopTimer()
+	buf := testbuffer()
+	pts := make([]int, test_rndpoints)
+	s := buf.Size()
+	for i := range pts {
+		pts[i] = rand.Intn(s)
+	}
+	b.StartTimer()
+	return buf, pts
+
+}
 
 func testinsert() string {
 	data := make([]rune, 1)
@@ -112,29 +146,37 @@ func testinsert() string {
 
 func testbuffer() *Buffer {
 	var buf Buffer
-	buf.data = make([]rune, testbuffer_size)
-	fill(buf.data)
+	data := make([]rune, testbuffer_size)
+	fill(data)
+	buf.Insert(0, string(data))
 	return &buf
 }
 
-func BenchmarkSubstr(b *testing.B) {
+func benchsubinit(b *testing.B) (*Buffer, []Region) {
 	b.StopTimer()
-	r := rand.Perm(b.N)
-	buf := testbuffer()
+	buf, pts := benchptsinit(b)
+
+	s := len(pts)
+	wr := make([]Region, s)
+	for i := range wr {
+		wr[i] = buf.Word(pts[i] % s)
+	}
 	b.StartTimer()
+	return buf, wr
+}
+func BenchmarkSubstr(b *testing.B) {
+	buf, wr := benchsubinit(b)
+	l := len(wr)
 	for i := 0; i < b.N; i++ {
-		buf.Substr(buf.Word(r[i]))
+		buf.Substr(wr[i%l])
 	}
 }
 
-func BenchmarkSubstrRunes(b *testing.B) {
-	b.StopTimer()
-	r := rand.Perm(b.N)
-	buf := testbuffer()
-	b.StartTimer()
+func BenchmarkSubstrR(b *testing.B) {
+	buf, wr := benchsubinit(b)
+	l := len(wr)
 	for i := 0; i < b.N; i++ {
-		rr := buf.Word(r[i])
-		_ = buf.data[rr.A:rr.B]
+		buf.SubstrR(wr[i%l])
 	}
 }
 
@@ -159,23 +201,35 @@ func BenchmarkLine(b *testing.B) {
 }
 
 func BenchmarkRowCol(b *testing.B) {
+	buf, pts := benchptsinit(b)
+	l := len(pts)
+	for i := 0; i < b.N; i++ {
+		buf.RowCol(pts[i%l])
+	}
+}
+
+func BenchmarkTextPoint(b *testing.B) {
 	b.StopTimer()
-	r := rand.Perm(b.N)
-	buf := testbuffer()
+	buf, pts := benchptsinit(b)
+	l := len(pts)
+	rc := make([]Region, l)
+	for i := range rc {
+		rc[i].A = rand.Intn(1000)
+		rc[i].B = rand.Intn(200)
+	}
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		buf.RowCol(r[i])
+		r := rc[i%l]
+		buf.TextPoint(r.A, r.B)
 	}
 }
 
 func BenchmarkBufferInsertRand(b *testing.B) {
-	b.StopTimer()
 	sdata := testinsert()
-	r := rand.Perm(b.N)
-	buf := testbuffer()
-	b.StartTimer()
+	buf, pts := benchptsinit(b)
+	l := len(pts)
 	for i := 0; i < b.N; i++ {
-		buf.Insert(r[i], sdata)
+		buf.Insert(pts[i%l], sdata)
 	}
 }
 

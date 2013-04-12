@@ -10,8 +10,8 @@ func TestActions(t *testing.T) {
 		expected string
 	}
 	const init = "hello world"
-
-	buffer := Buffer{data: []rune(init)}
+	var buffer Buffer
+	buffer.Insert(0, init)
 	tests := []Test{
 		{NewInsertAction(&buffer, 0, "hello"), "hellohello world"},
 		{NewInsertAction(&buffer, 1, "hello"), "hhelloello world"},
@@ -51,8 +51,9 @@ func TestActionsUtf(t *testing.T) {
 		expected string
 	}
 	const init = "€þıœəßðĸʒ×ŋµåäö𝄞"
+	var buffer Buffer
+	buffer.Insert(0, init)
 
-	buffer := Buffer{data: []rune(init)}
 	tests := []Test{
 		{NewInsertAction(&buffer, 0, "𝄞€ŋ"), "𝄞€ŋ€þıœəßðĸʒ×ŋµåäö𝄞"},
 		{NewInsertAction(&buffer, 1, "𝄞€ŋ"), "€𝄞€ŋþıœəßðĸʒ×ŋµåäö𝄞"},

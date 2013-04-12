@@ -1,3 +1,5 @@
+// +build ignore
+
 package primitives
 
 import (
@@ -43,12 +45,12 @@ func (n *node) dump(indent string) string {
 	return ret
 }
 
-func (n *node) Rune(pos int) rune {
+func (n *node) Index(pos int) rune {
 	if s := pos - n.weight; s >= 0 {
-		return n.right.Rune(s)
+		return n.right.Index(s)
 	} else if n.weight > pos {
 		if n.left != nil {
-			return n.left.Rune(pos)
+			return n.left.Index(pos)
 		} else {
 			return n.data[pos]
 		}
@@ -70,10 +72,23 @@ func (n node) String() string {
 }
 
 func (n *node) SubstrR(r Region) []rune {
-	data := make([]rune, r.Size())
-	b := r.Begin()
-	for i := range data {
-		data[i] = n.Rune(i + b)
+	l := n.Size()
+	a, b := Clamp(0, l, r.Begin()), Clamp(0, l, r.End())
+
+	l = b - a
+	data := make([]rune, 0, l)
+	for l > 0 {
+		inner, off := n.find(a)
+		if inner == nil {
+			break
+		} else {
+			//			fmt.Println(a, l, off)
+			r := Clamp(0, l, len(inner.data[off:]))
+			data = append(data, inner.data[off:off+r]...)
+			a += r
+			l -= r
+		}
+		//data[i] = //n.Index(i + a)
 	}
 	return data
 }
@@ -82,13 +97,13 @@ func (n *node) Substr(r Region) string {
 	return string(n.SubstrR(r))
 }
 
-func (n *node) find(pos int) *node {
-	if n.weight < pos {
-		return n.right.find(pos - n.weight)
+func (n *node) find(pos int) (*node, int) {
+	if l := pos - n.weight; l >= 0 {
+		return n.right.find(l)
 	} else if n.left != nil {
 		return n.left.find(pos)
 	} else {
-		return n
+		return n, pos
 	}
 }
 
@@ -146,7 +161,7 @@ func newNode(data []rune) *node {
 func (n *node) patch() {
 	n.simplify()
 	if n.left != nil {
-		n.weight = n.left.length()
+		n.weight = n.left.Size()
 		if n.right != nil && n.right.left != nil && n.left.leaf() && n.right.left.leaf() && n.weight+n.right.weight < merge {
 			r := n.right.split(n.right.weight)
 			n.simplify()
@@ -182,11 +197,11 @@ func (n *node) split(pos int) (right *node) {
 	return right
 }
 
-func (n *node) length() int {
+func (n *node) Size() int {
 	ret := 0
 	ret += n.weight
 	if n.right != nil {
-		ret += n.right.length()
+		ret += n.right.Size()
 	}
 	return ret
 }
@@ -197,7 +212,7 @@ func (n *node) join(other *node) {
 		n.left = &left
 		n.right = other
 		n.data = nil
-		n.weight = n.left.length()
+		n.weight = n.left.Size()
 	} else {
 		// Allocating a new buffer as other nodes might have references
 		// into sub positions in the original
@@ -235,10 +250,9 @@ func (n *node) concat(other *node) {
 	n.patch()
 }
 
-func (n *node) insert(position int, data string) {
-	l := n.length()
+func (n *node) Insert(position int, r []rune) {
+	l := n.Size()
 	position = Clamp(0, l, position)
-	r := []rune(data)
 	left := newNode(r)
 	if position >= l {
 		n.concat(left)
@@ -249,7 +263,7 @@ func (n *node) insert(position int, data string) {
 	}
 }
 
-func (n *node) erase(position, length int) {
+func (n *node) Erase(position, length int) {
 	right := n.split(position + length)
 	n.split(position)
 	n.concat(right)
