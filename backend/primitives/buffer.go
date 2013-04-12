@@ -154,8 +154,11 @@ func (b *Buffer) FullLines(r Region) Region {
 }
 
 func (b *Buffer) Word(offset int) Region {
-	_, col := b.RowCol(offset)
+	if offset < 0 {
+		offset = 0
+	}
 	lr := b.FullLine(offset)
+	col := offset - lr.Begin()
 
 	line := b.SubstrR(lr)
 	if len(line) == 0 {
