@@ -91,14 +91,28 @@ func TestSomething(t *testing.T) {
 }
 
 func fill(data []rune) {
+	s := int('a')
+	e := int('z')
+	l := int(e - s)
 	for i := range data {
-		data[i] = rune(rand.Int())
+		data[i] = rune(s + (rand.Int() % l))
 	}
+}
+
+const (
+	testbuffer_size = 1024 * 1024
+	testinsert_size = 1
+)
+
+func testinsert() string {
+	data := make([]rune, 1)
+	fill(data)
+	return string(data)
 }
 
 func testbuffer() *Buffer {
 	var buf Buffer
-	buf.data = make([]rune, 1024*1024)
+	buf.data = make([]rune, testbuffer_size)
 	fill(buf.data)
 	return &buf
 }
@@ -156,9 +170,7 @@ func BenchmarkRowCol(b *testing.B) {
 
 func BenchmarkBufferInsertRand(b *testing.B) {
 	b.StopTimer()
-	data := make([]rune, 1024)
-	fill(data)
-	sdata := string(data)
+	sdata := testinsert()
 	r := rand.Perm(b.N)
 	buf := testbuffer()
 	b.StartTimer()
@@ -169,9 +181,7 @@ func BenchmarkBufferInsertRand(b *testing.B) {
 
 func BenchmarkBufferInsertBegin(b *testing.B) {
 	b.StopTimer()
-	data := make([]rune, 1024)
-	fill(data)
-	sdata := string(data)
+	sdata := testinsert()
 	buf := testbuffer()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -179,11 +189,19 @@ func BenchmarkBufferInsertBegin(b *testing.B) {
 	}
 }
 
+func BenchmarkBufferInsertMid(b *testing.B) {
+	b.StopTimer()
+	sdata := testinsert()
+	buf := testbuffer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		buf.Insert(buf.Size()/2, sdata)
+	}
+}
+
 func BenchmarkBufferInsertEnd(b *testing.B) {
 	b.StopTimer()
-	data := make([]rune, 1024)
-	fill(data)
-	sdata := string(data)
+	sdata := testinsert()
 	buf := testbuffer()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
