@@ -44,7 +44,7 @@ func (n *node) dump(indent string) string {
 }
 
 func (n *node) Rune(pos int) rune {
-	if s := pos - n.weight; s >= 0 && n.right != nil {
+	if s := pos - n.weight; s >= 0 {
 		return n.right.Rune(s)
 	} else if n.weight > pos {
 		if n.left != nil {
@@ -53,8 +53,9 @@ func (n *node) Rune(pos int) rune {
 			return n.data[pos]
 		}
 	}
-	return ' '
+	panic(fmt.Sprintf("Index out of bounds: %d >= %d", pos, n.weight))
 }
+
 func (n node) String() string {
 	ret := ""
 	if n.left != nil {
@@ -68,17 +69,20 @@ func (n node) String() string {
 	return ret
 }
 
-func (n *node) Substr(r Region) string {
+func (n *node) SubstrR(r Region) []rune {
 	data := make([]rune, r.Size())
 	b := r.Begin()
 	for i := range data {
 		data[i] = n.Rune(i + b)
 	}
-	return string(data)
+	return data
+}
+
+func (n *node) Substr(r Region) string {
+	return string(n.SubstrR(r))
 }
 
 func (n *node) find(pos int) *node {
-	fmt.Println(pos)
 	if n.weight < pos {
 		return n.right.find(pos - n.weight)
 	} else if n.left != nil {
@@ -121,14 +125,14 @@ func (n *node) leaf() bool {
 	return n.le() && n.re()
 }
 
-var merge = 1024 * 4
+var merge = 1024 * 2
 
 func newNodeEx(data []rune, split int) *node {
 	if len(data) > split {
 		half := len(data) / 2
 		return &node{half,
-			newNodeEx(data[half:], split),
 			newNodeEx(data[:half], split),
+			newNodeEx(data[half:], split),
 			nil,
 		}
 	}
@@ -173,9 +177,7 @@ func (n *node) split(pos int) (right *node) {
 	}
 	n.right = nil
 	n.patch()
-	if right != nil {
-		right.patch()
-	}
+	right.patch()
 
 	return right
 }
@@ -207,13 +209,12 @@ func (n *node) join(other *node) {
 }
 
 func (n *node) concat(other *node) {
-	if len(other.data) != 0 {
-		if len(n.data) != 0 {
+	if other.leaf() {
+		if n.leaf() {
 			//  If both arguments are short leaves, we produce a flat rope (leaf) consisting of the concatenation.
 			n.join(other)
-			return
 		} else if n.right != nil {
-			if n.right.le() {
+			if n.right.leaf() {
 				// If the left argument is a concatenation node whose right son is a short leaf,
 				// and the right argument is also a short leaf,
 				// then we concatenate the two leaves, and then concatenate the result to the left son of the left argument.
