@@ -23,6 +23,7 @@ func (buf *NaiveBuffer) SubstrR(r Region) []rune {
 }
 
 func (buf *NaiveBuffer) Insert(point int, value []rune) {
+	point = Clamp(0, len(buf.data), point)
 	req := len(buf.data) + len(value)
 	if cap(buf.data) < req {
 		alloc := (req + chunk_size - 1) &^ (chunk_size - 1)

@@ -43,6 +43,14 @@ func TestActions(t *testing.T) {
 			t.Errorf("Undo %d, Expected %s, but got %s", i, init, d)
 		}
 	}
+	bigdata := make([]rune, 1024*1024)
+	fill(bigdata)
+	buffer.Insert(0, string(bigdata))
+	a := NewInsertAction(&buffer, buffer.Size(), "test")
+	a.Apply()
+	if end := buffer.Substr(Region{buffer.Size() - 4, buffer.Size()}); end != "test" {
+		t.Errorf("%s != test", end)
+	}
 }
 
 func TestActionsUtf(t *testing.T) {

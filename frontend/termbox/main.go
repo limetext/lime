@@ -105,8 +105,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
 	sel := v.Sel()
 	vr := t.VisibleRegion(v)
-	substr := v.Buffer().Substr(vr)
-	runes := []rune(substr)
+	runes := v.Buffer().SubstrR(vr)
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
@@ -138,7 +137,7 @@ func (t *tbfe) renderView(v *backend.View) {
 	}
 
 	for i := range runes {
-		o := vr.Begin() + i + 1
+		o := vr.Begin() + i
 		fg, bg := lfg, lbg
 		scope := v.ScopeName(o)
 		if scope != lastScope {
@@ -395,7 +394,7 @@ func (t *tbfe) loop() {
 	defer func() {
 		close(evchan)
 		termbox.Close()
-		//fmt.Println(c.Buffer().String())
+		fmt.Println(c.Buffer().String())
 		fmt.Println(backend.Prof)
 	}()
 
@@ -424,10 +423,12 @@ func (t *tbfe) loop() {
 
 	{
 		w, h := termbox.Size()
-		t.layout[v] = layout{0, 0, w, h - console_height, Region{}, 0}
+		t.layout[v] = layout{0, 0, w, h - console_height - 1, Region{}, 0}
 		t.Show(v, Region{1, 1})
 		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
 	}
+	t.Show(v, Region{100, 100})
+	t.Show(v, Region{1, 1})
 
 	sublime.Init()
 	_ = sublime.Init
@@ -445,7 +446,6 @@ func (t *tbfe) loop() {
 	}
 	for {
 		p := backend.Prof.Enter("mainloop")
-
 		if timed := time.Since(lastrender) > (time.Millisecond * 15); timed || render {
 			lastrender = time.Now()
 			termbox.Clear(defaultFg, defaultBg)
@@ -470,7 +470,7 @@ func (t *tbfe) loop() {
 		select {
 		case ev := <-evchan:
 			mp := backend.Prof.Enter("evchan")
-			limit := 1
+			limit := 3
 		loop:
 			switch ev.Type {
 			case termbox.EventError:
@@ -498,7 +498,7 @@ func (t *tbfe) loop() {
 				blink = true
 				render = false
 			}
-			if len(evchan) > 0 && false {
+			if len(evchan) > 0 {
 				limit--
 				ev = <-evchan
 				goto loop

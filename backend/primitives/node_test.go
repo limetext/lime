@@ -137,7 +137,7 @@ func TestNodeInsert(t *testing.T) {
 
 	const (
 		size  = 256
-		isize = 256
+		isize = 32
 	)
 	od := make([]rune, size)
 	fill(od)
@@ -172,6 +172,129 @@ func TestNodeInsert(t *testing.T) {
 					t.Log(string(j))
 					na := n.dump("\t")
 					t.Fatalf("%d, %d, %d: %d != %d\n%s", m, i, j, n.Size(), l+1, na)
+				}
+			}
+		}
+	}
+
+	offs := []int{-100, len(od) - 1, len(od) + 1, len(od) + 100}
+
+	for _, m := range merges {
+		for i, o := range offs {
+			n := newNode(od)
+			b := NaiveBuffer{}
+			b.Insert(0, od)
+			n.Insert(o, in)
+			b.Insert(o, in)
+			r := Region{0, b.Size()}
+
+			if b.Size() != n.Size() {
+				na := n.dump("\t")
+				t.Fatalf("%d, %d: %d != %d\n%s", m, i, b.Size(), n.Size(), na)
+			} else if e, a := string(b.SubstrR(r)), string(n.SubstrR(r)); e != a {
+				na := n.dump("\t")
+				t.Fatalf("%d, %d: %s != %s\n%s", m, i, e, a, na)
+			}
+		}
+	}
+}
+
+func TestNodeRowCol(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Short")
+	}
+	const (
+		size  = 256
+		isize = 256
+	)
+	od := make([]rune, size)
+	fill(od)
+
+	in := make([]rune, size)
+	fill(in)
+
+	for _, m := range merges {
+		merge = m
+		n := newNode(od)
+		b := NaiveBuffer{}
+		b.Insert(0, od)
+		for i := 0; i < 30; i++ {
+			n.Insert(n.Size(), in)
+			b.Insert(b.Size(), in)
+			r := Region{0, b.Size()}
+			if b.Size() != n.Size() {
+				na := n.dump("\t")
+				t.Fatalf("%d, %d: %d != %d\n%s", m, i, b.Size(), n.Size(), na)
+			} else if e, a := string(b.SubstrR(r)), string(n.SubstrR(r)); e != a {
+				na := n.dump("\t")
+				t.Fatalf("%d, %d: %s != %s\n%s", m, i, e, a, na)
+			} else {
+				for j := -5; j < n.Size()+10; j++ {
+					r1, c1 := n.RowCol(j)
+					r2, c2 := b.RowCol(j)
+					if r1 != r2 || c1 != c2 {
+						t.Fatalf("%d, %d: %d != %d || %d != %d", m, i, r1, r2, c1, c2)
+					} else if tp1, tp2 := b.TextPoint(r2, c2), n.TextPoint(r1, c1); tp1 != tp2 {
+						t.Fatalf("%d, %d: %d != %d", m, i, tp1, tp2)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestNodeSubstr(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Short")
+	}
+	const (
+		size  = 256
+		isize = 13
+	)
+	od := make([]rune, size)
+	fill(od)
+
+	in := make([]rune, size)
+	fill(in)
+
+	for _, m := range merges {
+		merge = m
+		n := newNode(od)
+		b := NaiveBuffer{}
+		b.Insert(0, od)
+		for i := 0; i < 10; i++ {
+			n.Insert(n.Size(), in)
+			b.Insert(b.Size(), in)
+			if b.Size() != n.Size() {
+				na := n.dump("\t")
+				t.Fatalf("%d, %d: %d != %d\n%s", m, i, b.Size(), n.Size(), na)
+			}
+			regions := []Region{
+				{0, b.Size()},
+				{b.Size() / 2, b.Size()},
+				{b.Size() / 4, b.Size() / 2},
+				{b.Size() / 8, b.Size() / 4},
+				{b.Size() / 16, b.Size() / 8},
+				{b.Size() - b.Size()/32, b.Size()},
+				{b.Size() - b.Size()/16, b.Size()},
+				{b.Size() - b.Size()/8, b.Size()},
+				{b.Size() - b.Size()/4, b.Size()},
+				{b.Size() - b.Size()/2, b.Size()},
+				{b.Size()/2 - b.Size()/32, b.Size() / 2},
+				{b.Size()/2 - b.Size()/16, b.Size() / 2},
+				{b.Size()/2 - b.Size()/8, b.Size() / 2},
+				{b.Size()/2 - b.Size()/4, b.Size() / 2},
+				{b.Size()/4 - b.Size()/32, b.Size() / 4},
+				{b.Size()/4 - b.Size()/16, b.Size() / 4},
+				{b.Size()/4 - b.Size()/8, b.Size() / 4},
+				{b.Size()/4 - b.Size()/8, b.Size() + 10},
+				{b.Size() - 10, b.Size() + 10},
+				{-10, 10},
+			}
+			for _, r := range regions {
+				if e, a := string(b.SubstrR(r)), string(n.SubstrR(r)); e != a {
+					na := n.dump("\t")
+					t.Fatalf("%d, %d: %s != %s\n%s", m, i, e, a, na)
 				}
 			}
 		}

@@ -110,9 +110,13 @@ func (n *node) rc(pos int) (row, col int) {
 	if l := pos - n.weight; l > 0 {
 		if n.right != nil {
 			r, c := n.right.rc(l)
+			if r == 0 {
+				_, c2 := n.left.rc(n.weight)
+				c += c2
+			}
 			return n.lines + r, c
 		} else {
-			return n.lines, l
+			return n.lines, 0
 		}
 	} else if n.left != nil {
 		return n.left.rc(pos)
@@ -162,7 +166,7 @@ func (n *node) findline(off, line int) (*node, int, int) {
 	if n.leaf() {
 		return n, off, line
 	} else {
-		if line-n.lines < 0 {
+		if line-n.lines <= 0 {
 			return n.left.findline(off, line)
 		} else {
 			if n.right != nil {
@@ -207,7 +211,7 @@ func (n *node) leaf() bool {
 	return n.le() && n.re()
 }
 
-var merge = 1024 * 2
+var merge = 1024 * 8
 
 func linecount(data []rune) (ret int) {
 	for _, r := range data {

@@ -84,7 +84,7 @@ func NewEraseAction(b *Buffer, region Region) Action {
 }
 
 func NewInsertAction(b *Buffer, point int, value string) Action {
-	return &insertAction{b, Clamp(0, len(b.data), point), []rune(value)}
+	return &insertAction{b, Clamp(0, b.Size(), point), []rune(value)}
 }
 
 func NewReplaceAction(b *Buffer, region Region, value string) Action {

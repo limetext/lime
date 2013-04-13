@@ -40,7 +40,6 @@ func TestRowColLineWord(t *testing.T) {
 				a.WordAtOffset = b.Word(test.Offset)
 				a.FullLineAtOffset = b.FullLine(test.Offset)
 				a.Offset = b.TextPoint(test.Line, test.Column)
-				t.Log(a, "\n", test)
 				if a.Line != test.Line {
 					failed++
 					t.Fatalf("%d Line mismatch: %d != %d", i, a.Line, test.Line)
@@ -82,6 +81,13 @@ func TestRowColLineWord(t *testing.T) {
 	b.Insert(0, "Hello World!\nTest123123\nAbrakadabra\nabc")
 	if r, c := b.RowCol(b.Size()); r != 3 || c != 3 {
 		t.Errorf("These should be 3: %d, %d", r, c)
+	}
+
+	if r, c := b.RowCol(b.Size() + 100); r != 3 || c != 3 {
+		t.Errorf("These should be 3: %d, %d", r, c)
+	}
+	if tp, s := b.TextPoint(100, 100), b.Size(); tp != s {
+		t.Errorf("%d != %d", tp, s)
 	}
 }
 

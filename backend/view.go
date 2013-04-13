@@ -111,8 +111,10 @@ func (v *View) SetSyntaxFile(f string) error {
 	} else if err := loaders.LoadPlist(d, &lang); err != nil {
 		return err
 	} else {
+		v.lastScopeNode = nil
+		v.lastParse = -1
+		v.lastScopeBuf.Reset()
 		v.syntax.Language = &lang
-		v.syntax.Parse(v.buffer.String())
 	}
 	return nil
 }
