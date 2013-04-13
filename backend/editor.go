@@ -7,6 +7,7 @@ import (
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
 	"runtime"
+	"sync"
 )
 
 type (
@@ -31,6 +32,7 @@ type (
 		OkCancelDialog(msg string, okname string)
 	}
 	myLogWriter struct {
+		log chan string
 	}
 	DummyFrontend struct{}
 )
@@ -55,23 +57,42 @@ func (h *DummyFrontend) OkCancelDialog(string, string) {}
 func (h *DummyFrontend) Show(v *View, r Region)        {}
 func (h *DummyFrontend) VisibleRegion(v *View) Region  { return Region{} }
 
+func newMyLogWriter() *myLogWriter {
+	ret := &myLogWriter{make(chan string, 100)}
+	go ret.handle()
+	return ret
+}
+
+func (m *myLogWriter) handle() {
+	for fl := range m.log {
+		c := GetEditor().Console()
+		f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(fl), fl)
+		e := c.BeginEdit()
+		c.Insert(e, c.Buffer().Size(), f)
+		c.EndEdit(e)
+	}
+}
+
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	p := Prof.Enter("log")
 	defer p.Exit()
-	c := GetEditor().Console()
 	fl := log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec)
-	f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(fl), fl)
-	e := c.BeginEdit()
-	c.Insert(e, c.Buffer().Size(), f)
-	c.EndEdit(e)
+	m.log <- fl
 }
 
 func (m *myLogWriter) Close() {
+	fmt.Println("Closing...")
+	close(m.log)
 }
 
-var ed *Editor
+var (
+	ed  *Editor
+	edl sync.Mutex
+)
 
 func GetEditor() *Editor {
+	edl.Lock()
+	defer edl.Unlock()
 	if ed == nil {
 		ed = &Editor{
 			cmdhandler: commandHandler{
@@ -86,9 +107,10 @@ func GetEditor() *Editor {
 				scratch: true,
 			},
 		}
+		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
-		log4go.Global.AddFilter("console", log4go.DEBUG, &myLogWriter{})
+		log4go.Global.AddFilter("console", log4go.DEBUG, newMyLogWriter())
 		ed.loadKeybindings()
 		ed.loadSettings()
 		//		initBasicCommands()
@@ -156,6 +178,7 @@ func (e *Editor) NewWindow() *Window {
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
 	w.Settings().SetParent(e)
+	OnNewWindow.Call(w)
 	return w
 }
 

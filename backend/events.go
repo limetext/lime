@@ -12,6 +12,9 @@ type (
 	QueryContextReturn   int
 	QueryContextCallback func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn
 	QueryContextEvent    []QueryContextCallback
+
+	WindowEventCallback func(w *Window)
+	WindowEvent         []WindowEventCallback
 )
 
 const (
@@ -45,6 +48,16 @@ func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand inter
 	return Unknown
 }
 
+func (we *WindowEvent) Add(cb WindowEventCallback) {
+	*we = append(*we, cb)
+}
+
+func (we WindowEvent) Call(w *Window) {
+	for i := range we {
+		we[i](w)
+	}
+}
+
 var (
 	OnNew               ViewEvent
 	OnLoad              ViewEvent
@@ -55,7 +68,9 @@ var (
 	OnPostSave          ViewEvent
 	OnModified          ViewEvent
 	OnSelectionModified ViewEvent
-	OnQueryContext      QueryContextEvent
+
+	OnNewWindow    WindowEvent
+	OnQueryContext QueryContextEvent
 )
 
 func init() {

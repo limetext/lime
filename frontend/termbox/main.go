@@ -304,13 +304,12 @@ func (t *tbfe) loop() {
 	ed.LogCommands(true)
 	c := ed.Console()
 	var (
-		scheme textmate.Theme
+		scheme *textmate.Theme
 	)
-
-	if d, err := ioutil.ReadFile("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
-		log4go.Error("Unable to load colorscheme definition: %s", err)
-	} else if err := loaders.LoadPlist(d, &scheme); err != nil {
-		log4go.Error("Unable to load colorscheme definition: %s", err)
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+		log4go.Error(err)
+	} else {
+		scheme = sc
 	}
 
 	var (

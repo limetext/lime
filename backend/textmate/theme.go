@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"io/ioutil"
+	"lime/backend/loaders"
 	"strconv"
 	"strings"
 )
@@ -27,6 +29,17 @@ type (
 		UUID           UUID
 	}
 )
+
+func LoadTheme(filename string) (*Theme, error) {
+	var scheme Theme
+	if d, err := ioutil.ReadFile(filename); err != nil {
+		return nil, fmt.Errorf("Unable to load colorscheme definition: %s", err)
+	} else if err := loaders.LoadPlist(d, &scheme); err != nil {
+		return nil, fmt.Errorf("Unable to load colorscheme definition: %s", err)
+	}
+
+	return &scheme, nil
+}
 
 func (t Theme) String() (ret string) {
 	ret = fmt.Sprintf("%s - %s\n", t.Name, t.UUID)
@@ -70,4 +83,29 @@ func (s *Settings) UnmarshalJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+func (t *Theme) ClosestMatchingSetting(scope string) *ScopeSetting {
+	na := scope
+	for len(na) > 0 {
+		sn := na
+		i := strings.LastIndex(sn, " ")
+		if i != -1 {
+			sn = sn[i+1:]
+		}
+
+		for j := range t.Settings {
+			if t.Settings[j].Scope == sn {
+				return &t.Settings[j]
+			}
+		}
+		if i2 := strings.LastIndex(na, "."); i2 == -1 {
+			break
+		} else if i > i2 {
+			na = na[:i]
+		} else {
+			na = strings.TrimSpace(na[:i2])
+		}
+	}
+	return &t.Settings[0]
 }

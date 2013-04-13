@@ -79,6 +79,14 @@ func (ea *eraseAction) Undo() {
 	ea.insertAction.Apply()
 }
 
+func (ia insertAction) String() string {
+	return fmt.Sprintf("insert %d %s", ia.point, string(ia.value))
+}
+
+func (ea eraseAction) String() string {
+	return fmt.Sprintf("erase %v", ea.region)
+}
+
 func NewEraseAction(b *Buffer, region Region) Action {
 	return &eraseAction{insertAction{buffer: b}, region}
 }

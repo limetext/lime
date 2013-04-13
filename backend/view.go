@@ -258,9 +258,9 @@ func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 	return nil
 }
 
-func (v *View) ScopeName(point int) string {
+func (v *View) updateScope(point int) {
 	if v.syntax.Language == nil {
-		return ""
+		return
 	}
 
 	if v.lastParse != v.buffer.ChangeCount() {
@@ -285,6 +285,19 @@ func (v *View) ScopeName(point int) string {
 		v.lastScopeNode = v.findScope(search, v.syntax.RootNode())
 		v.lastScopeName = v.lastScopeBuf.String()
 	}
+}
+
+func (v *View) ExtractScope(point int) Region {
+	v.updateScope(point)
+	if v.lastScopeNode != nil {
+		r := v.lastScopeNode.Range
+		return Region{r.Start, r.End}
+	}
+	return Region{}
+}
+
+func (v *View) ScopeName(point int) string {
+	v.updateScope(point)
 	return v.lastScopeName
 }
 

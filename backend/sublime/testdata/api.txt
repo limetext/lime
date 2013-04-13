@@ -222,6 +222,7 @@ View                          : <class 'type'>
 	end_edit
 	erase
 	erase_regions
+	extract_scope
 	file_name
 	full_line
 	get_regions
