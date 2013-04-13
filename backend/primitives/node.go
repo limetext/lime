@@ -1,9 +1,8 @@
-// +build ignore
-
 package primitives
 
 import (
 	"fmt"
+	//"strings"
 )
 
 type (
@@ -11,9 +10,9 @@ type (
 	// http://en.wikipedia.org/wiki/Rope_(data_structure)
 	// http://citeseer.ist.psu.edu/viewdoc/download?doi=10.1.1.14.9450&rep=rep1&type=pdf
 	node struct {
-		weight      int
-		left, right *node
-		data        []rune
+		weight, lines int
+		left, right   *node
+		data          []rune
 	}
 )
 
@@ -25,7 +24,7 @@ func (n *node) clone() *node {
 	if n.right != nil {
 		rc = n.right.clone()
 	}
-	return &node{n.weight, lc, rc, n.data}
+	return &node{n.weight, n.lines, lc, rc, n.data}
 }
 
 func (n *node) dump(indent string) string {
@@ -107,6 +106,73 @@ func (n *node) find(pos int) (*node, int) {
 	}
 }
 
+func (n *node) rc(pos int) (row, col int) {
+	if l := pos - n.weight; l > 0 {
+		if n.right != nil {
+			r, c := n.right.rc(l)
+			return n.lines + r, c
+		} else {
+			return n.lines, l
+		}
+	} else if n.left != nil {
+		return n.left.rc(pos)
+	} else {
+		for i := 0; i < pos && i < len(n.data); i++ {
+			if n.data[i] == '\n' {
+				row++
+				col = 0
+			} else {
+				col++
+			}
+		}
+		return
+	}
+}
+
+func (n *node) RowCol(point int) (row, col int) {
+	if point < 0 {
+		point = 0
+	} else if l := n.Size(); point > l {
+		point = l
+	}
+
+	return n.rc(point)
+}
+
+func (n *node) TextPoint(row, col int) (i int) {
+	if row == 0 && col == 0 {
+		return 0
+	}
+
+	var n2 *node
+	n2, i, row = n.findline(0, row)
+	for l, o := n2.Size(), 0; row > 0 && o < l; o++ {
+		if n2.data[o] == '\n' {
+			row--
+		}
+		i++
+	}
+	if i < n.Size() {
+		return i + col
+	}
+	return i
+}
+
+func (n *node) findline(off, line int) (*node, int, int) {
+	if n.leaf() {
+		return n, off, line
+	} else {
+		if line-n.lines < 0 {
+			return n.left.findline(off, line)
+		} else {
+			if n.right != nil {
+				return n.right.findline(off+n.weight, line-n.lines)
+			}
+			return nil, off + n.weight, 0
+		}
+	}
+}
+
 func (n *node) simplify() {
 	if (n.re()) && n.left != nil {
 		*n = *n.left
@@ -115,6 +181,7 @@ func (n *node) simplify() {
 		*n = *n.right
 	}
 	if n.empty() {
+		n.lines = 0
 		n.weight = 0
 		n.left = nil
 		n.right = nil
@@ -142,16 +209,25 @@ func (n *node) leaf() bool {
 
 var merge = 1024 * 2
 
+func linecount(data []rune) (ret int) {
+	for _, r := range data {
+		if r == '\n' {
+			ret++
+		}
+	}
+	return
+}
 func newNodeEx(data []rune, split int) *node {
 	if len(data) > split {
 		half := len(data) / 2
 		return &node{half,
+			linecount(data[:half]),
 			newNodeEx(data[:half], split),
 			newNodeEx(data[half:], split),
 			nil,
 		}
 	}
-	return &node{len(data), nil, nil, data}
+	return &node{len(data), linecount(data), nil, nil, data}
 }
 
 func newNode(data []rune) *node {
@@ -162,6 +238,7 @@ func (n *node) patch() {
 	n.simplify()
 	if n.left != nil {
 		n.weight = n.left.Size()
+		n.lines = n.left.Lines()
 		if n.right != nil && n.right.left != nil && n.left.leaf() && n.right.left.leaf() && n.weight+n.right.weight < merge {
 			r := n.right.split(n.right.weight)
 			n.simplify()
@@ -169,6 +246,7 @@ func (n *node) patch() {
 		}
 	} else {
 		n.weight = len(n.data)
+		n.lines = linecount(n.data)
 	}
 }
 
@@ -182,19 +260,28 @@ func (n *node) split(pos int) (right *node) {
 			panic("shouldn't get here")
 		} else {
 			right = newNode(n.data[pos:])
-			n.weight = pos
 			n.data = n.data[:pos]
+			n.patch()
 			return right
 		}
 	}
 	if n.right != nil {
-		right = &node{right.weight, right, n.right, nil}
+		right = &node{right.weight, right.lines, right, n.right, nil}
 	}
 	n.right = nil
 	n.patch()
 	right.patch()
 
 	return right
+}
+
+func (n *node) Lines() int {
+	ret := 0
+	ret += n.lines
+	if n.right != nil {
+		ret += n.right.Lines()
+	}
+	return ret
 }
 
 func (n *node) Size() int {
@@ -213,6 +300,7 @@ func (n *node) join(other *node) {
 		n.right = other
 		n.data = nil
 		n.weight = n.left.Size()
+		n.lines = n.left.Lines()
 	} else {
 		// Allocating a new buffer as other nodes might have references
 		// into sub positions in the original
@@ -220,6 +308,7 @@ func (n *node) join(other *node) {
 		n.data = append(nd, n.data...)
 		n.data = append(n.data, other.data...)
 		n.weight += other.weight
+		n.lines += other.lines
 	}
 }
 

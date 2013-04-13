@@ -11,14 +11,16 @@ type (
 		Insert(point int, data []rune)
 		Erase(point, length int)
 		Index(int) rune
+		RowCol(point int) (row, col int)
+		TextPoint(row, col int) (i int)
 	}
 	BufferChangedCallback func(buf *Buffer, position, delta int)
 
 	Buffer struct {
 		HasId
 		HasSettings
-		NaiveBuffer
-		//node
+		//NaiveBuffer
+		node
 		changecount int
 		name        string
 		filename    string
@@ -57,7 +59,7 @@ func (buf *Buffer) Insert(point int, svalue string) {
 		return
 	}
 	value := []rune(svalue)
-	buf.NaiveBuffer.Insert(point, value)
+	buf.node.Insert(point, value)
 	buf.changecount++
 	buf.notify(point, len(value))
 }
@@ -67,7 +69,7 @@ func (buf *Buffer) Erase(point, length int) {
 		return
 	}
 	buf.changecount++
-	buf.NaiveBuffer.Erase(point, length)
+	buf.node.Erase(point, length)
 	buf.notify(point+length, -length)
 }
 
@@ -215,38 +217,4 @@ func (b *Buffer) Words(r Region) Region {
 	s := b.Word(r.Begin())
 	e := b.Word(r.End())
 	return Region{s.Begin(), e.End()}
-}
-
-func (b *Buffer) RowCol(point int) (row, col int) {
-	if point < 0 {
-		point = 0
-	} else if l := b.Size(); point > l {
-		point = l
-	}
-
-	sub := b.SubstrR(Region{0, point})
-	for _, r := range sub {
-		if r == '\n' {
-			row++
-			col = 0
-		} else {
-			col++
-		}
-	}
-	return
-}
-
-func (b *Buffer) TextPoint(row, col int) (i int) {
-	if row == 0 && col == 0 {
-		return 0
-	}
-	for l := b.Size(); row >= 0 && i < l; {
-		fl := b.FullLine(i)
-		row--
-		if row < 0 {
-			return i + col
-		}
-		i += fl.Size()
-	}
-	return i
 }

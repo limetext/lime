@@ -106,6 +106,61 @@ func TestMove(t *testing.T) {
 			[]Region{{0, 0}},
 			Args{"word_begin": true},
 		},
+		{
+			[]Region{{34, 34}},
+			"lines",
+			false,
+			false,
+			[]Region{{23, 23}},
+			nil,
+		},
+		{
+			[]Region{{23, 23}},
+			"lines",
+			false,
+			false,
+			[]Region{{10, 10}},
+			nil,
+		},
+		{
+			[]Region{{100, 100}},
+			"lines",
+			false,
+			false,
+			[]Region{{24, 24}},
+			nil,
+		},
+	}
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		args := Args{"by": test.by, "extend": test.extend, "forward": test.forward}
+		if test.args != nil {
+			for k, v := range test.args {
+				args[k] = v
+			}
+		}
+		ed.CommandHandler().RunTextCommand(v, "move", args)
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("Move test %d failed: %v, %+v", i, sr, test)
+		}
+	}
+
+	e = v.BeginEdit()
+	v.Insert(e, v.Buffer().Size(), "abc")
+	v.EndEdit(e)
+
+	tests = []Test{
+		{
+			[]Region{{100, 100}},
+			"lines",
+			false,
+			false,
+			[]Region{{27, 27}},
+			nil,
+		},
 	}
 	for i, test := range tests {
 		v.Sel().Clear()

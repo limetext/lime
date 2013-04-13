@@ -1,5 +1,3 @@
-// +build ignore
-
 package primitives
 
 import (
@@ -9,34 +7,34 @@ import (
 )
 
 var complexnode_test = &node{
-	22,
+	22, 0,
 	&node{
-		9,
+		9, 0,
 		&node{
-			9,
+			9, 0,
 			&node{
-				6,
-				&node{6, nil, nil, []rune("Hello ")},
-				&node{3, nil, nil, []rune("my ")},
+				6, 0,
+				&node{6, 0, nil, nil, []rune("Hello ")},
+				&node{3, 0, nil, nil, []rune("my ")},
 				nil,
 			},
 			nil,
 			nil,
 		},
 		&node{
-			7,
+			7, 0,
 			&node{
-				6,
+				6, 0,
 				&node{
-					2,
-					&node{2, nil, nil, []rune("na")},
-					&node{4, nil, nil, []rune("me i")},
+					2, 0,
+					&node{2, 0, nil, nil, []rune("na")},
+					&node{4, 0, nil, nil, []rune("me i")},
 					nil,
 				},
-				&node{1, nil, nil, []rune("s")},
+				&node{1, 0, nil, nil, []rune("s")},
 				nil,
 			},
-			&node{6, nil, nil, []rune(" Simon")},
+			&node{6, 0, nil, nil, []rune(" Simon")},
 			nil,
 		},
 		nil,
@@ -52,9 +50,9 @@ type Test struct {
 
 var (
 	tests = []Test{
-		{&node{6, &node{6, nil, nil, []rune("Hello ")}, &node{5, nil, nil, []rune("world")}, nil}, "Hello world"},
-		{&node{6, &node{6, nil, nil, []rune("Hello ")}, &node{3, &node{3, nil, nil, []rune("wor")}, &node{2, nil, nil, []rune("ld")}, nil}, nil}, "Hello world"},
-		{&node{6, &node{6, nil, nil, []rune("Hello ")}, &node{5, nil, nil, []rune("world")}, nil}, "Hello world"},
+		{&node{6, 0, &node{6, 0, nil, nil, []rune("Hello ")}, &node{5, 0, nil, nil, []rune("world")}, nil}, "Hello world"},
+		{&node{6, 0, &node{6, 0, nil, nil, []rune("Hello ")}, &node{3, 0, &node{3, 0, nil, nil, []rune("wor")}, &node{2, 0, nil, nil, []rune("ld")}, nil}, nil}, "Hello world"},
+		{&node{6, 0, &node{6, 0, nil, nil, []rune("Hello ")}, &node{5, 0, nil, nil, []rune("world")}, nil}, "Hello world"},
 		{complexnode_test, "Hello my name is Simon"},
 	}
 	merges = []int{4, 8, 32, 128, 1024, merge}
@@ -81,14 +79,14 @@ func TestNode(t *testing.T) {
 }
 
 func TestNodeSimplify(t *testing.T) {
-	r := &node{5, nil, nil, []rune("world")}
-	l := &node{0, nil, nil, nil}
-	n := node{0, l, r, nil}
+	r := &node{5, 0, nil, nil, []rune("world")}
+	l := &node{0, 0, nil, nil, nil}
+	n := node{0, 0, l, r, nil}
 	n.simplify()
 	if !reflect.DeepEqual(&n, r) {
 		t.Error(n.dump(""))
 	}
-	n = node{5, r, l, nil}
+	n = node{5, 0, r, l, nil}
 	n.simplify()
 	if !reflect.DeepEqual(&n, r) {
 		t.Error(n.dump(""))

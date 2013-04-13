@@ -40,10 +40,10 @@ func TestRowColLineWord(t *testing.T) {
 				a.WordAtOffset = b.Word(test.Offset)
 				a.FullLineAtOffset = b.FullLine(test.Offset)
 				a.Offset = b.TextPoint(test.Line, test.Column)
-				t.Log(a)
+				t.Log(a, "\n", test)
 				if a.Line != test.Line {
 					failed++
-					t.Logf("%d Line mismatch: %d != %d", i, a.Line, test.Line)
+					t.Fatalf("%d Line mismatch: %d != %d", i, a.Line, test.Line)
 				}
 				if a.Column != test.Column {
 					failed++
@@ -73,10 +73,15 @@ func TestRowColLineWord(t *testing.T) {
 		}
 	}
 	if r, c := b.RowCol(-1); r != 0 || c != 0 {
-		t.Errorf("These should be 0 %d, %d", r, c)
+		t.Errorf("These should be 0: %d, %d", r, c)
 	}
 	if r, c := b.RowCol(b.Size() + 10); c != 0 {
-		t.Errorf("Column should be 0 %d, %d", r, c)
+		t.Errorf("Column should be 0: %d, %d", r, c)
+	}
+	b.Erase(0, b.Size())
+	b.Insert(0, "Hello World!\nTest123123\nAbrakadabra\nabc")
+	if r, c := b.RowCol(b.Size()); r != 3 || c != 3 {
+		t.Errorf("These should be 3: %d, %d", r, c)
 	}
 }
 
