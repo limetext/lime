@@ -21,7 +21,7 @@ type (
 		HasId
 		name          string
 		window        *Window
-		buffer        *Buffer
+		buffer        Buffer
 		selection     RegionSet
 		undoStack     UndoStack
 		scratch       bool
@@ -80,14 +80,14 @@ func (e *Edit) Undo() {
 	}
 }
 
-func (v *View) setBuffer(b *Buffer) error {
+func (v *View) setBuffer(b Buffer) error {
 	if v.buffer != nil {
 		return fmt.Errorf("There is already a buffer set")
 	}
 	v.buffer = b
 	// TODO(q): Dynamically load the correct syntax file
 	v.syntax.Language = &textmate.Language{}
-	b.AddCallback(func(_ *Buffer, a, b int) {
+	b.AddCallback(func(_ Buffer, a, b int) {
 		v.flush(a, b)
 	})
 	return nil
@@ -127,7 +127,7 @@ func (v *View) Window() *Window {
 	return v.window
 }
 
-func (v *View) Buffer() *Buffer {
+func (v *View) Buffer() Buffer {
 	return v.buffer
 }
 

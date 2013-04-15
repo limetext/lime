@@ -10,10 +10,11 @@ import (
 
 func LoadJSON(data []byte, intf interface{}) error {
 	var (
-		b   = Buffer{}
+		b   = NewBuffer()
 		p   json.JSON
 		set RegionSet
 	)
+	defer b.Close()
 	b.Insert(0, string(data))
 	if !p.Parse(string(data)) {
 		return fmt.Errorf("%s, %s", p.Error().String(), p.RootNode())
@@ -28,7 +29,7 @@ func LoadJSON(data []byte, intf interface{}) error {
 			}
 		}
 	}
-	b.AddCallback(func(b *Buffer, pos, delta int) {
+	b.AddCallback(func(b Buffer, pos, delta int) {
 		set.Adjust(pos, delta)
 	})
 	i := 0

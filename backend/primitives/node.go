@@ -16,6 +16,10 @@ type (
 	}
 )
 
+func (n *node) Close() {
+
+}
+
 func (n *node) clone() *node {
 	var lc, rc *node
 	if n.left != nil {
@@ -78,7 +82,7 @@ func (n *node) SubstrR(r Region) []rune {
 	data := make([]rune, 0, l)
 	for l > 0 {
 		inner, off := n.find(a)
-		if inner == nil {
+		if inner == nil || off >= len(inner.data) {
 			break
 		} else {
 			//			fmt.Println(a, l, off)
@@ -343,7 +347,7 @@ func (n *node) concat(other *node) {
 	n.patch()
 }
 
-func (n *node) Insert(position int, r []rune) {
+func (n *node) InsertR(position int, r []rune) {
 	l := n.Size()
 	position = Clamp(0, l, position)
 	left := newNode(r)

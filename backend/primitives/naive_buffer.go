@@ -22,7 +22,7 @@ func (buf *NaiveBuffer) SubstrR(r Region) []rune {
 	return buf.data[a:b]
 }
 
-func (buf *NaiveBuffer) Insert(point int, value []rune) {
+func (buf *NaiveBuffer) InsertR(point int, value []rune) {
 	point = Clamp(0, len(buf.data), point)
 	req := len(buf.data) + len(value)
 	if cap(buf.data) < req {

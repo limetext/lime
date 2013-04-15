@@ -45,6 +45,9 @@ func (h *DummyFrontend) ActiveWindow() *Window {
 }
 
 func (h *DummyFrontend) ActiveView(w *Window) *View {
+	if w == nil {
+		return nil
+	}
 	if v := w.Views(); len(v) > 0 {
 		return v[0]
 	}
@@ -103,7 +106,7 @@ func GetEditor() *Editor {
 			},
 			frontend: &DummyFrontend{},
 			console: &View{
-				buffer:  &Buffer{},
+				buffer:  NewBuffer(),
 				scratch: true,
 			},
 		}

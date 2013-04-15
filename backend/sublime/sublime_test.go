@@ -18,8 +18,8 @@ import (
 
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
-	ed.Console().Buffer().AddCallback(func(b *primitives.Buffer, pos, delta int) {
-		t.Logf("%s", string(b.Runes()[pos:pos+delta]))
+	ed.Console().Buffer().AddCallback(func(b primitives.Buffer, pos, delta int) {
+		t.Logf("%s", b.Substr(primitives.Region{pos, pos + delta}))
 	})
 	w := ed.NewWindow()
 	w.NewFile()

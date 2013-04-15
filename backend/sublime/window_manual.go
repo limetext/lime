@@ -64,6 +64,8 @@ func (o *Window) Py_active_view() (py.Object, error) {
 	if err != nil {
 	} else if v2, ok := pyret0.(*View); !ok {
 		return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
+	} else if v2 == nil {
+		return toPython(nil)
 	} else {
 		v2.data = ret0
 	}

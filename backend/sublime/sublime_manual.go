@@ -2,7 +2,9 @@ package sublime
 
 import (
 	"code.google.com/p/log4go"
+	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
+	"lime/backend"
 	"os"
 	"strings"
 )
@@ -63,9 +65,22 @@ func scanpath(path string, m *py.Module) {
 	}
 }
 
-func Init() {
-	py.Initialize()
+func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
+	if tu.Size() != 1 {
+		return nil, fmt.Errorf("Unexpected argument count: %d", tu.Size())
+	}
+	if i, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		log4go.Info("Python sez: %s", i)
+	}
+	return toPython(nil)
+}
 
+func init() {
+	sublime_methods = append(sublime_methods, py.Method{Name: "console", Func: sublime_Console})
+	backend.GetEditor()
+	py.InitializeEx(false)
 	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
 		panic(err)
@@ -100,6 +115,10 @@ func Init() {
 	py.AddToPath("../../backend/packages/")
 	py.AddToPath("../../3rdparty/bundles/")
 	py.AddToPath("../../backend/sublime/")
+}
+
+// TODO
+func Init() {
 	if m, err := py.Import("sublime_plugin"); err != nil {
 		panic(err)
 	} else {

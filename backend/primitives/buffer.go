@@ -1,26 +1,48 @@
 package primitives
 
 import (
+	"runtime"
 	"strings"
 )
 
 type (
-	BufferInterface interface {
+	InnerBufferInterface interface {
 		Size() int
 		SubstrR(r Region) []rune
-		Insert(point int, data []rune)
+		InsertR(point int, data []rune)
 		Erase(point, length int)
 		Index(int) rune
 		RowCol(point int) (row, col int)
 		TextPoint(row, col int) (i int)
+		Close()
 	}
-	BufferChangedCallback func(buf *Buffer, position, delta int)
+	Buffer interface {
+		InnerBufferInterface
+		IdInterface
+		SettingsInterface
+		AddCallback(cb BufferChangedCallback)
+		SetName(string)
+		Name() string
+		SetFileName(string)
+		FileName() string
+		Insert(point int, svalue string)
+		Substr(r Region) string
+		String() string
+		Runes() []rune
+		ChangeCount() int
+		Line(offset int) Region
+		Lines(r Region) Region
+		FullLine(offset int) Region
+		FullLines(r Region) Region
+		Word(offset int) Region
+		Words(r Region) Region
+	}
+	BufferChangedCallback func(buf Buffer, position, delta int)
 
-	Buffer struct {
+	buffer struct {
 		HasId
 		HasSettings
-		//NaiveBuffer
-		node
+		SerializedBuffer
 		changecount int
 		name        string
 		filename    string
@@ -28,68 +50,77 @@ type (
 	}
 )
 
-func (b *Buffer) AddCallback(cb BufferChangedCallback) {
+func NewBuffer() Buffer {
+	b := buffer{}
+	b.SerializedBuffer.init(&node{})
+	r := &b
+	runtime.SetFinalizer(r, func(b *buffer) { b.Close() })
+
+	return r
+}
+
+func (b *buffer) AddCallback(cb BufferChangedCallback) {
 	b.callbacks = append(b.callbacks, cb)
 }
 
-func (b *Buffer) SetName(n string) {
+func (b *buffer) SetName(n string) {
 	b.name = n
 }
 
-func (b *Buffer) Name() string {
+func (b *buffer) Name() string {
 	return b.name
 }
 
-func (b *Buffer) FileName() string {
+func (b *buffer) FileName() string {
 	return b.filename
 }
 
-func (b *Buffer) SetFileName(n string) {
+func (b *buffer) SetFileName(n string) {
 	b.filename = n
 }
 
-func (buf *Buffer) notify(position, delta int) {
+func (buf *buffer) notify(position, delta int) {
 	for i := range buf.callbacks {
 		buf.callbacks[i](buf, position, delta)
 	}
 }
 
-func (buf *Buffer) Insert(point int, svalue string) {
+func (buf *buffer) Insert(point int, svalue string) {
 	if len(svalue) == 0 {
 		return
 	}
 	value := []rune(svalue)
-	buf.node.Insert(point, value)
+	buf.SerializedBuffer.InsertR(point, value)
 	buf.changecount++
 	buf.notify(point, len(value))
 }
 
-func (buf *Buffer) Erase(point, length int) {
+func (buf *buffer) Erase(point, length int) {
 	if length == 0 {
 		return
 	}
 	buf.changecount++
-	buf.node.Erase(point, length)
+	buf.SerializedBuffer.Erase(point, length)
 	buf.notify(point+length, -length)
 }
 
-func (b *Buffer) Substr(r Region) string {
+func (b *buffer) Substr(r Region) string {
 	return string(b.SubstrR(r))
 }
 
-func (b *Buffer) String() string {
+func (b *buffer) String() string {
 	return b.Substr(Region{0, b.Size()})
 }
 
-func (b *Buffer) Runes() []rune {
+func (b *buffer) Runes() []rune {
 	return b.SubstrR(Region{0, b.Size()})
 }
 
-func (b *Buffer) ChangeCount() int {
+func (b *buffer) ChangeCount() int {
 	return b.changecount
 }
 
-func (b *Buffer) Line(offset int) Region {
+func (b *buffer) Line(offset int) Region {
 	if offset < 0 {
 		return Region{0, 0}
 	} else if s := b.Size(); offset >= s {
@@ -126,13 +157,13 @@ eloop:
 
 // Returns a region that starts at the first character in a line
 // and ends with the last character in a (possibly different) line
-func (b *Buffer) Lines(r Region) Region {
+func (b *buffer) Lines(r Region) Region {
 	s := b.Line(r.Begin())
 	e := b.Line(r.End())
 	return Region{s.Begin(), e.End()}
 }
 
-func (b *Buffer) FullLine(offset int) Region {
+func (b *buffer) FullLine(offset int) Region {
 	r := b.Line(offset)
 	s := b.Size()
 	for r.B < s {
@@ -149,13 +180,13 @@ func (b *Buffer) FullLine(offset int) Region {
 
 // Returns a region that starts at the first character in a line
 // and ends with the line break in a (possibly different) line
-func (b *Buffer) FullLines(r Region) Region {
+func (b *buffer) FullLines(r Region) Region {
 	s := b.FullLine(r.Begin())
 	e := b.FullLine(r.End())
 	return Region{s.Begin(), e.End()}
 }
 
-func (b *Buffer) Word(offset int) Region {
+func (b *buffer) Word(offset int) Region {
 	if offset < 0 {
 		offset = 0
 	}
@@ -213,7 +244,7 @@ func (b *Buffer) Word(offset int) Region {
 
 // Returns a region that starts at the first character in a word
 // and ends with the last character in a (possibly different) word
-func (b *Buffer) Words(r Region) Region {
+func (b *buffer) Words(r Region) Region {
 	s := b.Word(r.Begin())
 	e := b.Word(r.End())
 	return Region{s.Begin(), e.End()}

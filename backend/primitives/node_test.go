@@ -130,7 +130,7 @@ func TestNodeConcat(t *testing.T) {
 	}
 }
 
-func TestNodeInsert(t *testing.T) {
+func TestNodeInsertR(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Short")
 	}
@@ -150,9 +150,9 @@ func TestNodeInsert(t *testing.T) {
 		for i := range od {
 			n := newNode(od)
 			b := NaiveBuffer{}
-			b.Insert(0, od)
-			n.Insert(i, in)
-			b.Insert(i, in)
+			b.InsertR(0, od)
+			n.InsertR(i, in)
+			b.InsertR(i, in)
 			r := Region{0, b.Size()}
 
 			if b.Size() != n.Size() {
@@ -167,7 +167,7 @@ func TestNodeInsert(t *testing.T) {
 			n := newNode(od)
 			for _, j := range in {
 				l := n.Size()
-				n.Insert(i, []rune{j})
+				n.InsertR(i, []rune{j})
 				if n.Size() != l+1 {
 					t.Log(string(j))
 					na := n.dump("\t")
@@ -183,9 +183,9 @@ func TestNodeInsert(t *testing.T) {
 		for i, o := range offs {
 			n := newNode(od)
 			b := NaiveBuffer{}
-			b.Insert(0, od)
-			n.Insert(o, in)
-			b.Insert(o, in)
+			b.InsertR(0, od)
+			n.InsertR(o, in)
+			b.InsertR(o, in)
 			r := Region{0, b.Size()}
 
 			if b.Size() != n.Size() {
@@ -195,6 +195,31 @@ func TestNodeInsert(t *testing.T) {
 				na := n.dump("\t")
 				t.Fatalf("%d, %d: %s != %s\n%s", m, i, e, a, na)
 			}
+		}
+	}
+}
+
+func TestNodeAppend(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Short")
+	}
+
+	const (
+		size   = 1024 * 4
+		isize  = 256
+		target = 1024 * 1024
+	)
+	od := make([]rune, size)
+	fill(od)
+
+	in := make([]rune, size)
+	fill(in)
+
+	for _, m := range merges {
+		merge = m
+		n := newNode(od)
+		for n.Size() < target {
+			n.InsertR(n.Size(), in)
 		}
 	}
 }
@@ -217,10 +242,10 @@ func TestNodeRowCol(t *testing.T) {
 		merge = m
 		n := newNode(od)
 		b := NaiveBuffer{}
-		b.Insert(0, od)
+		b.InsertR(0, od)
 		for i := 0; i < 30; i++ {
-			n.Insert(n.Size(), in)
-			b.Insert(b.Size(), in)
+			n.InsertR(n.Size(), in)
+			b.InsertR(b.Size(), in)
 			r := Region{0, b.Size()}
 			if b.Size() != n.Size() {
 				na := n.dump("\t")
@@ -261,10 +286,10 @@ func TestNodeSubstr(t *testing.T) {
 		merge = m
 		n := newNode(od)
 		b := NaiveBuffer{}
-		b.Insert(0, od)
+		b.InsertR(0, od)
 		for i := 0; i < 10; i++ {
-			n.Insert(n.Size(), in)
-			b.Insert(b.Size(), in)
+			n.InsertR(n.Size(), in)
+			b.InsertR(b.Size(), in)
 			if b.Size() != n.Size() {
 				na := n.dump("\t")
 				t.Fatalf("%d, %d: %d != %d\n%s", m, i, b.Size(), n.Size(), na)
@@ -318,7 +343,7 @@ func TestNodeErase(t *testing.T) {
 		for i := range od {
 			n := newNode(od)
 			b := NaiveBuffer{}
-			b.Insert(0, od)
+			b.InsertR(0, od)
 			n.Erase(i, dsize)
 			b.Erase(i, dsize)
 			r := Region{0, b.Size()}
@@ -356,7 +381,7 @@ func TestNodeErase(t *testing.T) {
 // 	for i := 0; i < b.N; i++ {
 // 		l := buf.Size()
 // 		pos := r[i] % l
-// 		buf.Insert(pos, data)
+// 		buf.InsertR(pos, data)
 // 	}
 // 	buf.Substr(Region{0, buf.Size()})
 // }
@@ -369,7 +394,7 @@ func TestNodeErase(t *testing.T) {
 // 	b.StartTimer()
 
 // 	for i := 0; i < b.N; i++ {
-// 		buf.Insert(0, sdata)
+// 		buf.InsertR(0, sdata)
 // 	}
 // 	buf.Substr(Region{0, buf.Size()})
 // 	if a, e := buf.Size(), b.N*len(sdata)+len(in); a != e {
@@ -385,7 +410,7 @@ func TestNodeErase(t *testing.T) {
 // 	b.StartTimer()
 
 // 	for i := 0; i < b.N; i++ {
-// 		buf.Insert(buf.Size()/2, sdata)
+// 		buf.InsertR(buf.Size()/2, sdata)
 // 	}
 // 	buf.Substr(Region{0, buf.Size()})
 // 	if a, e := buf.Size(), b.N*len(sdata)+len(in); a != e {
@@ -400,7 +425,7 @@ func TestNodeErase(t *testing.T) {
 // 	buf := newNode(in)
 // 	b.StartTimer()
 // 	for i := 0; i < b.N; i++ {
-// 		buf.Insert(buf.Size(), sdata)
+// 		buf.InsertR(buf.Size(), sdata)
 // 	}
 // 	buf.Substr(Region{0, buf.Size()})
 // 	if a, e := buf.Size(), b.N*len(sdata)+len(in); a != e {

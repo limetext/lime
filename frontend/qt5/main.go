@@ -67,7 +67,7 @@ func newQLimeView(v *backend.View) *QLimeView {
 			line := b.Line(pos)
 
 			if is_widget {
-				p.DrawText(qt5.Point{0, int32(y+1) * (ps + 2)}, b.Substr(line))
+				p.DrawText(qt5.Point{0, (y + 1) * (ps + 2)}, b.Substr(line))
 			} else {
 				for line.Contains(pos) {
 					scope := primitives.Region{pos, pos}
@@ -88,7 +88,7 @@ func newQLimeView(v *backend.View) *QLimeView {
 					pen.SetColor(c)
 					p.SetPen(pen)
 					_, col := b.RowCol(line.A)
-					p.DrawText(qt5.Point{int32(col) * ps / 2, int32(y+1) * (ps + 2)}, b.Substr(is))
+					p.DrawText(qt5.Point{col * ps / 2, (y + 1) * (ps + 2)}, b.Substr(is))
 					line.A = is.End()
 				}
 			}

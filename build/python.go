@@ -400,8 +400,8 @@ func main() {
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile").MatchString)},
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&primitives.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
 		{"../backend/sublime/view_buffer.go", generatemethodsEx(
-			reflect.TypeOf(&primitives.Buffer{}),
-			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index").MatchString,
+			reflect.TypeOf(backend.GetEditor().Console().Buffer()),
+			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index|Close").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := ""
@@ -426,7 +426,7 @@ func main() {
 			sn),
 		},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
-			regexp.MustCompile("Info|HandleInput|CommandHandler|Windows|Frontend").MatchString,
+			regexp.MustCompile("Info|HandleInput|CommandHandler|Windows|Frontend|Console").MatchString,
 			"backend.GetEditor().",
 			sn),
 		},

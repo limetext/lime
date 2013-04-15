@@ -8,7 +8,7 @@ import (
 )
 
 func TestRowColLineWord(t *testing.T) {
-	var b Buffer
+	var b = NewBuffer()
 	if d, err := ioutil.ReadFile("./testdata/unittest.json"); err != nil {
 		t.Fatal(err)
 	} else {
@@ -92,7 +92,7 @@ func TestRowColLineWord(t *testing.T) {
 }
 
 func TestSomething(t *testing.T) {
-	var b Buffer
+	var b = NewBuffer()
 	b.Insert(0, "testaråäöochliteannat€þıœəßðĸʒ×ŋµåäö𝄞")
 	t.Log(b.Line(0))
 	t.Log(b.Word(3))
@@ -136,7 +136,7 @@ const (
 	test_rndpoints  = 128
 )
 
-func benchptsinit(b *testing.B) (*Buffer, []int) {
+func benchptsinit(b *testing.B) (Buffer, []int) {
 	b.StopTimer()
 	buf := testbuffer()
 	pts := make([]int, test_rndpoints)
@@ -155,15 +155,15 @@ func testinsert() string {
 	return string(data)
 }
 
-func testbuffer() *Buffer {
-	var buf Buffer
+func testbuffer() Buffer {
+	var buf = NewBuffer()
 	data := make([]rune, testbuffer_size)
 	fill(data)
 	buf.Insert(0, string(data))
-	return &buf
+	return buf
 }
 
-func benchsubinit(b *testing.B) (*Buffer, []Region) {
+func benchsubinit(b *testing.B) (Buffer, []Region) {
 	b.StopTimer()
 	buf, pts := benchptsinit(b)
 

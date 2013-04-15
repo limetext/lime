@@ -10,7 +10,10 @@ var (
 )
 
 type (
-	Id    int
+	Id          int
+	IdInterface interface {
+		Id() Id
+	}
 	HasId struct {
 		id Id
 	}

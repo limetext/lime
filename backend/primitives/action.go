@@ -15,7 +15,7 @@ type (
 	}
 
 	insertAction struct {
-		buffer *Buffer
+		buffer Buffer
 		point  int
 		value  []rune
 	}
@@ -87,15 +87,15 @@ func (ea eraseAction) String() string {
 	return fmt.Sprintf("erase %v", ea.region)
 }
 
-func NewEraseAction(b *Buffer, region Region) Action {
+func NewEraseAction(b Buffer, region Region) Action {
 	return &eraseAction{insertAction{buffer: b}, region}
 }
 
-func NewInsertAction(b *Buffer, point int, value string) Action {
+func NewInsertAction(b Buffer, point int, value string) Action {
 	return &insertAction{b, Clamp(0, b.Size(), point), []rune(value)}
 }
 
-func NewReplaceAction(b *Buffer, region Region, value string) Action {
+func NewReplaceAction(b Buffer, region Region, value string) Action {
 	return &CompositeAction{[]Action{
 		NewEraseAction(b, region),
 		NewInsertAction(b, Clamp(0, b.Size()-region.Size(), region.Begin()), value),

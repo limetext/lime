@@ -3,12 +3,10 @@ package main
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	"io/ioutil"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	_ "lime/backend/commands"
-	"lime/backend/loaders"
 	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
@@ -292,7 +290,7 @@ func (t *tbfe) OkCancelDialog(msg, ok string) {
 	log4go.Info(msg, ok)
 }
 
-func (t *tbfe) scroll(b *Buffer, pos, delta int) {
+func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	//fmt.Printf(string(b.Runes()[pos : pos+delta]))
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
@@ -515,6 +513,7 @@ func (t *tbfe) loop() {
 }
 
 func main() {
+	defer py.Finalize()
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}

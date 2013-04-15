@@ -134,15 +134,17 @@ def reload_plugin(module):
 
 
 class MyLogger:
+    def __init__(self):
+        self.data = ""
+
     def flush(self):
-        pass
+        sublime.console(self.data)
+        self.data = ""
 
     def write(self, data):
-        v = sublime.console()
-        try:
-            e = v.begin_edit()
-            v.insert(e, v.size(), data)
-        finally:
-            v.end_edit(e)
+        self.data += str(data)
+        if data.endswith("\n"):
+            self.data = self.data[:-1]
+            self.flush()
 
 sys.stdout = sys.stderr = MyLogger()
