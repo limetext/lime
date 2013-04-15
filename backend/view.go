@@ -267,7 +267,7 @@ func (v *View) updateScope(point int) {
 		// TODO(q): A full reparse every time the buffer changes is overkill.
 		// It would be better if the nodes are just adjusted as appropriate, together with a
 		// minimal parse of the new data
-		v.syntax.Parse(v.buffer.String())
+		v.syntax.Parse(v.buffer.Substr(Region{0, v.Buffer().Size()}))
 		v.lastParse = v.buffer.ChangeCount()
 	}
 

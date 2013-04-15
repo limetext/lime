@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	. "lime/backend"
+	"lime/backend/primitives"
 )
 
 type (
@@ -65,15 +66,17 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 		}
 		r := sel.Get(i)
 		if r.A == r.B && !hasNonEmpty {
-			d := v.Buffer().Runes()
 			if trim_space {
 				_, col := v.Buffer().RowCol(r.A)
 				prev_col := r.A - (col - (col-tab_size+(tab_size-1))&^(tab_size-1))
 				if prev_col < 0 {
 					prev_col = 0
 				}
-				for r.A > prev_col && d[r.A-1] == ' ' {
+				d := v.Buffer().SubstrR(primitives.Region{prev_col, r.A})
+				i := len(d) - 1
+				for r.A > prev_col && i >= 0 && d[i] == ' ' {
 					r.A--
+					i--
 				}
 			}
 			if r.A == r.B {

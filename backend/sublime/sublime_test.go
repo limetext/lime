@@ -139,7 +139,7 @@ func TestSublime(t *testing.T) {
 			if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
 				continue
 			}
-			if strings.Index(v.Buffer().String(), "FAILED") != -1 {
+			if strings.Index(v.Buffer().Substr(primitives.Region{0, v.Buffer().Size()}), "FAILED") != -1 {
 				t.Error(v.Buffer())
 			}
 		}

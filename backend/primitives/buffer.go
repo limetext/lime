@@ -27,8 +27,6 @@ type (
 		FileName() string
 		Insert(point int, svalue string)
 		Substr(r Region) string
-		String() string
-		Runes() []rune
 		ChangeCount() int
 		Line(offset int) Region
 		Lines(r Region) Region
@@ -106,14 +104,6 @@ func (buf *buffer) Erase(point, length int) {
 
 func (b *buffer) Substr(r Region) string {
 	return string(b.SubstrR(r))
-}
-
-func (b *buffer) String() string {
-	return b.Substr(Region{0, b.Size()})
-}
-
-func (b *buffer) Runes() []rune {
-	return b.SubstrR(Region{0, b.Size()})
 }
 
 func (b *buffer) ChangeCount() int {

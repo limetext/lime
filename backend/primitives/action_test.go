@@ -35,11 +35,11 @@ func TestActions(t *testing.T) {
 	}
 	for i, test := range tests {
 		test.action.Apply()
-		if d := buffer.String(); d != test.expected {
+		if d := buffer.Substr(Region{0, buffer.Size()}); d != test.expected {
 			t.Errorf("Apply %d, Expected %s, but got %s", i, test.expected, d)
 		}
 		test.action.Undo()
-		if d := buffer.String(); d != init {
+		if d := buffer.Substr(Region{0, buffer.Size()}); d != init {
 			t.Errorf("Undo %d, Expected %s, but got %s", i, init, d)
 		}
 	}
@@ -74,11 +74,11 @@ func TestActionsUtf(t *testing.T) {
 	}
 	for i, test := range tests {
 		test.action.Apply()
-		if d := buffer.String(); d != test.expected {
+		if d := buffer.Substr(Region{0, buffer.Size()}); d != test.expected {
 			t.Errorf("Apply %d\n\tExpected %v\n\tBut got  %v", i, []rune(test.expected), []rune(d))
 		}
 		test.action.Undo()
-		if d := buffer.String(); d != init {
+		if d := buffer.Substr(Region{0, buffer.Size()}); d != init {
 			t.Errorf("Undo %d, Expected %s, but got %s", i, init, d)
 		}
 	}
