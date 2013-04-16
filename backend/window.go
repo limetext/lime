@@ -5,15 +5,20 @@ import (
 	"io/ioutil"
 	"lime/backend/primitives"
 	"runtime/debug"
+	"sync"
 )
 
 type Window struct {
 	primitives.HasId
 	primitives.HasSettings
-	views []*View
+	views       []*View
+	active_view *View
+	lock        sync.Mutex
 }
 
 func (w *Window) NewFile() *View {
+	w.lock.Lock()
+	defer w.lock.Unlock()
 	w.views = append(w.views, newView(w))
 	v := w.views[len(w.views)-1]
 	v.Settings().SetParent(w)
@@ -21,11 +26,16 @@ func (w *Window) NewFile() *View {
 	v.selection.Clear()
 	v.selection.Add(primitives.Region{0, 0})
 	OnNew.Call(v)
+	w.SetActiveView(v)
 	return v
 }
 
 func (w *Window) Views() []*View {
-	return w.views
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	ret := make([]*View, 0, len(w.views))
+	copy(ret, w.views)
+	return ret
 }
 
 func (w *Window) OpenFile(filename string, flags int) *View {
@@ -42,6 +52,23 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 	v.SetScratch(false)
 	OnLoad.Call(v)
 	return v
+}
+
+func (w *Window) SetActiveView(v *View) {
+	// w.lock.Lock()
+	// defer w.lock.Unlock()
+
+	if w.active_view != nil {
+		OnDeactivated.Call(w.active_view)
+	}
+	w.active_view = v
+	if w.active_view != nil {
+		OnActivated.Call(w.active_view)
+	}
+}
+
+func (w *Window) ActiveView() *View {
+	return w.active_view
 }
 
 func (w *Window) runCommand(c WindowCommand, name string, args Args) error {

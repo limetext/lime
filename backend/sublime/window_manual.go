@@ -55,26 +55,6 @@ func (o *Window) Py_open_file(tu *py.Tuple) (py.Object, error) {
 	return pyret0, err
 }
 
-func (o *Window) Py_active_view() (py.Object, error) {
-	ret0 := backend.GetEditor().Frontend().ActiveView(o.data)
-	var err error
-	var pyret0 py.Object
-
-	pyret0, err = _viewClass.Alloc(1)
-	if err != nil {
-	} else if v2, ok := pyret0.(*View); !ok {
-		return nil, fmt.Errorf("Unable to convert return value to the right type?!: %s", pyret0.Type())
-	} else if v2 == nil {
-		return toPython(nil)
-	} else {
-		v2.data = ret0
-	}
-	if err != nil {
-		return nil, err
-	}
-	return pyret0, err
-}
-
 func (o *Window) Py_run_command(tu *py.Tuple) (py.Object, error) {
 	var (
 		arg1 string

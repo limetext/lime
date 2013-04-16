@@ -72,6 +72,8 @@ func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 }
 
 func (c *ViewEventGlue) onEvent(v *backend.View) {
+	l := py.NewLock()
+	defer l.Unlock()
 	if pv, err := toPython(v); err != nil {
 		log4go.Error(err)
 	} else {
@@ -111,6 +113,9 @@ func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 }
 
 func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operator backend.Op, operand interface{}, match_all bool) backend.QueryContextReturn {
+	l := py.NewLock()
+	defer l.Unlock()
+
 	var (
 		pv, pk, po, poa, pm, ret py.Object
 		err                      error

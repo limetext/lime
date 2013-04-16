@@ -14,6 +14,10 @@ type (
 )
 
 func toPython(r interface{}) (py.Object, error) {
+	if v := reflect.ValueOf(r); !v.IsValid() || (v.Kind() == reflect.Ptr && v.IsNil()) {
+		py.None.Incref()
+		return py.None, nil
+	}
 	switch t := r.(type) {
 	case nil:
 		py.None.Incref()
@@ -85,6 +89,9 @@ func toPython(r interface{}) (py.Object, error) {
 			return v2, nil
 		}
 	case *backend.Window:
+		if t == nil {
+			panic(t)
+		}
 		pyret0, err := _windowClass.Alloc(1)
 		if err != nil {
 			return nil, err

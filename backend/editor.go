@@ -10,20 +10,24 @@ import (
 	"sync"
 )
 
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+}
+
 type (
 	Editor struct {
 		HasSettings
-		windows                   []*Window
-		loginput                  bool
-		cmdhandler                commandHandler
-		keyBindings, lastBindings KeyBindings
-		console                   *View
-		frontend                  Frontend
-		clipboard                 string
+		windows       []*Window
+		active_window *Window
+		loginput      bool
+		cmdhandler    commandHandler
+		keyBindings   KeyBindings
+		console       *View
+		frontend      Frontend
+		clipboard     string
+		keyInput      chan (KeyPress)
 	}
 	Frontend interface {
-		ActiveWindow() *Window
-		ActiveView(*Window) *View
 		VisibleRegion(v *View) Region
 		Show(v *View, r Region)
 		StatusMessage(string)
@@ -37,22 +41,6 @@ type (
 	DummyFrontend struct{}
 )
 
-func (h *DummyFrontend) ActiveWindow() *Window {
-	if w := GetEditor().Windows(); len(w) > 0 {
-		return w[0]
-	}
-	return nil
-}
-
-func (h *DummyFrontend) ActiveView(w *Window) *View {
-	if w == nil {
-		return nil
-	}
-	if v := w.Views(); len(v) > 0 {
-		return v[0]
-	}
-	return nil
-}
 func (h *DummyFrontend) StatusMessage(msg string)      {}
 func (h *DummyFrontend) ErrorMessage(msg string)       {}
 func (h *DummyFrontend) MessageDialog(msg string)      {}
@@ -109,11 +97,13 @@ func GetEditor() *Editor {
 				buffer:  NewBuffer(),
 				scratch: true,
 			},
+			keyInput: make(chan KeyPress, 32),
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, newMyLogWriter())
+		go ed.inputthread()
 		ed.loadKeybindings()
 		ed.loadSettings()
 		//		initBasicCommands()
@@ -174,14 +164,29 @@ func (e *Editor) Console() *View {
 }
 
 func (e *Editor) Windows() []*Window {
-	return e.windows
+	edl.Lock()
+	defer edl.Unlock()
+	ret := make([]*Window, 0, len(e.windows))
+	copy(ret, e.windows)
+	return ret
+}
+
+func (e *Editor) SetActiveWindow(w *Window) {
+	e.active_window = w
+}
+
+func (e *Editor) ActiveWindow() *Window {
+	return e.active_window
 }
 
 func (e *Editor) NewWindow() *Window {
+	edl.Lock()
+	defer edl.Unlock()
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
 	w.Settings().SetParent(e)
 	OnNewWindow.Call(w)
+	ed.SetActiveWindow(w)
 	return w
 }
 
@@ -202,48 +207,60 @@ func (e *Editor) CommandHandler() CommandHandler {
 }
 
 func (e *Editor) HandleInput(kp KeyPress) {
-	p := Prof.Enter("hi")
-	defer p.Exit()
+	e.keyInput <- kp
+}
 
-	if e.loginput {
-		log4go.Info("Key: %v", kp)
-	}
-	if e.lastBindings.keyOff == 0 {
-		e.lastBindings = e.keyBindings
-	}
-try_again:
-	possible_actions := e.lastBindings.Filter(kp)
-	e.lastBindings = possible_actions
+func (e *Editor) inputthread() {
+	var lastBindings KeyBindings
+	for kp := range e.keyInput {
+		p := Prof.Enter("hi")
+		defer p.Exit()
 
-	// TODO?
-	wnd := e.Frontend().ActiveWindow()
-	v := e.Frontend().ActiveView(wnd)
+		if e.loginput {
+			log4go.Info("Key: %v", kp)
+		}
+		if lastBindings.keyOff == 0 {
+			lastBindings = e.keyBindings
+		}
+	try_again:
+		possible_actions := lastBindings.Filter(kp)
+		lastBindings = possible_actions
 
-	if action := possible_actions.Action(v); action != nil {
-		p2 := Prof.Enter("hi.perform")
-		// TODO: what's the command precedence?
-		if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
-			if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
+		// TODO?
+		var (
+			wnd *Window
+			v   *View
+		)
+		if wnd = e.ActiveWindow(); wnd != nil {
+			v = wnd.ActiveView()
+		}
+
+		if action := possible_actions.Action(v); action != nil {
+			p2 := Prof.Enter("hi.perform")
+			// TODO: what's the command precedence?
+			if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
+				if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
+					log4go.Debug("Couldn't run textcommand: %s", err)
+				}
+			} else if c := e.cmdhandler.WindowCommands[action.Command]; c != nil {
+				if err := e.CommandHandler().RunWindowCommand(wnd, action.Command, action.Args); err != nil {
+					log4go.Debug("Couldn't run windowcommand: %s", err)
+				}
+			} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
+				log4go.Debug("Couldn't run applicationcommand: %s", err)
+			}
+			p2.Exit()
+		} else if possible_actions.keyOff > 1 {
+			lastBindings = e.keyBindings
+			goto try_again
+		} else if kp.IsCharacter() {
+			p2 := Prof.Enter("hi.character")
+			log4go.Finest("kp: %v, pos: %v", kp, possible_actions)
+			if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
 				log4go.Debug("Couldn't run textcommand: %s", err)
 			}
-		} else if c := e.cmdhandler.WindowCommands[action.Command]; c != nil {
-			if err := e.CommandHandler().RunWindowCommand(wnd, action.Command, action.Args); err != nil {
-				log4go.Debug("Couldn't run windowcommand: %s", err)
-			}
-		} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
-			log4go.Debug("Couldn't run applicationcommand: %s", err)
+			p2.Exit()
 		}
-		p2.Exit()
-	} else if possible_actions.keyOff > 1 {
-		e.lastBindings = e.keyBindings
-		goto try_again
-	} else if kp.IsCharacter() {
-		p2 := Prof.Enter("hi.character")
-		log4go.Finest("kp: %v, pos: %v", kp, possible_actions)
-		if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
-			log4go.Debug("Couldn't run textcommand: %s", err)
-		}
-		p2.Exit()
 	}
 }
 

@@ -29,17 +29,22 @@ type (
 )
 
 func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) error {
+	lvl := log4go.FINE
 	p := Prof.Enter("wc")
 	defer p.Exit()
 	if ch.log {
-		log4go.Info("Running window command: %s %v", name, args)
-	} else {
-		log4go.Fine("Running window command: %s %v", name, args)
+		lvl = log4go.DEBUG
 	}
+	log4go.Logf(lvl, "Running window command: %s %v", name, args)
+	t := time.Now()
 	if c := ch.WindowCommands[name]; c != nil {
-		if err := wnd.runCommand(c, name, args); err != nil && ch.verbose {
-			log4go.Debug("Command execution failed: %s", err)
+		if err := wnd.runCommand(c, name, args); err != nil {
+			log4go.Logf(lvl-1, "Command execution failed: %s", err)
+		} else {
+			log4go.Logf(lvl, "Ran Window command: %s %s", name, time.Since(t))
 		}
+	} else {
+		log4go.Logf(lvl, "No such window command: %s", name)
 	}
 	return nil
 }

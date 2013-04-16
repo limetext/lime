@@ -10,14 +10,10 @@ import (
 	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
-	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-}
 
 var (
 	lut = map[termbox.Key]backend.KeyPress{
@@ -78,31 +74,17 @@ type layout struct {
 type tbfe struct {
 	layout         map[*backend.View]layout
 	status_message string
-	active_window  *backend.Window
+	dorender       chan bool
+	lock           sync.Mutex
 }
 
-func (t *tbfe) ActiveWindow() *backend.Window {
-	return t.active_window
-}
-
-func (t *tbfe) ActiveView(w *backend.Window) *backend.View {
-	if w == nil {
-		return nil
-	}
-	if v := w.Views(); len(v) > 0 {
-		return v[0]
-	}
-	return nil
-}
-
-func (t *tbfe) renderView(v *backend.View) {
+func (t *tbfe) renderView(v *backend.View, lay layout) {
 	p := backend.Prof.Enter("render")
 	defer p.Exit()
 
-	lay := t.layout[v]
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
 	sel := v.Sel()
-	vr := t.VisibleRegion(v)
+	vr := lay.visible
 	runes := v.Buffer().SubstrR(vr)
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
@@ -134,10 +116,20 @@ func (t *tbfe) renderView(v *backend.View) {
 		caret_blink = b
 	}
 
+	highlight_line := false
+	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
+		highlight_line = b
+	}
+
+	// TODO: much of this belongs in backend as it's not specific to any particular frontend
 	for i := range runes {
 		o := vr.Begin() + i
 		fg, bg := lfg, lbg
 		scope := v.ScopeName(o)
+		var lr Region
+		if highlight_line {
+			lr = v.Buffer().Line(o)
+		}
 		if scope != lastScope {
 			fg, bg = defaultFg, defaultBg
 			lastScope = scope
@@ -165,6 +157,11 @@ func (t *tbfe) renderView(v *backend.View) {
 			fg, bg = lfg, lbg
 		}
 		for _, r2 := range sel.Regions() {
+			if highlight_line && (lr.Contains(r2.A) || lr.Contains(r2.B)) {
+				// TODO: highlight color
+				bg |= termbox.AttrReverse
+				continue
+			}
 			if r2.Contains(o) {
 				if r2.Size() == 0 {
 					if !caret_blink || blink {
@@ -189,8 +186,11 @@ func (t *tbfe) renderView(v *backend.View) {
 			}
 			continue
 		} else if runes[i] == '\n' {
-			if x < ex {
+			for ; x < ex; x++ {
 				termbox.SetCell(x, y, ' ', fg, bg)
+				if !highlight_line {
+					break
+				}
 			}
 			x = sx
 			y++
@@ -255,7 +255,10 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 
 		r3 = t.clip(v, r3.A, r3.B)
 		l.visible = r3
+		t.lock.Lock()
 		t.layout[v] = l
+		t.lock.Unlock()
+		t.render()
 	}
 }
 
@@ -295,7 +298,50 @@ func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
+func (t *tbfe) render() {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	if len(t.dorender) < cap(t.dorender) {
+		t.dorender <- true
+	}
+}
+
+func (t *tbfe) renderthread() {
+	for a := range t.dorender {
+		_ = a
+		termbox.Clear(defaultFg, defaultBg)
+		w, h := termbox.Size()
+
+		t.lock.Lock()
+		vs := make([]*backend.View, 0, len(t.layout))
+		l := make([]layout, 0, len(t.layout))
+		for k, v := range t.layout {
+			vs = append(vs, k)
+			l = append(l, v)
+		}
+		t.lock.Unlock()
+		for i, v := range vs {
+			t.renderView(v, l[i])
+		}
+		runes := []rune(t.status_message)
+		for i := 0; i < w && i < len(runes); i++ {
+			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
+		}
+		termbox.Flush()
+	}
+}
+
 func (t *tbfe) loop() {
+	backend.OnNew.Add(func(v *backend.View) {
+		v.Settings().AddOnChange("lime.frontend.termbox.render", func() { t.render() })
+	})
+	backend.OnModified.Add(func(v *backend.View) {
+		t.render()
+	})
+	backend.OnSelectionModified.Add(func(v *backend.View) {
+		t.render()
+	})
+
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
 	ed.LogInput(true)
@@ -391,12 +437,11 @@ func (t *tbfe) loop() {
 	defer func() {
 		close(evchan)
 		termbox.Close()
-		fmt.Println(c.Buffer().String())
+		fmt.Println(c.Buffer().Substr(Region{0, c.Buffer().Size()}))
 		fmt.Println(backend.Prof)
 	}()
 
 	w := ed.NewWindow()
-	t.active_window = w
 	v := w.OpenFile("main.go", 0)
 	v.Settings().Set("trace", true)
 	c.Buffer().AddCallback(t.scroll)
@@ -428,9 +473,7 @@ func (t *tbfe) loop() {
 	t.Show(v, Region{1, 1})
 
 	sublime.Init()
-	_ = sublime.Init
-	lastrender := time.Now()
-	render := false
+	l := py.NewLock()
 	og, err := py.Import("objgraph")
 	if err != nil {
 		log4go.Debug(err)
@@ -441,22 +484,10 @@ func (t *tbfe) loop() {
 		log4go.Debug(err)
 		return
 	}
+	l.Unlock()
+
 	for {
 		p := backend.Prof.Enter("mainloop")
-		if timed := time.Since(lastrender) > (time.Millisecond * 15); timed || render {
-			lastrender = time.Now()
-			termbox.Clear(defaultFg, defaultBg)
-			w, h := termbox.Size()
-
-			for v := range t.layout {
-				t.renderView(v)
-			}
-			runes := []rune(t.status_message)
-			for i := 0; i < w && i < len(runes); i++ {
-				termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
-			}
-			termbox.Flush()
-		}
 
 		blink_phase := time.Second
 		if p, ok := ed.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
@@ -488,12 +519,16 @@ func (t *tbfe) loop() {
 					return
 				}
 				log4go.Debug("Before")
+				l := py.NewLock()
 				gr.Base().CallFunctionObjArgs()
+				l.Unlock()
 				ed.HandleInput(kp)
 				log4go.Debug("After")
+				l.Lock()
 				gr.Base().CallFunctionObjArgs()
+				l.Unlock()
+
 				blink = true
-				render = false
 			}
 			if len(evchan) > 0 {
 				limit--
@@ -504,6 +539,7 @@ func (t *tbfe) loop() {
 		case <-timer.C:
 			// 	// case <-time.After(blink_phase / 2):
 			blink = !blink
+			t.render()
 			// 	// 	// Divided by two since we're only doing a simple toggle blink
 			// 	// 	// TODO(q): Shouldn't redraw if blink is disabled...
 		}
@@ -513,12 +549,18 @@ func (t *tbfe) loop() {
 }
 
 func main() {
-	defer py.Finalize()
+	defer func() {
+		py.NewLock()
+		py.Finalize()
+	}()
+
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}
 
 	var t tbfe
+	t.dorender = make(chan bool, 4)
 	t.layout = make(map[*backend.View]layout)
+	go t.renderthread()
 	t.loop()
 }

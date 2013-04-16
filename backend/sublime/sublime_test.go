@@ -22,8 +22,8 @@ func TestSublime(t *testing.T) {
 		t.Logf("%s", b.Substr(primitives.Region{pos, pos + delta}))
 	})
 	w := ed.NewWindow()
-	w.NewFile()
 	Init()
+	l := py.NewLock()
 	py.AddToPath("testdata")
 	py.AddToPath("testdata/plugins")
 	if m, err := py.Import("sublime_plugin"); err != nil {
@@ -65,14 +65,17 @@ func TestSublime(t *testing.T) {
 	} else {
 		for _, fn := range files {
 			if filepath.Ext(fn) == ".py" {
+				log4go.Debug("Running %s", fn)
 				if _, err := py.Import(fn[:len(fn)-3]); err != nil {
+					log4go.Error(err)
 					t.Error(err)
 				} else {
-					t.Log("Ran", fn)
+					log4go.Debug("Ran %s", fn)
 				}
 			}
 		}
 	}
+
 	var f func(indent string, v py.Object, buf *bytes.Buffer)
 	f = func(indent string, v py.Object, buf *bytes.Buffer) {
 		b := v.Base()
@@ -112,6 +115,8 @@ func TestSublime(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	f("", subl, buf)
 
+	l.Unlock()
+
 	const expfile = "testdata/api.txt"
 	if d, err := ioutil.ReadFile(expfile); err != nil {
 		if err := ioutil.WriteFile(expfile, buf.Bytes(), 0644); err != nil {
@@ -145,7 +150,9 @@ func TestSublime(t *testing.T) {
 		}
 	}
 	log4go.Debug("After")
+	l.Lock()
 	gr.Base().CallFunctionObjArgs()
+	l.Unlock()
 
 	var v *backend.View
 	for _, v2 := range w.Views() {

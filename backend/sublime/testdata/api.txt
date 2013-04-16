@@ -343,7 +343,7 @@ platform                      : <class 'builtin_function_or_method'>
 register                      : <class 'builtin_function_or_method'>
 run_command                   : <class 'builtin_function_or_method'>
 set_clipboard                 : <class 'builtin_function_or_method'>
-set_timeout                   : <class 'function'>
+set_timeout                   : <class 'builtin_function_or_method'>
 settings                      : <class 'builtin_function_or_method'>
 status_message                : <class 'builtin_function_or_method'>
 test_window                   : <class 'sublime.Window'>

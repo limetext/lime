@@ -13,9 +13,6 @@ sublime.OP_REGEX_MATCH = 2
 sublime.OP_NOT_REGEX_MATCH = 3
 sublime.OP_REGEX_CONTAINS = 4
 sublime.OP_NOT_REGEX_CONTAINS = 5
-def __hack(a, b):
-    print("set_timeout not implemented")
-sublime.set_timeout = __hack
 
 class Command(object):
     def is_enabled(self, args=None):

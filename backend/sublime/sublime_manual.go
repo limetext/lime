@@ -7,6 +7,7 @@ import (
 	"lime/backend"
 	"os"
 	"strings"
+	"time"
 )
 
 func scanpath(path string, m *py.Module) {
@@ -77,10 +78,47 @@ func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 	return toPython(nil)
 }
 
+func sublime_set_timeout(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
+	var (
+		pyarg py.Object
+	)
+	if tu.Size() != 2 {
+		return nil, fmt.Errorf("Unexpected argument count: %d", tu.Size())
+	}
+	if i, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		pyarg = i
+	}
+	if i, err := tu.GetItem(1); err != nil {
+		return nil, err
+	} else if v, err := fromPython(i); err != nil {
+		return nil, err
+	} else if v2, ok := v.(int); !ok {
+		return nil, fmt.Errorf("Expected int not %s", i.Type())
+	} else {
+		pyarg.Incref()
+		go func() {
+			time.Sleep(time.Millisecond * time.Duration(v2))
+			l := py.NewLock()
+			defer l.Unlock()
+			defer pyarg.Decref()
+			if ret, err := pyarg.Base().CallFunctionObjArgs(); err != nil {
+				log4go.Debug("Error in callback: %v", err)
+			} else {
+				ret.Decref()
+			}
+		}()
+	}
+	return toPython(nil)
+}
+
 func init() {
-	sublime_methods = append(sublime_methods, py.Method{Name: "console", Func: sublime_Console})
+	sublime_methods = append(sublime_methods, py.Method{Name: "console", Func: sublime_Console}, py.Method{Name: "set_timeout", Func: sublime_set_timeout})
 	backend.GetEditor()
-	py.InitializeEx(false)
+	l := py.InitAndLock()
+	defer l.Unlock()
+	//	py.InitializeEx(false)
 	m, err := py.InitModule("sublime", sublime_methods)
 	if err != nil {
 		panic(err)
@@ -119,6 +157,8 @@ func init() {
 
 // TODO
 func Init() {
+	l := py.NewLock()
+	defer l.Unlock()
 	if m, err := py.Import("sublime_plugin"); err != nil {
 		panic(err)
 	} else {

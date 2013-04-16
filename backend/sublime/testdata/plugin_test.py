@@ -1,8 +1,11 @@
 try:
     import traceback
     import sublime
+    print("new file")
     v = sublime.test_window.new_file()
+    print("running command")
     v.run_command("test_text")
+    print("command ran")
     assert v.substr(sublime.Region(0, v.size())) == "hello"
     v.run_command("undo")
     print(v.sel()[0])

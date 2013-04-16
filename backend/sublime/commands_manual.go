@@ -75,6 +75,9 @@ func (c *CommandGlue) CreatePyArgs(args backend.Args) (ret *py.Dict, err error) 
 }
 
 func (c *CommandGlue) callBool(name string, args backend.Args) bool {
+	gs := py.GilState_Ensure()
+	defer gs.Release()
+
 	var (
 		pyargs, r py.Object
 		err       error
@@ -105,6 +108,9 @@ func (c *CommandGlue) IsVisible(args backend.Args) bool {
 }
 
 func (c *CommandGlue) Description(args backend.Args) string {
+	gs := py.GilState_Ensure()
+	defer gs.Release()
+
 	var (
 		pyargs, r py.Object
 		err       error
@@ -137,6 +143,9 @@ func pyError(err error) error {
 	return err
 }
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
+	l := py.NewLock()
+	defer l.Unlock()
+
 	p0 := backend.Prof.Enter("tc.run")
 	defer p0.Exit()
 	var (
@@ -173,28 +182,37 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	// 	}
 	// }()
 	exec := backend.Prof.Enter("tc.exec")
+	defer exec.Exit()
 	if obj.Base().HasAttrString("run_") {
 		// The plugin is probably trying to bypass the undostack...
 		old := v.IsScratch()
 		v.SetScratch(true)
-		//		log4go.Finest("Discarded: %s", e)
+		log4go.Finest("Discarded: %s", e)
 		v.EndEdit(e)
 		v.SetScratch(old)
-		if ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs); err != nil {
-			return pyError(err)
-		} else {
+		ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs)
+		if ret != nil {
 			ret.Decref()
 		}
-	} else if ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs); err != nil {
-		return pyError(err)
+		if err != nil {
+			return pyError(err)
+		}
 	} else {
-		ret.Decref()
+		ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs)
+		if ret != nil {
+			ret.Decref()
+		}
+		if err != nil {
+			return pyError(err)
+		}
 	}
-	exec.Exit()
 	return nil
 }
 
 func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
+	l := py.NewLock()
+	defer l.Unlock()
+
 	var (
 		pyw, pyargs, obj py.Object
 		err              error
@@ -231,6 +249,9 @@ func (c *WindowCommandGlue) Run(w *backend.Window, args backend.Args) error {
 }
 
 func (c *ApplicationCommandGlue) Run(args backend.Args) error {
+	l := py.NewLock()
+	defer l.Unlock()
+
 	var (
 		pyargs py.Object
 		err    error
