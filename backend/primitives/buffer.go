@@ -28,12 +28,18 @@ type (
 		Insert(point int, svalue string)
 		Substr(r Region) string
 		ChangeCount() int
+		// Returns the line at the given offset
 		Line(offset int) Region
-		Lines(r Region) Region
+		// Returns a Region starting at the start of a line and ending at the end of a (possibly different) line
+		LineR(r Region) Region
+		// Returns the lines intersecting the region
+		Lines(r Region) []Region
+		// Like #Line, but includes the line endings
 		FullLine(offset int) Region
-		FullLines(r Region) Region
+		// Like #LineR, but includes the line endings
+		FullLineR(r Region) Region
 		Word(offset int) Region
-		Words(r Region) Region
+		WordR(r Region) Region
 	}
 	BufferChangedCallback func(buf Buffer, position, delta int)
 
@@ -145,9 +151,23 @@ eloop:
 	return Region{s, e}
 }
 
-// Returns a region that starts at the first character in a line
-// and ends with the last character in a (possibly different) line
-func (b *buffer) Lines(r Region) Region {
+func (b *buffer) Lines(r Region) (lines []Region) {
+	r = b.LineR(r)
+	buf := b.SubstrR(r)
+	last := r.Begin()
+	for i, ru := range buf {
+		if ru == '\n' {
+			lines = append(lines, Region{last, r.Begin() + i})
+			last = r.Begin() + i
+		}
+	}
+	if last != r.End() {
+		lines = append(lines, Region{last, r.End()})
+	}
+	return lines
+}
+
+func (b *buffer) LineR(r Region) Region {
 	s := b.Line(r.Begin())
 	e := b.Line(r.End())
 	return Region{s.Begin(), e.End()}
@@ -168,9 +188,7 @@ func (b *buffer) FullLine(offset int) Region {
 	return r
 }
 
-// Returns a region that starts at the first character in a line
-// and ends with the line break in a (possibly different) line
-func (b *buffer) FullLines(r Region) Region {
+func (b *buffer) FullLineR(r Region) Region {
 	s := b.FullLine(r.Begin())
 	e := b.FullLine(r.End())
 	return Region{s.Begin(), e.End()}
@@ -234,7 +252,7 @@ func (b *buffer) Word(offset int) Region {
 
 // Returns a region that starts at the first character in a word
 // and ends with the last character in a (possibly different) word
-func (b *buffer) Words(r Region) Region {
+func (b *buffer) WordR(r Region) Region {
 	s := b.Word(r.Begin())
 	e := b.Word(r.End())
 	return Region{s.Begin(), e.End()}

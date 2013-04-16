@@ -8,11 +8,13 @@ import (
 	"io/ioutil"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
+	"lime/backend/render"
 	"lime/backend/textmate"
 	"reflect"
 	"runtime/debug"
 	"sort"
 	"strings"
+	"sync"
 )
 
 type (
@@ -31,8 +33,9 @@ type (
 		lastScopeNode *parser.Node
 		lastScopeBuf  bytes.Buffer
 		lastScopeName string
-		regions       map[string][]Region
+		regions       render.ViewRegionMap
 		editstack     []*Edit
+		lock          sync.Mutex
 	}
 	Edit struct {
 		invalid    bool
@@ -47,7 +50,7 @@ type (
 )
 
 func newView(w *Window) *View {
-	ret := &View{window: w, regions: make(map[string][]Region)}
+	ret := &View{window: w, regions: make(render.ViewRegionMap)}
 	ret.lastParse = -1
 	ret.Settings().Set("is_widget", false)
 	return ret
@@ -94,12 +97,21 @@ func (v *View) setBuffer(b Buffer) error {
 }
 
 func (v *View) flush(a, b int) {
-	e := Prof.Enter("view.flush")
-	defer e.Exit()
-	v.selection.Adjust(a, b)
-	v.lastScopeNode = nil
-	v.lastParse = -1
-	v.lastScopeBuf.Reset()
+	func() {
+		v.lock.Lock()
+		defer v.lock.Unlock()
+
+		e := Prof.Enter("view.flush")
+		defer e.Exit()
+		v.selection.Adjust(a, b)
+		for k, v2 := range v.regions {
+			v2.Regions.Adjust(a, b)
+			v.regions[k] = v2
+		}
+		v.lastScopeNode = nil
+		v.lastParse = -1
+		v.lastScopeBuf.Reset()
+	}()
 	OnModified.Call(v)
 	OnSelectionModified.Call(v)
 }
@@ -327,16 +339,29 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 	return cmd.Run(v, e, args)
 }
 
-func (v *View) AddRegions(key string, regions []Region, extras ...interface{}) {
-	v.regions[key] = regions
+func (v *View) AddRegions(key string, regions []Region, scope, icon string, flags render.ViewRegionFlags) {
+	vr := render.ViewRegions{Scope: scope, Icon: icon, Flags: flags}
+	vr.Regions.AddAll(regions)
+
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	v.regions[key] = vr
 }
 
-func (v *View) GetRegions(key string) []Region {
-	return v.regions[key]
+func (v *View) GetRegions(key string) (ret []Region) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	vr := v.regions[key]
+	rs := vr.Regions.Regions()
+	ret = make([]Region, len(rs))
+	copy(ret, rs)
+	return
 }
 
 func (v *View) EraseRegions(key string) {
-	v.regions[key] = nil
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	delete(v.regions, key)
 }
 
 func (v *View) UndoStack() *UndoStack {

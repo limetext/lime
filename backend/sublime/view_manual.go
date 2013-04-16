@@ -111,7 +111,7 @@ func (o *View) Py_add_regions(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
 			}
 		}
 	}
-	o.data.AddRegions(arg1, arg2)
+	o.data.AddRegions(arg1, arg2, "", "", 0) // TODO
 	return toPython(nil)
 }
 
@@ -226,7 +226,7 @@ func (o *View) Py_line(tu *py.Tuple) (py.Object, error) {
 		return nil, err
 	} else {
 		if _, ok := v.(*Region); ok {
-			return o.lines(tu)
+			return o.liner(tu)
 		} else {
 			return o.line(tu)
 		}
@@ -238,7 +238,7 @@ func (o *View) Py_full_line(tu *py.Tuple) (py.Object, error) {
 		return nil, err
 	} else {
 		if _, ok := v.(*Region); ok {
-			return o.fulllines(tu)
+			return o.fullliner(tu)
 		} else {
 			return o.fullline(tu)
 		}
@@ -250,7 +250,7 @@ func (o *View) Py_word(tu *py.Tuple) (py.Object, error) {
 		return nil, err
 	} else {
 		if _, ok := v.(*Region); ok {
-			return o.words(tu)
+			return o.wordr(tu)
 		} else {
 			return o.word(tu)
 		}

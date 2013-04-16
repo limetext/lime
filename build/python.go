@@ -406,7 +406,7 @@ func main() {
 			func(t reflect.Type, m reflect.Method) string {
 				mn := ""
 				switch m.Name {
-				case "Line", "Lines", "FullLine", "FullLines", "Words", "Word":
+				case "Line", "LineR", "FullLine", "FullLineR", "WordR", "Word":
 					mn = strings.ToLower(m.Name)
 				case "Id":
 					mn = "Py_buffer_id"

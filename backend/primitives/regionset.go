@@ -70,6 +70,11 @@ func (r *RegionSet) Len() int {
 	return len(r.regions)
 }
 
+func (r *RegionSet) AddAll(rs []Region) {
+	r.regions = append(r.regions, rs...)
+	r.flush()
+}
+
 func (r *RegionSet) Contains(r2 Region) bool {
 	for i := range r.regions {
 		if r.regions[i] == r2 || (r.regions[i].Contains(r2.Begin()) && r.regions[i].Contains(r2.End())) {

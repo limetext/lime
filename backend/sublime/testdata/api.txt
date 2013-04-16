@@ -134,6 +134,7 @@ RegionSet                     : <class 'type'>
 	__str__
 	__subclasshook__
 	add
+	add_all
 	clear
 	contains
 	regions
@@ -231,6 +232,7 @@ View                          : <class 'type'>
 	insert
 	is_scratch
 	line
+	lines
 	name
 	overwrite_status
 	replace
