@@ -86,7 +86,7 @@ func (v *ProfileResult) Avg() time.Duration {
 	return v.Tottime / time.Duration(v.Calls)
 }
 func (v ProfileResult) String() string {
-	return fmt.Sprintf("%s %d, %s, %s", v.Name, v.Calls, v.Tottime, v.Avg())
+	return fmt.Sprintf("%64s %6d, %20s, %20s", v.Name, v.Calls, v.Tottime, v.Avg())
 }
 
 func (p Profiler) String() (ret string) {

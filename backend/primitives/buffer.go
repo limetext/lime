@@ -58,7 +58,7 @@ type (
 
 func NewBuffer() Buffer {
 	b := buffer{}
-	b.SerializedBuffer.init(&node{})
+	b.SerializedBuffer.init(&rebalancingNode{})
 	r := &b
 	runtime.SetFinalizer(r, func(b *buffer) { b.Close() })
 

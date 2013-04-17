@@ -14,6 +14,10 @@ type (
 		left, right   *node
 		data          []rune
 	}
+	rebalancingNode struct {
+		node
+		patches int
+	}
 )
 
 func (n *node) Close() {
@@ -215,7 +219,9 @@ func (n *node) leaf() bool {
 	return n.le() && n.re()
 }
 
-var merge = 1024 * 8
+const rebalance = 1024 * 8
+
+var merge = 512
 
 func linecount(data []rune) (ret int) {
 	for _, r := range data {
@@ -342,8 +348,10 @@ func (n *node) concat(other *node) {
 	} else {
 		left := *n
 		n.left = &left
+		n.data = nil
 		n.right = other
 	}
+
 	n.patch()
 }
 
@@ -364,4 +372,22 @@ func (n *node) Erase(position, length int) {
 	right := n.split(position + length)
 	n.split(position)
 	n.concat(right)
+}
+
+func (n *rebalancingNode) rebalance(add int) {
+	n.patches += add
+	if n.patches >= rebalance {
+		n.node = *newNode(n.SubstrR(Region{0, n.Size()}))
+		n.patches = 0
+	}
+}
+
+func (n *rebalancingNode) InsertR(position int, r []rune) {
+	n.node.InsertR(position, r)
+	n.rebalance(len(r))
+}
+
+func (n *rebalancingNode) Erase(position, length int) {
+	n.node.Erase(position, length)
+	n.rebalance(length)
 }
