@@ -426,7 +426,7 @@ func main() {
 			sn),
 		},
 		{"../backend/sublime/sublime_api.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor()),
-			regexp.MustCompile("Info|HandleInput|CommandHandler|Windows|Frontend|Console|SetActiveWindow").MatchString,
+			regexp.MustCompile("Info|HandleInput|CommandHandler|Windows|Frontend|Console|SetActiveWindow|Init").MatchString,
 			"backend.GetEditor().",
 			sn),
 		},

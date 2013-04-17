@@ -84,7 +84,9 @@ func init() {
 			}
 			return False
 		} else if key == "num_selections" {
-			op, _ := operand.(int)
+			opf, _ := operand.(float64)
+			op := int(opf)
+
 			switch operator {
 			case OpEqual:
 				if op == v.Sel().Len() {

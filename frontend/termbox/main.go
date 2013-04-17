@@ -603,7 +603,9 @@ func (t *tbfe) loop() {
 }
 
 func main() {
+	ed := backend.GetEditor()
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
+	ed.Init()
 	defer func() {
 		py.NewLock()
 		py.Finalize()

@@ -107,8 +107,6 @@ func GetEditor() *Editor {
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, newMyLogWriter())
 		go ed.inputthread()
-		ed.loadKeybindings()
-		ed.loadSettings()
 		//		initBasicCommands()
 	}
 	return ed
@@ -120,6 +118,11 @@ func (e *Editor) Frontend() Frontend {
 
 func (e *Editor) SetFrontend(f Frontend) {
 	e.frontend = f
+}
+
+func (e *Editor) Init() {
+	ed.loadKeybindings()
+	ed.loadSettings()
 }
 
 func (e *Editor) loadKeybinding(fn string) {
