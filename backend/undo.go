@@ -80,6 +80,9 @@ func (us *UndoStack) GlueFrom(mark int) {
 		name string
 		args Args
 	}
+	e.v = us.actions[mark].v
+	e.savedSel.AddAll(us.actions[mark].savedSel.Regions())
+
 	entries := make([]entry, us.position-mark)
 	for i := range entries {
 		a := us.actions[i+mark]

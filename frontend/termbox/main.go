@@ -19,6 +19,17 @@ import (
 
 var (
 	lut = map[termbox.Key]backend.KeyPress{
+		// Omission of these are intentional due to map collisions
+		//		termbox.KeyCtrlTilde:      backend.KeyPress{Ctrl: true, Key: '~'},
+		//		termbox.KeyCtrlBackslash:  backend.KeyPress{Ctrl: true, Key: '\\'},
+		//		termbox.KeyCtrlSlash:      backend.KeyPress{Ctrl: true, Key: '/'},
+		//		termbox.KeyCtrlUnderscore: backend.KeyPress{Ctrl: true, Key: '_'},
+		//		termbox.KeyCtrlLsqBracket: backend.KeyPress{Ctrl: true, Key: '{'},
+		//		termbox.KeyCtrlRsqBracket: backend.KeyPress{Ctrl: true, Key: '}'},
+		// termbox.KeyCtrl3:
+		// termbox.KeyCtrl8
+		//		termbox.KeyCtrl2:      backend.KeyPress{Ctrl: true, Key: '2'},
+		termbox.KeyCtrlSpace:  backend.KeyPress{Ctrl: true, Key: ' '},
 		termbox.KeyCtrlA:      backend.KeyPress{Ctrl: true, Key: 'a'},
 		termbox.KeyCtrlB:      backend.KeyPress{Ctrl: true, Key: 'b'},
 		termbox.KeyCtrlC:      backend.KeyPress{Ctrl: true, Key: 'c'},
@@ -43,7 +54,6 @@ var (
 		termbox.KeyCtrlX:      backend.KeyPress{Ctrl: true, Key: 'x'},
 		termbox.KeyCtrlY:      backend.KeyPress{Ctrl: true, Key: 'y'},
 		termbox.KeyCtrlZ:      backend.KeyPress{Ctrl: true, Key: 'z'},
-		termbox.KeyCtrl2:      backend.KeyPress{Ctrl: true, Key: '2'},
 		termbox.KeyCtrl4:      backend.KeyPress{Ctrl: true, Key: '4'},
 		termbox.KeyCtrl5:      backend.KeyPress{Ctrl: true, Key: '5'},
 		termbox.KeyCtrl6:      backend.KeyPress{Ctrl: true, Key: '6'},
@@ -57,6 +67,20 @@ var (
 		termbox.KeyArrowRight: backend.KeyPress{Key: backend.Right},
 		termbox.KeyDelete:     backend.KeyPress{Key: backend.Delete},
 		termbox.KeyEsc:        backend.KeyPress{Key: backend.Escape},
+		termbox.KeyPgup:       backend.KeyPress{Key: backend.PageUp},
+		termbox.KeyPgdn:       backend.KeyPress{Key: backend.PageDown},
+		termbox.KeyF1:         backend.KeyPress{Key: backend.F1},
+		termbox.KeyF2:         backend.KeyPress{Key: backend.F2},
+		termbox.KeyF3:         backend.KeyPress{Key: backend.F3},
+		termbox.KeyF4:         backend.KeyPress{Key: backend.F4},
+		termbox.KeyF5:         backend.KeyPress{Key: backend.F5},
+		termbox.KeyF6:         backend.KeyPress{Key: backend.F6},
+		termbox.KeyF7:         backend.KeyPress{Key: backend.F7},
+		termbox.KeyF8:         backend.KeyPress{Key: backend.F8},
+		termbox.KeyF9:         backend.KeyPress{Key: backend.F9},
+		termbox.KeyF10:        backend.KeyPress{Key: backend.F10},
+		termbox.KeyF11:        backend.KeyPress{Key: backend.F11},
+		termbox.KeyF12:        backend.KeyPress{Key: backend.F12},
 		termbox.KeyTab:        backend.KeyPress{Key: '\t'},
 	}
 	schemelut = make(map[string][2]termbox.Attribute)
