@@ -83,6 +83,20 @@ func init() {
 				return True
 			}
 			return False
+		} else if key == "num_selections" {
+			op, _ := operand.(int)
+			switch operator {
+			case OpEqual:
+				if op == v.Sel().Len() {
+					return True
+				}
+				return False
+			case OpNotEqual:
+				if op != v.Sel().Len() {
+					return True
+				}
+				return False
+			}
 		}
 		return Unknown
 	})

@@ -11,3 +11,5 @@ out.txt
 backend/sublime/*.go
 !backend/sublime/*_test.go
 !backend/sublime/*_manual.go
+*.log
+*.log.0*

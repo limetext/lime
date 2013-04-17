@@ -106,3 +106,25 @@ func (r *RegionSet) Regions() (ret []Region) {
 	copy(ret, r.regions)
 	return
 }
+
+func (r *RegionSet) HasNonEmpty() bool {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	for _, r := range r.regions {
+		if !r.Empty() {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *RegionSet) HasEmpty() bool {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	for _, r := range r.regions {
+		if r.Empty() {
+			return true
+		}
+	}
+	return false
+}

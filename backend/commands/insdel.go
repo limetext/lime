@@ -51,13 +51,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	}
 
 	sel := v.Sel()
-	hasNonEmpty := false
-	for _, r := range sel.Regions() {
-		if !r.Empty() {
-			hasNonEmpty = true
-			break
-		}
-	}
+	hasNonEmpty := sel.HasNonEmpty()
 	i := 0
 	for {
 		l := sel.Len()
@@ -94,13 +88,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 
 func (c *RightDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	sel := v.Sel()
-	hasNonEmpty := false
-	for _, r := range sel.Regions() {
-		if !r.Empty() {
-			hasNonEmpty = true
-			break
-		}
-	}
+	hasNonEmpty := sel.HasNonEmpty()
 	i := 0
 	for {
 		l := sel.Len()

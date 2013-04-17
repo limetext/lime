@@ -394,7 +394,7 @@ func main() {
 	}
 	data := [][]string{
 		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
-		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust").MatchString)},
+		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust|Has").MatchString)},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show|AddRegions|UndoStack").MatchString)},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile|SetActiveView").MatchString)},
