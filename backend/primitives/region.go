@@ -8,9 +8,6 @@ type (
 	Region struct {
 		A, B int
 	}
-	RegionSet struct {
-		regions []Region
-	}
 )
 
 func (r Region) String() string {

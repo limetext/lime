@@ -2,9 +2,17 @@ package primitives
 
 import (
 	"sort"
+	"sync"
 )
 
+type RegionSet struct {
+	regions []Region
+	lock    sync.Mutex
+}
+
 func (r *RegionSet) Adjust(position, delta int) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	for i := range r.regions {
 		if r.regions[i].A >= position {
 			r.regions[i].A += delta
@@ -36,20 +44,25 @@ func (r *RegionSet) flush() {
 
 func (r *RegionSet) Substract(r2 Region) {
 	r.Adjust(r2.Begin(), r2.Size())
-	r.flush()
 }
 
 func (r *RegionSet) Add(r2 Region) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	r.regions = append(r.regions, r2)
 	r.flush()
 }
 
 func (r *RegionSet) Clear() {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	r.regions = r.regions[0:0]
 	r.flush()
 }
 
 func (r *RegionSet) Get(i int) Region {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	return r.regions[i]
 }
 
@@ -71,6 +84,8 @@ func (r *RegionSet) Len() int {
 }
 
 func (r *RegionSet) AddAll(rs []Region) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	r.regions = append(r.regions, rs...)
 	r.flush()
 }
@@ -84,6 +99,10 @@ func (r *RegionSet) Contains(r2 Region) bool {
 	return false
 }
 
-func (r *RegionSet) Regions() []Region {
-	return r.regions
+func (r *RegionSet) Regions() (ret []Region) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	ret = make([]Region, len(r.regions))
+	copy(ret, r.regions)
+	return
 }

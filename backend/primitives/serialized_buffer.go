@@ -2,6 +2,7 @@ package primitives
 
 import (
 	"code.google.com/p/log4go"
+	"runtime/debug"
 )
 
 // A type that serializes all read/write operations from/to the inner buffer implementation
@@ -35,7 +36,7 @@ func (s *SerializedBuffer) worker() {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					log4go.Error("Recovered from panic: %v", r)
+					log4go.Error("Recovered from panic: %v, %s", r, debug.Stack())
 					s.lockret <- r
 				}
 			}()

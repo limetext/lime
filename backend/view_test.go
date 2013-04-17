@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestView(t *testing.T) {
@@ -140,12 +141,16 @@ func TestScopeName(t *testing.T) {
 	if d, err := ioutil.ReadFile(in); err != nil {
 		t.Fatal(err)
 	} else {
+		v.rootNode = nil
 		e := v.BeginEdit()
 		v.Insert(e, 0, string(d))
 		v.EndEdit(e)
 		last := ""
 		str := ""
 		lasti := 0
+		for v.rootNode == nil {
+			time.Sleep(time.Millisecond)
+		}
 		for i := 0; i < v.buffer.Size(); i++ {
 			if name := v.ScopeName(i); name != last {
 				if last != "" {

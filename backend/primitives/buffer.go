@@ -3,6 +3,7 @@ package primitives
 import (
 	"runtime"
 	"strings"
+	"sync"
 )
 
 type (
@@ -51,6 +52,7 @@ type (
 		name        string
 		filename    string
 		callbacks   []BufferChangedCallback
+		lock        sync.Mutex
 	}
 )
 
@@ -64,22 +66,32 @@ func NewBuffer() Buffer {
 }
 
 func (b *buffer) AddCallback(cb BufferChangedCallback) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	b.callbacks = append(b.callbacks, cb)
 }
 
 func (b *buffer) SetName(n string) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	b.name = n
 }
 
 func (b *buffer) Name() string {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	return b.name
 }
 
 func (b *buffer) FileName() string {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	return b.filename
 }
 
 func (b *buffer) SetFileName(n string) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	b.filename = n
 }
 
@@ -95,6 +107,8 @@ func (buf *buffer) Insert(point int, svalue string) {
 	}
 	value := []rune(svalue)
 	buf.SerializedBuffer.InsertR(point, value)
+	buf.lock.Lock()
+	defer buf.lock.Unlock()
 	buf.changecount++
 	buf.notify(point, len(value))
 }
@@ -103,6 +117,8 @@ func (buf *buffer) Erase(point, length int) {
 	if length == 0 {
 		return
 	}
+	buf.lock.Lock()
+	defer buf.lock.Unlock()
 	buf.changecount++
 	buf.SerializedBuffer.Erase(point, length)
 	buf.notify(point+length, -length)
@@ -113,6 +129,8 @@ func (b *buffer) Substr(r Region) string {
 }
 
 func (b *buffer) ChangeCount() int {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	return b.changecount
 }
 

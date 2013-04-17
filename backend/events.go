@@ -28,6 +28,7 @@ func (ve *ViewEvent) Add(cb ViewEventCallback) {
 }
 
 func (ve ViewEvent) Call(v *View) {
+	log4go.Finest("ViewEvent")
 	for i := range ve {
 		ve[i](v)
 	}
@@ -53,6 +54,7 @@ func (we *WindowEvent) Add(cb WindowEventCallback) {
 }
 
 func (we WindowEvent) Call(w *Window) {
+	log4go.Finest("WindowEvent")
 	for i := range we {
 		we[i](w)
 	}

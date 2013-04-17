@@ -6,12 +6,15 @@ import (
 	"io/ioutil"
 	"lime/backend/loaders"
 	. "lime/backend/primitives"
+	. "lime/backend/util"
 	"runtime"
+	"runtime/debug"
 	"sync"
 )
 
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	GetEditor()
 }
 
 type (
@@ -211,8 +214,18 @@ func (e *Editor) HandleInput(kp KeyPress) {
 }
 
 func (e *Editor) inputthread() {
+	pc := 0
 	var lastBindings KeyBindings
-	for kp := range e.keyInput {
+	doinput := func(kp KeyPress) {
+		defer func() {
+			if r := recover(); r != nil {
+				log4go.Error("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
+				if pc > 0 {
+					panic(r)
+				}
+				pc++
+			}
+		}()
 		p := Prof.Enter("hi")
 		defer p.Exit()
 
@@ -262,14 +275,17 @@ func (e *Editor) inputthread() {
 			p2.Exit()
 		}
 	}
+	for kp := range e.keyInput {
+		doinput(kp)
+	}
 }
 
 func (e *Editor) LogInput(l bool) {
 	e.loginput = l
 }
 
-func (e *Editor) LogCommands(bool) {
-	e.cmdhandler.log = true
+func (e *Editor) LogCommands(l bool) {
+	e.cmdhandler.log = l
 }
 
 func (e *Editor) RunCommand(name string, args Args) {

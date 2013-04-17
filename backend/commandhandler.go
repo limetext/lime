@@ -3,6 +3,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	. "lime/backend/util"
 	"time"
 )
 
@@ -39,7 +40,7 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 	t := time.Now()
 	if c := ch.WindowCommands[name]; c != nil {
 		if err := wnd.runCommand(c, name, args); err != nil {
-			log4go.Logf(lvl-1, "Command execution failed: %s", err)
+			log4go.Logf(lvl+1, "Command execution failed: %s", err)
 		} else {
 			log4go.Logf(lvl, "Ran Window command: %s %s", name, time.Since(t))
 		}
@@ -50,28 +51,26 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 }
 
 func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) error {
+	lvl := log4go.FINE
 	p := Prof.Enter("tc")
 	defer p.Exit()
 	t := time.Now()
 	if ch.log {
-		log4go.Info("Running text command: %s %v", name, args)
-	} else {
-		log4go.Fine("Running text command: %s %v", name, args)
+		lvl = log4go.DEBUG
 	}
+	log4go.Logf(lvl, "Running text command: %s %v", name, args)
 	if c := ch.TextCommands[name]; c != nil {
-		if err := view.runCommand(c, name, args); err != nil && ch.verbose {
-			log4go.Debug("Command execution failed: %s", err)
+		if err := view.runCommand(c, name, args); err != nil {
+			log4go.Logf(lvl, "Command execution failed: %s", err)
 		}
 	} else if w := view.Window(); w != nil {
 		if c := ch.WindowCommands[name]; c != nil {
-			if err := w.runCommand(c, name, args); err != nil && ch.verbose {
-				log4go.Debug("Command execution failed: %s", err)
+			if err := w.runCommand(c, name, args); err != nil {
+				log4go.Logf(lvl, "Command execution failed: %s", err)
 			}
 		}
 	}
-	if ch.log {
-		log4go.Info("Ran text command: %s %s", name, time.Since(t))
-	}
+	log4go.Logf(lvl, "Ran text command: %s %s", name, time.Since(t))
 	return nil
 }
 

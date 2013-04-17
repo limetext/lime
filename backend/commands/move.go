@@ -4,6 +4,7 @@ import (
 	"fmt"
 	. "lime/backend"
 	"lime/backend/primitives"
+	"lime/backend/util"
 )
 
 type (
@@ -30,9 +31,7 @@ func move_action(v *View, extend bool, transform func(r primitives.Region) int) 
 		}
 	}
 	sel.Clear()
-	for i := range r {
-		sel.Add(r[i])
-	}
+	sel.AddAll(r)
 }
 
 func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
@@ -65,6 +64,7 @@ func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
 }
 
 func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
+	p := util.Prof.Enter("move.run.init")
 	by, ok := args["by"].(string)
 	if !ok {
 		return fmt.Errorf("move: Missing or invalid 'by' argument: %v", args)
@@ -73,6 +73,10 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	fwd, ok := args["forward"].(bool)
 	word_begin, ok := args["word_begin"].(bool)
 	word_end, ok := args["word_end"].(bool)
+
+	p.Exit()
+	p = util.Prof.Enter("move.run.action")
+	defer p.Exit()
 
 	switch by {
 	case "characters":
@@ -108,6 +112,7 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 	case "lines":
 		move_action(v, extend, func(in primitives.Region) int {
 			r, c := v.Buffer().RowCol(in.B)
+			_ = r
 			if !fwd {
 				r--
 			} else {

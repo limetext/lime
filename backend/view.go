@@ -10,6 +10,7 @@ import (
 	. "lime/backend/primitives"
 	"lime/backend/render"
 	"lime/backend/textmate"
+	. "lime/backend/util"
 	"reflect"
 	"runtime/debug"
 	"sort"
@@ -29,13 +30,19 @@ type (
 		scratch       bool
 		overwrite     bool
 		syntax        textmate.LanguageParser
-		lastParse     int
+		rootNode      *parser.Node
 		lastScopeNode *parser.Node
 		lastScopeBuf  bytes.Buffer
 		lastScopeName string
 		regions       render.ViewRegionMap
 		editstack     []*Edit
 		lock          sync.Mutex
+		modified      bool
+		reparseChan   chan parseReq
+	}
+	parseReq struct {
+		syntax textmate.LanguageParser
+		forced bool
 	}
 	Edit struct {
 		invalid    bool
@@ -51,7 +58,8 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
-	ret.lastParse = -1
+	ret.reparseChan = make(chan parseReq, 32)
+	go ret.parsethread()
 	ret.Settings().Set("is_widget", false)
 	return ret
 }
@@ -108,12 +116,43 @@ func (v *View) flush(a, b int) {
 			v2.Regions.Adjust(a, b)
 			v.regions[k] = v2
 		}
-		v.lastScopeNode = nil
-		v.lastParse = -1
-		v.lastScopeBuf.Reset()
 	}()
-	OnModified.Call(v)
-	OnSelectionModified.Call(v)
+	v.reparse(false)
+}
+
+func (v *View) parsethread() {
+	pc := 0
+	doparse := func(pr parseReq) {
+		defer func() {
+			if r := recover(); r != nil {
+				log4go.Error("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
+				if pc > 0 {
+					panic(r)
+				}
+				pc++
+			}
+		}()
+		pr.syntax.Parse(v.buffer.Substr(Region{0, v.Buffer().Size()}))
+		v.lock.Lock()
+		v.rootNode = pr.syntax.RootNode()
+		v.lastScopeNode = nil
+		v.lastScopeBuf.Reset()
+		v.lock.Unlock()
+	}
+	lastParse := -1
+	for pr := range v.reparseChan {
+		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
+			lastParse = cc
+			doparse(pr)
+		}
+	}
+}
+func (v *View) reparse(forced bool) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	if len(v.reparseChan) < cap(v.reparseChan) || forced {
+		v.reparseChan <- parseReq{v.syntax, forced}
+	}
 }
 
 func (v *View) SetSyntaxFile(f string) error {
@@ -123,10 +162,10 @@ func (v *View) SetSyntaxFile(f string) error {
 	} else if err := loaders.LoadPlist(d, &lang); err != nil {
 		return err
 	} else {
-		v.lastScopeNode = nil
-		v.lastParse = -1
-		v.lastScopeBuf.Reset()
+		v.lock.Lock()
 		v.syntax.Language = &lang
+		v.lock.Unlock()
+		v.reparse(true)
 	}
 	return nil
 }
@@ -207,13 +246,23 @@ func (v *View) EndEdit(e *Edit) {
 		return
 	}
 
+	var bufmod, selmod bool
+
 	if l := len(v.editstack) - 1; i != l {
 		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, e, v.editstack)
 	}
 	for j := len(v.editstack) - 1; j >= i; j-- {
 		ce := v.editstack[j]
 		ce.invalid = true
-		eq := (reflect.DeepEqual(*v.Sel(), ce.savedSel) && v.buffer.ChangeCount() == ce.savedCount && ce.composite.Len() == 0)
+		is := reflect.DeepEqual(*v.Sel(), ce.savedSel)
+		ib := v.buffer.ChangeCount() == ce.savedCount
+		eq := (is && ib && ce.composite.Len() == 0)
+		if !eq && is {
+			selmod = true
+		}
+		if !eq && ib {
+			bufmod = true
+		}
 
 		if !v.scratch && !ce.bypassUndo && !eq {
 			if i == 0 || j != i {
@@ -226,6 +275,14 @@ func (v *View) EndEdit(e *Edit) {
 		}
 	}
 	v.editstack = v.editstack[:i]
+	if len(v.editstack) == 0 {
+		if bufmod {
+			OnModified.Call(v)
+		}
+		if selmod {
+			OnSelectionModified.Call(v)
+		}
+	}
 }
 
 func (v *View) SetScratch(s bool) {
@@ -271,16 +328,8 @@ func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 }
 
 func (v *View) updateScope(point int) {
-	if v.syntax.Language == nil {
+	if v.rootNode == nil {
 		return
-	}
-
-	if v.lastParse != v.buffer.ChangeCount() {
-		// TODO(q): A full reparse every time the buffer changes is overkill.
-		// It would be better if the nodes are just adjusted as appropriate, together with a
-		// minimal parse of the new data
-		v.syntax.Parse(v.buffer.Substr(Region{0, v.Buffer().Size()}))
-		v.lastParse = v.buffer.ChangeCount()
 	}
 
 	search := parser.Range{point, point + 1}
@@ -294,12 +343,14 @@ func (v *View) updateScope(point int) {
 	} else {
 		v.lastScopeNode = nil
 		v.lastScopeBuf.Reset()
-		v.lastScopeNode = v.findScope(search, v.syntax.RootNode())
+		v.lastScopeNode = v.findScope(search, v.rootNode)
 		v.lastScopeName = v.lastScopeBuf.String()
 	}
 }
 
 func (v *View) ExtractScope(point int) Region {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	v.updateScope(point)
 	if v.lastScopeNode != nil {
 		r := v.lastScopeNode.Range
@@ -309,6 +360,8 @@ func (v *View) ExtractScope(point int) Region {
 }
 
 func (v *View) ScopeName(point int) string {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	v.updateScope(point)
 	return v.lastScopeName
 }
@@ -334,7 +387,7 @@ func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
 			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
 		}
 	}()
-	p := Prof.Enter("view.cmd")
+	p := Prof.Enter("view.cmd." + name)
 	defer p.Exit()
 	return cmd.Run(v, e, args)
 }

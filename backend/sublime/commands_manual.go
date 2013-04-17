@@ -6,6 +6,7 @@ import (
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	"lime/backend/primitives"
+	"lime/backend/util"
 
 //	"time"
 )
@@ -140,13 +141,13 @@ func pyError(err error) error {
 	// 		log4go.Debug("%v", i)
 	// 	}
 	// }
-	return err
+	return fmt.Errorf("%v", err)
 }
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
 	l := py.NewLock()
 	defer l.Unlock()
 
-	p0 := backend.Prof.Enter("tc.run")
+	p0 := util.Prof.Enter("tc.run")
 	defer p0.Exit()
 	var (
 		pyv, pye, pyargs, obj py.Object
@@ -167,7 +168,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	}
 	defer pyargs.Decref()
 
-	init := backend.Prof.Enter("tc.init")
+	init := util.Prof.Enter("tc.init")
 	if obj, err = c.inner.Base().CallFunctionObjArgs(pyv); err != nil {
 		return pyError(err)
 	}
@@ -181,7 +182,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit, args backend.Arg
 	// 		py.SetInterrupt()
 	// 	}
 	// }()
-	exec := backend.Prof.Enter("tc.exec")
+	exec := util.Prof.Enter("tc.exec")
 	defer exec.Exit()
 	if obj.Base().HasAttrString("run_") {
 		// The plugin is probably trying to bypass the undostack...

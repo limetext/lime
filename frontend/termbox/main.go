@@ -10,6 +10,8 @@ import (
 	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
+	"lime/backend/util"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -79,7 +81,7 @@ type tbfe struct {
 }
 
 func (t *tbfe) renderView(v *backend.View, lay layout) {
-	p := backend.Prof.Enter("render")
+	p := util.Prof.Enter("render")
 	defer p.Exit()
 
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
@@ -207,7 +209,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 }
 
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
-	p := backend.Prof.Enter("clip")
+	p := util.Prof.Enter("clip")
 	defer p.Exit()
 	h := t.layout[v].height
 	if e-s > h {
@@ -224,15 +226,17 @@ func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	e = s + h
 
 	r := Region{v.Buffer().TextPoint(s, 0), v.Buffer().TextPoint(e, 0)}
-	return v.Buffer().Lines(r)
+	return v.Buffer().LineR(r)
 }
 
 func (t *tbfe) Show(v *backend.View, r Region) {
-	if !t.layout[v].visible.Covers(r) {
-		p := backend.Prof.Enter("show")
+	t.lock.Lock()
+	l := t.layout[v]
+	t.lock.Unlock()
+	if !l.visible.Covers(r) {
+		p := util.Prof.Enter("show")
 		defer p.Exit()
 
-		l := t.layout[v]
 		lv := l.visible
 
 		s1, _ := v.Buffer().RowCol(lv.Begin())
@@ -263,19 +267,21 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 }
 
 func (t *tbfe) VisibleRegion(v *backend.View) Region {
-	if r, ok := t.layout[v]; ok {
-		if r.lastUpdate != v.Buffer().ChangeCount() {
-			t.Show(v, r.visible)
-			return t.layout[v].visible
-		}
-		return r.visible
-	} else {
-		t.Show(v, Region{0, 0})
-		return t.layout[v].visible
+	t.lock.Lock()
+	r, ok := t.layout[v]
+	t.lock.Unlock()
+	if !ok || r.lastUpdate != v.Buffer().ChangeCount() {
+		t.Show(v, r.visible)
+		t.lock.Lock()
+		r = t.layout[v]
+		t.lock.Unlock()
 	}
+	return r.visible
 }
 
 func (t *tbfe) StatusMessage(msg string) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
 	t.status_message = msg
 }
 
@@ -307,11 +313,24 @@ func (t *tbfe) render() {
 }
 
 func (t *tbfe) renderthread() {
-	for a := range t.dorender {
-		_ = a
+	pc := 0
+	dorender := func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log4go.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+				if pc > 1 {
+					panic(r)
+				}
+				pc++
+			}
+		}()
 		termbox.Clear(defaultFg, defaultBg)
 		w, h := termbox.Size()
-
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				termbox.SetCell(x, y, ' ', defaultFg, defaultBg)
+			}
+		}
 		t.lock.Lock()
 		vs := make([]*backend.View, 0, len(t.layout))
 		l := make([]layout, 0, len(t.layout))
@@ -323,11 +342,21 @@ func (t *tbfe) renderthread() {
 		for i, v := range vs {
 			t.renderView(v, l[i])
 		}
+		t.lock.Lock()
 		runes := []rune(t.status_message)
+		t.lock.Unlock()
 		for i := 0; i < w && i < len(runes); i++ {
 			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
 		}
 		termbox.Flush()
+	}
+	for a := range t.dorender {
+		_ = a
+		if len(t.dorender) > 0 {
+			continue
+		}
+		log4go.Finest("Rendering")
+		dorender()
 	}
 }
 
@@ -344,8 +373,8 @@ func (t *tbfe) loop() {
 
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
-	ed.LogInput(true)
-	ed.LogCommands(true)
+	ed.LogInput(false)
+	ed.LogCommands(false)
 	c := ed.Console()
 	var (
 		scheme *textmate.Theme
@@ -437,8 +466,7 @@ func (t *tbfe) loop() {
 	defer func() {
 		close(evchan)
 		termbox.Close()
-		fmt.Println(c.Buffer().Substr(Region{0, c.Buffer().Size()}))
-		fmt.Println(backend.Prof)
+		fmt.Println(util.Prof)
 	}()
 
 	w := ed.NewWindow()
@@ -465,9 +493,11 @@ func (t *tbfe) loop() {
 
 	{
 		w, h := termbox.Size()
+		t.lock.Lock()
 		t.layout[v] = layout{0, 0, w, h - console_height - 1, Region{}, 0}
-		t.Show(v, Region{1, 1})
 		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
+		t.lock.Unlock()
+		t.Show(v, Region{1, 1})
 	}
 	t.Show(v, Region{100, 100})
 	t.Show(v, Region{1, 1})
@@ -487,7 +517,7 @@ func (t *tbfe) loop() {
 	l.Unlock()
 
 	for {
-		p := backend.Prof.Enter("mainloop")
+		p := util.Prof.Enter("mainloop")
 
 		blink_phase := time.Second
 		if p, ok := ed.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
@@ -497,7 +527,7 @@ func (t *tbfe) loop() {
 		timer := time.NewTimer(blink_phase / 2)
 		select {
 		case ev := <-evchan:
-			mp := backend.Prof.Enter("evchan")
+			mp := util.Prof.Enter("evchan")
 			limit := 3
 		loop:
 			switch ev.Type {
@@ -549,6 +579,7 @@ func (t *tbfe) loop() {
 }
 
 func main() {
+	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
 	defer func() {
 		py.NewLock()
 		py.Finalize()

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"lime/3rdparty/libs/rubex"
 	"lime/backend/loaders"
+	"lime/backend/primitives"
 	"strconv"
 	"strings"
 )
@@ -385,6 +386,8 @@ type dp struct {
 }
 
 func (d *dp) Data(a, b int) string {
+	a = primitives.Clamp(0, len(d.data), a)
+	b = primitives.Clamp(0, len(d.data), b)
 	return string(d.data[a:b])
 }
 
@@ -403,6 +406,12 @@ func (lp *LanguageParser) patch(lut []int, node *parser.Node) {
 func (lp *LanguageParser) Parse(data string) bool {
 	d := &dp{[]rune(data)}
 	lp.root = parser.Node{P: d, Name: lp.Language.ScopeName}
+	defer func() {
+		if r := recover(); r != nil {
+			log4go.Error("Panic during parse: %v\n", r)
+			log4go.Debug("%v", lp.root)
+		}
+	}()
 	iter := maxiter
 	for i := 0; i < len(data) && iter > 0; iter-- {
 		pat, ret := lp.Language.RootPattern.Cache(data, i)
@@ -427,12 +436,13 @@ func (lp *LanguageParser) Parse(data string) bool {
 	}
 	lp.root.UpdateRange()
 	if len(data) != 0 {
-		lut := make([]int, len(data))
+		lut := make([]int, len(data)+1)
 		j := 0
 		for i := range data {
 			lut[i] = j
 			j++
 		}
+		lut[len(data)] = len(d.data)
 		lp.patch(lut, &lp.root)
 	}
 	return true
