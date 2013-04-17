@@ -366,6 +366,13 @@ func (v *View) ScopeName(point int) string {
 	return v.lastScopeName
 }
 
+func (v *View) ScoreSelector(point int, selector string) int {
+	if sn := v.ScopeName(point); len(sn) > 0 {
+		return 1 + strings.Index(sn, selector)
+	}
+	return 0
+}
+
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
 	// TODO: merge history when possible
 	if i := v.undoStack.index(idx, modifying_only); i != -1 {

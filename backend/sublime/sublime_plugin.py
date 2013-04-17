@@ -7,13 +7,6 @@ import sublime
 import sys
 import importlib
 
-sublime.OP_EQUAL = 0
-sublime.OP_NOT_EQUAL = 1
-sublime.OP_REGEX_MATCH = 2
-sublime.OP_NOT_REGEX_MATCH = 3
-sublime.OP_REGEX_CONTAINS = 4
-sublime.OP_NOT_REGEX_CONTAINS = 5
-
 class Command(object):
     def is_enabled(self, args=None):
         return True

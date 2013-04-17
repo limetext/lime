@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
+	"lime/backend/render"
 	"os"
 	"strings"
 	"time"
@@ -141,12 +142,53 @@ func init() {
 		{"OnQueryContextGlue", &_onQueryContextGlueClass},
 		{"ViewEventGlue", &_viewEventGlueClass},
 	}
+	type constant struct {
+		name     string
+		constant int
+	}
+	constants := []constant{
+		{"OP_EQUAL", int(backend.OpEqual)},
+		{"OP_NOT_EQUAL", int(backend.OpNotEqual)},
+		{"OP_REGEX_MATCH", int(backend.OpRegexMatch)},
+		{"OP_NOT_REGEX_MATCH", int(backend.OpNotRegexMatch)},
+		{"OP_REGEX_CONTAINS", int(backend.OpRegexContains)},
+		{"OP_NOT_REGEX_CONTAINS", int(backend.OpNotRegexContains)},
+		{"INHIBIT_WORD_COMPLETIONS", 0},
+		{"INHIBIT_EXPLICIT_COMPLETIONS", 0},
+		{"LITERAL", 0},
+		{"IGNORECASE", 0},
+		{"CLASS_WORD_START", 0},
+		{"CLASS_WORD_END", 0},
+		{"CLASS_PUNCTUATION_START", 0},
+		{"CLASS_PUNCTUATION_END", 0},
+		{"CLASS_SUB_WORD_START", 0},
+		{"CLASS_SUB_WORD_END", 0},
+		{"CLASS_LINE_START", 0},
+		{"CLASS_LINE_END", 0},
+		{"CLASS_EMPTY_LINE", 0},
+		{"DRAW_EMPTY", int(render.DRAW_EMPTY)},
+		{"HIDE_ON_MINIMAP", int(render.HIDE_ON_MINIMAP)},
+		{"DRAW_EMPTY_AS_OVERWRITE", int(render.DRAW_EMPTY_AS_OVERWRITE)},
+		{"DRAW_NO_FILL", int(render.DRAW_NO_FILL)},
+		{"DRAW_NO_OUTLINE", int(render.DRAW_NO_OUTLINE)},
+		{"DRAW_SOLID_UNDERLINE", int(render.DRAW_SOLID_UNDERLINE)},
+		{"DRAW_STIPPLED_UNDERLINE", int(render.DRAW_STIPPLED_UNDERLINE)},
+		{"DRAW_SQUIGGLY_UNDERLINE", int(render.DRAW_SQUIGGLY_UNDERLINE)},
+		{"PERSISTENT", int(render.PERSISTENT)},
+		{"HIDDEN", int(render.HIDDEN)},
+	}
+
 	for _, cl := range classes {
 		c, err := cl.c.Create()
 		if err != nil {
 			panic(err)
 		}
 		if err := m.AddObject(cl.name, c); err != nil {
+			panic(err)
+		}
+	}
+	for _, c := range constants {
+		if err := m.AddIntConstant(c.name, c.constant); err != nil {
 			panic(err)
 		}
 	}

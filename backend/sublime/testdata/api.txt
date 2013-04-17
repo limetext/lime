@@ -1,4 +1,4 @@
-ApplicationCommandGlue        : <class 'type'>
+ApplicationCommandGlue
 	__class__
 	__delattr__
 	__dir__
@@ -21,7 +21,23 @@ ApplicationCommandGlue        : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Edit                          : <class 'type'>
+CLASS_EMPTY_LINE
+CLASS_LINE_END
+CLASS_LINE_START
+CLASS_PUNCTUATION_END
+CLASS_PUNCTUATION_START
+CLASS_SUB_WORD_END
+CLASS_SUB_WORD_START
+CLASS_WORD_END
+CLASS_WORD_START
+DRAW_EMPTY
+DRAW_EMPTY_AS_OVERWRITE
+DRAW_NO_FILL
+DRAW_NO_OUTLINE
+DRAW_SOLID_UNDERLINE
+DRAW_SQUIGGLY_UNDERLINE
+DRAW_STIPPLED_UNDERLINE
+Edit
 	__class__
 	__delattr__
 	__dir__
@@ -44,13 +60,19 @@ Edit                          : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-OP_EQUAL                      : <class 'int'>
-OP_NOT_EQUAL                  : <class 'int'>
-OP_NOT_REGEX_CONTAINS         : <class 'int'>
-OP_NOT_REGEX_MATCH            : <class 'int'>
-OP_REGEX_CONTAINS             : <class 'int'>
-OP_REGEX_MATCH                : <class 'int'>
-OnQueryContextGlue            : <class 'type'>
+HIDDEN
+HIDE_ON_MINIMAP
+IGNORECASE
+INHIBIT_EXPLICIT_COMPLETIONS
+INHIBIT_WORD_COMPLETIONS
+LITERAL
+OP_EQUAL
+OP_NOT_EQUAL
+OP_NOT_REGEX_CONTAINS
+OP_NOT_REGEX_MATCH
+OP_REGEX_CONTAINS
+OP_REGEX_MATCH
+OnQueryContextGlue
 	__class__
 	__delattr__
 	__dir__
@@ -73,7 +95,8 @@ OnQueryContextGlue            : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Region                        : <class 'type'>
+PERSISTENT
+Region
 	__class__
 	__delattr__
 	__dir__
@@ -108,7 +131,7 @@ Region                        : <class 'type'>
 	intersection
 	intersects
 	size
-RegionSet                     : <class 'type'>
+RegionSet
 	__class__
 	__delattr__
 	__dir__
@@ -139,7 +162,7 @@ RegionSet                     : <class 'type'>
 	contains
 	regions
 	substract
-Settings                      : <class 'type'>
+Settings
 	__class__
 	__delattr__
 	__dir__
@@ -169,7 +192,7 @@ Settings                      : <class 'type'>
 	has
 	id
 	set
-TextCommandGlue               : <class 'type'>
+TextCommandGlue
 	__class__
 	__delattr__
 	__dir__
@@ -192,7 +215,7 @@ TextCommandGlue               : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-View                          : <class 'type'>
+View
 	__class__
 	__delattr__
 	__dir__
@@ -239,6 +262,7 @@ View                          : <class 'type'>
 	rowcol
 	run_command
 	scope_name
+	score_selector
 	sel
 	set_name
 	set_overwrite_status
@@ -251,7 +275,7 @@ View                          : <class 'type'>
 	visible_region
 	window
 	word
-ViewEventGlue                 : <class 'type'>
+ViewEventGlue
 	__class__
 	__delattr__
 	__dir__
@@ -274,7 +298,7 @@ ViewEventGlue                 : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-Window                        : <class 'type'>
+Window
 	__class__
 	__delattr__
 	__dir__
@@ -304,7 +328,7 @@ Window                        : <class 'type'>
 	run_command
 	settings
 	views
-WindowCommandGlue             : <class 'type'>
+WindowCommandGlue
 	__class__
 	__delattr__
 	__dir__
@@ -327,27 +351,27 @@ WindowCommandGlue             : <class 'type'>
 	__sizeof__
 	__str__
 	__subclasshook__
-__doc__                       : <class 'NoneType'>
-__name__                      : <class 'str'>
-__package__                   : <class 'NoneType'>
-active_window                 : <class 'builtin_function_or_method'>
-arch                          : <class 'builtin_function_or_method'>
-console                       : <class 'builtin_function_or_method'>
-error_message                 : <class 'builtin_function_or_method'>
-get_clipboard                 : <class 'builtin_function_or_method'>
-log_commands                  : <class 'builtin_function_or_method'>
-log_input                     : <class 'builtin_function_or_method'>
-message_dialog                : <class 'builtin_function_or_method'>
-new_window                    : <class 'builtin_function_or_method'>
-ok_cancel_dialog              : <class 'builtin_function_or_method'>
-packages_path                 : <class 'builtin_function_or_method'>
-platform                      : <class 'builtin_function_or_method'>
-register                      : <class 'builtin_function_or_method'>
-run_command                   : <class 'builtin_function_or_method'>
-set_clipboard                 : <class 'builtin_function_or_method'>
-set_timeout                   : <class 'builtin_function_or_method'>
-settings                      : <class 'builtin_function_or_method'>
-status_message                : <class 'builtin_function_or_method'>
-test_window                   : <class 'sublime.Window'>
-unregister                    : <class 'builtin_function_or_method'>
-version                       : <class 'builtin_function_or_method'>
+__doc__
+__name__
+__package__
+active_window
+arch
+console
+error_message
+get_clipboard
+log_commands
+log_input
+message_dialog
+new_window
+ok_cancel_dialog
+packages_path
+platform
+register
+run_command
+set_clipboard
+set_timeout
+settings
+status_message
+test_window
+unregister
+version

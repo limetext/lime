@@ -91,7 +91,7 @@ func TestSublime(t *testing.T) {
 							t.Error(err)
 						} else {
 							ty := item.Type()
-							line := fmt.Sprintf("%s%-30s: %s\n", indent, v2, ty)
+							line := fmt.Sprintf("%s%s\n", indent, v2)
 							buf.WriteString(line)
 							if ty == py.TypeType {
 								f(indent+"\t", item, buf)
