@@ -39,6 +39,7 @@ func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
 }
 
 func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
+	log4go.Fine("Query context: %s, %v, %v, %v", key, operator, operand, match_all)
 	for i := range qe {
 		r := qe[i](v, key, operator, operand, match_all)
 		if r != Unknown {

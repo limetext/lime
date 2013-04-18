@@ -232,9 +232,11 @@ func (e *Editor) inputthread() {
 		p := Prof.Enter("hi")
 		defer p.Exit()
 
+		lvl := log4go.FINE
 		if e.loginput {
-			log4go.Info("Key: %v", kp)
+			lvl++
 		}
+		log4go.Logf(lvl, "Key: %v", kp)
 		if lastBindings.keyOff == 0 {
 			lastBindings = e.keyBindings
 		}

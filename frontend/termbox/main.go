@@ -89,7 +89,10 @@ var (
 	blink     bool
 )
 
-const console_height = 20
+const (
+	console_height  = 20
+	render_chan_len = 2
+)
 
 type layout struct {
 	x, y          int
@@ -245,10 +248,9 @@ func (t *tbfe) clip(v *backend.View, s, e int) Region {
 		e = e2
 	}
 	if s < 0 {
-		s += h
+		s = 0
 	}
 	e = s + h
-
 	r := Region{v.Buffer().TextPoint(s, 0), v.Buffer().TextPoint(e, 0)}
 	return v.Buffer().LineR(r)
 }
@@ -376,9 +378,6 @@ func (t *tbfe) renderthread() {
 	}
 	for a := range t.dorender {
 		_ = a
-		if len(t.dorender) > 0 {
-			continue
-		}
 		log4go.Finest("Rendering")
 		dorender()
 	}
@@ -526,19 +525,10 @@ func (t *tbfe) loop() {
 	t.Show(v, Region{100, 100})
 	t.Show(v, Region{1, 1})
 
-	sublime.Init()
-	l := py.NewLock()
-	og, err := py.Import("objgraph")
-	if err != nil {
-		log4go.Debug(err)
-		return
-	}
-	gr, err := og.Dict().GetItemString("show_growth")
-	if err != nil {
-		log4go.Debug(err)
-		return
-	}
-	l.Unlock()
+	go func() {
+		ed.Init()
+		sublime.Init()
+	}()
 
 	for {
 		p := util.Prof.Enter("mainloop")
@@ -572,15 +562,7 @@ func (t *tbfe) loop() {
 				if ev.Key == termbox.KeyCtrlQ {
 					return
 				}
-				log4go.Debug("Before")
-				l := py.NewLock()
-				gr.Base().CallFunctionObjArgs()
-				l.Unlock()
 				ed.HandleInput(kp)
-				log4go.Debug("After")
-				l.Lock()
-				gr.Base().CallFunctionObjArgs()
-				l.Unlock()
 
 				blink = true
 			}
@@ -603,9 +585,7 @@ func (t *tbfe) loop() {
 }
 
 func main() {
-	ed := backend.GetEditor()
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
-	ed.Init()
 	defer func() {
 		py.NewLock()
 		py.Finalize()
@@ -616,7 +596,7 @@ func main() {
 	}
 
 	var t tbfe
-	t.dorender = make(chan bool, 4)
+	t.dorender = make(chan bool, render_chan_len)
 	t.layout = make(map[*backend.View]layout)
 	go t.renderthread()
 	t.loop()

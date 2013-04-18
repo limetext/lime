@@ -117,12 +117,15 @@ func (v *View) flush(a, b int) {
 			v.regions[k] = v2
 		}
 	}()
+	OnModified.Call(v)
 	v.reparse(false)
 }
 
 func (v *View) parsethread() {
 	pc := 0
 	doparse := func(pr parseReq) {
+		p := Prof.Enter("syntax.parse")
+		defer p.Exit()
 		defer func() {
 			if r := recover(); r != nil {
 				log4go.Error("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
@@ -246,7 +249,7 @@ func (v *View) EndEdit(e *Edit) {
 		return
 	}
 
-	var bufmod, selmod bool
+	var selmod bool
 
 	if l := len(v.editstack) - 1; i != l {
 		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, e, v.editstack)
@@ -260,10 +263,6 @@ func (v *View) EndEdit(e *Edit) {
 		if !eq && is {
 			selmod = true
 		}
-		if !eq && ib {
-			bufmod = true
-		}
-
 		if !v.scratch && !ce.bypassUndo && !eq {
 			if i == 0 || j != i {
 				// Presume someone forgot to add it in the j != i case
@@ -275,13 +274,8 @@ func (v *View) EndEdit(e *Edit) {
 		}
 	}
 	v.editstack = v.editstack[:i]
-	if len(v.editstack) == 0 {
-		if bufmod {
-			OnModified.Call(v)
-		}
-		if selmod {
-			OnSelectionModified.Call(v)
-		}
+	if selmod {
+		OnSelectionModified.Call(v)
 	}
 }
 
