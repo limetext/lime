@@ -497,7 +497,7 @@ func (t *tbfe) loop() {
 	v.Settings().Set("trace", true)
 	c.Buffer().AddCallback(t.scroll)
 
-	if err := v.SetSyntaxFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
+	if err := v.SetSyntaxFile("../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"); err != nil {
 		log4go.Error("Unable to set syntax file: %s", err)
 	}
 	sel := v.Sel()

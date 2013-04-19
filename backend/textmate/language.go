@@ -133,13 +133,14 @@ func (r *RootPattern) String() (ret string) {
 }
 
 func (s *Language) String() string {
-	return fmt.Sprintf("%s\n%s", s.ScopeName, s.RootPattern)
+	return fmt.Sprintf("%s\n%s\n", s.ScopeName, s.RootPattern, s.Repository)
 }
 
-func (p *Pattern) setOwner(l *Language) {
+func (p *Pattern) tweak(l *Language) {
 	p.owner = l
+	p.Name = strings.TrimSpace(p.Name)
 	for i := range p.Patterns {
-		p.Patterns[i].setOwner(l)
+		p.Patterns[i].tweak(l)
 	}
 }
 
@@ -147,9 +148,9 @@ func (l *Language) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &l.UnpatchedLanguage); err != nil {
 		return err
 	}
-	l.RootPattern.setOwner(l)
+	l.RootPattern.tweak(l)
 	for k := range l.Repository {
-		l.Repository[k].setOwner(l)
+		l.Repository[k].tweak(l)
 	}
 	return nil
 }
@@ -208,7 +209,7 @@ func (p *Pattern) FirstMatch(data string, pos int) (pat *Pattern, ret MatchObjec
 	startIdx := -1
 	for i := 0; i < len(p.cachedPatterns); {
 		ip, im := p.cachedPatterns[i].Cache(data, pos)
-		if im != nil && im[0] != im[1] {
+		if im != nil /* && im[0] != im[1]*/ {
 			if startIdx < 0 || startIdx > im[0] {
 				startIdx, pat, ret = im[0], ip, im
 				// This match is right at the start, we're not going to find a better pattern than this,
@@ -232,7 +233,7 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 		if p.cachedMatch == nil {
 			return nil, nil
 		}
-		if p.cachedMatch[0] >= pos {
+		if p.cachedMatch[0] >= pos && p.cachedPat.cachedMatch != nil {
 			p.hits++
 			return p.cachedPat, p.cachedMatch
 		}
@@ -344,6 +345,8 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 						// oops.. no end found at all, set it to the next line
 						if e2 := strings.IndexRune(data[i:], '\n'); e2 != -1 {
 							end = i + e2
+						} else {
+							end = len(data)
 						}
 						break
 					} else {
@@ -351,13 +354,10 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 						break
 					}
 				}
-				if (endmatch == nil || (endmatch != nil && endmatch[0] != i)) && len(p.cachedPatterns) > 0 {
+				if /*(endmatch == nil || (endmatch != nil && endmatch[0] != i)) && */ len(p.cachedPatterns) > 0 {
 					// Might be more recursive patterns to apply BEFORE the end is reached
 					pattern2, match2 := p.FirstMatch(data, i)
-					if match2 != nil &&
-						((endmatch == nil && match2[0] < end) ||
-							(endmatch != nil && match2[0] < endmatch[0])) {
-
+					if match2 != nil && ((endmatch == nil && match2[0] < end) || (endmatch != nil && (match2[0] < endmatch[0] || match2[0] == endmatch[0] && ret.Range.Start == ret.Range.End))) {
 						found = true
 						r := pattern2.CreateNode(data, i, d, match2)
 						ret.Append(r)
@@ -416,7 +416,6 @@ func (lp *LanguageParser) Parse(data string) bool {
 	for i := 0; i < len(data) && iter > 0; iter-- {
 		pat, ret := lp.Language.RootPattern.Cache(data, i)
 		nl := strings.IndexAny(data[i:], "\n\r")
-
 		if nl != -1 {
 			nl += i
 		}
@@ -444,6 +443,9 @@ func (lp *LanguageParser) Parse(data string) bool {
 		}
 		lut[len(data)] = len(d.data)
 		lp.patch(lut, &lp.root)
+	}
+	if iter == 0 {
+		log4go.Error("reached maximum number of iterations")
 	}
 	return true
 }

@@ -26,13 +26,23 @@ func TestTmLanguage(t *testing.T) {
 	}
 	tests := []test{
 		{
+			"testdata/plist2.tmlang",
+			"testdata/plist2.tmlang.res",
+			"text.xml.plist",
+		},
+		{
 			"testdata/Property List (XML).tmLanguage",
-			"testdata/plist.tmlang",
+			"testdata/plist.tmlang.res",
 			"text.xml.plist",
 		},
 		{
 			"testdata/main.go",
 			"testdata/main.go.res",
+			"source.go",
+		},
+		{
+			"testdata/go2.go",
+			"testdata/go2.go.res",
 			"source.go",
 		},
 		{
@@ -57,7 +67,7 @@ func TestTmLanguage(t *testing.T) {
 			d0 = string(d)
 		}
 		lp.Parse(d0)
-
+		//		fmt.Println(lp.RootNode())
 		str := fmt.Sprintf("%s", lp.RootNode())
 		if d, err := ioutil.ReadFile(t3.out); err != nil {
 			if err := ioutil.WriteFile(t3.out, []byte(str), 0644); err != nil {

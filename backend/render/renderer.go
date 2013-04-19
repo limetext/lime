@@ -7,9 +7,10 @@ import (
 )
 
 type (
+	Colour  color.RGBA
 	Flavour struct {
-		Background color.RGBA
-		Foreground color.RGBA
+		Background Colour
+		Foreground Colour
 		Font       Font
 	}
 
@@ -22,7 +23,7 @@ type (
 	Recipe map[Flavour]primitives.RegionSet
 
 	ColourScheme interface {
-		Spice(ViewRegions) Flavour
+		Spice(*ViewRegions) Flavour
 	}
 
 	Renderer struct {
@@ -37,7 +38,7 @@ func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport p
 	data.Cull(viewport)
 	recipe := make(Recipe)
 	for _, v := range data {
-		k := scheme.Spice(v)
+		k := scheme.Spice(&v)
 		rs := recipe[k]
 		rs.AddAll(v.Regions.Regions())
 		recipe[k] = rs

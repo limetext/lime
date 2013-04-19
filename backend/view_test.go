@@ -127,6 +127,49 @@ func TestErase(t *testing.T) {
 	}
 }
 
+// This is not 100% what ST3 does
+func TestExtractScope(t *testing.T) {
+	var (
+		w Window
+		v = w.NewFile()
+	)
+	const (
+		in      = "textmate/testdata/main.go"
+		expfile = "testdata/scoperange.res"
+		syntax  = "textmate/testdata/Go.tmLanguage"
+	)
+	v.SetSyntaxFile(syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		t.Fatal(err)
+	} else {
+		v.rootNode = nil
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		last := Region{-1, -1}
+		str := ""
+
+		for v.rootNode == nil {
+			time.Sleep(time.Millisecond)
+		}
+		for i := 0; i < v.buffer.Size(); i++ {
+			if r := v.ExtractScope(i); r != last {
+				str += fmt.Sprintf("%d (%d, %d)\n", i, r.A, r.B)
+				last = r
+			}
+		}
+		if d, err := ioutil.ReadFile(expfile); err != nil {
+			if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {
+				t.Error(err)
+			}
+		} else if diff := util.Diff(string(d), str); diff != "" {
+			t.Error(diff)
+		}
+
+	}
+}
+
+// This is not 100% what ST3 does, but IMO ST3 is wrong
 func TestScopeName(t *testing.T) {
 	var (
 		w Window

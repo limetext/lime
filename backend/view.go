@@ -305,8 +305,10 @@ func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 			break
 		}
 		if c.Range.Contains(search) {
-			if node.Name != " " && node != v.lastScopeNode {
-				v.lastScopeBuf.WriteByte(' ')
+			if node.Name != "" && node != v.lastScopeNode {
+				if v.lastScopeBuf.Len() > 0 {
+					v.lastScopeBuf.WriteByte(' ')
+				}
 				v.lastScopeBuf.WriteString(node.Name)
 			}
 			return v.findScope(search, node.Children[idx])
@@ -314,7 +316,9 @@ func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
 		idx++
 	}
 	if node != v.lastScopeNode && node.Range.Contains(search) && node.Name != "" {
-		v.lastScopeBuf.WriteByte(' ')
+		if v.lastScopeBuf.Len() > 0 {
+			v.lastScopeBuf.WriteByte(' ')
+		}
 		v.lastScopeBuf.WriteString(node.Name)
 		return node
 	}
@@ -329,7 +333,7 @@ func (v *View) updateScope(point int) {
 	search := parser.Range{point, point + 1}
 	if v.lastScopeNode != nil && v.lastScopeNode.Range.Contains(search) {
 		if len(v.lastScopeNode.Children) != 0 {
-			if no := v.findScope(search, v.lastScopeNode); no != v.lastScopeNode {
+			if no := v.findScope(search, v.lastScopeNode); no != v.lastScopeNode && no != nil {
 				v.lastScopeNode = no
 				v.lastScopeName = v.lastScopeBuf.String()
 			}
