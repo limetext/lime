@@ -495,11 +495,9 @@ func (t *tbfe) loop() {
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
 	v.Settings().Set("trace", true)
+	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
 	c.Buffer().AddCallback(t.scroll)
 
-	if err := v.SetSyntaxFile("../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"); err != nil {
-		log4go.Error("Unable to set syntax file: %s", err)
-	}
 	sel := v.Sel()
 	sel.Clear()
 	//	end := v.Buffer().Size() - 2

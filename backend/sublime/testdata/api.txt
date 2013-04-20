@@ -267,6 +267,7 @@ View
 	set_name
 	set_overwrite_status
 	set_scratch
+	set_syntax_file
 	settings
 	show
 	size

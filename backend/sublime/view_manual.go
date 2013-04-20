@@ -256,3 +256,14 @@ func (o *View) Py_word(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 }
+
+func (o *View) Py_set_syntax_file(tu *py.Tuple) (py.Object, error) {
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v, ok := v.(*py.Unicode); ok {
+			o.data.Settings().Set("syntax", v.String())
+		}
+		return toPython(nil)
+	}
+}

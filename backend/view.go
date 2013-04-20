@@ -30,6 +30,7 @@ type (
 		undoStack   UndoStack
 		scratch     bool
 		overwrite   bool
+		cursyntax   string
 		syntax      parser.SyntaxHighlighter
 		regions     render.ViewRegionMap
 		editstack   []*Edit
@@ -54,6 +55,16 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+	ret.Settings().AddOnChange("lime.view.syntax", func() {
+		ret.lock.Lock()
+		defer ret.lock.Unlock()
+		syn, _ := ret.Settings().Get("syntax", "").(string)
+		if syn != ret.cursyntax {
+			ret.cursyntax = syn
+			defer ret.reparse(true)
+		}
+	})
+
 	ret.reparseChan = make(chan parseReq, 32)
 	go ret.parsethread()
 	ret.Settings().Set("is_widget", false)
@@ -158,8 +169,6 @@ func (v *View) parsethread() {
 }
 
 func (v *View) reparse(forced bool) {
-	v.lock.Lock()
-	defer v.lock.Unlock()
 	if len(v.reparseChan) < cap(v.reparseChan) || forced {
 		v.reparseChan <- parseReq{forced}
 	}
@@ -188,12 +197,6 @@ func (v *View) ScoreSelector(point int, selector string) int {
 		return 1 + strings.Index(sn, selector)
 	}
 	return 0
-}
-
-func (v *View) SetSyntaxFile(f string) error {
-	v.Settings().Set("syntax", f)
-	v.reparse(true)
-	return nil
 }
 
 func (v *View) Sel() *RegionSet {

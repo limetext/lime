@@ -82,8 +82,8 @@ func (s *Settings) Get(name string, def ...interface{}) interface{} {
 
 func (s *Settings) Set(name string, val interface{}) {
 	s.lock.Lock()
-	defer s.lock.Unlock()
 	s.data[name] = val
+	s.lock.Unlock()
 	s.onChange()
 }
 
