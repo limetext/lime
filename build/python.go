@@ -401,7 +401,7 @@ func main() {
 		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&primitives.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
 		{"../backend/sublime/view_buffer.go", generatemethodsEx(
 			reflect.TypeOf(backend.GetEditor().Console().Buffer()),
-			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index|Close").MatchString,
+			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index|Close|Unlock|Lock").MatchString,
 			"o.data.Buffer().",
 			func(t reflect.Type, m reflect.Method) string {
 				mn := ""

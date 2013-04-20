@@ -28,10 +28,6 @@ type (
 
 	Renderer struct {
 	}
-
-	SyntaxHighlighter interface {
-		Process(primitives.Buffer) []ViewRegions
-	}
 )
 
 func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport primitives.Region) Recipe {

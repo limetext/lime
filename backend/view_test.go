@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/quarnster/completion/util"
 	"io/ioutil"
@@ -11,6 +12,10 @@ import (
 	"time"
 )
 
+func init() {
+	GetEditor()
+	log4go.AddFilter("stdout", log4go.DEBUG, log4go.NewConsoleLogWriter())
+}
 func TestView(t *testing.T) {
 	var (
 		w Window
@@ -142,14 +147,14 @@ func TestExtractScope(t *testing.T) {
 	if d, err := ioutil.ReadFile(in); err != nil {
 		t.Fatal(err)
 	} else {
-		v.rootNode = nil
+		//		v.rootNode = nil
 		e := v.BeginEdit()
 		v.Insert(e, 0, string(d))
 		v.EndEdit(e)
 		last := Region{-1, -1}
 		str := ""
-
-		for v.rootNode == nil {
+		nr := Region{0, 0}
+		for v.ExtractScope(1) == nr {
 			time.Sleep(time.Millisecond)
 		}
 		for i := 0; i < v.buffer.Size(); i++ {
@@ -158,6 +163,7 @@ func TestExtractScope(t *testing.T) {
 				last = r
 			}
 		}
+		log4go.Debug("%v, %s", v.ScopeName(1), v.ExtractScope(1))
 		if d, err := ioutil.ReadFile(expfile); err != nil {
 			if err := ioutil.WriteFile(expfile, []byte(str), 0644); err != nil {
 				t.Error(err)
@@ -165,7 +171,6 @@ func TestExtractScope(t *testing.T) {
 		} else if diff := util.Diff(string(d), str); diff != "" {
 			t.Error(diff)
 		}
-
 	}
 }
 
@@ -184,15 +189,16 @@ func TestScopeName(t *testing.T) {
 	if d, err := ioutil.ReadFile(in); err != nil {
 		t.Fatal(err)
 	} else {
-		v.rootNode = nil
+		//		v.rootNode = nil
 		e := v.BeginEdit()
 		v.Insert(e, 0, string(d))
 		v.EndEdit(e)
 		last := ""
 		str := ""
 		lasti := 0
-		for v.rootNode == nil {
-			time.Sleep(time.Millisecond)
+		for v.ScopeName(1) == "" {
+			time.Sleep(250 * time.Millisecond)
+			log4go.Debug("%v, %s", v.ScopeName(1), v.ExtractScope(1))
 		}
 		for i := 0; i < v.buffer.Size(); i++ {
 			if name := v.ScopeName(i); name != last {

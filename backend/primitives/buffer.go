@@ -21,6 +21,7 @@ type (
 		InnerBufferInterface
 		IdInterface
 		SettingsInterface
+		sync.Locker
 		AddCallback(cb BufferChangedCallback)
 		SetName(string)
 		Name() string
@@ -52,7 +53,9 @@ type (
 		name        string
 		filename    string
 		callbacks   []BufferChangedCallback
-		lock        sync.Mutex
+
+		sync.Mutex            // Change lock
+		lock       sync.Mutex // All lock
 	}
 )
 
@@ -107,6 +110,8 @@ func (buf *buffer) Insert(point int, svalue string) {
 	}
 	value := []rune(svalue)
 	buf.SerializedBuffer.InsertR(point, value)
+	buf.Lock()
+	defer buf.Unlock()
 	buf.lock.Lock()
 	defer buf.lock.Unlock()
 	buf.changecount++
@@ -117,6 +122,8 @@ func (buf *buffer) Erase(point, length int) {
 	if length == 0 {
 		return
 	}
+	buf.Lock()
+	defer buf.Unlock()
 	buf.lock.Lock()
 	defer buf.lock.Unlock()
 	buf.changecount++

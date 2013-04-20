@@ -1,19 +1,20 @@
 package backend
 
 import (
-	"bytes"
+	//	"bytes"
 	"code.google.com/p/log4go"
 	"fmt"
-	"github.com/quarnster/parser"
-	"io/ioutil"
-	"lime/backend/loaders"
+	//	"github.com/quarnster/parser"
+	//	"io/ioutil"
+	//	"lime/backend/loaders"
+	"lime/backend/parser"
 	. "lime/backend/primitives"
 	"lime/backend/render"
 	"lime/backend/textmate"
 	. "lime/backend/util"
 	"reflect"
 	"runtime/debug"
-	"sort"
+	//	"sort"
 	"strings"
 	"sync"
 )
@@ -22,26 +23,21 @@ type (
 	View struct {
 		HasSettings
 		HasId
-		name          string
-		window        *Window
-		buffer        Buffer
-		selection     RegionSet
-		undoStack     UndoStack
-		scratch       bool
-		overwrite     bool
-		syntax        textmate.LanguageParser
-		rootNode      *parser.Node
-		lastScopeNode *parser.Node
-		lastScopeBuf  bytes.Buffer
-		lastScopeName string
-		regions       render.ViewRegionMap
-		editstack     []*Edit
-		lock          sync.Mutex
-		modified      bool
-		reparseChan   chan parseReq
+		name        string
+		window      *Window
+		buffer      Buffer
+		selection   RegionSet
+		undoStack   UndoStack
+		scratch     bool
+		overwrite   bool
+		syntax      parser.SyntaxHighlighter
+		regions     render.ViewRegionMap
+		editstack   []*Edit
+		lock        sync.Mutex
+		modified    bool
+		reparseChan chan parseReq
 	}
 	parseReq struct {
-		syntax textmate.LanguageParser
 		forced bool
 	}
 	Edit struct {
@@ -97,7 +93,6 @@ func (v *View) setBuffer(b Buffer) error {
 	}
 	v.buffer = b
 	// TODO(q): Dynamically load the correct syntax file
-	v.syntax.Language = &textmate.Language{}
 	b.AddCallback(func(_ Buffer, a, b int) {
 		v.flush(a, b)
 	})
@@ -123,7 +118,7 @@ func (v *View) flush(a, b int) {
 
 func (v *View) parsethread() {
 	pc := 0
-	doparse := func(pr parseReq) {
+	doparse := func() {
 		p := Prof.Enter("syntax.parse")
 		defer p.Exit()
 		defer func() {
@@ -135,41 +130,69 @@ func (v *View) parsethread() {
 				pc++
 			}
 		}()
-		pr.syntax.Parse(v.buffer.Substr(Region{0, v.Buffer().Size()}))
-		v.lock.Lock()
-		v.rootNode = pr.syntax.RootNode()
-		v.lastScopeNode = nil
-		v.lastScopeBuf.Reset()
-		v.lock.Unlock()
+		b := v.Buffer()
+		b.Lock()
+		sub := b.Substr(Region{0, b.Size()})
+		b.Unlock()
+		source, _ := v.Settings().Get("syntax", "").(string)
+		if len(source) != 0 {
+			// TODO
+			if pr, err := textmate.NewLanguageParser(source, sub); err != nil {
+				log4go.Error("Couldn't parse: %v", err)
+			} else if syn, err := parser.NewSyntaxHighlighter(pr); err != nil {
+				log4go.Error("Couldn't create syntaxhighlighter: %v", err)
+			} else {
+				v.lock.Lock()
+				defer v.lock.Unlock()
+				v.syntax = syn
+			}
+		}
 	}
 	lastParse := -1
 	for pr := range v.reparseChan {
 		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
 			lastParse = cc
-			doparse(pr)
+			doparse()
 		}
 	}
 }
+
 func (v *View) reparse(forced bool) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
 	if len(v.reparseChan) < cap(v.reparseChan) || forced {
-		v.reparseChan <- parseReq{v.syntax, forced}
+		v.reparseChan <- parseReq{forced}
 	}
 }
 
-func (v *View) SetSyntaxFile(f string) error {
-	var lang textmate.Language
-	if d, err := ioutil.ReadFile(f); err != nil {
-		return err
-	} else if err := loaders.LoadPlist(d, &lang); err != nil {
-		return err
-	} else {
-		v.lock.Lock()
-		v.syntax.Language = &lang
-		v.lock.Unlock()
-		v.reparse(true)
+func (v *View) ScopeName(point int) string {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	if v.syntax != nil {
+		return v.syntax.ScopeName(point)
 	}
+	return ""
+}
+
+func (v *View) ExtractScope(point int) Region {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	if v.syntax != nil {
+		return v.syntax.ScopeExtent(point)
+	}
+	return Region{}
+}
+
+func (v *View) ScoreSelector(point int, selector string) int {
+	if sn := v.syntax.ScopeName(point); len(sn) > 0 {
+		return 1 + strings.Index(sn, selector)
+	}
+	return 0
+}
+
+func (v *View) SetSyntaxFile(f string) error {
+	v.Settings().Set("syntax", f)
+	v.reparse(true)
 	return nil
 }
 
@@ -293,82 +316,6 @@ func (v *View) OverwriteStatus() bool {
 
 func (v *View) SetOverwriteStatus(s bool) {
 	v.overwrite = s
-}
-
-func (v *View) findScope(search parser.Range, node *parser.Node) *parser.Node {
-	idx := sort.Search(len(node.Children), func(i int) bool {
-		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
-	})
-	for idx < len(node.Children) {
-		c := node.Children[idx]
-		if c.Range.Start > search.End {
-			break
-		}
-		if c.Range.Contains(search) {
-			if node.Name != "" && node != v.lastScopeNode {
-				if v.lastScopeBuf.Len() > 0 {
-					v.lastScopeBuf.WriteByte(' ')
-				}
-				v.lastScopeBuf.WriteString(node.Name)
-			}
-			return v.findScope(search, node.Children[idx])
-		}
-		idx++
-	}
-	if node != v.lastScopeNode && node.Range.Contains(search) && node.Name != "" {
-		if v.lastScopeBuf.Len() > 0 {
-			v.lastScopeBuf.WriteByte(' ')
-		}
-		v.lastScopeBuf.WriteString(node.Name)
-		return node
-	}
-	return nil
-}
-
-func (v *View) updateScope(point int) {
-	if v.rootNode == nil {
-		return
-	}
-
-	search := parser.Range{point, point + 1}
-	if v.lastScopeNode != nil && v.lastScopeNode.Range.Contains(search) {
-		if len(v.lastScopeNode.Children) != 0 {
-			if no := v.findScope(search, v.lastScopeNode); no != v.lastScopeNode && no != nil {
-				v.lastScopeNode = no
-				v.lastScopeName = v.lastScopeBuf.String()
-			}
-		}
-	} else {
-		v.lastScopeNode = nil
-		v.lastScopeBuf.Reset()
-		v.lastScopeNode = v.findScope(search, v.rootNode)
-		v.lastScopeName = v.lastScopeBuf.String()
-	}
-}
-
-func (v *View) ExtractScope(point int) Region {
-	v.lock.Lock()
-	defer v.lock.Unlock()
-	v.updateScope(point)
-	if v.lastScopeNode != nil {
-		r := v.lastScopeNode.Range
-		return Region{r.Start, r.End}
-	}
-	return Region{}
-}
-
-func (v *View) ScopeName(point int) string {
-	v.lock.Lock()
-	defer v.lock.Unlock()
-	v.updateScope(point)
-	return v.lastScopeName
-}
-
-func (v *View) ScoreSelector(point int, selector string) int {
-	if sn := v.ScopeName(point); len(sn) > 0 {
-		return 1 + strings.Index(sn, selector)
-	}
-	return 0
 }
 
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
