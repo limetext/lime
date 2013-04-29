@@ -187,12 +187,12 @@ func (e *Editor) ActiveWindow() *Window {
 
 func (e *Editor) NewWindow() *Window {
 	edl.Lock()
-	defer edl.Unlock()
 	e.windows = append(e.windows, &Window{})
 	w := e.windows[len(e.windows)-1]
+	edl.Unlock()
 	w.Settings().SetParent(e)
-	OnNewWindow.Call(w)
 	ed.SetActiveWindow(w)
+	OnNewWindow.Call(w)
 	return w
 }
 

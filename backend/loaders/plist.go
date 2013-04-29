@@ -59,7 +59,7 @@ func LoadPlist(data []byte, intf interface{}) error {
 		p plist.PLIST
 	)
 	if !p.Parse(string(data)) {
-		return errors.New(p.Error().String())
+		return p.Error()
 	} else {
 		var (
 			root = p.RootNode()

@@ -17,7 +17,7 @@ func LoadJSON(data []byte, intf interface{}) error {
 	defer b.Close()
 	b.Insert(0, string(data))
 	if !p.Parse(string(data)) {
-		return fmt.Errorf("%s, %s", p.Error().String(), p.RootNode())
+		return fmt.Errorf("%s, %s", p.Error(), p.RootNode())
 	} else {
 		root := p.RootNode()
 		for _, child := range root.Children {

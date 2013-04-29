@@ -19,6 +19,8 @@ func init() {
 }
 
 var (
+	_      = primitives.Region{}
+	_      = color.RGBA{}
 	wnds   = make(map[*backend.Window]QLimeWindow)
 	scheme *textmate.Theme
 )
@@ -35,6 +37,8 @@ type (
 )
 
 func newQLimeView(v *backend.View) *QLimeView {
+	log4go.Debug("new_QLimeView entered")
+	defer log4go.Debug("new_QLimeView exited")
 	var ret QLimeView
 	ret.Widget = qt5.NewWidget()
 	ret.v = v
@@ -104,6 +108,8 @@ func newQLimeView(v *backend.View) *QLimeView {
 }
 
 func new_window(w *backend.Window) {
+	log4go.Debug("new_window entered")
+	defer log4go.Debug("new_window exited")
 	qw := qt5.NewWidget()
 	qw.Show()
 	qw.SetSizev(600, 400)
@@ -119,11 +125,11 @@ func new_window(w *backend.Window) {
 }
 
 func new_view(v *backend.View) {
+	log4go.Debug("new_view entered")
+	defer log4go.Debug("new_view exited")
 	qw := wnds[v.Window()]
 	w := newQLimeView(v)
-	if err := v.SetSyntaxFile("../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage"); err != nil {
-		log4go.Error("Unable to set syntax file: %s", err)
-	}
+	v.Settings().Set("syntax", "../../3rdparty/bundles/GoSublime/GoSublime.tmLanguage")
 
 	w.SetSizev(600, 400)
 	// w := qt5.NewWidget()
@@ -155,6 +161,7 @@ func main() {
 	backend.OnNewWindow.Add(new_window)
 	backend.OnNew.Add(new_view)
 	backend.OnModified.Add(view_modified)
+	go e.Init()
 	qt5.Main(func() {
 		w := e.NewWindow()
 		w.OpenFile("main.go", 0)
