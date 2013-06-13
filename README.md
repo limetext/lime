@@ -33,6 +33,9 @@ You need to have Go 1.1 installed. As of writing this it hasn't been released ye
 Once go is installed and set up properly a rough draft is (please submit a pull request if you find other steps are needed):
 
 ```
+go get github.com/salviati/go-qt5
+#follow install instructions at github.com/salviati/go-qt5
+
 go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion
 sudo apt-get install libonig-dev python3-dev (on Linux)
 brew install oniguruma python3 (on OSX)
