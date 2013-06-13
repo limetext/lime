@@ -28,34 +28,67 @@ Because I'm just a single person and I don't want to offer up my spare time doin
 
 # Build instructions
 
-You need to have Go 1.1 installed. As of writing this it hasn't been released yet which means you need to [build it yourself](http://tip.golang.org/doc/install/source). If you haven't built it already, you might be interested to know that on my machine it takes less than 60 seconds to build the whole Go distribution including the compilers and all packages in the standard library, so this is not a time consuming task. Go is the absolutely easiest and fastest system language to get a full environment up and running for from source that I've ever stumbled upon, without huge dependencies on outside resources. IIRC all you need is a c compiler installed.
+### Install required components
+- Go 1.1
+   - Follow the build instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
+- Python3
+   - ``` sudo apt-get install python3-dev ``` # On Linux
+   - ``` brew install python3 ``` # On Mac
+- Oniguruma
+   - ``` sudo apt-get install libonig-dev ``` # On Linux
+   - ``` brew install oniguruma ``` # On Mac
+- qt5 (Optional)
+   - Follow the instructions at [go-qt5](https://github.com/salviati/go-qt5)
 
-Once go is installed and set up properly a rough draft is (please submit a pull request if you find other steps are needed):
+### Download the needed repositories
+
+``` 
+go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/howeyc/fsnotify 
+git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src
+```
+
+### Modify cgo.go settings
+
+``` open $GOPATH/src/lime/3rdparty/libs/gopy/lib/cgo.go ```
+
+Example of ``` cgo.go ``` settings on my Mac
 
 ```
-# For the qt5 frontend
-go get github.com/salviati/go-qt5
-#follow install instructions at github.com/salviati/go-qt5
+package py
 
-# Pre requisites
-go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion
+// #cgo CFLAGS: -I/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/include/python3.3m -I/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/include/python3.3m
+// #cgo LDFLAGS: -L/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/lib/python3.3/config-3.3m -ldl -framework CoreFoundation -lpython3.3
+// #cgo pkg-config: /usr/local/Cellar/libffi/3.0.13/lib/pkgconfig/libffi.pc
+import "C"
+```
+
+### Compile completion
+
+``` 
 cd $GOPATH/src/github.com/quarnster/completion/build
-go run build.go # Some unit tests might fail here depending on their quality (ie how specific they are to my installation), but they are safe to ignore
-sudo apt-get install libonig-dev python3-dev (on Linux)
-brew install oniguruma python3 (on OSX)
-
-cd $GOPATH/src
-git clone --recursive git@github.com:quarnster/lime.git
-cd lime/3rdparty/libs/gopy/lib (Tweak cgo.go as appropriate with the help of python3-config --cflags and python3-config --libs)
-cd lime/build
 go run build.go
+```
 
-# For the termbox frontend
+### Compile lime
+
+``` 
+cd $GOPATH/src/lime/build 
+go run build.go
+```
+
+Done!
+
+# To use termbox
+
+``` 
 cd ../frontend/termbox
-go run main.go
+go run main.go 
+```
 
-# For the qt5 frontend
-cd ../frontend/qt5
+# To use qt5
+
+``` 
+cd ../frontend/qt5 
 go run main.go
 ```
 
