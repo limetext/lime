@@ -33,17 +33,29 @@ You need to have Go 1.1 installed. As of writing this it hasn't been released ye
 Once go is installed and set up properly a rough draft is (please submit a pull request if you find other steps are needed):
 
 ```
+# For the qt5 frontend
 go get github.com/salviati/go-qt5
 #follow install instructions at github.com/salviati/go-qt5
 
+# Pre requisites
 go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion
+cd $GOPATH/src/github.com/quarnster/completion/build
+go run build.go # Some unit tests might fail here depending on their quality (ie how specific they are to my installation), but they are safe to ignore
 sudo apt-get install libonig-dev python3-dev (on Linux)
 brew install oniguruma python3 (on OSX)
+
+cd $GOPATH/src
 git clone --recursive git@github.com:quarnster/lime.git
 cd lime/3rdparty/libs/gopy/lib (Tweak cgo.go as appropriate with the help of python3-config --cflags and python3-config --libs)
 cd lime/build
 go run build.go
+
+# For the termbox frontend
 cd ../frontend/termbox
+go run main.go
+
+# For the qt5 frontend
+cd ../frontend/qt5
 go run main.go
 ```
 
