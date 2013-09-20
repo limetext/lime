@@ -15,15 +15,28 @@ func LoadJSON(data []byte, intf interface{}) error {
 		set RegionSet
 	)
 	defer b.Close()
-	b.Insert(0, string(data))
-	if !p.Parse(string(data)) {
+	str := string(data)
+	b.Insert(0, str)
+
+	// Lime works with rune indices, but the parser works with byte indices
+	// so we need to create a lookup table to map these correctly.
+	lut := make([]int, len(str))
+	runeidx := 0
+	for i := range str {
+		lut[i] = runeidx
+		runeidx++
+	}
+
+	if !p.Parse(str) {
 		return fmt.Errorf("%s, %s", p.Error(), p.RootNode())
 	} else {
 		root := p.RootNode()
 		for _, child := range root.Children {
 			switch child.Name {
 			case "BlockComment", "LineComment", "EndOfFile", "JunkComma":
-				set.Add(Region{child.Range.Start, child.Range.End})
+				if child.Range.End < len(lut) {
+					set.Add(Region{lut[child.Range.Start], lut[child.Range.End]})
+				}
 			default:
 				return errors.New("Unhandled node: " + child.Name)
 			}

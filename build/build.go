@@ -93,7 +93,7 @@ func main() {
 	if runtime.GOOS == "windows" {
 		extension += ".exe"
 	}
-	c := exec.Command("go", "build", "-o", "parser_exe"+extension, "github.com/quarnster/parser/exe")
+	c := exec.Command("go", "build", "-o", "parser_exe"+extension, "github.com/quarnster/parser/pegparser")
 	if verbose {
 		fmt.Println(c.Args)
 	}
@@ -115,7 +115,7 @@ func main() {
 		fmt.Println(string(b))
 	}
 
-	tests := []string{"test", "-short"}
+	tests := []string{"test", "-short", "-cover"}
 	if verbose {
 		tests = append(tests, "-v")
 	}
