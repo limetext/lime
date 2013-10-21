@@ -34,8 +34,8 @@ func LoadJSON(data []byte, intf interface{}) error {
 		for _, child := range root.Children {
 			switch child.Name {
 			case "BlockComment", "LineComment", "EndOfFile", "JunkComma":
-				if child.Range.End < len(lut) {
-					set.Add(Region{lut[child.Range.Start], lut[child.Range.End]})
+				if child.Range.End() < len(lut) {
+					set.Add(Region{lut[child.Range.Begin()], lut[child.Range.End()]})
 				}
 			default:
 				return errors.New("Unhandled node: " + child.Name)

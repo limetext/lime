@@ -41,16 +41,16 @@ func NewSyntaxHighlighter(p Parser) (SyntaxHighlighter, error) {
 	}
 }
 
-func (nh *nodeHighlighter) findScope(search parser.Range, node *parser.Node) *parser.Node {
+func (nh *nodeHighlighter) findScope(search text.Region, node *parser.Node) *parser.Node {
 	idx := sort.Search(len(node.Children), func(i int) bool {
-		return node.Children[i].Range.Start >= search.Start || node.Children[i].Range.Contains(search)
+		return node.Children[i].Range.A >= search.A || node.Children[i].Range.Covers(search)
 	})
 	for idx < len(node.Children) {
 		c := node.Children[idx]
-		if c.Range.Start > search.End {
+		if c.Range.A > search.B {
 			break
 		}
-		if c.Range.Contains(search) {
+		if c.Range.Covers(search) {
 			if node.Name != "" && node != nh.lastScopeNode {
 				if nh.lastScopeBuf.Len() > 0 {
 					nh.lastScopeBuf.WriteByte(' ')
@@ -61,7 +61,7 @@ func (nh *nodeHighlighter) findScope(search parser.Range, node *parser.Node) *pa
 		}
 		idx++
 	}
-	if node != nh.lastScopeNode && node.Range.Contains(search) && node.Name != "" {
+	if node != nh.lastScopeNode && node.Range.Covers(search) && node.Name != "" {
 		if nh.lastScopeBuf.Len() > 0 {
 			nh.lastScopeBuf.WriteByte(' ')
 		}
@@ -76,8 +76,8 @@ func (nh *nodeHighlighter) updateScope(point int) {
 		return
 	}
 
-	search := parser.Range{point, point + 1}
-	if nh.lastScopeNode != nil && nh.lastScopeNode.Range.Contains(search) {
+	search := text.Region{point, point + 1}
+	if nh.lastScopeNode != nil && nh.lastScopeNode.Range.Covers(search) {
 		if len(nh.lastScopeNode.Children) != 0 {
 			if no := nh.findScope(search, nh.lastScopeNode); no != nh.lastScopeNode && no != nil {
 				nh.lastScopeNode = no
@@ -96,7 +96,7 @@ func (nh *nodeHighlighter) ScopeExtent(point int) text.Region {
 	nh.updateScope(point)
 	if nh.lastScopeNode != nil {
 		r := nh.lastScopeNode.Range
-		return text.Region{r.Start, r.End}
+		return text.Region{r.A, r.B}
 	}
 	return text.Region{}
 }
@@ -111,18 +111,18 @@ func (nh *nodeHighlighter) flatten(in []NamedRegion, scopename string, node *par
 	cur := node.Range
 
 	for _, c := range node.Children {
-		if cur.Start < c.Range.Start {
+		if cur.A < c.Range.A {
 			var vr NamedRegion
-			vr.A, vr.B = cur.Start, c.Range.Start
+			vr.A, vr.B = cur.A, c.Range.A
 			vr.Name = scopename
 			in = append(in, vr)
-			cur.Start = c.Range.End
+			cur.A = c.Range.B
 		}
 		in = nh.flatten(in, scopename, c)
 	}
-	if cur.Start != cur.End {
+	if cur.A != cur.B {
 		var vr NamedRegion
-		vr.A, vr.B = cur.Start, cur.End
+		vr.A, vr.B = cur.A, cur.B
 		vr.Name = scopename
 		in = append(in, vr)
 	}
