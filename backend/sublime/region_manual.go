@@ -2,15 +2,15 @@ package sublime
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	"lime/3rdparty/libs/gopy/lib"
-	"lime/backend/primitives"
 )
 
 func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 	if op != py.EQ && op != py.NE {
 		return nil, fmt.Errorf("Can only do EQ and NE compares")
 	}
-	var o2 primitives.Region
+	var o2 text.Region
 	switch t := other.(type) {
 	case *Region:
 		o2 = t.data
@@ -27,7 +27,7 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 		} else if b2, ok := b.(*py.Long); !ok {
 			return nil, fmt.Errorf("Can only compare with int tuples and other regions")
 		} else {
-			o2 = primitives.Region{int(a2.Int64()), int(b2.Int64())}
+			o2 = text.Region{int(a2.Int64()), int(b2.Int64())}
 		}
 	default:
 		return nil, fmt.Errorf("Can only compare with int tuples and other regions")

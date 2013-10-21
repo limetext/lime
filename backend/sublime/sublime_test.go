@@ -5,11 +5,11 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/quarnster/completion/util"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	_ "lime/backend/commands"
-	"lime/backend/primitives"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,8 +18,8 @@ import (
 
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
-	ed.Console().Buffer().AddCallback(func(b primitives.Buffer, pos, delta int) {
-		t.Logf("%s", b.Substr(primitives.Region{pos, pos + delta}))
+	ed.Console().Buffer().AddCallback(func(b text.Buffer, pos, delta int) {
+		t.Logf("%s", b.Substr(text.Region{pos, pos + delta}))
 	})
 	w := ed.NewWindow()
 	Init()
@@ -144,7 +144,7 @@ func TestSublime(t *testing.T) {
 			if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
 				continue
 			}
-			if strings.Index(v.Buffer().Substr(primitives.Region{0, v.Buffer().Size()}), "FAILED") != -1 {
+			if strings.Index(v.Buffer().Substr(text.Region{0, v.Buffer().Size()}), "FAILED") != -1 {
 				t.Error(v.Buffer())
 			}
 		}

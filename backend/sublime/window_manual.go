@@ -2,14 +2,14 @@ package sublime
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
-	"lime/backend/primitives"
 )
 
 var (
 	_ = backend.View{}
-	_ = primitives.Region{}
+	_ = text.Region{}
 	_ = fmt.Errorf
 )
 

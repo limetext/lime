@@ -1,9 +1,9 @@
 package render
 
 import (
+	"github.com/quarnster/util/text"
 	"image"
 	"image/color"
-	"lime/backend/primitives"
 )
 
 type (
@@ -16,11 +16,11 @@ type (
 
 	RenderUnit struct {
 		Flavour Flavour
-		Region  primitives.Region
+		Region  text.Region
 		Layout  image.Rectangle
 	}
 
-	Recipe map[Flavour]primitives.RegionSet
+	Recipe map[Flavour]text.RegionSet
 
 	ColourScheme interface {
 		Spice(*ViewRegions) Flavour
@@ -30,7 +30,7 @@ type (
 	}
 )
 
-func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport primitives.Region) Recipe {
+func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Recipe {
 	data.Cull(viewport)
 	recipe := make(Recipe)
 	for _, v := range data {

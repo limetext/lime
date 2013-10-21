@@ -1,7 +1,7 @@
 package render
 
 import (
-	"lime/backend/primitives"
+	"github.com/quarnster/util/text"
 )
 
 const (
@@ -25,14 +25,14 @@ type (
 	ViewRegionMap   map[string]ViewRegions
 	ViewRegionFlags int
 	ViewRegions     struct {
-		Regions primitives.RegionSet
+		Regions text.RegionSet
 		Scope   string
 		Icon    string
 		Flags   ViewRegionFlags
 	}
 )
 
-func (vrm *ViewRegionMap) Cull(viewport primitives.Region) {
+func (vrm *ViewRegionMap) Cull(viewport text.Region) {
 	rm := []string{}
 	for k, v := range *vrm {
 		v.Cull(viewport)
@@ -47,8 +47,8 @@ func (vrm *ViewRegionMap) Cull(viewport primitives.Region) {
 	}
 }
 
-func (vr *ViewRegions) Cull(viewport primitives.Region) {
-	nr := []primitives.Region{}
+func (vr *ViewRegions) Cull(viewport text.Region) {
+	nr := []text.Region{}
 	for _, r := range vr.Regions.Regions() {
 		if viewport.Intersects(r) {
 			nr = append(nr, viewport.Intersection(r))

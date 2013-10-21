@@ -3,7 +3,7 @@ package parser
 import (
 	"bytes"
 	"github.com/quarnster/parser"
-	"lime/backend/primitives"
+	"github.com/quarnster/util/text"
 	"sort"
 	"sync"
 )
@@ -14,14 +14,14 @@ type (
 	}
 
 	NamedRegion struct {
-		primitives.Region
+		text.Region
 		Name string
 	}
 
 	SyntaxHighlighter interface {
-		ScopeExtent(point int) primitives.Region
+		ScopeExtent(point int) text.Region
 		ScopeName(point int) string
-		Flatten(viewport primitives.Region) []NamedRegion
+		Flatten(viewport text.Region) []NamedRegion
 	}
 
 	nodeHighlighter struct {
@@ -92,13 +92,13 @@ func (nh *nodeHighlighter) updateScope(point int) {
 	}
 }
 
-func (nh *nodeHighlighter) ScopeExtent(point int) primitives.Region {
+func (nh *nodeHighlighter) ScopeExtent(point int) text.Region {
 	nh.updateScope(point)
 	if nh.lastScopeNode != nil {
 		r := nh.lastScopeNode.Range
-		return primitives.Region{r.Start, r.End}
+		return text.Region{r.Start, r.End}
 	}
-	return primitives.Region{}
+	return text.Region{}
 }
 
 func (nh *nodeHighlighter) ScopeName(point int) string {
@@ -129,6 +129,6 @@ func (nh *nodeHighlighter) flatten(in []NamedRegion, scopename string, node *par
 	return in
 }
 
-func (nh *nodeHighlighter) Flatten(viewport primitives.Region) []NamedRegion {
+func (nh *nodeHighlighter) Flatten(viewport text.Region) []NamedRegion {
 	return nh.flatten(nil, "", nh.rootNode)
 }

@@ -2,7 +2,7 @@ package textmate
 
 import (
 	"github.com/quarnster/parser"
-	"lime/backend/primitives"
+	"github.com/quarnster/util/text"
 	"lime/backend/render"
 	"lime/backend/textmate"
 	"sync"
@@ -14,7 +14,7 @@ type (
 	}
 )
 
-func (ts *TextmateSyntax) PrepareForRendering(primitives.Region) []render.ViewRegions {
+func (ts *TextmateSyntax) PrepareForRendering(text.Region) []render.ViewRegions {
 	ts.Lock()
 	defer ts.Unlock()
 	return ts.flatten([]render.ViewRegions{}, "", ts.RootNode())

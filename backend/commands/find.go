@@ -1,8 +1,8 @@
 package commands
 
 import (
+	. "github.com/quarnster/util/text"
 	. "lime/backend"
-	. "lime/backend/primitives"
 )
 
 type (

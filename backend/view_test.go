@@ -3,8 +3,8 @@ package backend
 import (
 	"fmt"
 	"github.com/quarnster/completion/util"
+	. "github.com/quarnster/util/text"
 	"io/ioutil"
-	. "lime/backend/primitives"
 	"math/rand"
 	"reflect"
 	"testing"

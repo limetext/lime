@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/quarnster/parser"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/3rdparty/libs/rubex"
 	"lime/backend/loaders"
-	"lime/backend/primitives"
 	"strconv"
 	"strings"
 	"sync"
@@ -409,8 +409,8 @@ func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo Match
 }
 
 func (d *LanguageParser) Data(a, b int) string {
-	a = primitives.Clamp(0, len(d.data), a)
-	b = primitives.Clamp(0, len(d.data), b)
+	a = text.Clamp(0, len(d.data), a)
+	b = text.Clamp(0, len(d.data), b)
 	return string(d.data[a:b])
 }
 

@@ -7,7 +7,7 @@ import (
 	"lime/backend"
 	_ "lime/backend/commands"
 	// "lime/backend/loaders"
-	"lime/backend/primitives"
+	"github.com/quarnster/util/text"
 	// "lime/backend/sublime"
 	"image/color"
 	"lime/backend/textmate"
@@ -19,7 +19,7 @@ func init() {
 }
 
 var (
-	_      = primitives.Region{}
+	_      = text.Region{}
 	_      = color.RGBA{}
 	wnds   = make(map[*backend.Window]QLimeWindow)
 	scheme *textmate.Theme
@@ -74,7 +74,7 @@ func newQLimeView(v *backend.View) *QLimeView {
 				p.DrawText(qt5.Point{0, (y + 1) * (ps + 2)}, b.Substr(line))
 			} else {
 				for line.Contains(pos) {
-					scope := primitives.Region{pos, pos}
+					scope := text.Region{pos, pos}
 					sn := v.ScopeName(pos)
 					for line.Contains(pos) {
 						pos++

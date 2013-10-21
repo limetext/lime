@@ -4,8 +4,8 @@ import (
 	sj "encoding/json"
 	"errors"
 	"fmt"
+	. "github.com/quarnster/util/text"
 	"lime/backend/loaders/json"
-	. "lime/backend/primitives"
 )
 
 func LoadJSON(data []byte, intf interface{}) error {

@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	. "lime/backend"
-	"lime/backend/primitives"
 )
 
 type (
@@ -66,7 +66,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 				if prev_col < 0 {
 					prev_col = 0
 				}
-				d := v.Buffer().SubstrR(primitives.Region{prev_col, r.A})
+				d := v.Buffer().SubstrR(text.Region{prev_col, r.A})
 				i := len(d) - 1
 				for r.A > prev_col && i >= 0 && d[i] == ' ' {
 					r.A--

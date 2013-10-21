@@ -3,15 +3,14 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/quarnster/util/text" //"time"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
-	"lime/backend/primitives"
-	//"time"
 )
 
 var (
 	_ = backend.View{}
-	_ = primitives.Region{}
+	_ = text.Region{}
 )
 
 var (

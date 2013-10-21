@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/backend"
-	"lime/backend/primitives"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -393,12 +393,12 @@ func main() {
 		return sn
 	}
 	data := [][]string{
-		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(primitives.Region{}), true, nil)},
-		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&primitives.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust|Has").MatchString)},
+		{"../backend/sublime/region.go", generateWrapper(reflect.TypeOf(text.Region{}), true, nil)},
+		{"../backend/sublime/regionset.go", generateWrapper(reflect.TypeOf(&text.RegionSet{}), false, regexp.MustCompile("Less|Swap|Adjust|Has").MatchString)},
 		{"../backend/sublime/edit.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
 		{"../backend/sublime/view.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show|AddRegions|UndoStack").MatchString)},
 		{"../backend/sublime/window.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile|SetActiveView").MatchString)},
-		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&primitives.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
+		{"../backend/sublime/settings.go", generateWrapper(reflect.TypeOf(&text.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
 		{"../backend/sublime/view_buffer.go", generatemethodsEx(
 			reflect.TypeOf(backend.GetEditor().Console().Buffer()),
 			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index|Close|Unlock|Lock").MatchString,
@@ -445,11 +445,11 @@ func main() {
 				"fmt"
 				"lime/3rdparty/libs/gopy/lib"
 				"lime/backend"
-				"lime/backend/primitives"
+				"github.com/quarnster/util/text"
 			)
 			var (
 				_ = backend.View{}
-				_ = primitives.Region{}
+				_ = text.Region{}
 				_ = fmt.Errorf
 			)
 			` + gen[1]

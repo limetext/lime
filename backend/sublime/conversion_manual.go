@@ -2,9 +2,9 @@ package sublime
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
-	"lime/backend/primitives"
 	"reflect"
 )
 
@@ -38,7 +38,7 @@ func toPython(r interface{}) (py.Object, error) {
 		return py.NewUnicode(t)
 	case float64:
 		return py.NewFloat(t)
-	case *primitives.Settings:
+	case *text.Settings:
 		pyret0, err := _settingsClass.Alloc(1)
 		if err != nil {
 			return nil, err
@@ -68,7 +68,7 @@ func toPython(r interface{}) (py.Object, error) {
 			v2.data = t
 			return v2, nil
 		}
-	case primitives.Region:
+	case text.Region:
 		pyret0, err := _regionClass.Alloc(1)
 		if err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func toPython(r interface{}) (py.Object, error) {
 			v2.data = t
 			return v2, nil
 		}
-	case *primitives.RegionSet:
+	case *text.RegionSet:
 		pyret0, err := _region_setClass.Alloc(1)
 		if err != nil {
 			return nil, err

@@ -3,11 +3,11 @@ package main
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	. "github.com/quarnster/util/text"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	_ "lime/backend/commands"
-	. "lime/backend/primitives"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"lime/backend/util"

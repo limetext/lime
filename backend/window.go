@@ -2,15 +2,15 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
-	"lime/backend/primitives"
 	"runtime/debug"
 	"sync"
 )
 
 type Window struct {
-	primitives.HasId
-	primitives.HasSettings
+	text.HasId
+	text.HasSettings
 	views       []*View
 	active_view *View
 	lock        sync.Mutex
@@ -22,9 +22,9 @@ func (w *Window) NewFile() *View {
 	w.views = append(w.views, newView(w))
 	v := w.views[len(w.views)-1]
 	v.Settings().SetParent(w)
-	v.setBuffer(primitives.NewBuffer())
+	v.setBuffer(text.NewBuffer())
 	v.selection.Clear()
-	v.selection.Add(primitives.Region{0, 0})
+	v.selection.Add(text.Region{0, 0})
 	OnNew.Call(v)
 	w.SetActiveView(v)
 	return v

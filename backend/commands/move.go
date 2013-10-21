@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"github.com/quarnster/util/text"
 	. "lime/backend"
-	"lime/backend/primitives"
 	"lime/backend/util"
 )
 
@@ -21,7 +21,7 @@ type (
 	}
 )
 
-func move_action(v *View, extend bool, transform func(r primitives.Region) int) {
+func move_action(v *View, extend bool, transform func(r text.Region) int) {
 	sel := v.Sel()
 	r := sel.Regions()
 	for i := range r {
@@ -40,21 +40,21 @@ func (c *MoveToCommand) Run(v *View, e *Edit, args Args) error {
 
 	switch to {
 	case "eol":
-		move_action(v, extend, func(r primitives.Region) int {
+		move_action(v, extend, func(r text.Region) int {
 			line := v.Buffer().Line(r.B)
 			return line.B
 		})
 	case "bol":
-		move_action(v, extend, func(r primitives.Region) int {
+		move_action(v, extend, func(r text.Region) int {
 			line := v.Buffer().Line(r.B)
 			return line.A
 		})
 	case "bof":
-		move_action(v, extend, func(r primitives.Region) int {
+		move_action(v, extend, func(r text.Region) int {
 			return 0
 		})
 	case "eof":
-		move_action(v, extend, func(r primitives.Region) int {
+		move_action(v, extend, func(r text.Region) int {
 			return v.Buffer().Size()
 		})
 	default:
@@ -84,12 +84,12 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 		if !fwd {
 			dir = -1
 		}
-		move_action(v, extend, func(r primitives.Region) int {
+		move_action(v, extend, func(r text.Region) int {
 			return r.B + dir
 		})
 	case "stops":
-		move_action(v, extend, func(r primitives.Region) int {
-			var next primitives.Region
+		move_action(v, extend, func(r text.Region) int {
+			var next text.Region
 			word := v.Buffer().Word(r.B)
 			if word_end && fwd && r.B < word.End() {
 				next = word
@@ -110,7 +110,7 @@ func (c *MoveCommand) Run(v *View, e *Edit, args Args) error {
 			return r.B
 		})
 	case "lines":
-		move_action(v, extend, func(in primitives.Region) int {
+		move_action(v, extend, func(in text.Region) int {
 			r, c := v.Buffer().RowCol(in.B)
 			_ = r
 			if !fwd {
@@ -153,7 +153,7 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit, args Args) error {
 		r -= amount
 	}
 	r = v.Buffer().TextPoint(r, 0)
-	fe.Show(v, primitives.Region{r, r})
+	fe.Show(v, text.Region{r, r})
 	return nil
 }
 

@@ -3,9 +3,9 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/backend/loaders"
-	. "lime/backend/primitives"
 	. "lime/backend/util"
 	"runtime"
 	"runtime/debug"
