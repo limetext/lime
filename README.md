@@ -8,6 +8,8 @@ As none of the other text editors I've tried come close to the love I had for Su
 
 The frontend(s) are not ready to replace your favourite editor, but the backend itself I believe isn't too far away.
 
+![Screenshot taken Oct 23 2013](http://i.imgur.com/VIpmjau.png)
+
 # Goals
 
 - [x] 100% Open source
