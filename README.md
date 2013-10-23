@@ -71,7 +71,7 @@ import "C"
 
 ```
 cd $GOPATH/src/github.com/quarnster/completion/build
-go run build.go
+make
 ```
 
 ### Compile lime
