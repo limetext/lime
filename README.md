@@ -6,6 +6,8 @@ There was a period of about 6 months after the Sublime Text 2 "stable" version w
 
 As none of the other text editors I've tried come close to the love I had for Sublime Text, I decided I had to create my own.
 
+The frontend(s) are not ready to replace your favourite editor, but the backend itself I believe isn't too far away.
+
 # Goals
 
 - [x] 100% Open source
@@ -32,8 +34,9 @@ Because I'm just a single person and I don't want to offer up my spare time doin
 - Go 1.1
    - Follow the build instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
 - Python3
-   - ``` sudo apt-get install python3-dev ``` # On Linux
-   - ``` brew install python3 ``` # On Mac
+   - Python 3 **must** be compiled without [sigaltstack enabled](https://code.google.com/p/go/issues/detail?id=5287).
+   - ~~``` sudo apt-get install python3-dev ``` # On Linux~~
+   - ~~``` brew install python3 ``` # On Mac~~
 - Oniguruma
    - ``` sudo apt-get install libonig-dev ``` # On Linux
    - ``` brew install oniguruma ``` # On Mac
