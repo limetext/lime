@@ -83,20 +83,16 @@ go run build.go
 
 Done!
 
-# To use termbox
+# To use termbox frontend
 
 ```
 cd ../frontend/termbox
 go run main.go
 ```
 
-# To use qt5
+# To use qt5 frontend
 
 ```
-cd ../frontend/qt5
-go run main.go
-
-# For the qt5 frontend
 cd ../frontend/qt5
 go run main.go
 ```
