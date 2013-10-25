@@ -49,7 +49,7 @@ Because I’m just a single person and I don’t want to offer up my spare time 
 
 ```
 go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/howeyc/fsnotify
-git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src
+git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src/lime
 ```
 
 ### Modify cgo.go settings
