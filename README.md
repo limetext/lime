@@ -48,7 +48,13 @@ Well, why don't you fork it and open up the list in your fork? Why isn't any exc
 
 Just because I kicked this off doesn't mean I'd like to be the spider in the web managing it. I have after all not written [much code](https://github.com/quarnster/lime/graphs/code-frequency) for it since April 2013. If you'd like to ask if anyone else is working on something before you dig in, feel free to summon me via @quarnster, or you could just grab my email address from a commit via ```git log --author=quarnster -1```.
 
-Let me know if you'd like to manage the issues list and I can add you as a collaborator and open it up to the public.
+### Wait, you want people to summon you via @quarnster or email you? Isn't that the same as being the spider in the web and having an issues list?
+
+Not even close. In my experience people actually doing any work and submitting pull requests fixing things can be counted using the fingers on one hand. There aren't enough fingers and toes to count the people who *demand* support, fixes and help, and like a zombie apocalypse the count just keeps growing.
+
+If this project grows into a couple of collaborators willing to deal with the zombie apocalypse that's a different matter, but as long as I'm alone I'll be sitting in my tree fort with a shotgun.
+
+Feel free to have an issues list open in your own fork or to host a support forum. Let me know and I'll put a link to it here.
 
 # Build instructions
 
