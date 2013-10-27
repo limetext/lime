@@ -8,25 +8,27 @@ As none of the other text editors I've tried come close to the love I had for Su
 
 The frontend(s) are not ready to replace your favourite editor, but the backend itself I believe isn't too far away.
 
+![Screenshot taken Oct 23 2013](http://i.imgur.com/VIpmjau.png)
+
 ### Why create a clone?
 
 Because I like the architecture of the extensibilities in the original editor.
 
 # Goals
 
-- [x] 100% Open source
-- [x] Compatible with Textmate color schemes (which is what ST is using)
-- [x] Compatible with Textmate syntax definitions (which again is what ST is using)
-- [ ] Compatible with Textmate snippets
-- [ ] Compatible with Sublime Text's python plugin api. I'll probably never implement this 100%, only the api bits I need for the plugins I use.
-- [ ] Compatible with Sublime Text's keybindings and settings
-- [ ] Compatible with Sublime Text snippets
-- [ ] Sublime Text's Goto anything panel
-- [x] Multiple cursors
-- [x] Regression tests (Programming in [Go](http://golang.org) makes it trivial and even fun to write them ;))
-- [ ] Support for plugging in a custom parser for more advanced syntax highlighting.
-- [ ] Terminal UI (*Maybe* I'll work on a simple non-terminal UI at some point)
-- [ ] Cross platform (It appears to be compiling and running on OSX and Linux last I tried, but needs further validation.)
+- ☑ 100% Open source
+- ☑ Compatible with Textmate color schemes (which is what ST is using)
+- ☑ Compatible with Textmate syntax definitions (which again is what ST is using)
+- ☐ Compatible with Textmate snippets
+- ☐ Compatible with Sublime Text’s python plugin API. I’ll probably never implement this 100%, only the api bits I need for the plugins I use.
+- ☐ Compatible with Sublime Text’s keybindings and settings
+- ☐ Compatible with Sublime Text snippets
+- ☐ Sublime Text’s Goto anything panel
+- ☑ Multiple cursors
+- ☑ Regression tests (Programming in [Go](http://golang.org) makes it trivial and even fun to write them ;))
+- ☐ Support for plugging in a custom parser for more advanced syntax highlighting.
+- ☐ Terminal UI (*Maybe* I’ll work on a simple non-terminal UI at some point)
+- ☐ Cross platform (It appears to be compiling and running on OSX and Linux last I tried, but needs further validation.)
 
 # Why can't I open up an issue?
 
@@ -67,7 +69,7 @@ Let me know if you'd like to manage the issues list and I can add you as a colla
 
 ```
 go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/howeyc/fsnotify
-git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src
+git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src/lime
 ```
 
 ### Modify cgo.go settings
@@ -89,7 +91,7 @@ import "C"
 
 ```
 cd $GOPATH/src/github.com/quarnster/completion/build
-go run build.go
+make
 ```
 
 ### Compile lime
@@ -101,20 +103,16 @@ go run build.go
 
 Done!
 
-# To use termbox
+# To use termbox frontend
 
 ```
 cd ../frontend/termbox
 go run main.go
 ```
 
-# To use qt5
+# To use qt5 frontend
 
 ```
-cd ../frontend/qt5
-go run main.go
-
-# For the qt5 frontend
 cd ../frontend/qt5
 go run main.go
 ```
