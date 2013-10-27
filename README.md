@@ -20,8 +20,8 @@ Because I like the architecture of the extensibilities in the original editor.
 - ☑ Compatible with Textmate color schemes (which is what ST is using)
 - ☑ Compatible with Textmate syntax definitions (which again is what ST is using)
 - ☐ Compatible with Textmate snippets
-- ☐ Compatible with Sublime Text’s python plugin API. I’ll probably never implement this 100%, only the api bits I need for the plugins I use.
-- ☐ Compatible with Sublime Text’s keybindings and settings
+- ☑ Compatible with Sublime Text’s python plugin API. I’ll probably never implement this 100%, only the api bits I need for the plugins I use.
+- ☑ Compatible with Sublime Text’s keybindings and settings (think most of it is working)
 - ☐ Compatible with Sublime Text snippets
 - ☐ Sublime Text’s Goto anything panel
 - ☑ Multiple cursors
