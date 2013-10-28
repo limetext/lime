@@ -2,35 +2,64 @@ package render
 
 import (
 	"github.com/quarnster/util/text"
-	"image"
 	"image/color"
+	"sort"
 )
 
 type (
-	Colour  color.RGBA
+	// Colour represented by a underlying color.RGBA structure
+	Colour color.RGBA
+
+	// The Flavour struct contains the specific settings
+	// used to style a particular section of text.
 	Flavour struct {
 		Background Colour
 		Foreground Colour
 		Font       Font
 	}
 
+	// The Recipe type groups text.RegionSets by their Flavour.
+	// The idea is to allow large groups of text be rendered as
+	// a single batch without any state changes inbetween the
+	// batches.
+	Recipe map[Flavour]text.RegionSet
+
+	// A RenderUnit is just a Flavour and an associated Region.
 	RenderUnit struct {
 		Flavour Flavour
 		Region  text.Region
-		Layout  image.Rectangle
 	}
 
-	Recipe map[Flavour]text.RegionSet
+	// A TranscribedRecipe is a linear (in text.Regions) representation of a Recipe
+	TranscribedRecipe []RenderUnit
 
 	ColourScheme interface {
+		// Takes a ViewRegions pointer as input and uses the data contained in it
+		// to determine the Flavour it should be rendered with.
 		Spice(*ViewRegions) Flavour
 	}
 
-	Renderer struct {
+	Renderer interface {
+		// Renders the given Recipe
+		Render(Recipe)
 	}
 )
 
-func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Recipe {
+// Transform takes a ColourScheme, a ViewRegionMap and a viewport as input.
+//
+// The viewport would be the text.Region of the current buffer that is visible to the user
+// and any ViewRegions outside of this area are not forwarded for further processing.
+//
+// The remaining ViewRegions are then passed on to the ColourScheme for determining the exact Flavour
+// for which that RegionSet should be styled, adding Regions of the same Flavour to the same RegionSet.
+//
+// Typically there are more ViewRegions available in a text buffer than there are unique Flavours in
+// a ColourScheme, so this operation can be viewed as reducing the number of state changes required to
+// display the text to the user.
+//
+// The final output, the Recipe, contains a mapping of all unique Flavours and that Flavour's
+// associated RegionSet.
+func Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Recipe {
 	data.Cull(viewport)
 	recipe := make(Recipe)
 	for _, v := range data {
@@ -42,6 +71,30 @@ func (r *Renderer) Transform(scheme ColourScheme, data ViewRegionMap, viewport t
 	return recipe
 }
 
-func (r Recipe) Transcribe() []RenderUnit {
-	return nil
+// Transcribing the Recipe creates a linear step-by-step
+// representation of it, which might or might not
+// make it easier for Renderers to work with.
+func (r Recipe) Transcribe() (ret TranscribedRecipe) {
+	for flav, set := range r {
+		for _, r := range set.Regions() {
+			ret = append(ret, RenderUnit{Flavour: flav, Region: r})
+		}
+	}
+	sort.Sort(&ret)
+	return
+}
+
+// Just used to satisfy the sort.Interface interface, typically not used otherwise.
+func (r *TranscribedRecipe) Len() int {
+	return len(*r)
+}
+
+// Just used to satisfy the sort.Interface interface, typically not used otherwise.
+func (r *TranscribedRecipe) Less(i, j int) bool {
+	return (*r)[i].Region.Begin() < (*r)[j].Region.Begin()
+}
+
+// Just used to satisfy the sort.Interface interface, typically not used otherwise.
+func (r *TranscribedRecipe) Swap(i, j int) {
+	(*r)[i], (*r)[j] = (*r)[j], (*r)[i]
 }
