@@ -30,32 +30,6 @@ Because I like the architecture of the extensibilities in the original editor.
 - ☐ Terminal UI (*Maybe* I’ll work on a simple non-terminal UI at some point)
 - ☐ Cross platform (It appears to be compiling and running on OSX and Linux last I tried, but needs further validation.)
 
-# Why can't I open up an issue?
-
-Because I'm just a single person and I don't want to offer up my spare time doing support or dealing with feature requests that I don't care about myself. If you want a feature implemented or a bug fixed, fork it and implement it yourself and submit a pull request when you're happy with the implementation.
-
-### Isn't that exactly what you were complaining about earlier?
-
-Sadly I have to add this section as people keep asking, and the answer is "not at all". If you really are wondering, perhaps that's a sign you need to educate yourself regarding the concepts of [Free Software](http://www.gnu.org/philosophy/free-sw.html) and [Open Source](http://opensource.org/).
-
-I cannot fix issues in the original software due to it's closed nature and I'm thus dependant on the author of it acknowledging the existence of the issue and then have a dialogue with him until it is solved. When the author does not respond at all, this model breaks down and there is nothing at all I can do.
-
-In contrast, as this project is 100% Open Source no one depends on me to fix anything and everyone can change exactly every single line of code that makes it up without my personal involvement.
-
-### Will you please open up the issues list? It'll make cooperation easier.
-
-Well, why don't you fork it and open up the list in your fork? Why isn't any excuse you can think of to not do that valid for me also?
-
-Just because I kicked this off doesn't mean I'd like to be the spider in the web managing it. I have after all not written [much code](https://github.com/quarnster/lime/graphs/code-frequency) for it since April 2013. If you'd like to ask if anyone else is working on something before you dig in, feel free to summon me via @quarnster, or you could just grab my email address from a commit via ```git log --author=quarnster -1```.
-
-### Wait, you want people to summon you via @quarnster or email you? Isn't that the same as being the spider in the web and having an issues list?
-
-Not even close. In my experience people actually doing any work and submitting pull requests fixing things can be counted using the fingers on one hand. There aren't enough fingers and toes to count the people who *demand* support, fixes and help, and like a zombie apocalypse the count just keeps growing.
-
-If this project grows into a couple of collaborators willing to deal with the zombie apocalypse that's a different matter, but as long as I'm alone I'll be sitting in my tree fort with a shotgun.
-
-Feel free to have an issues list open in your own fork or to host a support forum. Let me know and I'll put a link to it here.
-
 # Build instructions
 
 ### Install required components
