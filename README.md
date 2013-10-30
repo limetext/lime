@@ -62,6 +62,7 @@ Feel free to have an issues list open in your own fork or to host a support foru
 - Go 1.1
 	- Download a binary package from http://golang.org/doc/install
 	- Or if you prefer building from source, follow the instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
+	- Go 1.2 is required on OS X Mavericks (see [issue here](https://code.google.com/p/go/issues/detail?id=6515)); use ``` brew install --devel go ```
 - Python3
 	- Python 3 **[must](https://code.google.com/p/go/issues/detail?id=5287)** be compiled without [sigaltstack enabled](#compiling-python3-without-sigaltstack-enabled).
 - Oniguruma
