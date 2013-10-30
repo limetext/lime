@@ -13,3 +13,4 @@ backend/sublime/*.go
 !backend/sublime/*_manual.go
 *.log
 *.log.0*
+.DS_Store
