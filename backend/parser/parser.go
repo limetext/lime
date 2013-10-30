@@ -19,9 +19,10 @@ type (
 	}
 
 	SyntaxHighlighter interface {
+		Adjust(position, delta int)
 		ScopeExtent(point int) text.Region
 		ScopeName(point int) string
-		Flatten(viewport text.Region) []NamedRegion
+		//		Flatten() []NamedRegion
 	}
 
 	nodeHighlighter struct {
@@ -129,6 +130,10 @@ func (nh *nodeHighlighter) flatten(in []NamedRegion, scopename string, node *par
 	return in
 }
 
-func (nh *nodeHighlighter) Flatten(viewport text.Region) []NamedRegion {
-	return nh.flatten(nil, "", nh.rootNode)
+func (nh *nodeHighlighter) Adjust(position, delta int) {
+	nh.rootNode.Adjust(position, delta)
 }
+
+// func (nh *nodeHighlighter) Flatten() []NamedRegion {
+// 	return nh.flatten(nil, "", nh.rootNode)
+// }

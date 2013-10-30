@@ -18,6 +18,7 @@ const (
 	FOREGROUND
 	SELECTION
 	HIGHLIGHT
+	DRAW_TEXT
 	DEFAULT ViewRegionFlags = 0
 )
 

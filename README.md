@@ -125,6 +125,8 @@ Done!
 	cd ../frontend/termbox
 	go run main.go
 
+Press Ctrl+Q to exit.
+
 # To use qt5 frontend
 
 	cd ../frontend/qt5

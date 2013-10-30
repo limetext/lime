@@ -11,11 +11,12 @@ type (
 	Colour color.RGBA
 
 	// The Flavour struct contains the specific settings
-	// used to style a particular section of text.
+	// used to style a particular Region.
 	Flavour struct {
 		Background Colour
 		Foreground Colour
 		Font       Font
+		Flags      ViewRegionFlags
 	}
 
 	// The Recipe type groups text.RegionSets by their Flavour.

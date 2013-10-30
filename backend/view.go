@@ -104,22 +104,25 @@ func (v *View) setBuffer(b Buffer) error {
 	}
 	v.buffer = b
 	// TODO(q): Dynamically load the correct syntax file
-	b.AddCallback(func(_ Buffer, a, b int) {
-		v.flush(a, b)
+	b.AddCallback(func(_ Buffer, position, delta int) {
+		v.flush(position, delta)
 	})
 	return nil
 }
 
-func (v *View) flush(a, b int) {
+func (v *View) flush(position, delta int) {
 	func() {
 		v.lock.Lock()
 		defer v.lock.Unlock()
 
 		e := Prof.Enter("view.flush")
 		defer e.Exit()
-		v.selection.Adjust(a, b)
+		v.selection.Adjust(position, delta)
+		if v.syntax != nil {
+			v.syntax.Adjust(position, delta)
+		}
 		for k, v2 := range v.regions {
-			v2.Regions.Adjust(a, b)
+			v2.Regions.Adjust(position, delta)
 			v.regions[k] = v2
 		}
 	}()
@@ -129,6 +132,7 @@ func (v *View) flush(a, b int) {
 
 func (v *View) parsethread() {
 	pc := 0
+	lastParse := -1
 	doparse := func() {
 		p := Prof.Enter("syntax.parse")
 		defer p.Exit()
@@ -155,15 +159,20 @@ func (v *View) parsethread() {
 			} else {
 				v.lock.Lock()
 				defer v.lock.Unlock()
-				v.syntax = syn
+				// Only set if it isn't invalid already, otherwise the
+				// current syntax highlighting will be more accurate
+				// as it will have had incremental adjustments done to it
+				if v.buffer.ChangeCount() == lastParse {
+					v.syntax = syn
+				}
 			}
 		}
 	}
-	lastParse := -1
 	for pr := range v.reparseChan {
 		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
 			lastParse = cc
 			doparse()
+			v.Settings().Set("lime.syntax.updated", lastParse)
 		}
 	}
 }
