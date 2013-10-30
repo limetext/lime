@@ -60,68 +60,75 @@ Feel free to have an issues list open in your own fork or to host a support foru
 
 ### Install required components
 - Go 1.1
-   - Follow the build instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
+	- Download a binary package from http://golang.org/doc/install
+	- Or if you prefer building from source, follow the instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
 - Python3
-   - Python 3 **must** be compiled without [sigaltstack enabled](https://code.google.com/p/go/issues/detail?id=5287).
-   - ~~``` sudo apt-get install python3-dev ``` # On Linux~~
-   - ~~``` brew install python3 ``` # On Mac~~
+	- Python 3 **[must](https://code.google.com/p/go/issues/detail?id=5287)** be compiled without [sigaltstack enabled](#compiling-python3-without-sigaltstack-enabled).
 - Oniguruma
-   - ``` sudo apt-get install libonig-dev ``` # On Linux
-   - ``` brew install oniguruma ``` # On Mac
-- qt5 (Optional)
-   - Follow the instructions at [go-qt5](https://github.com/salviati/go-qt5)
+	- ``` sudo apt-get install libonig-dev ``` # On Linux
+	- ``` brew install oniguruma ``` # On Mac
+- qt5 (Optional) (this is way, way broken at the moment, don't even try it unless you want to fix it)
+	- Follow the instructions at [go-qt5](https://github.com/salviati/go-qt5)
+
+### Compiling Python3 without sigaltstack enabled
+
+	cd Python-3.3.2
+	./configure --enable-shared
+	cat pyconfig.h | sed s/#define\ HAVE_SIGALTSTACK\ 1// > pyconfig.new && mv pyconfig.new pyconfig.h
+	make -j8
+	make install
 
 ### Download the needed repositories
+	go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/quarnster/util github.com/howeyc/fsnotify
+	git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src/lime
 
-```
-go get code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/howeyc/fsnotify
-git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src/lime
-```
-
-### Modify cgo.go settings
+### Modify gopy's cgo.go settings
 
 ``` open $GOPATH/src/lime/3rdparty/libs/gopy/lib/cgo.go ```
 
-Example of ``` cgo.go ``` settings on my Mac
+Example of ``` cgo.go ``` settings on my Mac:
 
-```
-package py
+	package py
 
-// #cgo CFLAGS: -I/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/include/python3.3m -I/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/include/python3.3m
-// #cgo LDFLAGS: -L/usr/local/Cellar/python3/3.3.1/Frameworks/Python.framework/Versions/Current/lib/python3.3/config-3.3m -ldl -framework CoreFoundation -lpython3.3
-// #cgo pkg-config: /usr/local/Cellar/libffi/3.0.13/lib/pkgconfig/libffi.pc
-import "C"
-```
+	// #cgo CFLAGS: -I/usr/local/include/python3.3m
+	// #cgo LDFLAGS: -L/usr/local/lib/python3.3/config-3.3m -ldl -framework CoreFoundation -lpython3.3 -lintl
+	// #cgo pkg-config: /usr/local/Cellar/libffi/3.0.13/lib/pkgconfig/libffi.pc
+	import "C"
+
+#### Make sure gopy works
+
+	cd $GOPATH/src/lime/3rdparty/lib/gopy
+	go install
+	go test
+
+A successful run of ```go test``` will output something similar to:
+
+	tick
+	tick
+	PASS
+	ok    lime/3rdparty/libs/gopy 5.299s
 
 ### Compile completion
 
-```
-cd $GOPATH/src/github.com/quarnster/completion/build
-make
-```
+	cd $GOPATH/src/github.com/quarnster/completion/build
+	make
 
 ### Compile lime
 
-```
-cd $GOPATH/src/lime/build
-go run build.go
-```
+	cd $GOPATH/src/lime/build
+	go run build.go
 
 Done!
 
 # To use termbox frontend
 
-```
-cd ../frontend/termbox
-go run main.go
-```
+	cd ../frontend/termbox
+	go run main.go
 
 # To use qt5 frontend
 
-```
-cd ../frontend/qt5
-go run main.go
-```
+	cd ../frontend/qt5
+	go run main.go
 
 # License
 
