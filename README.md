@@ -85,6 +85,8 @@ A successful run of ```go test``` will output something similar to:
 
 ### Compile completion
 
+	#Make sure $GOPATH/bin is in your PATH
+	export PATH=$PATH:$GOPATH/bin
 	cd $GOPATH/src/github.com/quarnster/completion/build
 	make
 
