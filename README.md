@@ -55,7 +55,7 @@ Because I like the architecture of the extensibilities in the original editor.
 
 ### Download the needed repositories
 	go get -d code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/completion github.com/quarnster/util github.com/howeyc/fsnotify
-	git clone --recursive git@github.com:quarnster/lime.git $GOPATH/src/lime
+	git clone --recursive git@github.com:limetext/lime.git $GOPATH/src/lime
 
 ### Modify gopy's cgo.go settings
 
