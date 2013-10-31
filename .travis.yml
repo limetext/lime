@@ -13,6 +13,7 @@ install:
   - go get -d github.com/howeyc/fsnotify
   - sudo apt-get update -qq
   - sudo apt-get install -qq libonig-dev
+  - ./scripts/ci/python3.sh
   - ln -s $(pwd) ../../../lime #Fix Travis CI checking out the code to github.com/limetext/lime instead of lime
 
 script:
