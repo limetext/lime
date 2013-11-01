@@ -61,6 +61,8 @@ Because I like the architecture of the extensibilities in the original editor.
 
 ``` open $GOPATH/src/lime/3rdparty/libs/gopy/lib/cgo.go ```
 
+You should be able to update with the output of `python3.3-config --cflags` and `python3.3-config --libs`.
+
 Example of ``` cgo.go ``` settings on my Mac:
 
 	package py
