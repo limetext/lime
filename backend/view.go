@@ -20,6 +20,9 @@ import (
 )
 
 type (
+	// A View provides a view into a specific underlying buffer
+	// with its own set of selections, settings, viewport, etc.
+	// Multiple Views can share the same underlying data buffer.
 	View struct {
 		HasSettings
 		HasId
@@ -41,6 +44,10 @@ type (
 	parseReq struct {
 		forced bool
 	}
+
+	// The Edit object is an internal type passed as an argument
+	// to a TextCommand. All text operations need to be associated
+	// with a valid Edit object.
 	Edit struct {
 		invalid    bool
 		composite  CompositeAction
@@ -339,21 +346,21 @@ func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args A
 	return "", nil, 0
 }
 
-func (v *View) runCommand(cmd TextCommand, name string, args Args) error {
+func (v *View) runCommand(cmd TextCommand, name string) error {
 	e := v.BeginEdit()
 	e.command = name
-	e.args = args
+	//	e.args = args
 	e.bypassUndo = cmd.BypassUndo()
 
 	defer func() {
 		v.EndEdit(e)
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
+			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, cmd, r, string(debug.Stack()))
 		}
 	}()
 	p := Prof.Enter("view.cmd." + name)
 	defer p.Exit()
-	return cmd.Run(v, e, args)
+	return cmd.Run(v, e)
 }
 
 func (v *View) AddRegions(key string, regions []Region, scope, icon string, flags render.ViewRegionFlags) {

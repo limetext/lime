@@ -1,43 +1,47 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/quarnster/util/text"
 	. "lime/backend"
 )
 
 type (
+	// The InsertCommand inserts the given characters, at all
+	// of the current selection locations, possibly replacing
+	// text if the selection area covers one or more characters.
 	InsertCommand struct {
 		DefaultCommand
+		// The characters to insert
+		Characters string
 	}
 
+	// The LeftDeleteCommand deletes characters to the left of the
+	// current selection or the current selection if it is not empty.
 	LeftDeleteCommand struct {
 		DefaultCommand
 	}
 
+	// The RightDeleteCommand deletes characters to the right of the
+	// current selection or the current selection if it is not empty.
 	RightDeleteCommand struct {
 		DefaultCommand
 	}
 )
 
-func (c *InsertCommand) Run(v *View, e *Edit, args Args) error {
+func (c *InsertCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
-	chars, ok := args["characters"].(string)
-	if !ok {
-		return fmt.Errorf("insert: Missing or invalid characters argument: %v", args)
-	}
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
 		if r.Size() == 0 {
-			v.Insert(e, r.B, chars)
+			v.Insert(e, r.B, c.Characters)
 		} else {
-			v.Replace(e, r, chars)
+			v.Replace(e, r, c.Characters)
 		}
 	}
 	return nil
 }
 
-func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
+func (c *LeftDeleteCommand) Run(v *View, e *Edit) error {
 	trim_space := false
 	tab_size := 4
 	if t, ok := v.Settings().Get("translate_tabs_to_spaces", false).(bool); ok && t {
@@ -86,7 +90,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit, args Args) error {
 	return nil
 }
 
-func (c *RightDeleteCommand) Run(v *View, e *Edit, args Args) error {
+func (c *RightDeleteCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
 	hasNonEmpty := sel.HasNonEmpty()
 	i := 0

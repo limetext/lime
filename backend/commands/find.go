@@ -6,22 +6,29 @@ import (
 )
 
 type (
+	// The FindUnderExpandCommand extends the selection to the current word
+	// if the current selection region is empty.
+	// If one character or more is selected, the text buffer is scanned for
+	// the next occurrence of the selection and that region too is added to
+	// the selection set.
 	FindUnderExpandCommand struct {
 		DefaultCommand
 	}
+	// The SingleSelectionCommand merges multiple cursors
+	// into a single one.
 	SingleSelectionCommand struct {
 		DefaultCommand
 	}
 )
 
-func (c *SingleSelectionCommand) Run(v *View, e *Edit, args Args) error {
+func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
 	r := v.Sel().Get(0)
 	v.Sel().Clear()
 	v.Sel().Add(r)
 	return nil
 }
 
-func (c *FindUnderExpandCommand) Run(v *View, e *Edit, args Args) error {
+func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
 	rs := sel.Regions()
 

@@ -15,12 +15,12 @@ type (
 	}
 )
 
-func (c *UndoCommand) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
+func (c *UndoCommand) Run(v *backend.View, e *backend.Edit) error {
 	v.UndoStack().Undo(c.hard)
 	return nil
 }
 
-func (c *RedoCommand) Run(v *backend.View, e *backend.Edit, args backend.Args) error {
+func (c *RedoCommand) Run(v *backend.View, e *backend.Edit) error {
 	v.UndoStack().Redo(c.hard)
 	return nil
 }

@@ -71,11 +71,11 @@ func (w *Window) ActiveView() *View {
 	return w.active_view
 }
 
-func (w *Window) runCommand(c WindowCommand, name string, args Args) error {
+func (w *Window) runCommand(c WindowCommand, name string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running window command %s %v: %v\n%s", name, args, r, string(debug.Stack()))
+			log4go.Error("Paniced while running window command %s %v: %v\n%s", name, c, r, string(debug.Stack()))
 		}
 	}()
-	return c.Run(w, args)
+	return c.Run(w)
 }
