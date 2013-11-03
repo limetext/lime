@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"code.google.com/p/log4go"
 	"fmt"
-	"github.com/quarnster/completion/util"
+	"lime/backend/util"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/3rdparty/libs/gopy/lib"

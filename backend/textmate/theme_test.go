@@ -2,7 +2,7 @@ package textmate
 
 import (
 	"fmt"
-	"github.com/quarnster/completion/util"
+	"lime/backend/util"
 	"io/ioutil"
 	"lime/backend/loaders"
 	"testing"

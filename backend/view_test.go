@@ -2,7 +2,7 @@ package backend
 
 import (
 	"fmt"
-	"github.com/quarnster/completion/util"
+	"lime/backend/util"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"math/rand"

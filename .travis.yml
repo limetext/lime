@@ -8,7 +8,6 @@ before_install:
 install:
   - go get -d code.google.com/p/log4go
   - go get -d github.com/quarnster/parser
-  - go get -d github.com/quarnster/completion
   - go get -d github.com/quarnster/util
   - go get -d github.com/howeyc/fsnotify
   - sudo apt-get update -qq
