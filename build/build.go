@@ -115,7 +115,7 @@ func main() {
 		fmt.Println(string(b))
 	}
 
-	tests := []string{"test", "-short", "-cover"}
+	tests := []string{"test", "-short"}
 	if verbose {
 		tests = append(tests, "-v")
 	}

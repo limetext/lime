@@ -19,5 +19,4 @@ install:
 
 script:
   - ./scripts/ci/gopy.sh
-  - ./scripts/ci/completion.sh
   - ./scripts/ci/lime.sh
