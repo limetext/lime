@@ -29,7 +29,7 @@ if(WIN32)
 		string(REPLACE "\\" "/" PYTHON_PATH ${PYTHON_PATH})
 		file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go "package py
 // #cgo CFLAGS: -I\"${PYTHON_PATH}/include\"
-// #cgo LDFLAGS: -L\"${PYTHON_PATH}/DLLs\" -lpython3
+// #cgo LDFLAGS: -L\"${CMAKE_BINARY_DIR}\" -lpython33
 import \"C\"
 ")
 	endif()
@@ -43,10 +43,38 @@ import \"C\"
 	endif()
 	if(NOT EXISTS ${CMAKE_BINARY_DIR}/dist/bin/gcc.exe)
 		execute_process(
-			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/mingw-get.exe install gcc
+			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/mingw-get.exe install gcc g++ mingw32-pexports
 			WORKING_DIR ${CMAKE_BINARY_DIR}/dist
 		)
 	endif()
+	set(SHELL_EXE ${CMAKE_BINARY_DIR}/dist/msys/1.0/bin/sh.exe)
+	if(NOT EXISTS ${SHELL_EXE})
+		execute_process(
+			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/mingw-get.exe install sh msys-sed msys-grep msys-awk msys-make
+			WORKING_DIR ${CMAKE_BINARY_DIR}/dist
+		)
+	endif()
+	set(SHELL ${CMAKE_BINARY_DIR}/sh.bat)
+	file(WRITE ${SHELL} "set PATH=%PATH%;${CMAKE_BINARY_DIR}/dist/bin;${CMAKE_BINARY_DIR}/dist/msys/1.0/bin;/bin;/sbin;/usr/bin;/usr/sbin
+${SHELL_EXE} %*
+")
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/libpython33.a)
+		execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/pexports ${PYTHON_PATH}/python33.dll OUTPUT_VARIABLE PY3_DATA)
+		file(WRITE ${CMAKE_BINARY_DIR}/py33.def ${PY3_DATA})
+		execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/dlltool -D python33.dll -l ${CMAKE_BINARY_DIR}/libpython33.a -d ${CMAKE_BINARY_DIR}/py33.def)
+	endif()
+	ExternalProject_Add(
+		Oniguruma
+		URL			http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz
+		URL_MD5		970f98a4cd10021b545d84e34c34aae4
+		CONFIGURE_COMMAND ${SHELL} <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dist
+		BUILD_COMMAND ${SHELL} -c "make libonig.la dll"
+		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/libonig.dll ${CMAKE_BINARY_DIR}
+			COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/oniguruma.h ${CMAKE_BINARY_DIR}/dist/include
+			COMMAND ${SHELL} -c "pexports ${CMAKE_BINARY_DIR}/libonig.dll > ${CMAKE_BINARY_DIR}/libonig.def"
+			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/dlltool -D libonig.dll -l ${CMAKE_BINARY_DIR}/dist/lib/libonig.a -d ${CMAKE_BINARY_DIR}/libonig.def
+		BUILD_IN_SOURCE		1
+	)
 else()
 	ExternalProject_Add(
 		Python3
