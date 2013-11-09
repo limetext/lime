@@ -5,18 +5,18 @@ include(ExternalProject)
 
 if(WIN32)
 	set(EXESUFFIX ".exe")
+	set(PYTHON_PATH "C:\\Python3")
 	find_package(PythonInterp 3.3 QUIET)
 	if (NOT PYTHONINTERP_FOUND)
 		set(file python-3.3.2.msi)
 		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 			set(file python-3.3.2.amd64.msi)
 		endif()
-		if(NOT EXISTS ${CMAKE_BINARY_DIR}/${file})
-			message("Downloading python ${file}")
-			file(DOWNLOAD http://python.org/ftp/python/3.3.2/${file} ${CMAKE_BINARY_DIR}/${file} SHOW_PROGRESS EXPECTED_MD5 0d9db9c2316562c62e1e4c347b6f9430)
-		endif()
-		set(PYTHON_PATH "C:\\Python3")
 		if(NOT EXISTS ${PYTHON_PATH})
+			if(NOT EXISTS ${CMAKE_BINARY_DIR}/${file})
+				message("Downloading python ${file}")
+				file(DOWNLOAD http://python.org/ftp/python/3.3.2/${file} ${CMAKE_BINARY_DIR}/${file} SHOW_PROGRESS EXPECTED_MD5 0d9db9c2316562c62e1e4c347b6f9430)
+			endif()
 			find_program(MSIEXEC msiexec REQUIRED)
 			message("Installing python3 to ${PYTHON_PATH}")
 			execute_process(
@@ -24,8 +24,27 @@ if(WIN32)
 				WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 			)
 		endif()
-		add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go
-			COMMAND echo "Hello world"
+	endif()
+	if(NOT EXISTS ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go)
+		string(REPLACE "\\" "/" PYTHON_PATH ${PYTHON_PATH})
+		file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go "package py
+// #cgo CFLAGS: -I\"${PYTHON_PATH}/include\"
+// #cgo LDFLAGS: -L\"${PYTHON_PATH}/DLLs\" -lpython3
+import \"C\"
+")
+	endif()
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/mingw-get.zip)
+		file(DOWNLOAD http://sourceforge.net/projects/mingw/files/Installer/mingw-get/mingw-get-0.6.2-beta-20131004-1/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip/download ${CMAKE_BINARY_DIR}/mingw-get.zip SHOW_PROGRESS EXPECTED_MD5 971778e9330ae006aaeb2d63344be5f3)
+	endif()
+
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/dist/bin/mingw-get.exe)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/dist)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}/dist ${CMAKE_COMMAND} -E tar xvfz ${CMAKE_BINARY_DIR}/mingw-get.zip)
+	endif()
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/dist/bin/gcc.exe)
+		execute_process(
+			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/mingw-get.exe install gcc
+			WORKING_DIR ${CMAKE_BINARY_DIR}/dist
 		)
 	endif()
 else()
@@ -40,17 +59,23 @@ else()
 		BUILD_COMMAND		make -j8
 		BUILD_IN_SOURCE		1
 	)
-	add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go
-		COMMAND echo "Hello world"
-		DEPENDS Python3
+	execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --cflags OUTPUT_VARIABLE PY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+	execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --ldflags OUTPUT_VARIABLE PY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+	if(NOT EXISTS ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go)
+		file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go "package py
+// #cgo CFLAGS: ${PY_CFLAGS}
+// #cgo LDFLAGS: ${PY_LDFLAGS}
+import \"C\"
+")
+	endif()
+	ExternalProject_Add(
+		Oniguruma
+		URL			http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz
+		URL_MD5		970f98a4cd10021b545d84e34c34aae4
+		CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dist
 	)
 endif()
 
-# ExternalProject_Add(
-# 	Oniguruma
-# 	URL			http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz
-# 	URL_MD5		970f98a4cd10021b545d84e34c34aae4
-# )
 
 execute_process(
 	COMMAND				${GIT_EXECUTABLE} submodule update --init --recursive
@@ -91,6 +116,7 @@ endforeach(var)
 
 if(WIN32)
 	file(WRITE "${CMAKE_BINARY_DIR}/go.bat" "
+set PATH=%PATH%;${CMAKE_BINARY_DIR}/dist/bin
 set GOPATH=${GOPATH}
 set GOROOT=${GOROOT}
 ${GOEXE} %*
@@ -104,7 +130,7 @@ set(GOPKG ${GOPATH}/pkg/${GOOS}_${GOARCH})
 foreach(pkg code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/util/text)
 	add_custom_command(OUTPUT ${GOPKG}/${pkg}.a
 		COMMAND ${GOCMD} get ${pkg}
-		DEPENDS ${GOEXE}
+		DEPENDS ${GOEXE} ${GODEPS}
 	)
 endforeach()
 
@@ -143,6 +169,7 @@ add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 add_custom_target(lime
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/lime/3rdparty/libs/gopy/lib.a
+	DEPENDS Oniguruma
 )
 
 file(GLOB_RECURSE TESTS ${CMAKE_SOURCE_DIR} "*_test.go")
