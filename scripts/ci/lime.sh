@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
 
-cd ./build
-go run build.go -v
+mkdir build2
+cd build2
+cmake ..
+make test

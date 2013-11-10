@@ -87,15 +87,27 @@ else()
 		BUILD_COMMAND		make -j8
 		BUILD_IN_SOURCE		1
 	)
-	execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --cflags OUTPUT_VARIABLE PY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-	execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --ldflags OUTPUT_VARIABLE PY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-	if(NOT EXISTS ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go)
-		file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go "package py
-// #cgo CFLAGS: ${PY_CFLAGS}
-// #cgo LDFLAGS: ${PY_LDFLAGS}
-import \"C\"
-")
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/gopy_cgo.cmake)
+		file(WRITE ${CMAKE_BINARY_DIR}/gopy_cgo.cmake "
+			cmake_minimum_required(VERSION 2.8)
+			execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --cflags OUTPUT_VARIABLE PY_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+			execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --ldflags OUTPUT_VARIABLE PY_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+			execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/python3-config --libs OUTPUT_VARIABLE PY_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+			file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go \"package py
+				// #cgo CFLAGS: \${PY_CFLAGS}
+				// #cgo LDFLAGS: \${PY_LDFLAGS} \${PY_LIBS}
+				import \\\"C\\\"
+				\")
+		")
 	endif()
+
+	add_custom_command(
+		OUTPUT ${CMAKE_SOURCE_DIR}/3rdparty/libs/gopy/lib/cgo.go
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/gopy_cgo.cmake
+		DEPENDS Python3
+		DEPENDS ${CMAKE_BINARY_DIR}/gopy_cgo.cmake
+	)
+
 	ExternalProject_Add(
 		Oniguruma
 		URL			http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz

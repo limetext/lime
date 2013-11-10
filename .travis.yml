@@ -2,21 +2,10 @@ language: go
 
 go: 1.1
 
-before_install:
-  - git submodule update --init --recursive
-
 install:
-  - go get -d code.google.com/p/log4go
-  - go get -d github.com/quarnster/parser
-  - go get -d github.com/quarnster/util
-  - go get -d github.com/howeyc/fsnotify
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libonig-dev
-  - ./scripts/ci/python3.sh
-  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib # for libpython3.3m
+  - sudo apt-get install -qq cmake
   - ln -s $(pwd) ../../../lime #Fix Travis CI checking out the code to github.com/limetext/lime instead of lime
-  - export PATH=$PATH:$HOME/gopath/bin #For pegparser
 
 script:
-  - ./scripts/ci/gopy.sh
   - ./scripts/ci/lime.sh
