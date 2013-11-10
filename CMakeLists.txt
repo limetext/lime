@@ -150,6 +150,8 @@ if(NOT GOEXE)
 
 	set(GOPATH ${CMAKE_SOURCE_DIR}/../..)
 	set(GOROOT ${CMAKE_BINARY_DIR}/Go-prefix/src/Go)
+	set(ENV{GOPATH} ${GOPATH})
+	set(ENV{GOROOT} ${GOROOT})
 	set(GOEXE ${CMAKE_BINARY_DIR}/Go-prefix/src/Go/bin/go${EXESUFFIX})
 	add_custom_command(OUTPUT ${GOEXE}
 		DEPENDS Go
