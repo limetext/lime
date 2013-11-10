@@ -116,6 +116,14 @@ else()
 	)
 endif()
 
+if(NOT EXISTS ${CMAKE_SOURCE_DIR}/3rdparty/libs/rubex/cgo.go)
+	file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/rubex/cgo.go "
+package rubex
+// #cgo CFLAGS: -I${CMAKE_BINARY_DIR}/dist/include
+// #cgo LDFLAGS: -L${CMAKE_BINARY_DIR}/dist/lib -lonig
+import \"C\"
+	")
+endif()
 
 execute_process(
 	COMMAND				${GIT_EXECUTABLE} submodule update --init --recursive
