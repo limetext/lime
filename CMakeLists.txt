@@ -162,8 +162,10 @@ set GOROOT=${GOROOT}
 ${GOEXE} %*
 ")
 	set(GOCMD ${CMAKE_BINARY_DIR}/go.bat)
+	string(REGEX REPLACE ";.*" "" GOPATH ${GOPATH})
 else()
 	set(GOCMD GOROOT=${GOROOT} GOPATH=${GOPATH} ${GOEXE})
+	string(REGEX REPLACE ":.*" "" GOPATH ${GOPATH})
 endif()
 
 set(GOPKG ${GOPATH}/pkg/${GOOS}_${GOARCH})
