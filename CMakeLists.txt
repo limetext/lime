@@ -148,17 +148,20 @@ if(NOT GOEXE)
 		INSTALL_COMMAND		""
 	)
 
-	set(ENV{GOPATH} ${CMAKE_SOURCE_DIR}/../..)
-	set(ENV{GOROOT} ${CMAKE_BINARY_DIR}/Go-prefix/src/Go)
+	set(GOPATH ${CMAKE_SOURCE_DIR}/../..)
+	set(GOROOT ${CMAKE_BINARY_DIR}/Go-prefix/src/Go)
 	set(GOEXE ${CMAKE_BINARY_DIR}/Go-prefix/src/Go/bin/go${EXESUFFIX})
+	add_custom_command(OUTPUT ${GOEXE}
+		DEPENDS Go
+	)
 endif()
 
-
-foreach(var GOPATH GOROOT GOARCH GOOS)
-	execute_process(COMMAND ${GOEXE} env ${var} OUTPUT_VARIABLE ${var} OUTPUT_STRIP_TRAILING_WHITESPACE)
-	message("${var}: " ${${var}})
-endforeach(var)
-
+if(EXISTS ${GOEXE})
+	foreach(var GOPATH GOROOT GOARCH GOOS)
+		execute_process(COMMAND ${GOEXE} env ${var} OUTPUT_VARIABLE ${var} OUTPUT_STRIP_TRAILING_WHITESPACE)
+		message("${var}: " ${${var}})
+	endforeach(var)
+endif()
 
 if(WIN32)
 	file(WRITE "${CMAKE_BINARY_DIR}/go.bat" "
@@ -168,10 +171,14 @@ set PATH=%PATH%;${CMAKE_BINARY_DIR}/dist/bin;${GOROOT}/bin;${CMAKE_BINARY_DIR}
 ${GOEXE} %*
 ")
 	set(GOCMD ${CMAKE_BINARY_DIR}/go.bat)
-	string(REGEX REPLACE ";.*" "" GOPATH ${GOPATH})
+	if(GOPATH)
+		string(REGEX REPLACE ";.*" "" GOPATH ${GOPATH})
+	endif()
 else()
-	set(GOCMD LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${CMAKE_BINARY_DIR}/dist/lib GOROOT=${GOROOT} GOPATH=${GOPATH} ${GOEXE})
-	string(REGEX REPLACE ":.*" "" GOPATH ${GOPATH})
+	set(GOCMD PATH=$ENV{PATH}:${CMAKE_BINARY_DIR}/Go-prefix/src/Go/bin LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${CMAKE_BINARY_DIR}/dist/lib GOROOT=${GOROOT} GOPATH=${GOPATH} ${GOEXE})
+	if(GOPATH)
+		string(REGEX REPLACE ":.*" "" GOPATH ${GOPATH})
+	endif()
 endif()
 
 set(GOPKG ${GOPATH}/pkg/${GOOS}_${GOARCH})
