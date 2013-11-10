@@ -15,13 +15,13 @@
 	url = git://github.com/AlanQuatermain/go-tmbundle.git
 [submodule "3rdparty/libs/gopy"]
 	path = 3rdparty/libs/gopy
-	url = git://github.com/quarnster/gopy.git
+	url = git://github.com/limetext/gopy.git
 [submodule "3rdparty/libs/rubex"]
 	path = 3rdparty/libs/rubex
-	url = git://github.com/quarnster/rubex.git
+	url = git://github.com/limetext/rubex.git
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
-	url = git://github.com/quarnster/termbox-go.git
+	url = git://github.com/limetext/termbox-go.git
 [submodule "3rdparty/bundles/TextMate-Themes"]
 	path = 3rdparty/bundles/TextMate-Themes
 	url = git://github.com/filmgirl/TextMate-Themes.git

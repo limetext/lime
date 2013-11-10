@@ -458,7 +458,7 @@ func main() {
 		} else {
 			c := exec.Command("go", "fmt", gen[0])
 			if o, err := c.CombinedOutput(); err != nil {
-				panic(err)
+				panic(fmt.Errorf("%s, %s", o, err))
 			} else {
 				fmt.Printf("%s", string(o))
 			}

@@ -62,17 +62,15 @@ ${SHELL_EXE} %*
 		execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/pexports ${PYTHON_PATH}/python33.dll OUTPUT_VARIABLE PY3_DATA)
 		file(WRITE ${CMAKE_BINARY_DIR}/py33.def ${PY3_DATA})
 		execute_process(COMMAND ${CMAKE_BINARY_DIR}/dist/bin/dlltool -D python33.dll -l ${CMAKE_BINARY_DIR}/libpython33.a -d ${CMAKE_BINARY_DIR}/py33.def)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${PYTHON_PATH}/python33.dll ${CMAKE_BINARY_DIR}/python33.dll)
 	endif()
 	ExternalProject_Add(
 		Oniguruma
 		URL			http://www.geocities.jp/kosako3/oniguruma/archive/onig-5.9.5.tar.gz
 		URL_MD5		970f98a4cd10021b545d84e34c34aae4
 		CONFIGURE_COMMAND ${SHELL} <SOURCE_DIR>/configure --prefix=${CMAKE_BINARY_DIR}/dist
-		BUILD_COMMAND ${SHELL} -c "make libonig.la dll"
-		INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/libonig.dll ${CMAKE_BINARY_DIR}
-			COMMAND ${CMAKE_COMMAND} -E copy <SOURCE_DIR>/oniguruma.h ${CMAKE_BINARY_DIR}/dist/include
-			COMMAND ${SHELL} -c "pexports ${CMAKE_BINARY_DIR}/libonig.dll > ${CMAKE_BINARY_DIR}/libonig.def"
-			COMMAND ${CMAKE_BINARY_DIR}/dist/bin/dlltool -D libonig.dll -l ${CMAKE_BINARY_DIR}/dist/lib/libonig.a -d ${CMAKE_BINARY_DIR}/libonig.def
+		BUILD_COMMAND ${SHELL} -c "make"
+		INSTALL_COMMAND ${SHELL} -c "make install"
 		BUILD_IN_SOURCE		1
 	)
 else()
@@ -118,10 +116,10 @@ endif()
 
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/3rdparty/libs/rubex/cgo.go)
 	file(WRITE ${CMAKE_SOURCE_DIR}/3rdparty/libs/rubex/cgo.go "
-package rubex
-// #cgo CFLAGS: -I${CMAKE_BINARY_DIR}/dist/include
-// #cgo LDFLAGS: -L${CMAKE_BINARY_DIR}/dist/lib -lonig
-import \"C\"
+		package rubex
+		// #cgo CFLAGS: -I${CMAKE_BINARY_DIR}/dist/include
+		// #cgo LDFLAGS: ${CMAKE_BINARY_DIR}/dist/lib/libonig.a
+		import \"C\"
 	")
 endif()
 
@@ -164,9 +162,9 @@ endforeach(var)
 
 if(WIN32)
 	file(WRITE "${CMAKE_BINARY_DIR}/go.bat" "
-set PATH=%PATH%;${CMAKE_BINARY_DIR}/dist/bin
-set GOPATH=${GOPATH}
 set GOROOT=${GOROOT}
+set GOPATH=${GOPATH}
+set PATH=%PATH%;${CMAKE_BINARY_DIR}/dist/bin;${GOROOT}/bin;${CMAKE_BINARY_DIR}
 ${GOEXE} %*
 ")
 	set(GOCMD ${CMAKE_BINARY_DIR}/go.bat)

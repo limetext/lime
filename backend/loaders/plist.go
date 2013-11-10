@@ -58,7 +58,7 @@ func LoadPlist(data []byte, intf interface{}) error {
 	var (
 		p plist.PLIST
 	)
-	if !p.Parse(string(data)) {
+	if !p.Parse(strings.Replace(string(data), "\r", "", -1)) {
 		return p.Error()
 	} else {
 		var (
