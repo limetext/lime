@@ -35,65 +35,25 @@ Because I like the architecture of the extensibilities in the original editor.
 # Build instructions
 
 ### Install required components
-- Go 1.1
-	- Download a binary package from http://golang.org/doc/install
-	- Or if you prefer building from source, follow the instructions at [tip.golang.org](http://tip.golang.org/doc/install/source)
-	- Go 1.2 is required on OS X Mavericks (see [issue here](https://code.google.com/p/go/issues/detail?id=6515)); use ``` brew install --devel go ```
-- Python3
-	- Python 3 **[must](https://code.google.com/p/go/issues/detail?id=5287)** be compiled without [sigaltstack enabled](#compiling-python3-without-sigaltstack-enabled).
-- Oniguruma
-	- ``` sudo apt-get install libonig-dev ``` # On Linux
-	- ``` brew install oniguruma ``` # On Mac
-- qt5 (Optional) (this is way, way broken at the moment, don't even try it unless you want to fix it)
-	- Follow the instructions at [go-qt5](https://github.com/salviati/go-qt5)
 
-### Compiling Python3 without sigaltstack enabled
-
-	cd Python-3.3.2
-	./configure --enable-shared
-	cat pyconfig.h | sed s/#define\ HAVE_SIGALTSTACK\ 1// > pyconfig.new && mv pyconfig.new pyconfig.h
-	make -j8
-	make install
+- [cmake](http://cmake.org/)
+- Some form of build system that cmake can create a build system for (ninja, make, visual studio)
+- Git
+- Other required components will be downloaded as needed
 
 ### Download the needed repositories
-	go get -d code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/util github.com/howeyc/fsnotify
-	git clone --recursive https://github.com/limetext/lime.git $GOPATH/src/lime
 
-### Modify gopy's cgo.go settings
-
-``` open $GOPATH/src/lime/3rdparty/libs/gopy/lib/cgo.go ```
-
-You should be able to update with the output of `python3.3-config --cflags` and `python3.3-config --libs`.
-Here's a shell one liner that might help:
-
-	cat lib/cgo.go | python -c "import re,sys; print re.sub(r'(CFLAGS:[^\n]+)(\n+.*?)(LDFLAGS:[^\n]+)', 'CFLAGS: `python3.3-config --cflags`\g<2>LDFLAGS: -L/usr/local/lib `python3.3-config --ldflags`', sys.stdin.read())" > lib/cgo2.go && rm -f lib/cgo.go
-
-Example of ``` cgo.go ``` settings on my Mac:
-
-	package py
-
-	// #cgo CFLAGS: -I/usr/local/include/python3.3m
-	// #cgo LDFLAGS: -L/usr/local/lib/python3.3/config-3.3m -ldl -framework CoreFoundation -lpython3.3 -lintl
-	// #cgo pkg-config: /usr/local/Cellar/libffi/3.0.13/lib/pkgconfig/libffi.pc
-	import "C"
-
-#### Make sure gopy works
-
-	cd $GOPATH/src/lime/3rdparty/lib/gopy
-	go install
-	go test
-
-A successful run of ```go test``` will output something similar to:
-
-	tick
-	tick
-	PASS
-	ok    lime/3rdparty/libs/gopy 5.299s
+	mkdir -p code/go/src
+	cd code/go/src
+	git clone --recursive https://github.com/limetext/lime.git lime
 
 ### Compile lime
 
-	cd $GOPATH/src/lime/build
-	go run build.go
+	mkdir code/go/src/lime/build2
+	cd code/go/src/lime/build2
+	cmake ..  # or use the cmake gui to create a build system suitable for you
+	make      # presuming you told cmake to generate makefiles
+	make test # To run all tests
 
 Done!
 
