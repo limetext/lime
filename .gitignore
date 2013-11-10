@@ -15,3 +15,4 @@ backend/sublime/*.go
 *.log
 *.log.0*
 .DS_Store
+frontend/termbox/termbox

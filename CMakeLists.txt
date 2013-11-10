@@ -229,6 +229,12 @@ add_custom_target(lime
 	DEPENDS Oniguruma
 )
 
+add_custom_target(termbox
+	COMMAND ${GOCMD} build
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/frontend/termbox
+	DEPENDS lime
+)
+
 file(GLOB_RECURSE TESTS ${CMAKE_SOURCE_DIR} "*_test.go")
 foreach(testfile ${TESTS})
 	if(${testfile} MATCHES ".*._test.go")
@@ -241,6 +247,6 @@ foreach(testfile ${TESTS})
 endforeach(testfile)
 
 add_custom_target(test
-	COMMAND ${GOCMD} test ${GO_TESTS}
+	COMMAND ${GOCMD} test -v ${GO_TESTS}
 	DEPENDS lime
 )
