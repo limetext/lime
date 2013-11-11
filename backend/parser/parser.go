@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/quarnster/parser"
 	"github.com/quarnster/util/text"
+	"lime/backend/render"
 	"sort"
 	"sync"
 )
@@ -13,16 +14,11 @@ type (
 		Parse() (*parser.Node, error)
 	}
 
-	NamedRegion struct {
-		text.Region
-		Name string
-	}
-
 	SyntaxHighlighter interface {
 		Adjust(position, delta int)
 		ScopeExtent(point int) text.Region
 		ScopeName(point int) string
-		//		Flatten() []NamedRegion
+		Flatten() render.ViewRegionMap
 	}
 
 	nodeHighlighter struct {
@@ -107,33 +103,37 @@ func (nh *nodeHighlighter) ScopeName(point int) string {
 	return nh.lastScopeName
 }
 
-func (nh *nodeHighlighter) flatten(in []NamedRegion, scopename string, node *parser.Node) []NamedRegion {
+func (nh *nodeHighlighter) flatten(vrmap render.ViewRegionMap, scopename string, node *parser.Node) {
 	scopename += " " + node.Name
 	cur := node.Range
 
 	for _, c := range node.Children {
-		if cur.A < c.Range.A {
-			var vr NamedRegion
-			vr.A, vr.B = cur.A, c.Range.A
-			vr.Name = scopename
-			in = append(in, vr)
-			cur.A = c.Range.B
+		if cur.A <= c.Range.A {
+			reg := vrmap[scopename]
+			reg.Flags |= render.DRAW_TEXT
+			reg.Scope = scopename
+			reg.Regions.Add(text.Region{cur.A, c.Range.A})
+			vrmap[scopename] = reg
 		}
-		in = nh.flatten(in, scopename, c)
+		cur.A = c.Range.B
+		nh.flatten(vrmap, scopename, c)
 	}
+	// Just add the last region if it's not zero sized
 	if cur.A != cur.B {
-		var vr NamedRegion
-		vr.A, vr.B = cur.A, cur.B
-		vr.Name = scopename
-		in = append(in, vr)
+		reg := vrmap[scopename]
+		reg.Flags |= render.DRAW_TEXT
+		reg.Scope = scopename
+		reg.Regions.Add(text.Region{cur.A, cur.B})
+		vrmap[scopename] = reg
 	}
-	return in
 }
 
 func (nh *nodeHighlighter) Adjust(position, delta int) {
 	nh.rootNode.Adjust(position, delta)
 }
 
-// func (nh *nodeHighlighter) Flatten() []NamedRegion {
-// 	return nh.flatten(nil, "", nh.rootNode)
-// }
+func (nh *nodeHighlighter) Flatten() (ret render.ViewRegionMap) {
+	ret = make(render.ViewRegionMap)
+	nh.flatten(ret, "lime.syntax", nh.rootNode)
+	return
+}

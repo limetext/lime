@@ -2,9 +2,10 @@ package backend
 
 import (
 	"fmt"
-	"lime/backend/util"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
+	"lime/backend/textmate"
+	"lime/backend/util"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -213,6 +214,34 @@ func TestScopeName(t *testing.T) {
 			t.Error(diff)
 		}
 
+	}
+}
+
+func TestTransform(t *testing.T) {
+	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var (
+		w Window
+		v = w.NewFile()
+	)
+	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
+
+	d, err := ioutil.ReadFile("view.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := v.BeginEdit()
+	v.Insert(e, 0, string(d))
+	v.EndEdit(e)
+
+	time.Sleep(time.Second)
+	a := v.Transform(sc, Region{0, 100}).Transcribe()
+	v.Transform(sc, Region{100, 200}).Transcribe()
+	c := v.Transform(sc, Region{0, 100}).Transcribe()
+	if !reflect.DeepEqual(a, c) {
+		t.Errorf("not equal:\n%v\n%v", a, c)
 	}
 }
 

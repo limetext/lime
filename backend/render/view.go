@@ -58,3 +58,9 @@ func (vr *ViewRegions) Cull(viewport text.Region) {
 	vr.Regions.Clear()
 	vr.Regions.AddAll(nr)
 }
+
+func (vr *ViewRegions) Clone() ViewRegions {
+	ret := ViewRegions{Scope: vr.Scope, Icon: vr.Icon, Flags: vr.Flags}
+	ret.Regions.AddAll(vr.Regions.Regions())
+	return ret
+}

@@ -61,13 +61,50 @@ type (
 // The final output, the Recipe, contains a mapping of all unique Flavours and that Flavour's
 // associated RegionSet.
 func Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Recipe {
+	// TODO:
+	// 	caret_blink := true
+	// if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
+	// 	caret_blink = b
+	// }
+	//
+	// highlight_line := false
+	// if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
+	// 	highlight_line = b
+	// }
+	//	if b, ok := v.Settings().Get("inverse_caret_state", false).(bool); !b && ok {
+	// 	if caret_style == termbox.AttrReverse {
+	// 		caret_style = termbox.AttrUnderline
+	// 	} else {
+	// 		caret_style = termbox.AttrReverse
+	// 	}
+	// }
+	// caret_style := termbox.AttrUnderline
+	// if b, ok := v.Settings().Get("caret_style", "underline").(string); ok {
+	// 	if b == "block" {
+	// 		caret_style = termbox.AttrReverse
+	// 	}
+	// }
+
 	data.Cull(viewport)
 	recipe := make(Recipe)
 	for _, v := range data {
 		k := scheme.Spice(&v)
 		rs := recipe[k]
 		rs.AddAll(v.Regions.Regions())
-		recipe[k] = rs
+
+		if rs.HasNonEmpty() {
+			var rs2 text.RegionSet
+			var last text.Region
+			for i, r := range rs.Regions() {
+				if i > 0 && r.Begin() == last.End() {
+					rs2.Add(r.Cover(last))
+				} else {
+					rs2.Add(r)
+				}
+				last = r
+			}
+			recipe[k] = rs2
+		}
 	}
 	return recipe
 }
@@ -92,7 +129,11 @@ func (r *TranscribedRecipe) Len() int {
 
 // Just used to satisfy the sort.Interface interface, typically not used otherwise.
 func (r *TranscribedRecipe) Less(i, j int) bool {
-	return (*r)[i].Region.Begin() < (*r)[j].Region.Begin()
+	a, b := (*r)[i].Region, (*r)[j].Region
+	if a.Begin() == b.Begin() {
+		return a.End() > b.End()
+	}
+	return a.Begin() < b.Begin()
 }
 
 // Just used to satisfy the sort.Interface interface, typically not used otherwise.

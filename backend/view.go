@@ -171,6 +171,16 @@ func (v *View) parsethread() {
 				// as it will have had incremental adjustments done to it
 				if v.buffer.ChangeCount() == lastParse {
 					v.syntax = syn
+					for k := range v.regions {
+						if strings.HasPrefix(k, "lime.syntax") {
+							delete(v.regions, k)
+						}
+					}
+					for k, v2 := range syn.Flatten() {
+						if v2.Regions.HasNonEmpty() {
+							v.regions[k] = v2
+						}
+					}
 				}
 			}
 		}
@@ -390,4 +400,17 @@ func (v *View) EraseRegions(key string) {
 
 func (v *View) UndoStack() *UndoStack {
 	return &v.undoStack
+}
+
+func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Recipe {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	if v.syntax == nil {
+		return nil
+	}
+	rr := make(render.ViewRegionMap)
+	for k, v := range v.regions {
+		rr[k] = v.Clone()
+	}
+	return render.Transform(scheme, rr, viewport)
 }

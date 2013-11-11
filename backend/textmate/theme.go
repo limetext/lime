@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"io/ioutil"
 	"lime/backend/loaders"
+	"lime/backend/render"
 	"strconv"
 	"strings"
 )
@@ -108,4 +109,13 @@ func (t *Theme) ClosestMatchingSetting(scope string) *ScopeSetting {
 		}
 	}
 	return &t.Settings[0]
+}
+
+func (t *Theme) Spice(vr *render.ViewRegions) (ret render.Flavour) {
+	s := t.ClosestMatchingSetting(vr.Scope)
+	ret.Foreground = render.Colour(s.Settings["foreground"])
+	if bg, ok := s.Settings["background"]; ok {
+		ret.Background = render.Colour(bg)
+	}
+	return
 }

@@ -8,11 +8,11 @@ import (
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	_ "lime/backend/commands"
+	"lime/backend/render"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"lime/backend/util"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"time"
 )
@@ -83,7 +83,8 @@ var (
 		termbox.KeyF12:        backend.KeyPress{Key: backend.F12},
 		termbox.KeyTab:        backend.KeyPress{Key: '\t'},
 	}
-	schemelut = make(map[string][2]termbox.Attribute)
+	palLut    func(col textmate.Color) termbox.Attribute
+	scheme    *textmate.Theme
 	defaultBg = termbox.ColorBlack
 	defaultFg = termbox.ColorWhite
 	blink     bool
@@ -107,120 +108,73 @@ type tbfe struct {
 	lock           sync.Mutex
 }
 
+var first = true
+var lastrecipe render.TranscribedRecipe
+
 func (t *tbfe) renderView(v *backend.View, lay layout) {
 	p := util.Prof.Enter("render")
 	defer p.Exit()
 
 	sx, sy, w, h := lay.x, lay.y, lay.width, lay.height
-	sel := v.Sel()
 	vr := lay.visible
-	runes := v.Buffer().SubstrR(vr)
+	runes := v.Buffer().Substr(vr)
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
-
-	var (
-		lastScope string
-		lfg, lbg  = defaultFg, defaultBg
-	)
 
 	tab_size, ok := v.Settings().Get("tab_size", 4).(int)
 	if !ok {
 		tab_size = 4
 	}
-	caret_style := termbox.AttrUnderline
-	if b, ok := v.Settings().Get("caret_style", "underline").(string); ok {
-		if b == "block" {
-			caret_style = termbox.AttrReverse
-		}
-	}
-	if b, ok := v.Settings().Get("inverse_caret_state", false).(bool); !b && ok {
-		if caret_style == termbox.AttrReverse {
-			caret_style = termbox.AttrUnderline
-		} else {
-			caret_style = termbox.AttrReverse
-		}
-	}
-	caret_blink := true
-	if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
-		caret_blink = b
-	}
 
+	recipie := v.Transform(scheme, vr).Transcribe()
 	highlight_line := false
 	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
 		highlight_line = b
 	}
 
+	if first && len(recipie) > 4 {
+		first = false
+		for i, v := range recipie {
+			log4go.Debug("%d: %+v", i, v)
+		}
+		log4go.Debug("vr: %+v", vr)
+	}
+
 	// TODO: much of this belongs in backend as it's not specific to any particular frontend
-	for i := range runes {
+	curr := 0
+	fg, bg := defaultFg, defaultBg
+	_ = render.DRAW_TEXT
+	for i, r := range runes {
 		o := vr.Begin() + i
-		fg, bg := lfg, lbg
-		scope := v.ScopeName(o)
-		var lr Region
-		if highlight_line {
-			lr = v.Buffer().Line(o)
-		}
-		if scope != lastScope {
-			fg, bg = defaultFg, defaultBg
-			lastScope = scope
-			na := scope
-			for len(na) > 0 {
-				sn := na
-				i := strings.LastIndex(sn, " ")
-				if i != -1 {
-					sn = sn[i+1:]
-				}
-				if c, ok := schemelut[sn]; ok {
-					fg, bg = c[0], c[1]
-					break
-				}
-				if i2 := strings.LastIndex(na, "."); i2 == -1 {
-					break
-				} else if i > i2 {
-					na = na[:i]
-				} else {
-					na = strings.TrimSpace(na[:i2])
-				}
+		curr = 0
+		fg, bg = defaultFg, defaultBg
+		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
+			// if curr > 0 {
+			// 	curr--
+			// }
+			if o < recipie[curr].Region.End() {
+				fg = palLut(textmate.Color(recipie[curr].Flavour.Foreground))
+				bg = palLut(textmate.Color(recipie[curr].Flavour.Background))
 			}
-			lfg, lbg = fg, bg
-		} else {
-			fg, bg = lfg, lbg
+			curr++
 		}
-		for _, r2 := range sel.Regions() {
-			if highlight_line && (lr.Contains(r2.A) || lr.Contains(r2.B)) {
-				// TODO: highlight color
-				bg |= termbox.AttrReverse
-				continue
-			}
-			if r2.Contains(o) {
-				if r2.Size() == 0 {
-					if !caret_blink || blink {
-						fg |= caret_style
-					}
-					break
-				} else if r2.Contains(o + 1) {
-					// TODO: selection color
-					fg |= termbox.AttrReverse
-					break
-				}
-			}
-		}
-		if runes[i] == '\t' {
+		if r == '\t' {
 			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
 			for x < add {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
-				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
+				//				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
 				x++
 			}
 			continue
-		} else if runes[i] == '\n' {
-			for ; x < ex; x++ {
-				termbox.SetCell(x, y, ' ', fg, bg)
-				if !highlight_line {
-					break
-				}
-			}
+		} else if r == '\n' {
+			// for ; x < ex; x++ {
+			// 	termbox.SetCell(x, y, ' ', fg, bg)
+			// 	if !highlight_line {
+			// 		break
+			// 	}
+			// }
 			x = sx
 			y++
 			if y > ey {
@@ -229,7 +183,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			continue
 		}
 		if x < ex {
-			termbox.SetCell(x, y, runes[i], fg, bg)
+			termbox.SetCell(x, y, r, fg, bg)
 		}
 		x++
 	}
@@ -399,9 +353,6 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	var (
-		scheme *textmate.Theme
-	)
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
@@ -409,7 +360,6 @@ func (t *tbfe) loop() {
 	}
 
 	var (
-		palLut  func(col textmate.Color) termbox.Attribute
 		pal     = make([]termbox.RGB, 0, 256)
 		mode256 bool
 	)
@@ -460,6 +410,7 @@ func (t *tbfe) loop() {
 			}
 			l := len(pal)
 			pal = append(pal, tc)
+			termbox.SetColorPalette(pal)
 			return termbox.Attribute(l)
 		}
 	}
@@ -480,10 +431,6 @@ func (t *tbfe) loop() {
 				defaultBg = bi
 			}
 		}
-		schemelut[s.Scope] = [2]termbox.Attribute{fi, bi}
-	}
-	if mode256 {
-		termbox.SetColorPalette(pal)
 	}
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
