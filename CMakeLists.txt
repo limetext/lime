@@ -221,6 +221,14 @@ add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/plist/plist.peg "Spacing,KeyValuePai
 add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/build/python.go
 	DEPENDS ${PEGDEPENDS}
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/command.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/commandhandler.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/editor.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/events.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/key.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/packages.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/view.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/window.go
 )
 
 add_custom_target(lime
