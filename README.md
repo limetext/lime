@@ -59,12 +59,16 @@ Done!
 
 # To use termbox frontend
 
+	cd code/go/src/lime/build2
+	make termbox # again presuming using a makefile based cmake target
 	cd ../frontend/termbox
-	go run main.go
+	./termbox
 
 Press Ctrl+Q to exit.
 
 # To use qt5 frontend
+
+It's broken, don't.
 
 	cd ../frontend/qt5
 	go run main.go
