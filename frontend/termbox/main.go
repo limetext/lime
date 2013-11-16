@@ -108,9 +108,6 @@ type tbfe struct {
 	lock           sync.Mutex
 }
 
-var first = true
-var lastrecipe render.TranscribedRecipe
-
 func (t *tbfe) renderView(v *backend.View, lay layout) {
 	p := util.Prof.Enter("render")
 	defer p.Exit()
@@ -127,23 +124,39 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	}
 
 	recipie := v.Transform(scheme, vr).Transcribe()
+
+	curr := 0
+	fg, bg := defaultFg, defaultBg
+	_ = render.DRAW_TEXT
+	sel := v.Sel()
+
+	caret_blink := true
+	if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
+		caret_blink = b
+	}
+
 	highlight_line := false
 	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
 		highlight_line = b
 	}
-
-	if first && len(recipie) > 4 {
-		first = false
-		for i, v := range recipie {
-			log4go.Debug("%d: %+v", i, v)
+	caret_style := termbox.AttrUnderline
+	if b, ok := v.Settings().Get("caret_style", "underline").(string); ok {
+		if b == "block" {
+			caret_style = termbox.AttrReverse
 		}
-		log4go.Debug("vr: %+v", vr)
+	}
+	if b, ok := v.Settings().Get("inverse_caret_state", false).(bool); !b && ok {
+		if caret_style == termbox.AttrReverse {
+			caret_style = termbox.AttrUnderline
+		} else {
+			caret_style = termbox.AttrReverse
+		}
 	}
 
-	// TODO: much of this belongs in backend as it's not specific to any particular frontend
-	curr := 0
-	fg, bg := defaultFg, defaultBg
-	_ = render.DRAW_TEXT
+	if caret_blink && blink {
+		caret_style = 0
+	}
+
 	for i, r := range runes {
 		o := vr.Begin() + i
 		curr = 0
@@ -158,13 +171,16 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			}
 			curr++
 		}
+		if sel.Contains(Region{o, o}) {
+			fg = fg | caret_style
+		}
 		if r == '\t' {
 			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
 			for x < add {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
-				//				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
+				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
 				x++
 			}
 			continue
@@ -409,6 +425,7 @@ func (t *tbfe) loop() {
 				}
 			}
 			l := len(pal)
+			log4go.Debug("Adding colour: %d %+v %+v", l, col, tc)
 			pal = append(pal, tc)
 			termbox.SetColorPalette(pal)
 			return termbox.Attribute(l)
@@ -429,6 +446,14 @@ func (t *tbfe) loop() {
 			bi = palLut(bg)
 			if i == 0 {
 				defaultBg = bi
+			}
+		}
+		for _, setting := range []string{"caret", "highlight", "invisibles", "selection"} {
+			if col, ok := s.Settings[setting]; ok {
+				i := palLut(col)
+				if setting == "selection" {
+					fmt.Println(col, i)
+				}
 			}
 		}
 	}

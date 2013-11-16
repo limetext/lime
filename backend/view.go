@@ -412,5 +412,8 @@ func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Rec
 	for k, v := range v.regions {
 		rr[k] = v.Clone()
 	}
+	rs := render.ViewRegions{Flags: render.SELECTION}
+	rs.Regions.AddAll(v.selection.Regions())
+	rr["lime.selection"] = rs
 	return render.Transform(scheme, rr, viewport)
 }

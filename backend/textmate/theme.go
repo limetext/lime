@@ -112,10 +112,25 @@ func (t *Theme) ClosestMatchingSetting(scope string) *ScopeSetting {
 }
 
 func (t *Theme) Spice(vr *render.ViewRegions) (ret render.Flavour) {
-	s := t.ClosestMatchingSetting(vr.Scope)
-	ret.Foreground = render.Colour(s.Settings["foreground"])
-	if bg, ok := s.Settings["background"]; ok {
-		ret.Background = render.Colour(bg)
+	if len(t.Settings) == 0 {
+		return
 	}
+	def := &t.Settings[0]
+
+	s := t.ClosestMatchingSetting(vr.Scope)
+	fg, ok := s.Settings["foreground"]
+	if !ok {
+		fg = def.Settings["foreground"]
+	}
+	ret.Foreground = render.Colour(fg)
+	bname := "background"
+	if vr.Flags&render.SELECTION != 0 {
+		bname = "selection"
+	}
+	bg, ok := s.Settings[bname]
+	if !ok {
+		bg = def.Settings[bname]
+	}
+	ret.Background = render.Colour(bg)
 	return
 }

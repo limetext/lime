@@ -238,9 +238,15 @@ add_custom_target(lime
 	DEPENDS Oniguruma
 )
 
-add_custom_target(termbox
+add_custom_target(termbox ALL
 	COMMAND ${GOCMD} build
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/frontend/termbox
+	DEPENDS lime
+)
+
+add_custom_target(html ALL
+	COMMAND ${GOCMD} build
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/frontend/html
 	DEPENDS lime
 )
 
