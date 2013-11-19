@@ -43,24 +43,25 @@ Because I like the architecture of the extensibilities in the original editor.
 
 ### Download the needed repositories
 
-	mkdir -p code/go/src
-	cd code/go/src
+	cd place/where/you/put/code
 	git clone --recursive https://github.com/limetext/lime.git lime
 
 ### Compile lime
 
-	mkdir code/go/src/lime/build2
-	cd code/go/src/lime/build2
-	cmake ..  # or use the cmake gui to create a build system suitable for you
-	make      # presuming you told cmake to generate makefiles
-	make test # To run all tests
+        cd lime
+	mkdir build2
+	cd build2
+	cmake ..
+	make
+	make test
 
 Done!
 
 # To use termbox frontend
 
-	cd code/go/src/lime/build2
-	make termbox # again presuming using a makefile based cmake target
+	cd build2
+	cmake ..
+	make termbox
 	cd ../frontend/termbox
 	./termbox
 
