@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	. "github.com/quarnster/util/text"
 	. "lime/backend"
 	"testing"
