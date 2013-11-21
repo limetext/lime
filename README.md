@@ -39,6 +39,7 @@ Because I like the architecture of the extensibilities in the original editor.
 - [cmake](http://cmake.org/)
 - Some form of build system that cmake can create a build system for (ninja, make, visual studio)
 - Git
+- Mercurial
 - Other required components will be downloaded as needed
 
 ### Download the needed repositories
