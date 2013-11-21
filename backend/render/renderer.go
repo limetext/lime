@@ -91,19 +91,16 @@ func Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Re
 		k := scheme.Spice(&v)
 		rs := recipe[k]
 		rs.AddAll(v.Regions.Regions())
-
 		if rs.HasNonEmpty() {
-			var rs2 text.RegionSet
 			var last text.Region
-			for i, r := range rs.Regions() {
+			rgs := rs.Regions()
+			for i, r := range rgs {
 				if i > 0 && r.Begin() == last.End() {
-					rs2.Add(r.Cover(last))
-				} else {
-					rs2.Add(r)
+					rs.Add(r.Cover(last))
 				}
 				last = r
 			}
-			recipe[k] = rs2
+			recipe[k] = rs
 		}
 	}
 	return recipe

@@ -14,7 +14,10 @@ import (
 	"lime/backend/util"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"sync"
+	"time"
+	"unicode"
 )
 
 var (
@@ -38,6 +41,7 @@ type tbfe struct {
 	status_message string
 	dorender       chan bool
 	lock           sync.Mutex
+	dirty          bool
 }
 
 func htmlcol(c render.Colour) string {
@@ -50,13 +54,11 @@ func (t *tbfe) renderView(wr io.Writer, v *backend.View, lay layout) {
 
 	vr := lay.visible
 	runes := v.Buffer().Substr(vr)
-
 	recipie := v.Transform(scheme, vr).Transcribe()
 	highlight_line := false
 	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
 		highlight_line = b
 	}
-
 	lastEnd := 0
 	for _, reg := range recipie {
 		if lastEnd != reg.Region.Begin() {
@@ -186,28 +188,94 @@ func (t *tbfe) render(w io.Writer) {
 	}
 	//	runes := []rune(t.status_message)
 }
+func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
+	log4go.Debug("key: %s", req)
+	kc := req.FormValue("keyCode")
+	var kp backend.KeyPress
+	v, _ := strconv.ParseInt(kc, 10, 32)
+
+	if req.FormValue("altKey") == "true" {
+		kp.Alt = true
+	}
+	if req.FormValue("ctrlKey") == "true" {
+		kp.Ctrl = true
+	}
+	if req.FormValue("metaKey") == "true" {
+		kp.Super = true
+	}
+	if req.FormValue("shiftKey") == "true" {
+		kp.Shift = true
+	}
+	if !kp.Shift {
+		v = int64(unicode.ToLower(rune(v)))
+	}
+	kp.Key = backend.Key(v)
+	backend.GetEditor().HandleInput(kp)
+}
+
+func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
+	log4go.Debug("view: %s", req)
+	if t.dirty {
+		t.dirty = false
+		t.render(w)
+	} else {
+		w.WriteHeader(404)
+	}
+}
+
 func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	s := time.Now()
 	w.Header().Set("Content-Type", "text/html")
 	log4go.Debug("Serving client: %s", req)
 
 	c := scheme.Spice(&render.ViewRegions{})
 
-	fmt.Fprintf(w, "<html><body style=\"white-space:pre; color:#%s; background-color:#%s\">", htmlcol(c.Foreground), htmlcol(c.Background))
-	t.render(w)
+	fmt.Fprintf(w, `<html><body style="white-space:pre; color:#%s; background-color:#%s">
+                <script type="text/javascript">
+
+window.setInterval(function(){checkReload()}, 200);
+function checkReload() {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+	        document.getElementById('contents').innerHTML = xmlhttp.responseText;
+	    }
+    };
+    xmlhttp.open("GET", "/view", true);
+    xmlhttp.send();
+}
+
+
+window.onkeydown = function(e)
+{
+	console.log(e);
+    xmlhttp = new XMLHttpRequest();
+	var data = new FormData();
+	for (var key in e) {
+		data.append(key, e[key]);
+	}
+
+    xmlhttp.open("POST", "/key", true);
+    xmlhttp.send(data);
+    e.preventDefault();
+}
+                </script>
+    <div id="contents" />
+`, htmlcol(c.Foreground), htmlcol(c.Background))
 	io.WriteString(w, "</body></html>")
-	log4go.Debug("Done serving client")
+	log4go.Debug("Done serving client: %s", time.Since(s))
 }
 
 func (t *tbfe) loop() {
-	// backend.OnNew.Add(func(v *backend.View) {
-	// 	v.Settings().AddOnChange("lime.frontend.html.render", func() { t.render() })
-	// })
-	// backend.OnModified.Add(func(v *backend.View) {
-	// 	t.render()
-	// })
-	// backend.OnSelectionModified.Add(func(v *backend.View) {
-	// 	t.render()
-	// })
+	backend.OnNew.Add(func(v *backend.View) {
+		v.Settings().AddOnChange("lime.frontend.html.render", func() { t.dirty = true })
+	})
+	backend.OnModified.Add(func(v *backend.View) {
+		t.dirty = true
+	})
+	backend.OnSelectionModified.Add(func(v *backend.View) {
+		t.dirty = true
+	})
 
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
@@ -254,7 +322,10 @@ func (t *tbfe) loop() {
 		sublime.Init()
 	}()
 	log4go.Debug("serving")
-	if err := http.ListenAndServe("localhost:8080", t); err != nil {
+	http.HandleFunc("/key", t.key)
+	http.HandleFunc("/", t.ServeHTTP)
+	http.HandleFunc("/view", t.view)
+	if err := http.ListenAndServe("localhost:8080", nil); err != nil {
 		log4go.Error("Error serving: %s", err)
 	}
 	log4go.Debug("Done")
