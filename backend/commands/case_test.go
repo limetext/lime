@@ -139,7 +139,7 @@ func TestSwapCase(t *testing.T) {
 	}
 }
 
-func TestUpperCase(t *testing.T){
+func TestUpperCase(t *testing.T) {
 	en := "Try not to become a man of success, but rather try to become a man of value."
 	ru := "чем больше законов и постановлений, тем больше разбойников и преступлений!"
 	zh := "千里之行﹐始于足下"
@@ -149,7 +149,7 @@ func TestUpperCase(t *testing.T){
 	ed := GetEditor()
 	w := ed.NewWindow()
 	v := w.NewFile()
-	
+
 	// ASCII Test
 	e := v.BeginEdit()
 	v.Insert(e, 0, en)
@@ -177,7 +177,7 @@ func TestUpperCase(t *testing.T){
 
 	ed.CommandHandler().RunTextCommand(v, "upper_case", nil)
 
-	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})	
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
 
 	if result != ruup {
 		t.Errorf(`UpperCaseCommand Failed.
@@ -195,7 +195,7 @@ func TestUpperCase(t *testing.T){
 
 	ed.CommandHandler().RunTextCommand(v, "upper_case", nil)
 
-	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})	
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
 
 	if result != zh {
 		t.Errorf(`UpperCaseCommand Failed.
@@ -205,7 +205,7 @@ func TestUpperCase(t *testing.T){
 
 }
 
-func TestLowerCase(t *testing.T){
+func TestLowerCase(t *testing.T) {
 	en := "We make a Living by WHAt we get, but WE make a lIfe by whAt we gIVe."
 	ru := "Все счастливые сЕмьи пОхОжи друг на друга, КАЖДАЯ несчастливая СемьЯ несчастлива ПО-СВоЕмУ."
 	ja := "行動のともなわないビジョンは、ただの白日夢。ビジョンのない行動は、ただの悪夢。"
@@ -215,7 +215,7 @@ func TestLowerCase(t *testing.T){
 	ed := GetEditor()
 	w := ed.NewWindow()
 	v := w.NewFile()
-	
+
 	// ASCII Test
 	e := v.BeginEdit()
 	v.Insert(e, 0, en)
@@ -243,7 +243,7 @@ func TestLowerCase(t *testing.T){
 
 	ed.CommandHandler().RunTextCommand(v, "lower_case", nil)
 
-	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})	
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
 
 	if result != rulo {
 		t.Errorf(`LowerCaseCommand Failed.
@@ -261,7 +261,7 @@ func TestLowerCase(t *testing.T){
 
 	ed.CommandHandler().RunTextCommand(v, "lower_case", nil)
 
-	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})	
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
 
 	if result != ja {
 		t.Errorf(`LowerCaseCommand Failed.
