@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package commands
 
 import (
@@ -49,12 +52,12 @@ func (c *UnmarkUndoGroupsForGluingCommand) Run(v *backend.View, e *backend.Edit)
 
 func (c *GlueMarkedUndoGroupsCommand) Run(v *backend.View, e *backend.Edit) error {
 	pos := v.UndoStack().Position()
-	if mark, ok := v.Settings().Get(lime_cmd_mark).(int); ok {
-		if l, p := pos-mark, mark; p != -1 && (l-p) > 1 {
-			v.UndoStack().GlueFrom(mark)
-		}
-	} else {
+	mark, ok := v.Settings().Get(lime_cmd_mark).(int)
+	if !ok {
 		return fmt.Errorf("No mark in the current view")
+	}
+	if l, p := pos-mark, mark; p != -1 && (l-p) > 1 {
+		v.UndoStack().GlueFrom(mark)
 	}
 	return nil
 }

@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package backend
 
 import (
@@ -157,31 +160,37 @@ func (v *View) parsethread() {
 		sub := b.Substr(Region{0, b.Size()})
 		b.Unlock()
 		source, _ := v.Settings().Get("syntax", "").(string)
-		if len(source) != 0 {
-			// TODO
-			if pr, err := textmate.NewLanguageParser(source, sub); err != nil {
-				log4go.Error("Couldn't parse: %v", err)
-			} else if syn, err := parser.NewSyntaxHighlighter(pr); err != nil {
-				log4go.Error("Couldn't create syntaxhighlighter: %v", err)
-			} else {
-				v.lock.Lock()
-				defer v.lock.Unlock()
-				// Only set if it isn't invalid already, otherwise the
-				// current syntax highlighting will be more accurate
-				// as it will have had incremental adjustments done to it
-				if v.buffer.ChangeCount() == lastParse {
-					v.syntax = syn
-					for k := range v.regions {
-						if strings.HasPrefix(k, "lime.syntax") {
-							delete(v.regions, k)
-						}
-					}
-					for k, v2 := range syn.Flatten() {
-						if v2.Regions.HasNonEmpty() {
-							v.regions[k] = v2
-						}
-					}
-				}
+		if len(source) == 0 {
+			return
+		}
+		// TODO
+		pr, err := textmate.NewLanguageParser(source, sub)
+		if err != nil {
+			log4go.Error("Couldn't parse: %v", err)
+			return
+		}
+		syn, err := parser.NewSyntaxHighlighter(pr)
+		if err != nil {
+			log4go.Error("Couldn't create syntaxhighlighter: %v", err)
+			return
+		}
+		v.lock.Lock()
+		defer v.lock.Unlock()
+		// Only set if it isn't invalid already, otherwise the
+		// current syntax highlighting will be more accurate
+		// as it will have had incremental adjustments done to it
+		if v.buffer.ChangeCount() != lastParse {
+			return
+		}
+		v.syntax = syn
+		for k := range v.regions {
+			if strings.HasPrefix(k, "lime.syntax") {
+				delete(v.regions, k)
+			}
+		}
+		for k, v2 := range syn.Flatten() {
+			if v2.Regions.HasNonEmpty() {
+				v.regions[k] = v2
 			}
 		}
 	}
@@ -247,21 +256,21 @@ func (v *View) Insert(edit *Edit, point int, value string) int {
 		lines := strings.Split(value, "\n")
 		for i, li := range lines {
 			for {
-				if idx := strings.Index(li, "\t"); idx != -1 {
-					ai := idx
-					if i == 0 {
-						_, col := v.buffer.RowCol(point)
-						ai = col + 1
-					}
-					add := 1 + ((ai + (tab_size - 1)) &^ (tab_size - 1))
-					spaces := ""
-					for j := ai; j < add; j++ {
-						spaces += " "
-					}
-					li = li[:idx] + spaces + li[idx+1:]
-					continue
+				idx := strings.Index(li, "\t")
+				if idx == -1 {
+					break
 				}
-				break
+				ai := idx
+				if i == 0 {
+					_, col := v.buffer.RowCol(point)
+					ai = col + 1
+				}
+				add := 1 + ((ai + (tab_size - 1)) &^ (tab_size - 1))
+				spaces := ""
+				for j := ai; j < add; j++ {
+					spaces += " "
+				}
+				li = li[:idx] + spaces + li[idx+1:]
 			}
 			lines[i] = li
 		}
@@ -315,14 +324,15 @@ func (v *View) EndEdit(e *Edit) {
 		if !eq && is {
 			selmod = true
 		}
-		if !v.scratch && !ce.bypassUndo && !eq {
-			if i == 0 || j != i {
-				// Presume someone forgot to add it in the j != i case
-				v.undoStack.Add(e)
-			} else {
-				// This edit belongs to another edit
-				v.editstack[i-1].composite.Add(ce)
-			}
+		if v.scratch || ce.bypassUndo || eq {
+			continue
+		}
+		if i == 0 || j != i {
+			// Presume someone forgot to add it in the j != i case
+			v.undoStack.Add(e)
+		} else {
+			// This edit belongs to another edit
+			v.editstack[i-1].composite.Add(ce)
 		}
 	}
 	v.editstack = v.editstack[:i]

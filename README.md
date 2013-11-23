@@ -8,7 +8,11 @@ There was a period of about 6 months after the Sublime Text 2 "stable" version w
 
 As none of the other text editors I've tried come close to the love I had for Sublime Text, I decided I had to create my own.
 
-The frontend(s) are not ready to replace your favourite editor, but the backend itself I believe isn't too far away.
+# Status
+
+The [frontend(s)](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself I believe isn't too far away.
+
+Your help is needed to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
 
 ![Screenshot taken Oct 23 2013](http://i.imgur.com/VIpmjau.png)
 
@@ -18,87 +22,13 @@ Because I like the architecture of the extensibilities in the original editor.
 
 # Goals
 
-- ☑ 100% Open source
-- ☑ Compatible with Textmate color schemes (which is what ST is using)
-- ☑ Compatible with Textmate syntax definitions (which again is what ST is using)
-- ☐ Compatible with Textmate snippets
-- ☑ Compatible with Sublime Text’s python plugin API. I’ll probably never implement this 100%, only the api bits I need for the plugins I use.
-- ☑ Compatible with Sublime Text’s keybindings and settings (think most of it is working)
-- ☐ Compatible with Sublime Text snippets
-- ☐ Sublime Text’s Goto anything panel
-- ☑ Multiple cursors
-- ☑ Regression tests (Programming in [Go](http://golang.org) makes it trivial and even fun to write them ;))
-- ☐ Support for plugging in a custom parser for more advanced syntax highlighting.
-- ☐ Terminal UI (*Maybe* I’ll work on a simple non-terminal UI at some point)
-- ☐ Cross platform (It appears to be compiling and running on OSX and Linux last I tried, but needs further validation.)
+Please refer to the [Goals](https://github.com/limetext/lime/wiki/Goals) page in the [wiki](https://github.com/limetext/lime/wiki/_pages).
 
 # Build instructions
 
-### Install required components
-
-- [cmake](http://cmake.org/)
-- Some form of build system that cmake can create a build system for (ninja, make, visual studio)
-- Git
-- Mercurial
-- Other required components will be downloaded as needed
-
-### Download the needed repositories
-
-	mkdir -p code/go/src
-	cd code/go/src
-	git clone --recursive https://github.com/limetext/lime.git lime
-
-### Compile lime
-
-	mkdir code/go/src/lime/build2
-	cd code/go/src/lime/build2
-	cmake ..  # or use the cmake gui to create a build system suitable for you
-	make      # presuming you told cmake to generate makefiles
-	make test # To run all tests
-
-Done!
-
-# To use termbox frontend
-
-	cd code/go/src/lime/build2
-	make termbox # again presuming using a makefile based cmake target
-	cd ../frontend/termbox
-	./termbox
-
-Press Ctrl+Q to exit.
-
-# To use qt5 frontend
-
-It's broken, don't.
-
-	cd ../frontend/qt5
-	go run main.go
+Please refer to the [Building](https://github.com/limetext/lime/wiki/Building) page in the [wiki](https://github.com/limetext/lime/wiki/_pages).
 
 # License
 
-The license of the project is the 2-clause BSD license:
+The license of the project is the [2-clause BSD license](https://github.com/limetext/lime/blob/master/LICENSE).
 
-```
-Copyright (c) 2013 Fredrik Ehnbom
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```

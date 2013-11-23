@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package loaders
 
 import (
@@ -29,17 +32,16 @@ func LoadJSON(data []byte, intf interface{}) error {
 
 	if !p.Parse(str) {
 		return fmt.Errorf("%s, %s", p.Error(), p.RootNode())
-	} else {
-		root := p.RootNode()
-		for _, child := range root.Children {
-			switch child.Name {
-			case "BlockComment", "LineComment", "EndOfFile", "JunkComma":
-				if child.Range.End() < len(lut) {
-					set.Add(Region{lut[child.Range.Begin()], lut[child.Range.End()]})
-				}
-			default:
-				return errors.New("Unhandled node: " + child.Name)
+	}
+	root := p.RootNode()
+	for _, child := range root.Children {
+		switch child.Name {
+		case "BlockComment", "LineComment", "EndOfFile", "JunkComma":
+			if child.Range.End() < len(lut) {
+				set.Add(Region{lut[child.Range.Begin()], lut[child.Range.End()]})
 			}
+		default:
+			return errors.New("Unhandled node: " + child.Name)
 		}
 	}
 	b.AddCallback(func(b Buffer, pos, delta int) {

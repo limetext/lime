@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package textmate
 
 import (
@@ -75,13 +78,12 @@ func (s *Settings) UnmarshalJSON(data []byte) error {
 	for k, v := range tmp {
 		if strings.HasPrefix(k, "font") {
 			continue
-		} else {
-			var c Color
-			if err := json.Unmarshal(v, &c); err != nil {
-				return err
-			}
-			(*s)[k] = c
 		}
+		var c Color
+		if err := json.Unmarshal(v, &c); err != nil {
+			return err
+		}
+		(*s)[k] = c
 	}
 	return nil
 }

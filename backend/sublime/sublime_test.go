@@ -1,15 +1,18 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package sublime
 
 import (
 	"bytes"
 	"code.google.com/p/log4go"
 	"fmt"
-	"lime/backend/util"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/3rdparty/libs/gopy/lib"
 	"lime/backend"
 	_ "lime/backend/commands"
+	"lime/backend/util"
 	"os"
 	"path/filepath"
 	"strings"

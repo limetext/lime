@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package backend
 
 import (
@@ -148,18 +151,14 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 }
 
 func (ch *commandHandler) Unregister(name string) error {
-	if _, ok := ch.ApplicationCommands[name]; !ok {
-		if _, ok := ch.TextCommands[name]; !ok {
-			if _, ok := ch.WindowCommands[name]; !ok {
-				return fmt.Errorf("%s wasn't a registered command", name)
-			} else {
-				ch.WindowCommands[name] = nil
-			}
-		} else {
-			ch.TextCommands[name] = nil
-		}
-	} else {
+	if _, ok := ch.ApplicationCommands[name]; ok {
 		ch.ApplicationCommands[name] = nil
+	} else if _, ok := ch.TextCommands[name]; ok {
+		ch.TextCommands[name] = nil
+	} else if _, ok := ch.WindowCommands[name]; !ok {
+		return fmt.Errorf("%s wasn't a registered command", name)
+	} else {
+		ch.WindowCommands[name] = nil
 	}
 	return nil
 }

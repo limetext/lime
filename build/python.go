@@ -1,3 +1,9 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
+// This file generates python bindings for the backend api.
+// Similar code would need to be written to generate bindings for other
+// scripting languages, though much code is likely shared.
 package main
 
 import (
@@ -34,16 +40,16 @@ func pyretvar(name string, ot reflect.Type) (string, error) {
 }
 
 func pyret(ot reflect.Type) (string, error) {
-	if v, err := pyretvar("ret", ot); err != nil {
+	v, err := pyretvar("ret", ot)
+	if err != nil {
 		return "", err
-	} else {
-		return fmt.Sprintf(`
+	}
+	return fmt.Sprintf(`
 				var pyret py.Object
 				var err error
 				%s
 				return pyret, err
 				`, v), nil
-	}
 }
 
 func typename(t reflect.Type) string {

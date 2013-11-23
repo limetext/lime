@@ -1,7 +1,9 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package commands
 
 import (
-	//"github.com/quarnster/util/text"
 	. "lime/backend"
 	"strings"
 	"unicode"
@@ -33,12 +35,10 @@ func (c *TitleCaseCommand) Run(v *View, e *Edit) error {
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
 		if r.Size() == 0 {
-			// return error or just ignore?
-		} else {
-			//v.Replace(e, r, c.Characters)
-			t := v.Buffer().Substr(r)
-			v.Replace(e, r, strings.Title(t))
+			continue
 		}
+		t := v.Buffer().Substr(r)
+		v.Replace(e, r, strings.Title(t))
 	}
 	return nil
 }
@@ -48,20 +48,18 @@ func (c *SwapCaseCommand) Run(v *View, e *Edit) error {
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
 		if r.Size() == 0 {
-			// return error or just ignore?
-		} else {
-			//v.Replace(e, r, c.Characters)
-			text := v.Buffer().Substr(r)
-			swapped := make([]rune, 0)
-			for _, c := range text {
-				if unicode.IsUpper(c) {
-					swapped = append(swapped, unicode.ToLower(c))
-				} else {
-					swapped = append(swapped, unicode.ToUpper(c))
-				}
-			}
-			v.Replace(e, r, string(swapped))
+			continue
 		}
+		text := v.Buffer().Substr(r)
+		swapped := make([]rune, 0)
+		for _, c := range text {
+			if unicode.IsUpper(c) {
+				swapped = append(swapped, unicode.ToLower(c))
+			} else {
+				swapped = append(swapped, unicode.ToUpper(c))
+			}
+		}
+		v.Replace(e, r, string(swapped))
 	}
 	return nil
 }

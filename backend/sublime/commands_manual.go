@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package sublime
 
 import (
@@ -95,11 +98,11 @@ func (c *CommandGlue) callBool(name string, args backend.Args) bool {
 
 	if r, err = c.CallMethodObjArgs(name, pyargs); err != nil {
 		log4go.Error(err)
-	} else {
-		defer r.Decref()
-		if r, ok := r.(*py.Bool); ok {
-			return r.Bool()
-		}
+		return true
+	}
+	defer r.Decref()
+	if r, ok := r.(*py.Bool); ok {
+		return r.Bool()
 	}
 	return true
 }
@@ -128,11 +131,11 @@ func (c *CommandGlue) Description() string {
 
 	if r, err = c.CallMethodObjArgs("description", pyargs); err != nil {
 		log4go.Error(err)
-	} else {
-		defer r.Decref()
-		if r, ok := r.(*py.Unicode); ok {
-			return r.String()
-		}
+		return ""
+	}
+	defer r.Decref()
+	if r, ok := r.(*py.Unicode); ok {
+		return r.String()
 	}
 	return ""
 }
@@ -202,14 +205,14 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit) error {
 		if err != nil {
 			return pyError(err)
 		}
-	} else {
-		ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs)
-		if ret != nil {
-			ret.Decref()
-		}
-		if err != nil {
-			return pyError(err)
-		}
+		return nil
+	}
+	ret, err := obj.Base().CallMethodObjArgs("run__", pye, pyargs)
+	if ret != nil {
+		ret.Decref()
+	}
+	if err != nil {
+		return pyError(err)
 	}
 	return nil
 }
@@ -274,15 +277,15 @@ func (c *ApplicationCommandGlue) Run() error {
 	// 	}
 	// }()
 
-	if obj, err := c.inner.Base().CallFunctionObjArgs(); err != nil {
+	obj, err := c.inner.Base().CallFunctionObjArgs()
+	if err != nil {
+		return pyError(err)
+	}
+	defer obj.Decref()
+	if ret, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
 		return pyError(err)
 	} else {
-		defer obj.Decref()
-		if ret, err := obj.Base().CallMethodObjArgs("run", pyargs); err != nil {
-			return pyError(err)
-		} else {
-			ret.Decref()
-		}
+		ret.Decref()
 	}
 	return nil
 }

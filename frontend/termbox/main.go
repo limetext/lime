@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package main
 
 import (
@@ -229,37 +232,38 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 	t.lock.Lock()
 	l := t.layout[v]
 	t.lock.Unlock()
-	if !l.visible.Covers(r) {
-		p := util.Prof.Enter("show")
-		defer p.Exit()
-
-		lv := l.visible
-
-		s1, _ := v.Buffer().RowCol(lv.Begin())
-		e1, _ := v.Buffer().RowCol(lv.End())
-		s2, _ := v.Buffer().RowCol(r.Begin())
-		e2, _ := v.Buffer().RowCol(r.End())
-
-		r1 := Region{s1, e1}
-		r2 := Region{s2, e2}
-
-		r3 := r1.Cover(r2)
-		diff := 0
-		if d1, d2 := Abs(r1.Begin()-r3.Begin()), Abs(r1.End()-r3.End()); d1 > d2 {
-			diff = r3.Begin() - r1.Begin()
-		} else {
-			diff = r3.End() - r1.End()
-		}
-		r3.A = r1.Begin() + diff
-		r3.B = r1.End() + diff
-
-		r3 = t.clip(v, r3.A, r3.B)
-		l.visible = r3
-		t.lock.Lock()
-		t.layout[v] = l
-		t.lock.Unlock()
-		t.render()
+	if l.visible.Covers(r) {
+		return
 	}
+	p := util.Prof.Enter("show")
+	defer p.Exit()
+
+	lv := l.visible
+
+	s1, _ := v.Buffer().RowCol(lv.Begin())
+	e1, _ := v.Buffer().RowCol(lv.End())
+	s2, _ := v.Buffer().RowCol(r.Begin())
+	e2, _ := v.Buffer().RowCol(r.End())
+
+	r1 := Region{s1, e1}
+	r2 := Region{s2, e2}
+
+	r3 := r1.Cover(r2)
+	diff := 0
+	if d1, d2 := Abs(r1.Begin()-r3.Begin()), Abs(r1.End()-r3.End()); d1 > d2 {
+		diff = r3.Begin() - r1.Begin()
+	} else {
+		diff = r3.End() - r1.End()
+	}
+	r3.A = r1.Begin() + diff
+	r3.B = r1.End() + diff
+
+	r3 = t.clip(v, r3.A, r3.B)
+	l.visible = r3
+	t.lock.Lock()
+	t.layout[v] = l
+	t.lock.Unlock()
+	t.render()
 }
 
 func (t *tbfe) VisibleRegion(v *backend.View) Region {

@@ -16,3 +16,5 @@ backend/sublime/*.go
 *.log.0*
 .DS_Store
 frontend/termbox/termbox
+frontend/html/html
+3rdparty/bundles/User

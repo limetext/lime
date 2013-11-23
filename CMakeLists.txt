@@ -232,10 +232,16 @@ add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/window.go
 )
 
+add_custom_target(fix
+	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/build/fix.go
+	DEPENDS ${PEGDEPENDS}
+)
+
 add_custom_target(lime
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/lime/3rdparty/libs/gopy/lib.a
 	DEPENDS Oniguruma
+	DEPENDS fix
 )
 
 add_custom_target(termbox ALL
@@ -262,6 +268,7 @@ foreach(testfile ${TESTS})
 endforeach(testfile)
 
 add_custom_target(test
+	COMMAND ${GOCMD} test -i ${GO_TESTS}
 	COMMAND ${GOCMD} test -v ${GO_TESTS}
 	DEPENDS lime
 )

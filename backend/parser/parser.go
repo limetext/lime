@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package parser
 
 import (
@@ -81,12 +84,12 @@ func (nh *nodeHighlighter) updateScope(point int) {
 				nh.lastScopeName = nh.lastScopeBuf.String()
 			}
 		}
-	} else {
-		nh.lastScopeNode = nil
-		nh.lastScopeBuf.Reset()
-		nh.lastScopeNode = nh.findScope(search, nh.rootNode)
-		nh.lastScopeName = nh.lastScopeBuf.String()
+		return
 	}
+	nh.lastScopeNode = nil
+	nh.lastScopeBuf.Reset()
+	nh.lastScopeNode = nh.findScope(search, nh.rootNode)
+	nh.lastScopeName = nh.lastScopeBuf.String()
 }
 
 func (nh *nodeHighlighter) ScopeExtent(point int) text.Region {

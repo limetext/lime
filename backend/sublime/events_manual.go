@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package sublime
 
 import (
@@ -73,25 +76,25 @@ func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 func (c *ViewEventGlue) onEvent(v *backend.View) {
 	l := py.NewLock()
 	defer l.Unlock()
-	if pv, err := toPython(v); err != nil {
+	pv, err := toPython(v)
+	if err != nil {
 		log4go.Error(err)
-	} else {
-		defer pv.Decref()
-		log4go.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
-		// interrupt := true
-		// defer func() { interrupt = false }()
-		// go func() {
-		// 	<-time.After(time.Second * 5)
-		// 	if interrupt {
-		// 		py.SetInterrupt()
-		// 	}
-		// }()
+	}
+	defer pv.Decref()
+	log4go.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
+	// interrupt := true
+	// defer func() { interrupt = false }()
+	// go func() {
+	// 	<-time.After(time.Second * 5)
+	// 	if interrupt {
+	// 		py.SetInterrupt()
+	// 	}
+	// }()
 
-		if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
-			log4go.Error(err)
-		} else if ret != nil {
-			ret.Decref()
-		}
+	if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
+		log4go.Error(err)
+	} else if ret != nil {
+		ret.Decref()
 	}
 }
 

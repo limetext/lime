@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package loaders
 
 import (
@@ -60,16 +63,15 @@ func LoadPlist(data []byte, intf interface{}) error {
 	)
 	if !p.Parse(strings.Replace(string(data), "\r", "", -1)) {
 		return p.Error()
-	} else {
-		var (
-			root = p.RootNode()
-			buf  bytes.Buffer
-		)
-		for _, child := range root.Children {
-			if err := plistconv(&buf, child); err != nil {
-				return err
-			}
-		}
-		return LoadJSON(buf.Bytes(), intf)
 	}
+	var (
+		root = p.RootNode()
+		buf  bytes.Buffer
+	)
+	for _, child := range root.Children {
+		if err := plistconv(&buf, child); err != nil {
+			return err
+		}
+	}
+	return LoadJSON(buf.Bytes(), intf)
 }

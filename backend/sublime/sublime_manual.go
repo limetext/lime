@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package sublime
 
 import (
@@ -20,49 +23,55 @@ func scanpath(path string, m *py.Module) {
 	}
 
 	// This should probably be done by the Editor as it needs to scan through for themes, keybinding, settings etc
-	if f, err := os.Open(path); err != nil {
+	f, err := os.Open(path)
+	if err != nil {
 		log4go.Warn(err)
-	} else {
-		defer f.Close()
-		if dirs, err := f.Readdirnames(-1); err != nil {
+		return
+	}
+	defer f.Close()
+	dirs, err := f.Readdirnames(-1)
+	if err != nil {
+		log4go.Warn(err)
+		return
+	}
+	for _, dir := range dirs {
+		if dir != "Vintageous" && dir != "Default" && dir != "plugins" {
+			// TODO obviously
+			continue
+		}
+		dir2 := path + dir
+		f2, err := os.Open(dir2)
+		if err != nil {
 			log4go.Warn(err)
-		} else {
-			for _, dir := range dirs {
-				if dir != "Vintageous" && dir != "Default" && dir != "plugins" {
-					// TODO obviously
-					continue
-				}
-				dir2 := path + dir
-				if f2, err := os.Open(dir2); err != nil {
-					log4go.Warn(err)
-				} else {
-					defer f2.Close()
-					if fi, err := f2.Readdir(-1); err != nil {
-						log4go.Warn(err)
-					} else {
-						for _, f := range fi {
-							if fn := f.Name(); strings.HasSuffix(fn, ".py") {
-								//m.Incref()
-								if s, err := py.NewUnicode(dir + "." + fn[:len(fn)-3]); err != nil {
-									log4go.Error(err)
-								} else {
-									if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-										log4go.Error(err)
-									} else if r != nil {
-										r.Decref()
-									}
-									// if i, err := sys.Base().CallMethodObjArgs("getrefcount", s); err != nil {
-									// 	log4go.Error(err)
-									// } else {
-									// 	log4go.Debug("m refs: %d", i.(*py.Long).Int64())
-									// 	i.Decref()
-									// }
-								}
-							}
-						}
-					}
-				}
+			continue
+		}
+		defer f2.Close()
+		fi, err := f2.Readdir(-1)
+		if err != nil {
+			log4go.Warn(err)
+		}
+		for _, f := range fi {
+			fn := f.Name()
+			if !strings.HasSuffix(fn, ".py") {
+				continue
 			}
+			//m.Incref()
+			s, err := py.NewUnicode(dir + "." + fn[:len(fn)-3])
+			if err != nil {
+				log4go.Error(err)
+				continue
+			}
+			if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+				log4go.Error(err)
+			} else if r != nil {
+				r.Decref()
+			}
+			// if i, err := sys.Base().CallMethodObjArgs("getrefcount", s); err != nil {
+			// 	log4go.Error(err)
+			// } else {
+			// 	log4go.Debug("m refs: %d", i.(*py.Long).Int64())
+			// 	i.Decref()
+			// }
 		}
 	}
 }

@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package backend
 
 import (
@@ -126,18 +129,19 @@ func (e *Editor) Init() {
 }
 
 func (e *Editor) loadKeybinding(fn string) {
-	if d, err := ioutil.ReadFile(fn); err != nil {
+	d, err := ioutil.ReadFile(fn)
+	if err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
-	} else {
-		var bindings KeyBindings
-		if err := loaders.LoadJSON(d, &bindings); err != nil {
-			log4go.Error(err)
-		} else {
-			log4go.Info("Loaded %s", fn)
-		}
-		e.keyBindings.merge(&bindings)
 	}
+	var bindings KeyBindings
+	if err := loaders.LoadJSON(d, &bindings); err != nil {
+		log4go.Error(err)
+	} else {
+		log4go.Info("Loaded %s", fn)
+	}
+	e.keyBindings.merge(&bindings)
 }
+
 func (e *Editor) loadKeybindings() {
 	// TODO(q): should search for keybindings
 	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
@@ -145,14 +149,14 @@ func (e *Editor) loadKeybindings() {
 }
 
 func (e *Editor) loadSetting(fn string) {
-	if d, err := ioutil.ReadFile(fn); err != nil {
+	d, err := ioutil.ReadFile(fn)
+	if err != nil {
 		log4go.Error("Couldn't load file %s: %s", fn, err)
+	}
+	if err := loaders.LoadJSON(d, e.Settings()); err != nil {
+		log4go.Error(err)
 	} else {
-		if err := loaders.LoadJSON(d, e.Settings()); err != nil {
-			log4go.Error(err)
-		} else {
-			log4go.Info("Loaded %s", fn)
-		}
+		log4go.Info("Loaded %s", fn)
 	}
 }
 

@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package sublime
 
 import (
@@ -26,10 +29,9 @@ func toPython(r interface{}) (py.Object, error) {
 		if t {
 			py.True.Incref()
 			return py.True, nil
-		} else {
-			py.False.Incref()
-			return py.False, nil
 		}
+		py.False.Incref()
+		return py.False, nil
 	case int:
 		return py.NewLong(int64(t)), nil
 	case int64:
@@ -219,19 +221,19 @@ func fromPython(r py.Object) (interface{}, error) {
 		}
 		return g, nil
 	case *py.Dict:
-		if ms, err := t.MapString(); err != nil {
+		ms, err := t.MapString()
+		if err != nil {
 			return nil, err
-		} else {
-			m2 := make(backend.Args)
-			for k, v := range ms {
-				if v2, err := fromPython(v); err != nil {
-					return nil, err
-				} else {
-					m2[k] = v2
-				}
-			}
-			return m2, nil
 		}
+		m2 := make(backend.Args)
+		for k, v := range ms {
+			if v2, err := fromPython(v); err != nil {
+				return nil, err
+			} else {
+				m2[k] = v2
+			}
+		}
+		return m2, nil
 	default:
 		return nil, fmt.Errorf("Cannot convert type %s from python to go", r.Type())
 	}

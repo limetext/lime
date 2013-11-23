@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package render
 
 import (
@@ -91,17 +94,6 @@ func Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Re
 		k := scheme.Spice(&v)
 		rs := recipe[k]
 		rs.AddAll(v.Regions.Regions())
-		if rs.HasNonEmpty() {
-			var last text.Region
-			rgs := rs.Regions()
-			for i, r := range rgs {
-				if i > 0 && r.Begin() == last.End() {
-					rs.Add(r.Cover(last))
-				}
-				last = r
-			}
-			recipe[k] = rs
-		}
 	}
 	return recipe
 }

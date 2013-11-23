@@ -1,3 +1,6 @@
+// Copyright 2013 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
 package commands
 
 import (
@@ -41,32 +44,32 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 		}
 		sel.Clear()
 		sel.AddAll(rs)
-	} else {
-		last := rs[len(rs)-1]
-		b := v.Buffer()
-		data := b.SubstrR(last)
-		next := last
-		size := last.Size()
-		next.A += size
-		next.B += size
-		buf := b.SubstrR(Region{next.A, next.B})
-		for next.End() < b.Size() {
-			buf[size-1] = b.Index(next.B - 1)
-			found := true
-			for j, r := range buf {
-				if r != data[j] {
-					found = false
-					break
-				}
-			}
-			if found {
-				sel.Add(next)
+		return nil
+	}
+	last := rs[len(rs)-1]
+	b := v.Buffer()
+	data := b.SubstrR(last)
+	next := last
+	size := last.Size()
+	next.A += size
+	next.B += size
+	buf := b.SubstrR(Region{next.A, next.B})
+	for next.End() < b.Size() {
+		buf[size-1] = b.Index(next.B - 1)
+		found := true
+		for j, r := range buf {
+			if r != data[j] {
+				found = false
 				break
 			}
-			copy(buf, buf[1:])
-			next.A += 1
-			next.B += 1
 		}
+		if found {
+			sel.Add(next)
+			break
+		}
+		copy(buf, buf[1:])
+		next.A += 1
+		next.B += 1
 	}
 	return nil
 }
