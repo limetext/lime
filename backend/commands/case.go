@@ -68,5 +68,7 @@ func init() {
 	register([]cmd{
 		{"title_case", &TitleCaseCommand{}},
 		{"swap_case", &SwapCaseCommand{}},
+		{"upper_case", &UpperCaseCommand{}},
+		{"lower_case", &LowerCaseCommand}
 	})
 }
