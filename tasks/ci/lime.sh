@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 
-mkdir build2
-cd build2
+cd build
 cmake ..
 make
 make test

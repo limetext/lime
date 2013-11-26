@@ -219,9 +219,9 @@ add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/json/json.peg "JsonFile,Values,Value
 add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/plist/plist.peg "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist" "testdata/C.plist")
 
 add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
-	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/build/python.go
+	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/python.go
 	DEPENDS ${PEGDEPENDS}
-	DEPENDS ${CMAKE_SOURCE_DIR}/build/python.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/tasks/python.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/command.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/commandhandler.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/editor.go
@@ -233,7 +233,7 @@ add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 )
 
 add_custom_target(fix
-	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/build/fix.go
+	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/fix.go
 	DEPENDS ${PEGDEPENDS}
 )
 
@@ -259,7 +259,7 @@ add_custom_target(html ALL
 file(GLOB_RECURSE TESTS ${CMAKE_SOURCE_DIR} "*_test.go")
 foreach(testfile ${TESTS})
 	if(${testfile} MATCHES ".*._test.go")
-		if(NOT ${testfile} MATCHES "bundles|build")
+		if(NOT ${testfile} MATCHES "bundles|tasks")
 			get_filename_component(dir ${testfile} PATH)
 			string(REPLACE ${CMAKE_SOURCE_DIR} "lime" dir ${dir})
 			set(GO_TESTS ${GO_TESTS} ${dir})
