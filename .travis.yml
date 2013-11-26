@@ -8,4 +8,4 @@ install:
   - ln -s $(pwd) ../../../lime #Fix Travis CI checking out the code to github.com/limetext/lime instead of lime
 
 script:
-  - ./scripts/ci/lime.sh
+  - ./tasks/ci/lime.sh
