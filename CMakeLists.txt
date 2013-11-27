@@ -219,9 +219,9 @@ add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/json/json.peg "JsonFile,Values,Value
 add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/plist/plist.peg "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist" "testdata/C.plist")
 
 add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
-	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/python.go
+	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
 	DEPENDS ${PEGDEPENDS}
-	DEPENDS ${CMAKE_SOURCE_DIR}/tasks/python.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/command.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/commandhandler.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/editor.go
@@ -233,7 +233,7 @@ add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 )
 
 add_custom_target(fix
-	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/fix.go
+	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/build/fix.go
 	DEPENDS ${PEGDEPENDS}
 )
 
