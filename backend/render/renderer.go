@@ -94,6 +94,7 @@ func Transform(scheme ColourScheme, data ViewRegionMap, viewport text.Region) Re
 		k := scheme.Spice(&v)
 		rs := recipe[k]
 		rs.AddAll(v.Regions.Regions())
+		recipe[k] = rs
 	}
 	return recipe
 }
