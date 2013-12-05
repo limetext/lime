@@ -203,10 +203,12 @@ add_custom_command(OUTPUT ${GOPKG}/lime/3rdparty/libs/gopy/lib.a
 )
 
 macro(add_peg peg ignore testfile)
-	string(REPLACE ".peg" ".go" GOFILE ${peg})
+	string(REPLACE ".peg" "_generated.go" GOFILE ${peg})
 	get_filename_component(dir ${GOFILE} PATH)
+	get_filename_component(BASE ${GOFILE} NAME_WE)
+	set(header "// This file was generated, and shouldn't be manually changed")
 	add_custom_command(OUTPUT ${GOFILE}
-		COMMAND ${GOPATH}/bin/pegparser -peg=${peg} -outpath=${dir} -notest -ignore=${ignore} -testfile=${testfile}
+		COMMAND ${GOPATH}/bin/pegparser -peg=${peg} -outpath=${dir} -outfile=${BASE} -header=${header} -notest -ignore=${ignore} -testfile=${testfile}
 		DEPENDS ${GOPATH}/bin/pegparser${EXESUFFIX}
 		DEPENDS ${peg}
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
@@ -218,7 +220,7 @@ endmacro(add_peg)
 add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/json/json.peg "JsonFile,Values,Value,Null,Dictionary,Array,KeyValuePairs,KeyValuePair,QuotedText,Text,Integer,Float,Boolean,Spacing,Comment" "testdata/Default (OSX).sublime-keymap")
 add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/plist/plist.peg "Spacing,KeyValuePair,KeyTag,StringTag,Value,Values,PlistFile,Plist" "testdata/C.plist")
 
-add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
+add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
 	DEPENDS ${PEGDEPENDS}
 	DEPENDS ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
@@ -235,10 +237,11 @@ add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
 add_custom_target(fix
 	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/build/fix.go
 	DEPENDS ${PEGDEPENDS}
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 )
 
 add_custom_target(lime
-	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region.go
+	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/lime/3rdparty/libs/gopy/lib.a
 	DEPENDS Oniguruma
 	DEPENDS fix

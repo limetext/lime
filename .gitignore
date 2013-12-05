@@ -1,16 +1,9 @@
 *.sublime-workspace
 *.sublime-project
-backend/loaders/json/json.go
-backend/loaders/json/json_test.go
-backend/loaders/plist/plist.go
-backend/loaders/plist/plist_test.go
 build/*
 !build/.gitkeep
 out.txt
 *.pyc
-backend/sublime/*.go
-!backend/sublime/*_test.go
-!backend/sublime/*_manual.go
 *.log
 *.log.0*
 .DS_Store

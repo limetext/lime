@@ -1,6 +1,7 @@
 // Copyright 2013 The lime Authors.
 // Use of this source code is governed by a 2-clause
 // BSD-style license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -36,12 +37,19 @@ func patch(path string, fi os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
+	lhn := append(licenseheader, '\n')
 	changed := false
 	if !bytes.Equal(licenseheader, cmp[:len(licenseheader)]) {
-		cmp = append(licenseheader, cmp...)
-		log.Println("Added license to", path)
+		cmp = append(lhn, cmp...)
+		changed = true
+	} else if cmp[len(licenseheader)] != '\n' {
+		cmp = append(lhn, cmp[len(licenseheader):]...)
 		changed = true
 	}
+	if changed {
+		log.Println("Added license to", path)
+	}
+
 	fmt, err := format.Source(cmp)
 	if err != nil {
 		return err
