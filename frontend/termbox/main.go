@@ -11,7 +11,6 @@ import (
 	"lime/3rdparty/libs/termbox-go"
 	"lime/backend"
 	_ "lime/backend/commands"
-	"lime/backend/render"
 	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"lime/backend/util"
@@ -130,7 +129,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 
 	curr := 0
 	fg, bg := defaultFg, defaultBg
-	_ = render.DRAW_TEXT
 	sel := v.Sel()
 
 	caret_blink := true
