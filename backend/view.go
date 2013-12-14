@@ -295,26 +295,26 @@ func (v *View) BeginEdit() *Edit {
 	return e
 }
 
-func (v *View) EndEdit(e *Edit) {
-	if e.invalid {
-		log4go.Fine("This edit has already been invalidated: %v, %v", e, v.editstack)
+func (v *View) EndEdit(edit *Edit) {
+	if edit.invalid {
+		log4go.Fine("This edit has already been invalidated: %v, %v", edit, v.editstack)
 		return
 	}
 	i := len(v.editstack) - 1
 	for i := len(v.editstack) - 1; i >= 0; i-- {
-		if v.editstack[i] == e {
+		if v.editstack[i] == edit {
 			break
 		}
 	}
 	if i == -1 {
-		log4go.Error("This edit isn't even in the stack... where did it come from? %v, %v", e, v.editstack)
+		log4go.Error("This edit isn't even in the stack... where did it come from? %v, %v", edit, v.editstack)
 		return
 	}
 
 	var selmod bool
 
 	if l := len(v.editstack) - 1; i != l {
-		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, e, v.editstack)
+		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
 	}
 	for j := len(v.editstack) - 1; j >= i; j-- {
 		ce := v.editstack[j]
@@ -330,7 +330,7 @@ func (v *View) EndEdit(e *Edit) {
 		}
 		if i == 0 || j != i {
 			// Presume someone forgot to add it in the j != i case
-			v.undoStack.Add(e)
+			v.undoStack.Add(edit)
 		} else {
 			// This edit belongs to another edit
 			v.editstack[i-1].composite.Add(ce)
