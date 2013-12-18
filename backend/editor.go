@@ -48,6 +48,8 @@ type (
 	DummyFrontend struct{}
 )
 
+const DEFAULT_SUBLIME_SETTINGS_PATH = "../../backend/packages/Default/Default.sublime-settings"
+
 func (h *DummyFrontend) StatusMessage(msg string)      {}
 func (h *DummyFrontend) ErrorMessage(msg string)       {}
 func (h *DummyFrontend) MessageDialog(msg string)      {}
@@ -149,21 +151,20 @@ func (e *Editor) loadKeybindings() {
 	e.loadKeybinding("../../3rdparty/bundles/Vintageous/Default.sublime-keymap")
 }
 
-func (e *Editor) loadSetting(fn string) {
-	d, err := ioutil.ReadFile(fn)
+func (e *Editor) loadSetting(path string) {
+	d, err := ioutil.ReadFile(path)
 	if err != nil {
-		log4go.Error("Couldn't load file %s: %s", fn, err)
+		log4go.Error("Couldn't load file %s: %s", path, err)
 	}
 	if err := loaders.LoadJSON(d, e.Settings()); err != nil {
 		log4go.Error(err)
 	} else {
-		log4go.Info("Loaded %s", fn)
+		log4go.Info("Loaded %s", path)
 	}
 }
 
 func (e *Editor) loadSettings() {
-	// TODO(q): should search for settings
-	e.loadSetting("../../backend/packages/Default/Default.sublime-settings")
+	e.loadSetting(DEFAULT_SUBLIME_SETTINGS_PATH)
 }
 
 func (e *Editor) PackagesPath() string {

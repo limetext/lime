@@ -1,0 +1,4 @@
+{
+    // The number of spaces a tab is equal to. Valid values are powers of two: 2, 4, 8, 16
+    "tab_size": 4
+}
