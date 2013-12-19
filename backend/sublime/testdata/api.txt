@@ -192,6 +192,7 @@ Settings
 	has
 	id
 	set
+	unmarshal_j_s_o_n
 TextCommandGlue
 	__class__
 	__delattr__
