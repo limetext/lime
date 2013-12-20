@@ -406,7 +406,7 @@ func main() {
 		{"../backend/sublime/edit_generated.go", generateWrapper(reflect.TypeOf(&backend.Edit{}), false, regexp.MustCompile("Apply|Undo").MatchString)},
 		{"../backend/sublime/view_generated.go", generateWrapper(reflect.TypeOf(&backend.View{}), false, regexp.MustCompile("Buffer|Syntax|CommandHistory|Show|AddRegions|UndoStack|Transform").MatchString)},
 		{"../backend/sublime/window_generated.go", generateWrapper(reflect.TypeOf(&backend.Window{}), false, regexp.MustCompile("OpenFile|SetActiveView").MatchString)},
-		{"../backend/sublime/settings_generated.go", generateWrapper(reflect.TypeOf(&text.Settings{}), false, regexp.MustCompile("Parent|Set|Get").MatchString)},
+		{"../backend/sublime/settings_generated.go", generateWrapper(reflect.TypeOf(&text.Settings{}), false, regexp.MustCompile("Parent|Set|Get|UnmarshalJSON").MatchString)},
 		{"../backend/sublime/view_buffer_generated.go", generatemethodsEx(
 			reflect.TypeOf(backend.GetEditor().Console().Buffer()),
 			regexp.MustCompile("Erase|Insert|Substr|SetFile|AddCallback|Data|Runes|Settings|Index|Close|Unlock|Lock").MatchString,
