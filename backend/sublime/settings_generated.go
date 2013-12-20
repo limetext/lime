@@ -147,3 +147,27 @@ func (o *Settings) Py_id() (py.Object, error) {
 	}
 	return pyret0, err
 }
+
+func (o *Settings) Py_unmarshal_j_s_o_n(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 []uint8
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.([]uint8); !ok {
+				return nil, fmt.Errorf("Expected type []uint8 for text.Settings.UnmarshalJSON() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	if err := o.data.UnmarshalJSON(arg1); err != nil {
+		return nil, err
+	} else {
+		return toPython(nil)
+	}
+}
