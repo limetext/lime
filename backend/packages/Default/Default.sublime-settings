@@ -16,5 +16,8 @@
     "caret_blink": true,
 
     // How fast the blinking is performed if enabled
-    "caret_blink_phase": 1.0
+    "caret_blink_phase": 1.0,
+
+    // Whether to render line numbers
+    "line_numbers": true
 }

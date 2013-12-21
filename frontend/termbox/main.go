@@ -15,6 +15,7 @@ import (
 	"lime/backend/textmate"
 	"lime/backend/util"
 	"runtime/debug"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -158,10 +159,30 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		caret_style = 0
 	}
 
+	shouldRenderLineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
+
+	line, _ := v.Buffer().RowCol(vr.Begin())
+	eofline, _ := v.Buffer().RowCol(v.Buffer().Size())
+	lineNumberRenderSize := len(intToRunes(eofline))
+
 	for i, r := range runes {
 		o := vr.Begin() + i
 		curr = 0
 		fg, bg = defaultFg, defaultBg
+
+		if shouldRenderLineNumbers {
+			if x == 0 {
+				lineRunes := padLineRunes(intToRunes(line), lineNumberRenderSize)
+
+				for _, num := range lineRunes {
+					termbox.SetCell(x, y, num, fg, bg)
+					x++
+				}
+
+				line++
+			}
+		}
+
 		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
 			// if curr > 0 {
 			// 	curr--
@@ -203,6 +224,17 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			termbox.SetCell(x, y, r, fg, bg)
 		}
 		x++
+	}
+
+	if shouldRenderLineNumbers {
+		if x == 0 {
+			lineRunes := padLineRunes(intToRunes(line), lineNumberRenderSize)
+
+			for _, num := range lineRunes {
+				termbox.SetCell(x, y, num, fg, bg)
+				x++
+			}
+		}
 	}
 }
 
@@ -554,6 +586,28 @@ func (t *tbfe) loop() {
 		timer.Stop()
 		p.Exit()
 	}
+}
+
+func intToRunes(n int) (runes []rune) {
+	lineStr := strconv.FormatInt(int64(n), 10)
+
+	return []rune(lineStr)
+}
+
+func padLineRunes(line []rune, totalLineSize int) (padded []rune) {
+	currentLineSize := len(line)
+	if currentLineSize < totalLineSize {
+		padding := (totalLineSize - currentLineSize)
+
+		for i := 0; i < padding; i++ {
+			padded = append(padded, ' ')
+		}
+	}
+
+	padded = append(padded, line...)
+	padded = append(padded, ' ')
+
+	return
 }
 
 func main() {
