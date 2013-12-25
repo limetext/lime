@@ -144,15 +144,7 @@ func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
-func (t *tbfe) FormatLine(line int) string {
-	var v *backend.View
-	for vi := range t.layout {
-		v = vi
-		break
-	}
-	if v == nil {
-		return ""
-	}
+func (t *tbfe) FormatLine(v *backend.View, line int) string {
 	buf := bytes.NewBuffer(nil)
 	vr := v.Buffer().Line(v.Buffer().TextPoint(line, 0))
 	log4go.Debug("FormatLine: %d, %s", line, vr)
@@ -191,6 +183,7 @@ func (t *tbfe) loop() {
 
 	engine.Context().SetVar("lines", t)
 	engine.Context().SetVar("frontend", t)
+	engine.Context().SetVar("editor", backend.GetEditor())
 
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.html.render", func() { t.dirty = true })
