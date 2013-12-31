@@ -95,6 +95,7 @@ func (v ProfileResult) String() string {
 
 func (p Profiler) String() (ret string) {
 	pr := p.SortByAvgTime()
+	ret = fmt.Sprintf("%64s %6s, %20s, %20s\n", "Name", "Calls", "Total Time", "Average")
 	for _, v := range pr {
 		ret += fmt.Sprintf("%s\n", v)
 	}
