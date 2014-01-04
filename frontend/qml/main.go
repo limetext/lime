@@ -186,7 +186,7 @@ func (t *tbfe) loop() {
 	engine.Context().SetVar("editor", backend.GetEditor())
 
 	backend.OnNew.Add(func(v *backend.View) {
-		v.Settings().AddOnChange("lime.frontend.html.render", func() { t.dirty = true })
+		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) { t.dirty = true })
 	})
 	backend.OnModified.Add(func(v *backend.View) {
 		t.dirty = true

@@ -66,9 +66,12 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
-	ret.Settings().AddOnChange("lime.view.syntax", func() {
+	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
 		ret.lock.Lock()
 		defer ret.lock.Unlock()
+		if name != "syntax" {
+			return
+		}
 		syn, _ := ret.Settings().Get("syntax", "").(string)
 		if syn != ret.cursyntax {
 			ret.cursyntax = syn
