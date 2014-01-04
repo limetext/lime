@@ -117,7 +117,7 @@ func TestSwapCase(t *testing.T) {
 
 	result := v.Buffer().Substr(Region{0, v.Buffer().Size()})
 	if result != helloSwapped {
-		t.Errorf(`TitleCaseCommand Failed.
+		t.Errorf(`SwapCaseCommand Failed.
 			Expected: %s
 			Got: -%s-`, helloSwapped, result)
 	}
@@ -134,8 +134,140 @@ func TestSwapCase(t *testing.T) {
 
 	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
 	if result != privetSwapped {
-		t.Errorf(`TitleCaseCommand Failed.
+		t.Errorf(`SwapCaseCommand Failed.
 			Expected: %s
 			Got: %s`, privetSwapped, result)
 	}
+}
+
+func TestUpperCase(t *testing.T) {
+	en := "Try not to become a man of success, but rather try to become a man of value."
+	ru := "чем больше законов и постановлений, тем больше разбойников и преступлений!"
+	zh := "千里之行﹐始于足下"
+	enup := "TRY NOT TO BECOME A MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUE."
+	ruup := "ЧЕМ БОЛЬШЕ ЗАКОНОВ И ПОСТАНОВЛЕНИЙ, ТЕМ БОЛЬШЕ РАЗБОЙНИКОВ И ПРЕСТУПЛЕНИЙ!"
+
+	ed := GetEditor()
+	w := ed.NewWindow()
+	v := w.NewFile()
+
+	// ASCII Test
+	e := v.BeginEdit()
+	v.Insert(e, 0, en)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "upper_case", nil)
+
+	result := v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != enup {
+		t.Errorf(`UpperCaseCommand Failed.
+			Expected: %s
+			Got: %s`, enup, result)
+	}
+
+	// Unicode Test
+	v = w.NewFile()
+	e = v.BeginEdit()
+	v.Insert(e, 0, ru)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "upper_case", nil)
+
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != ruup {
+		t.Errorf(`UpperCaseCommand Failed.
+			Expected: %s
+			Got: %s`, ruup, result)
+	}
+
+	// Unicode (Chinese) Test
+	v = w.NewFile()
+	e = v.BeginEdit()
+	v.Insert(e, 0, zh)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "upper_case", nil)
+
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != zh {
+		t.Errorf(`UpperCaseCommand Failed.
+			Expected: %s
+			Got: %s`, zh, result)
+	}
+
+}
+
+func TestLowerCase(t *testing.T) {
+	en := "We make a Living by WHAt we get, but WE make a lIfe by whAt we gIVe."
+	ru := "Все счастливые сЕмьи пОхОжи друг на друга, КАЖДАЯ несчастливая СемьЯ несчастлива ПО-СВоЕмУ."
+	ja := "行動のともなわないビジョンは、ただの白日夢。ビジョンのない行動は、ただの悪夢。"
+	enlo := "we make a living by what we get, but we make a life by what we give."
+	rulo := "все счастливые семьи похожи друг на друга, каждая несчастливая семья несчастлива по-своему."
+
+	ed := GetEditor()
+	w := ed.NewWindow()
+	v := w.NewFile()
+
+	// ASCII Test
+	e := v.BeginEdit()
+	v.Insert(e, 0, en)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "lower_case", nil)
+
+	result := v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != enlo {
+		t.Errorf(`LowerCaseCommand Failed.
+			Expected: %s
+			Got: %s`, enlo, result)
+	}
+
+	// Unicode Test
+	v = w.NewFile()
+	e = v.BeginEdit()
+	v.Insert(e, 0, ru)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "lower_case", nil)
+
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != rulo {
+		t.Errorf(`LowerCaseCommand Failed.
+			Expected: %s
+			Got: %s`, rulo, result)
+	}
+
+	// Unicode (Japanese) Test
+	v = w.NewFile()
+	e = v.BeginEdit()
+	v.Insert(e, 0, ja)
+	v.EndEdit(e)
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, v.Buffer().Size()})
+
+	ed.CommandHandler().RunTextCommand(v, "lower_case", nil)
+
+	result = v.Buffer().Substr(Region{0, v.Buffer().Size()})
+
+	if result != ja {
+		t.Errorf(`LowerCaseCommand Failed.
+			Expected: %s
+			Got: %s`, ja, result)
+	}
+
 }
