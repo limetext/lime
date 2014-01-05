@@ -568,7 +568,7 @@ func (t *tbfe) loop() {
 				}
 				ed.HandleInput(kp)
 
-				blink = true
+				blink = false
 			}
 			if len(evchan) > 0 {
 				limit--
