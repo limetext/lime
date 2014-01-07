@@ -23,6 +23,10 @@ type (
 	SingleSelectionCommand struct {
 		DefaultCommand
 	}
+	// The AllSelectionCommand selects the whole buffer of the current file
+	AllSelectionCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
@@ -75,9 +79,17 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func (c *AllSelectionCommand) Run(v *View, e *Edit) error {
+	r := Region{0, v.Buffer().Size()}
+	v.Sel().Clear()
+	v.Sel().Add(r)
+	return nil
+}
+
 func init() {
 	register([]cmd{
 		{"find_under_expand", &FindUnderExpandCommand{}},
 		{"single_selection", &SingleSelectionCommand{}},
+		{"select_all", &AllSelectionCommand{}},
 	})
 }
