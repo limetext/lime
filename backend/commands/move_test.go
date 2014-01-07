@@ -177,9 +177,96 @@ func TestMove(t *testing.T) {
 				args[k] = v
 			}
 		}
+
 		ed.CommandHandler().RunTextCommand(v, "move", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
 			t.Errorf("Move test %d failed: %v, %+v", i, sr, test)
+		}
+	}
+}
+
+func TestMoveTo(t *testing.T) {
+	/*
+	   Correct behavior of MoveTo:
+	       - Moves each cursor directly to the indicated position.
+	       - If extend, the selection will be extended in the direction of movement
+	*/
+
+	ed := GetEditor()
+	w := ed.NewWindow()
+	v := w.NewFile()
+	e := v.BeginEdit()
+
+	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.EndEdit(e)
+
+	type MoveToTest struct {
+		in     []Region
+		to     string
+		extend bool
+		exp    []Region
+	}
+	vbufflen := v.Buffer().Size()
+	tests := []MoveToTest{
+		{
+			[]Region{{vbufflen, vbufflen}},
+			"bof",
+			false,
+			[]Region{{0, 0}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}},
+			"bol",
+			false,
+			[]Region{{24, 24}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eol",
+			false,
+			[]Region{{12, 12}},
+		},
+		{
+			[]Region{{vbufflen, vbufflen}},
+			"bof",
+			true,
+			[]Region{{vbufflen, 0}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eof",
+			true,
+			[]Region{{0, vbufflen}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}},
+			"bol",
+			true,
+			[]Region{{vbufflen - 1, 24}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eol",
+			true,
+			[]Region{{0, 12}},
+		},
+	}
+
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		args := Args{"to": test.to, "extend": test.extend}
+		ed.CommandHandler().RunTextCommand(v, "move_to", args)
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("MoveTo test %d failed: %v, %+v", i, sr, test)
 		}
 	}
 }
