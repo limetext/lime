@@ -13,16 +13,11 @@ import (
 func TestLoadKeyBindings(t *testing.T) {
 	tests := []string{
 		"loaders/json/testdata/Default (OSX).sublime-keymap",
-		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Linux).sublime-keymap",
-		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
-		// "/Users/quarnster/Library/Application Support/Sublime Text 3/Packages/Default/Default (Windows).sublime-keymap",
 	}
 	for i, fn := range tests {
 		if d, err := ioutil.ReadFile(fn); err != nil {
 			if i == 0 {
 				t.Errorf("Couldn't load file %s: %s", fn, err)
-			} else {
-				t.Logf("Skipping: Couldn't load file %s: %s", fn, err)
 			}
 		} else {
 			var bindings KeyBindings
@@ -57,7 +52,6 @@ func TestKeyFilter2(t *testing.T) {
 	v := w.NewFile()
 	enable := "test1"
 	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
-		t.Log("Querying for", key)
 		if key == enable {
 			return True
 		}
