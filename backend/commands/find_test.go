@@ -16,7 +16,7 @@ func TestSingleSelection(t *testing.T) {
 		Correct behavior of SingleSelect:
 			- Remove all selection regions but the first.
 	*/
-			
+
 	ed := GetEditor()
 
 	w := ed.NewWindow()

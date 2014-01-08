@@ -100,7 +100,6 @@ func TestVintageous(t *testing.T) {
 		if err := loaders.LoadJSON(d, &bindings); err != nil {
 			t.Error(err)
 		}
-		t.Log(bindings)
 
 		b2 := bindings.Filter(KeyPress{Key: 'g'})
 		if a := b2.Action(v); a == nil || a.Command != "set_action" {
