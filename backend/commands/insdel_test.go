@@ -88,9 +88,8 @@ Goodbye worl
 	orig := "€þıœəßðĸʒ×ŋµåäö𝄞"
 	if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != orig {
 		t.Errorf("%s\n\t%v\n\t%v", d, []byte(d), []byte(orig))
-	} else {
-		t.Logf("ref %s\n\t%v\n\t%v", d, []byte(d), []byte(orig))
 	}
+
 	v.Sel().Clear()
 	v.Sel().Add(Region{3, 3})
 	v.Sel().Add(Region{6, 6})
