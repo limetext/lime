@@ -29,17 +29,30 @@ type (
 	SwapCaseCommand struct {
 		DefaultCommand
 	}
+
+	// The UpperCaseCommand transforms all selections
+	// so that each character in the selection
+	// is in its upper case equivalent (if any.)
+	UpperCaseCommand struct {
+		DefaultCommand
+	}
+
+	// The LowerCaseCommand transforms all selections
+	// so that each character in the selection
+	// is in its lower case equivalent
+	LowerCaseCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *TitleCaseCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
-		if r.Size() == 0 {
-			continue
+		if r.Size() != 0 {
+			t := v.Buffer().Substr(r)
+			v.Replace(e, r, strings.Title(t))
 		}
-		t := v.Buffer().Substr(r)
-		v.Replace(e, r, strings.Title(t))
 	}
 	return nil
 }
@@ -65,9 +78,36 @@ func (c *SwapCaseCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func (c *UpperCaseCommand) Run(v *View, e *Edit) error {
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		if r.Size() != 0 {
+			t := v.Buffer().Substr(r)
+			v.Replace(e, r, strings.ToUpper(t))
+		}
+	}
+	return nil
+}
+
+func (c *LowerCaseCommand) Run(v *View, e *Edit) error {
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		if r.Size() != 0 {
+
+			t := v.Buffer().Substr(r)
+			v.Replace(e, r, strings.ToLower(t))
+		}
+	}
+	return nil
+}
+
 func init() {
 	register([]cmd{
 		{"title_case", &TitleCaseCommand{}},
 		{"swap_case", &SwapCaseCommand{}},
+		{"upper_case", &UpperCaseCommand{}},
+		{"lower_case", &LowerCaseCommand{}},
 	})
 }
