@@ -10,20 +10,43 @@ import (
 	"testing"
 )
 
-func TestTitleCase(t *testing.T) {
+type CaseTest struct {
+	in_region []Region
+	in        string
+	exp       string
+}
 
-	// Please note the bizarre  capitalization of the first L in he'Ll...  This is due to a bug in go's strings
-	// library.  I'm going to try to get them to fix it...  If not, maybe we'll have
-	// to write our own Title Casing function.
-	type Test struct {
-		in_region []Region
-		in        string
-		exp       string
+func RunCaseTest(command string, testsuite *[]CaseTest, t *testing.T) {
+	ed := GetEditor()
+	w := ed.NewWindow()
+
+	for i, test := range *testsuite {
+		v := w.NewFile()
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.in)
+		v.EndEdit(e)
+
+		v.Sel().Clear()
+		if test.in_region != nil {
+			for _, r := range test.in_region {
+				v.Sel().Add(r)
+			}
+		}
+		ed.CommandHandler().RunTextCommand(v, command, nil)
+		sr := v.Buffer().Substr(Region{0, v.Buffer().Size()})
+		if sr != test.exp {
+			t.Errorf("%s test %d failed: %v, %+v", command, i, sr, test)
+		}
 	}
+}
 
-	tests := []Test{
+func TestTitleCase(t *testing.T) {
+	tests := []CaseTest{
 		/*single selection*/
 		{
+			// Please note the bizarre  capitalization of the first L in he'Ll...  This is due to a bug in go's strings
+			// library.  I'm going to try to get them to fix it...  If not, maybe we'll have
+			// to write our own Title Casing function.
 			[]Region{{24, 51}},
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 			"Give a man a match, and He'Ll Be Warm For A Minute, but set him on fire, and he'll be warm for the rest of his life.",
@@ -47,40 +70,20 @@ func TestTitleCase(t *testing.T) {
 			"ничего себе!",
 			"Ничего Себе!",
 		},
+		/*asian characters*/
+
+		{
+			[]Region{{0, 9}},
+			"千里之行﹐始于足下",
+			"千里之行﹐始于足下",
+		},
 	}
+	RunCaseTest("title_case", &tests, t)
 
-	ed := GetEditor()
-	w := ed.NewWindow()
-
-	for i, test := range tests {
-		v := w.NewFile()
-		e := v.BeginEdit()
-		v.Insert(e, 0, test.in)
-		v.EndEdit(e)
-
-		v.Sel().Clear()
-		if test.in_region != nil {
-			for _, r := range test.in_region {
-				v.Sel().Add(r)
-			}
-		}
-		ed.CommandHandler().RunTextCommand(v, "title_case", nil)
-		sr := v.Buffer().Substr(Region{0, v.Buffer().Size()})
-		if sr != test.exp {
-			t.Errorf("Title Case test %d failed: %v, %+v", i, sr, test)
-		}
-	}
 }
 
 func TestSwapCase(t *testing.T) {
-
-	type Test struct {
-		in_region []Region
-		in        string
-		exp       string
-	}
-
-	tests := []Test{
+	tests := []CaseTest{
 		{
 			[]Region{{0, 13}},
 			"Hello, World!",
@@ -92,26 +95,87 @@ func TestSwapCase(t *testing.T) {
 			"пРиВеТ, мИр",
 		},
 	}
+	RunCaseTest("swap_case", &tests, t)
+}
 
-	ed := GetEditor()
-	w := ed.NewWindow()
+func TestUpperCase(t *testing.T) {
+	tests := []CaseTest{
+		/*single selection*/
 
-	for i, test := range tests {
-		v := w.NewFile()
-		e := v.BeginEdit()
-		v.Insert(e, 0, test.in)
-		v.EndEdit(e)
+		{
+			[]Region{{0, 76}},
+			"Try not to become a man of success, but rather try to become a man of value.",
+			"TRY NOT TO BECOME A MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUE.",
+		},
+		/*multiple selection*/
+		{
+			[]Region{{0, 20}, {74, 76}},
 
-		v.Sel().Clear()
-		if test.in_region != nil {
-			for _, r := range test.in_region {
-				v.Sel().Add(r)
-			}
-		}
-		ed.CommandHandler().RunTextCommand(v, "swap_case", nil)
-		sr := v.Buffer().Substr(Region{0, v.Buffer().Size()})
-		if sr != test.exp {
-			t.Errorf("Swap Case test %d failed: %v, %+v", i, sr, test)
-		}
+			"Try not to become a man of success, but rather try to become a man of value.",
+			"TRY NOT TO BECOME A man of success, but rather try to become a man of valuE.",
+		},
+		/*no selection*/
+		{
+			nil,
+
+			"Try not to become a man of success, but rather try to become a man of value.",
+			"Try not to become a man of success, but rather try to become a man of value.",
+		},
+		/*unicode*/
+
+		{
+			[]Region{{0, 74}},
+			"чем больше законов и постановлений, тем больше разбойников и преступлений!",
+			"ЧЕМ БОЛЬШЕ ЗАКОНОВ И ПОСТАНОВЛЕНИЙ, ТЕМ БОЛЬШЕ РАЗБОЙНИКОВ И ПРЕСТУПЛЕНИЙ!",
+		},
+		/*asian characters*/
+
+		{
+			[]Region{{0, 9}},
+			"千里之行﹐始于足下",
+			"千里之行﹐始于足下",
+		},
 	}
+	RunCaseTest("upper_case", &tests, t)
+}
+
+func TestLowerCase(t *testing.T) {
+	tests := []CaseTest{
+		/*single selection*/
+		{
+			[]Region{{0, 76}},
+
+			"TRY NOT TO BECOME A MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUE.",
+			"try not to become a man of success, but rather try to become a man of value.",
+		},
+		/*multiple selection*/
+		{
+			[]Region{{0, 20}, {74, 76}},
+
+			"TRY NOT TO BECOME A MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUE.",
+			"try not to become a MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUe.",
+		},
+		/*no selection*/
+		{
+			nil,
+
+			"Try not to become a man of success, but rather try to become a man of value.",
+			"Try not to become a man of success, but rather try to become a man of value.",
+		},
+		/*unicode*/
+		{
+			[]Region{{0, 74}},
+
+			"ЧЕМ БОЛЬШЕ ЗАКОНОВ И ПОСТАНОВЛЕНИЙ, ТЕМ БОЛЬШЕ РАЗБОЙНИКОВ И ПРЕСТУПЛЕНИЙ!",
+			"чем больше законов и постановлений, тем больше разбойников и преступлений!",
+		},
+		/*asian characters*/
+
+		{
+			[]Region{{0, 9}},
+			"千里之行﹐始于足下",
+			"千里之行﹐始于足下",
+		},
+	}
+	RunCaseTest("lower_case", &tests, t)
 }
