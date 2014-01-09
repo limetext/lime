@@ -95,7 +95,6 @@ func (c *LowerCaseCommand) Run(v *View, e *Edit) error {
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
 		if r.Size() != 0 {
-
 			t := v.Buffer().Substr(r)
 			v.Replace(e, r, strings.ToLower(t))
 		}
