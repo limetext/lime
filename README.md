@@ -28,6 +28,20 @@ Please refer to the [Goals](https://github.com/limetext/lime/wiki/Goals) page in
 
 Please refer to the [Building](https://github.com/limetext/lime/wiki/Building) page in the [wiki](https://github.com/limetext/lime/wiki/_pages).
 
+
+# Contributing
+Want to hack on Lime? Awesome! Here are instructions to get you started. They are probably not perfect, please let us know if anything feels wrong or incomplete.
+
+We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
+
+If your pull request is not accepted on the first try, don't be discouraged! If there's a problem with the implementation, hopefully you received feedback on what to improve.
+
+Where is a good place to start ?
+We have created an "easy fix" label so you easily find easy issues to start with.
+
+https://github.com/limetext/lime/issues
+
+
 # License
 
 The license of the project is the [2-clause BSD license](https://github.com/limetext/lime/blob/master/LICENSE).
