@@ -471,8 +471,11 @@ func (v *View) SetOverwriteStatus(s bool) {
 	v.overwrite = s
 }
 
-// Returns the CommandHistory entry at the given index.
-// TODO(.): Yeah, I don't know what that means either ;)
+// Returns the CommandHistory entry at the given relative index.
+//
+// When "modifying_only" is set to true, only commands that actually changed
+// the buffer in some way (as opposed to just moving the cursor around) are counted as
+// an index. That would be a "hard" command as it is referred to in UndoStack.Undo.
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
 	// TODO(.): merge history when possible
 	if i := v.undoStack.index(idx, modifying_only); i != -1 {
