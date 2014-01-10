@@ -29,12 +29,12 @@ const (
 )
 
 const (
-	OpEqual Op = iota
-	OpNotEqual
-	OpRegexMatch
-	OpNotRegexMatch
-	OpRegexContains
-	OpNotRegexContains
+	OpEqual            Op = iota //< Compare for equality.
+	OpNotEqual                   //< Compare for difference.
+	OpRegexMatch                 //< Compare for a regular expression match.
+	OpNotRegexMatch              //< Compare for a regular expression difference.
+	OpRegexContains              //< Compare whether the given regular expression matches some substring of the operand.
+	OpNotRegexContains           //< Compare whether the given regular expression does not match some substring of the operand.
 )
 
 const (
@@ -145,22 +145,43 @@ var rkeylut = map[Key]string{
 }
 
 type (
-	Key      rune
+	Key rune
+
+	// A Key press with the given Key
+	// and modifiers.
 	KeyPress struct {
 		Key                     Key
 		Shift, Super, Alt, Ctrl bool
 	}
-	Op         int
+
+	// A comparison operation used in context queries.
+	Op int
+
+	// A Context definition for which a key binding
+	// is to be considered.
 	KeyContext struct {
 		rawKeyContext
 	}
+
+	// TODO(.): HACK. This is because I want to use the default UnmarshalJSON
+	// behaviour on most of the struct member, but then also do some custom
+	// handling too.
+	//
+	// So the publicly exported KeyContext implements a custom UnmarshalJSON,
+	// which then invokes the default UnMarshalJSON handling on the embedded
+	// rawKeyContext, and then does it's own custom code after that.
+	//
+	// Is there a better way to do this?
 	rawKeyContext struct {
-		Key      string
-		Operator Op
-		Operand  interface{}
-		MatchAll bool `json:"match_all"`
+		Key      string      //< The context's name.
+		Operator Op          //< The operation to perform.
+		Operand  interface{} //< The operand on which this operation should be performed.
+		MatchAll bool        `json:"match_all"` //< Whether all selections should match the context or if it's enough for just one to match.
 	}
 
+	// A single KeyBinding for which after pressing the given
+	// sequence of Keys, and the Context matches,
+	// the Command will be invoked with the provided Args.
 	KeyBinding struct {
 		Keys     []KeyPress
 		Command  string
@@ -208,6 +229,9 @@ func (k *KeyContext) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
+// Returns an index used for sorting key presses.
+// TODO(.): This is in no way a unique index with quite a lot of collisions and potentially resulting
+// in bad lookups.
 func (k KeyPress) Index() (ret int) {
 	ret = int(k.Key)
 	if k.Shift {
@@ -225,10 +249,14 @@ func (k KeyPress) Index() (ret int) {
 	return
 }
 
+// Returns whether this KeyPress is a print character or not.
 func (k KeyPress) IsCharacter() bool {
 	return unicode.IsPrint(rune(k.Key)) && !k.Super && !k.Ctrl
 }
 
+// Modifies the KeyPress so that it's Key is a unicode lower case
+// rune and if it was in uppercase before this modification, the
+// "Shift" modifier is also enabled.
 func (k *KeyPress) fix() {
 	lower := Key(unicode.ToLower(rune(k.Key)))
 	if lower != k.Key {
@@ -267,18 +295,23 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
+// Returns the number of KeyBindings.
 func (k *KeyBindings) Len() int {
 	return len(k.Bindings)
 }
 
+// Compares one KeyBinding to another for sorting purposes.
 func (k *KeyBindings) Less(i, j int) bool {
 	return k.Bindings[i].Keys[k.keyOff].Index() < k.Bindings[j].Keys[k.keyOff].Index()
 }
 
+// Swaps the two KeyBindings at the given positions.
 func (k *KeyBindings) Swap(i, j int) {
 	k.Bindings[i], k.Bindings[j] = k.Bindings[j], k.Bindings[i]
 }
 
+// Drops all KeyBindings that are a sequence of key presses less or equal
+// to the given number.
 func (k *KeyBindings) DropLessEqualKeys(count int) {
 	for i := 0; i < len(k.Bindings); {
 		if len(k.Bindings[i].Keys) <= count {
@@ -303,7 +336,7 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 }
 
 func (k *KeyBindings) merge(other *KeyBindings) {
-	// TODO: what is the order really? Newer on top?
+	// TODO(.): See issue #196
 	k.Bindings = append(k.Bindings, other.Bindings...)
 	k.DropLessEqualKeys(0)
 }
@@ -317,6 +350,8 @@ func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
 	}
 }
 
+// Filters the KeyBindings, returning a new KeyBindings object containing
+// a subset of matches for the given key press.
 func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	p := Prof.Enter("key.filter")
 	defer p.Exit()
@@ -334,12 +369,19 @@ func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	return
 }
 
+// Tries to resolve all the current KeyBindings in k to a single
+// action. If any action is appropriate as determined by context,
+// the return value will be the specific KeyBinding that is possible
+// to execute now, otherwise it is nil.
 func (k *KeyBindings) Action(v *View) (kb *KeyBinding) {
 	p := Prof.Enter("key.action")
 	defer p.Exit()
 
 	for i := range k.Bindings {
 		if len(k.Bindings[i].Keys) > k.keyOff {
+			// This key binding is of a key sequence longer than what is currently
+			// probed for. For example, the binding is for the sequence ['a','b','c'], but
+			// the user has only pressed ['a','b'] so far.
 			continue
 		}
 		for _, c := range k.Bindings[i].Context {
@@ -361,6 +403,7 @@ func (k Key) String() string {
 	}
 	return string(k)
 }
+
 func (k KeyPress) String() (ret string) {
 	if k.Super {
 		ret += "super+"
