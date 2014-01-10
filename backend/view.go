@@ -416,8 +416,7 @@ func (v *View) EndEdit(edit *Edit) {
 		sel_same := reflect.DeepEqual(*v.Sel(), current_edit.savedSel)
 		buf_same := v.buffer.ChangeCount() == current_edit.savedCount
 		eq := (sel_same && buf_same && current_edit.composite.Len() == 0)
-		if !eq && sel_same {
-			// TODO(.): HUH? shouldn't that be !sel_same???
+		if !eq && !sel_same {
 			selection_modified = true
 		}
 		if v.scratch || current_edit.bypassUndo || eq {
