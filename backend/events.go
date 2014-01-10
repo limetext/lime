@@ -10,27 +10,51 @@ import (
 )
 
 type (
+	// An event callback dealing with View events.
 	ViewEventCallback func(v *View)
-	ViewEvent         []ViewEventCallback
+	// A ViewEvent is simply a bunch of ViewEventCallbacks.
+	ViewEvent []ViewEventCallback
 
-	QueryContextReturn   int
+	// The return value returned from a QueryContextCallback.
+	QueryContextReturn int
+
+	// The context is queried when trying to figure out what action should be performed when
+	// certain conditions are met.
+	//
+	// Context is just a string identifier, an optional comparison operator, an optional operand, and an optional
+	// match_all boolean. The data of the context is optionally provided together with a key binding and the key's
+	// action will only be considered if the context conditions are met.
+	//
+	// Exactly how these values are interpreted is up to the individual context handlers, which may be fully
+	// customized by implementing the callback in a plugin.
+	//
+	// For instance pressing the key 'j' will have a different meaning when in a VI command mode emulation
+	// and when in a VI insert mode emulation. A plugin would then define two key binding entries for 'j',
+	// describe the key binding context to be able to discern which action is appropriate when 'j' is then pressed.
 	QueryContextCallback func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn
-	QueryContextEvent    []QueryContextCallback
 
+	// A QueryContextEvent is simply a bunch of QueryContextCallbacks.
+	QueryContextEvent []QueryContextCallback
+
+	// A WindowEventCallback deals with Window events.
 	WindowEventCallback func(w *Window)
-	WindowEvent         []WindowEventCallback
+	// A WindowEvent is simply a bunch of WindowEventCallbacks.
+	WindowEvent []WindowEventCallback
 )
 
 const (
-	True QueryContextReturn = iota
-	False
-	Unknown
+	True    QueryContextReturn = iota //< Returned when the context query matches.
+	False                             //< Returned when the context query does not match.
+	Unknown                           //< Returned when the QueryContextCallback does not know how to deal with the given context.
 )
 
+// Add the provided ViewEventCallback to this ViewEvent
+// TODO(.): Support removing ViewEventCallbacks?
 func (ve *ViewEvent) Add(cb ViewEventCallback) {
 	*ve = append(*ve, cb)
 }
 
+// Trigger this ViewEvent by calling all the registered callbacks in order of registration.
 func (ve ViewEvent) Call(v *View) {
 	log4go.Finest("ViewEvent")
 	for i := range ve {
@@ -38,10 +62,14 @@ func (ve ViewEvent) Call(v *View) {
 	}
 }
 
+// Add the provided QueryContextCallback to the QueryContextEvent.
+// TODO(.): Support removing QueryContextCallbacks?
 func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
 	*qe = append(*qe, cb)
 }
 
+// Searches for a QueryContextCallback and returns the result of the first callback being able to deal with this
+// context, or Unknown if no such callback was found.
 func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 	log4go.Fine("Query context: %s, %v, %v, %v", key, operator, operand, match_all)
 	for i := range qe {
@@ -54,10 +82,13 @@ func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand inter
 	return Unknown
 }
 
+// Add the provided WindowEventCallback to this WindowEvent.
+// TODO(.): Support removing WindowEventCallbacks?
 func (we *WindowEvent) Add(cb WindowEventCallback) {
 	*we = append(*we, cb)
 }
 
+// Trigger this WindowEvent by callig all the registered callbacks in order of registration.
 func (we WindowEvent) Call(w *Window) {
 	log4go.Finest("WindowEvent")
 	for i := range we {
@@ -66,21 +97,22 @@ func (we WindowEvent) Call(w *Window) {
 }
 
 var (
-	OnNew               ViewEvent
-	OnLoad              ViewEvent
-	OnActivated         ViewEvent
-	OnDeactivated       ViewEvent
-	OnClose             ViewEvent
-	OnPreSave           ViewEvent
-	OnPostSave          ViewEvent
-	OnModified          ViewEvent
-	OnSelectionModified ViewEvent
+	OnNew               ViewEvent //< Called when a new view is created
+	OnLoad              ViewEvent //< Called when loading a view's buffer has finished
+	OnActivated         ViewEvent //< Called when a view gains input focus.
+	OnDeactivated       ViewEvent //< Called when a view loses input focus.
+	OnClose             ViewEvent //< Called when a view has been closed.
+	OnPreSave           ViewEvent //< Called just before a view's buffer is saved.
+	OnPostSave          ViewEvent //< Called after a view's buffer has been saved.
+	OnModified          ViewEvent //< Called when the contents of a view's underlying buffer has changed.
+	OnSelectionModified ViewEvent //< Called when a view's Selection/cursor has changed.
 
-	OnNewWindow    WindowEvent
-	OnQueryContext QueryContextEvent
+	OnNewWindow    WindowEvent       //< Called when a new window has been created.
+	OnQueryContext QueryContextEvent //< Called when context is being queried.
 )
 
 func init() {
+	// Register functionality dealing with a couple of built in contexts
 	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
 		if strings.HasPrefix(key, "setting.") && operator == OpEqual {
 			c, ok := v.Settings().Get(key[8:]).(bool)
