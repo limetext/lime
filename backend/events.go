@@ -88,7 +88,7 @@ func (we *WindowEvent) Add(cb WindowEventCallback) {
 	*we = append(*we, cb)
 }
 
-// Trigger this WindowEvent by callig all the registered callbacks in order of registration.
+// Trigger this WindowEvent by calling all the registered callbacks in order of registration.
 func (we WindowEvent) Call(w *Window) {
 	log4go.Finest("WindowEvent")
 	for i := range we {
