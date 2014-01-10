@@ -1,8 +1,4 @@
-#### [Limetext](http://limetext.org)
-
 [![Build Status](https://travis-ci.org/limetext/lime.png?branch=master)](https://travis-ci.org/limetext/lime) [![GoDoc](https://godoc.org/github.com/limetext/lime?status.png)](https://godoc.org/github.com/limetext/lime)
-
-[#limetext at webchat.freenode.net](http://webchat.freenode.net/?channels=limetext)
 
 # What is Lime?
 
@@ -45,6 +41,11 @@ We have created an "easy fix" label so you easily find easy issues to start with
 
 https://github.com/limetext/lime/issues
 
+
+# Website and IRC channel
+Website: [limetext.org](http://limetext.org)
+
+IRC: [\#limetext](http://webchat.freenode.net/?channels=limetext)
 
 # License
 
