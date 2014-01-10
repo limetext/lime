@@ -1,4 +1,16 @@
+#### [Limetext](http://limetext.org)
+
+### Travis-CI Build Status
+
 [![Build Status](https://travis-ci.org/limetext/lime.png?branch=master)](https://travis-ci.org/limetext/lime)
+
+### GoDoc Lime documentation
+
+[![GoDoc](https://godoc.org/github.com/limetext/lime?status.png)](https://godoc.org/github.com/limetext/lime)
+
+### IRC channel
+
+[#limetext at webchat.freenode.net](http://webchat.freenode.net/?channels=limetext)
 
 # What is Lime?
 
@@ -45,4 +57,3 @@ https://github.com/limetext/lime/issues
 # License
 
 The license of the project is the [2-clause BSD license](https://github.com/limetext/lime/blob/master/LICENSE).
-
