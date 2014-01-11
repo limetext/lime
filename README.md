@@ -36,7 +36,7 @@ We are always thrilled to receive pull requests, and do our best to process them
 
 If your pull request is not accepted on the first try, don't be discouraged! If there's a problem with the implementation, hopefully you received feedback on what to improve.
 
-Where is a good place to start ?
+Where is a good place to start?
 We have created an "easy fix" label so you easily find easy issues to start with.
 
 https://github.com/limetext/lime/issues
