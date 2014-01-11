@@ -12,7 +12,7 @@ As none of the other text editors I've tried come close to the love I had for Su
 
 The [frontend(s)](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself I believe isn't too far away.
 
-Your help is needed to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
+[Your help is needed](https://github.com/limetext/lime#contributing) to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
 
 ![Screenshot taken Oct 23 2013](http://i.imgur.com/VIpmjau.png)
 
