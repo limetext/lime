@@ -56,6 +56,7 @@ ApplicationWindow {
                                 opacity: 0
                                 Behavior on opacity { PropertyAnimation {} }
                             }
+                            clip: true
                         }
                     }
                 }
@@ -77,6 +78,7 @@ ApplicationWindow {
                         textFormat: TextEdit.RichText
                         color: "white"
                     }
+                    clip: true
                 }
             }
         }
