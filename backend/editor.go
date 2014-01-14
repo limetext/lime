@@ -7,6 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/howeyc/fsnotify"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"lime/backend/loaders"
@@ -33,6 +34,8 @@ type (
 		frontend      Frontend
 		clipboard     string
 		keyInput      chan (KeyPress)
+		watcher       *fsnotify.Watcher
+		watchedFiles  map[string]WatchedFile
 	}
 	Frontend interface {
 		VisibleRegion(v *View) Region
@@ -106,14 +109,16 @@ func GetEditor() *Editor {
 				buffer:  NewBuffer(),
 				scratch: true,
 			},
-			keyInput: make(chan KeyPress, 32),
+			keyInput:     make(chan KeyPress, 32),
+			watcher:      newWatcher(),
+			watchedFiles: make(map[string]WatchedFile),
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, newMyLogWriter())
 		go ed.inputthread()
-		//		initBasicCommands()
+		go ed.observeFiles()
 	}
 	return ed
 }
@@ -189,6 +194,10 @@ func (e *Editor) SetActiveWindow(w *Window) {
 
 func (e *Editor) ActiveWindow() *Window {
 	return e.active_window
+}
+
+func (e *Editor) Watcher() *fsnotify.Watcher {
+	return e.watcher
 }
 
 func (e *Editor) NewWindow() *Window {
@@ -309,4 +318,33 @@ func (e *Editor) SetClipboard(n string) {
 
 func (e *Editor) GetClipboard() string {
 	return e.clipboard
+}
+
+func (e *Editor) Watch(file WatchedFile) {
+	if err := e.watcher.Watch(file.Name()); err != nil {
+		log4go.Error("Could not watch file: ", file.Name())
+	} else {
+		e.watchedFiles[file.Name()] = file
+	}
+}
+
+func (e *Editor) observeFiles() {
+	for {
+		select {
+		case ev := <-e.watcher.Event:
+			if ev.IsModify() {
+				e.watchedFiles[ev.Name].Reload()
+			}
+		case err := <-e.watcher.Error:
+			log4go.Error("error:", err)
+		}
+	}
+}
+
+func newWatcher() (w *fsnotify.Watcher) {
+	w, err := fsnotify.NewWatcher()
+	if err != nil {
+		log4go.Error("Could not create watcher due to: %v", err)
+	}
+	return
 }

@@ -184,7 +184,7 @@ else()
 endif()
 
 set(GOPKG ${GOPATH}/pkg/${GOOS}_${GOARCH})
-foreach(pkg code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/util/text)
+foreach(pkg code.google.com/p/log4go github.com/quarnster/parser github.com/quarnster/util/text github.com/howeyc/fsnotify)
 	add_custom_command(OUTPUT ${GOPKG}/${pkg}.a
 		COMMAND ${GOCMD} get ${pkg}
 		DEPENDS ${GOEXE} ${GODEPS}
@@ -240,7 +240,12 @@ add_custom_target(fix
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 )
 
+add_custom_target(godep
+	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/github.com/howeyc/fsnotify.a
+)
+
 add_custom_target(lime
+	DEPENDS godep
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/lime/3rdparty/libs/gopy/lib.a
 	DEPENDS Oniguruma

@@ -139,4 +139,9 @@ func init() {
 		}
 		return Unknown
 	})
+
+	OnLoad.Add(func(view *View) {
+		editor := GetEditor()
+		editor.Watch(NewWatchedUserFile(view))
+	})
 }
