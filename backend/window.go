@@ -23,14 +23,17 @@ type Window struct {
 func (w *Window) NewFile() *View {
 	w.lock.Lock()
 	defer w.lock.Unlock()
+
 	w.views = append(w.views, newView(w))
 	v := w.views[len(w.views)-1]
+
 	v.Settings().SetParent(w)
 	v.setBuffer(text.NewBuffer())
 	v.selection.Clear()
 	v.selection.Add(text.Region{0, 0})
 	OnNew.Call(v)
 	w.SetActiveView(v)
+
 	return v
 }
 
@@ -44,6 +47,7 @@ func (w *Window) Views() []*View {
 
 func (w *Window) OpenFile(filename string, flags int) *View {
 	v := w.NewFile()
+
 	v.SetScratch(true)
 	e := v.BeginEdit()
 	v.Buffer().SetFileName(filename)
@@ -55,6 +59,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 	v.EndEdit(e)
 	v.SetScratch(false)
 	OnLoad.Call(v)
+
 	return v
 }
 
