@@ -222,6 +222,7 @@ add_peg(${CMAKE_SOURCE_DIR}/backend/loaders/plist/plist.peg "Spacing,KeyValuePai
 
 add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 	COMMAND ${GOCMD} run ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
+	DEPENDS godep
 	DEPENDS ${PEGDEPENDS}
 	DEPENDS ${CMAKE_SOURCE_DIR}/tasks/build/gen_python_api.go
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/command.go
@@ -245,7 +246,6 @@ add_custom_target(godep
 )
 
 add_custom_target(lime
-	DEPENDS godep
 	DEPENDS ${CMAKE_SOURCE_DIR}/backend/sublime/region_generated.go
 	DEPENDS ${GOPATH}/pkg/${GOOS}_${GOARCH}/lime/3rdparty/libs/gopy/lib.a
 	DEPENDS Oniguruma
