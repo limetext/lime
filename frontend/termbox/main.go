@@ -184,9 +184,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		}
 
 		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
-			// if curr > 0 {
-			// 	curr--
-			// }
 			if o < recipie[curr].Region.End() {
 				fg = palLut(textmate.Color(recipie[curr].Flavour.Foreground))
 				bg = palLut(textmate.Color(recipie[curr].Flavour.Background))
@@ -207,12 +204,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			}
 			continue
 		} else if r == '\n' {
-			// for ; x < ex; x++ {
-			// 	termbox.SetCell(x, y, ' ', fg, bg)
-			// 	if !highlight_line {
-			// 		break
-			// 	}
-			// }
 			x = sx
 			y++
 			if y > ey {
@@ -330,7 +321,6 @@ func (t *tbfe) OkCancelDialog(msg, ok string) {
 }
 
 func (t *tbfe) scroll(b Buffer, pos, delta int) {
-	//fmt.Printf(string(b.Runes()[pos : pos+delta]))
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
@@ -506,11 +496,7 @@ func (t *tbfe) loop() {
 
 	sel := v.Sel()
 	sel.Clear()
-	//	end := v.Buffer().Size() - 2
 	sel.Add(Region{0, 0})
-	// sel.Add(Region{end - 22, end - 22})
-	// sel.Add(Region{end - 16, end - 20})
-	// sel.Add(Region{end - 13, end - 10})
 
 	go func() {
 		for {
@@ -542,6 +528,7 @@ func (t *tbfe) loop() {
 			blink_phase = time.Duration(float64(time.Second) * p)
 		}
 
+		// Divided by two since we're only doing a simple toggle blink
 		timer := time.NewTimer(blink_phase / 2)
 		select {
 		case ev := <-evchan:
@@ -577,11 +564,10 @@ func (t *tbfe) loop() {
 			}
 			mp.Exit()
 		case <-timer.C:
-			// 	// case <-time.After(blink_phase / 2):
+			// TODO(q): Shouldn't redraw if blink is disabled...
+
 			blink = !blink
 			t.render()
-			// 	// 	// Divided by two since we're only doing a simple toggle blink
-			// 	// 	// TODO(q): Shouldn't redraw if blink is disabled...
 		}
 		timer.Stop()
 		p.Exit()
