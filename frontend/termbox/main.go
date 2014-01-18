@@ -112,6 +112,7 @@ type layout struct {
 	visible       Region
 	lastUpdate    int
 }
+
 type tbfe struct {
 	layout         map[*backend.View]layout
 	status_message string
@@ -290,7 +291,14 @@ func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
-func (t tbfe) setupCallbacks() {
+func (t tbfe) setupCallbacks(view *backend.View) {
+	// Ensure that the visible region currently presented is
+	// inclusive of the insert/erase delta.
+	view.Buffer().AddCallback(func(b Buffer, pos, delta int) {
+		visible := t.layout[view].visible
+		t.Show(view, Region{visible.Begin(), visible.End() + delta})
+	})
+
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
 	})
@@ -378,7 +386,7 @@ func (t *tbfe) loop() {
 	t.settings = getSettings(v)
 	c.Buffer().AddCallback(t.scroll)
 
-	t.setupCallbacks()
+	t.setupCallbacks(v)
 	loadTextMateScheme()
 	setColorMode()
 	setSchemeSettings()
