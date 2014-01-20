@@ -5,11 +5,9 @@
 package commands
 
 import (
-	. "github.com/quarnster/util/text"
 	. "lime/backend"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 )
 
 type (
@@ -35,11 +33,18 @@ type (
 )
 
 func (c *JoinLinesCommand) Run(v *View, e *Edit) error {
-	r := Region{0, v.Buffer().Size()}
-	s := v.Buffer().Substr(r)
-	sa := strings.SplitAfter(s, "\n")
-	r = Region{0, utf8.RuneCountInString(sa[0]) + utf8.RuneCountInString(sa[1])}
-	v.Replace(e, r, strings.TrimRightFunc(sa[0], unicode.IsSpace)+" "+strings.TrimLeftFunc(sa[1], unicode.IsSpace))
+	sel := v.Sel()
+	r := sel.Regions()
+	for i := 0; i < len(r); i++ {
+		r0 := v.Buffer().FullLineR(r[i])
+		r1 := v.Buffer().FullLine(v.Buffer().FullLineR(r[i]).End())
+		s0 := v.Buffer().Substr(r0)
+		s1 := v.Buffer().Substr(r1)
+		sa0 := strings.SplitAfter(s0, "\n")
+		sa1 := strings.SplitAfter(s1, "\n")
+		v.Replace(e, r0, strings.TrimRightFunc(sa0[0], unicode.IsSpace)+" "+strings.TrimLeftFunc(sa1[0], unicode.IsSpace))
+		v.Replace(e, r1, "")
+	}
 	return nil
 }
 
