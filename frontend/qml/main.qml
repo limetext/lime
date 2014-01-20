@@ -42,11 +42,24 @@ ApplicationWindow {
                                 textFormat: TextEdit.RichText
                                 color: "white"
                             }
-                            states: State {
-                                name: "ShowBars"
-                                when: view.movingVertically || view.movingHorizontally
-                                PropertyChanges { target: verticalScrollBar; opacity: 0.5 }
-                            }
+                            states: [
+                                State {
+                                    name: "ShowBars"
+                                    when: view.movingVertically || view.movingHorizontally
+                                    PropertyChanges {
+                                        target: verticalScrollBar
+                                        opacity: 0.5
+                                    }
+                                },
+                                State {
+                                    name: "HideBars"
+                                    when: !view.movingVertically && !view.movingHorizontally
+                                    PropertyChanges {
+                                        target: verticalScrollBar
+                                        opacity: 0
+                                    }
+                                }
+                            ]
                             Rectangle {
                                 id: verticalScrollBar
                                 y: view.visibleArea.yPosition * view.height
