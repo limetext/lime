@@ -19,6 +19,7 @@ import (
 	"lime/backend/sublime"
 	"lime/backend/textmate"
 	"lime/backend/util"
+	"runtime"
 	"sync"
 )
 
@@ -440,6 +441,43 @@ func (t *tbfe) loop() {
 
 	log4go.Debug("Done")
 	window.Wait()
+}
+
+func (t *tbfe) HandleInput(keycode int, modifiers int) bool {
+	log4go.Debug("tbfe.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
+	shift := false
+	alt := false
+	ctrl := false
+	super := false
+
+	if key, ok := lut[keycode]; ok {
+		ed := backend.GetEditor()
+
+		if (modifiers & shift_mod) != 0 {
+			shift = true
+		}
+		if (modifiers & alt_mod) != 0 {
+			alt = true
+		}
+		if (modifiers & ctrl_mod) != 0 {
+			if runtime.GOOS == "darwin" {
+				super = true
+			} else {
+				ctrl = true
+			}
+		}
+		if (modifiers & meta_mod) != 0 {
+			if runtime.GOOS == "darwin" {
+				ctrl = true
+			} else {
+				super = true
+			}
+		}
+
+		ed.HandleInput(backend.KeyPress{Key: key, Shift: shift, Alt: alt, Ctrl: ctrl, Super: super})
+		return true
+	}
+	return false
 }
 
 func main() {
