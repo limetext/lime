@@ -98,6 +98,14 @@ const (
 	render_chan_len = 2
 )
 
+type FrontendSettings struct {
+	tabSize       int
+	caretBlink    bool
+	highlightLine bool
+	caretStyle    termbox.Attribute
+	lineNumbers   bool
+}
+
 type layout struct {
 	x, y          int
 	width, height int
@@ -109,6 +117,21 @@ type tbfe struct {
 	status_message string
 	dorender       chan bool
 	lock           sync.Mutex
+	settings       *FrontendSettings
+}
+
+func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.Attribute) {
+	if *x == 0 {
+		lineRunes := padLineRunes(intToRunes(*line), lineNumberRenderSize)
+
+		for _, num := range lineRunes {
+			termbox.SetCell(*x, y, num, fg, bg)
+			*x++
+		}
+
+		*line++
+	}
+
 }
 
 func (t *tbfe) renderView(v *backend.View, lay layout) {
@@ -121,45 +144,15 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
-	tab_size, ok := v.Settings().Get("tab_size", 4).(int)
-	if !ok {
-		tab_size = 4
+	caretStyle := t.settings.caretStyle
+	if t.settings.caretBlink && blink {
+		t.settings.caretStyle = 0
 	}
 
 	recipie := v.Transform(scheme, vr).Transcribe()
 
-	curr := 0
 	fg, bg := defaultFg, defaultBg
 	sel := v.Sel()
-
-	caret_blink := true
-	if b, ok := v.Settings().Get("caret_blink", true).(bool); ok {
-		caret_blink = b
-	}
-
-	highlight_line := false
-	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
-		highlight_line = b
-	}
-	caret_style := termbox.AttrUnderline
-	if b, ok := v.Settings().Get("caret_style", "underline").(string); ok {
-		if b == "block" {
-			caret_style = termbox.AttrReverse
-		}
-	}
-	if b, ok := v.Settings().Get("inverse_caret_state", false).(bool); !b && ok {
-		if caret_style == termbox.AttrReverse {
-			caret_style = termbox.AttrUnderline
-		} else {
-			caret_style = termbox.AttrReverse
-		}
-	}
-
-	if caret_blink && blink {
-		caret_style = 0
-	}
-
-	shouldRenderLineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
 
 	line, _ := v.Buffer().RowCol(vr.Begin())
 	eofline, _ := v.Buffer().RowCol(v.Buffer().Size())
@@ -167,20 +160,11 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 
 	for i, r := range runes {
 		o := vr.Begin() + i
-		curr = 0
+		curr := 0
 		fg, bg = defaultFg, defaultBg
 
-		if shouldRenderLineNumbers {
-			if x == 0 {
-				lineRunes := padLineRunes(intToRunes(line), lineNumberRenderSize)
-
-				for _, num := range lineRunes {
-					termbox.SetCell(x, y, num, fg, bg)
-					x++
-				}
-
-				line++
-			}
+		if t.settings.lineNumbers {
+			renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 		}
 
 		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
@@ -191,10 +175,10 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			curr++
 		}
 		if sel.Contains(Region{o, o}) {
-			fg = fg | caret_style
+			fg = fg | t.settings.caretStyle
 		}
 		if r == '\t' {
-			add := (x + 1 + (tab_size - 1)) &^ (tab_size - 1)
+			add := (x + 1 + (t.settings.tabSize - 1)) &^ (t.settings.tabSize - 1)
 			for x < add {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
@@ -217,16 +201,12 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		x++
 	}
 
-	if shouldRenderLineNumbers {
-		if x == 0 {
-			lineRunes := padLineRunes(intToRunes(line), lineNumberRenderSize)
-
-			for _, num := range lineRunes {
-				termbox.SetCell(x, y, num, fg, bg)
-				x++
-			}
-		}
+	if t.settings.lineNumbers {
+		renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 	}
+
+	// restore original caretStyle before blink modification
+	t.settings.caretStyle = caretStyle
 }
 
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
@@ -378,125 +358,30 @@ func (t *tbfe) renderthread() {
 }
 
 func (t *tbfe) loop() {
-	backend.OnNew.Add(func(v *backend.View) {
-		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
-	})
-	backend.OnModified.Add(func(v *backend.View) {
-		t.render()
-	})
-	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.render()
-	})
-
-	ed := backend.GetEditor()
-	ed.SetFrontend(t)
-	ed.LogInput(false)
-	ed.LogCommands(false)
-	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
-		log4go.Error(err)
-	} else {
-		scheme = sc
-	}
-
 	var (
-		pal     = make([]termbox.RGB, 0, 256)
-		mode256 bool
+		ed  = t.setupEditor()
+		c   = ed.Console()
+		w   = ed.NewWindow()
+		v   = createNewView("main.go", w)
+		sel = v.Sel()
 	)
 
-	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
-		log4go.Error("Unable to use 256 color mode: %s", err)
-	} else {
-		log4go.Debug("Using 256 color mode")
-		mode256 = true
-	}
+	t.settings = getSettings(v)
+	c.Buffer().AddCallback(t.scroll)
 
-	if !mode256 {
-		pal = pal[:10] // Not correct, but whatever
-		pal[termbox.ColorBlack] = termbox.RGB{0, 0, 0}
-		pal[termbox.ColorWhite] = termbox.RGB{255, 255, 255}
-		pal[termbox.ColorRed] = termbox.RGB{255, 0, 0}
-		pal[termbox.ColorGreen] = termbox.RGB{0, 255, 0}
-		pal[termbox.ColorBlue] = termbox.RGB{0, 0, 255}
-		pal[termbox.ColorMagenta] = termbox.RGB{255, 0, 255}
-		pal[termbox.ColorYellow] = termbox.RGB{255, 255, 0}
-		pal[termbox.ColorCyan] = termbox.RGB{0, 255, 255}
+	t.setupCallbacks()
+	loadTextMateScheme()
+	setColorMode()
+	setSchemeSettings()
+	sel.Clear()
+	sel.Add(Region{0, 0})
 
-		diff := func(i, j byte) int {
-			v := int(i) - int(j)
-			if v < 0 {
-				return -v
-			}
-			return v
-		}
-		palLut = func(col textmate.Color) termbox.Attribute {
-			mindist := 10000000
-			mini := 0
-			for i, c := range pal {
-				if dist := diff(c.R, col.R) + diff(c.G, col.G) + diff(c.B, col.B); dist < mindist {
-					mindist = dist
-					mini = i
-				}
-			}
-			return termbox.Attribute(mini)
-		}
-	} else {
-		palLut = func(col textmate.Color) termbox.Attribute {
-			tc := termbox.RGB{col.R, col.G, col.B}
-			for i, c := range pal {
-				if c == tc {
-					return termbox.Attribute(i)
-				}
-			}
-			l := len(pal)
-			log4go.Debug("Adding colour: %d %+v %+v", l, col, tc)
-			pal = append(pal, tc)
-			termbox.SetColorPalette(pal)
-			return termbox.Attribute(l)
-		}
-	}
-	for i, s := range scheme.Settings {
-		var (
-			fi = defaultFg
-			bi = defaultBg
-		)
-		if fg, ok := s.Settings["foreground"]; ok {
-			fi = palLut(fg)
-			if i == 0 {
-				defaultFg = fi
-			}
-		}
-		if bg, ok := s.Settings["background"]; ok {
-			bi = palLut(bg)
-			if i == 0 {
-				defaultBg = bi
-			}
-		}
-		for _, setting := range []string{"caret", "highlight", "invisibles", "selection"} {
-			if col, ok := s.Settings[setting]; ok {
-				i := palLut(col)
-				if setting == "selection" {
-					fmt.Println(col, i)
-				}
-			}
-		}
-	}
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
 		termbox.Close()
 		fmt.Println(util.Prof)
 	}()
-
-	w := ed.NewWindow()
-	v := w.OpenFile("main.go", 0)
-	v.Settings().Set("trace", true)
-	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
-	c.Buffer().AddCallback(t.scroll)
-
-	sel := v.Sel()
-	sel.Clear()
-	sel.Add(Region{0, 0})
 
 	go func() {
 		for {
@@ -594,6 +479,167 @@ func padLineRunes(line []rune, totalLineSize int) (padded []rune) {
 	padded = append(padded, ' ')
 
 	return
+}
+
+func getSettings(v *backend.View) *FrontendSettings {
+	style, _ := v.Settings().Get("caret_style", "underline").(string)
+	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
+
+	return &FrontendSettings{
+		v.Settings().Get("tab_size", 4).(int),
+		v.Settings().Get("caret_blink", true).(bool),
+		v.Settings().Get("highlight_line", false).(bool),
+		getCaretStyle(style, inverse),
+		v.Settings().Get("line_numbers", true).(bool),
+	}
+}
+
+func getCaretStyle(style string, inverse bool) termbox.Attribute {
+	caret_style := termbox.AttrUnderline
+
+	if style == "block" {
+		caret_style = termbox.AttrReverse
+	}
+
+	if inverse {
+		if caret_style == termbox.AttrReverse {
+			caret_style = termbox.AttrUnderline
+		} else {
+			caret_style = termbox.AttrReverse
+		}
+	}
+
+	return caret_style
+}
+
+func (t tbfe) setupCallbacks() {
+	backend.OnNew.Add(func(v *backend.View) {
+		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
+	})
+
+	backend.OnModified.Add(func(v *backend.View) {
+		t.render()
+	})
+
+	backend.OnSelectionModified.Add(func(v *backend.View) {
+		t.render()
+	})
+}
+
+func (t *tbfe) setupEditor() *backend.Editor {
+	ed := backend.GetEditor()
+	ed.SetFrontend(t)
+	ed.LogInput(false)
+	ed.LogCommands(false)
+
+	return ed
+}
+
+func loadTextMateScheme() {
+	path := "../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"
+	if sc, err := textmate.LoadTheme(path); err != nil {
+		log4go.Error(err)
+	} else {
+		scheme = sc
+	}
+}
+
+func setColorMode() {
+	var (
+		mode256 bool
+		pal     = make([]termbox.RGB, 0, 256)
+	)
+
+	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
+		log4go.Error("Unable to use 256 color mode: %s", err)
+	} else {
+		log4go.Debug("Using 256 color mode")
+		mode256 = true
+	}
+
+	if !mode256 {
+		pal = pal[:10] // Not correct, but whatever
+		pal[termbox.ColorBlack] = termbox.RGB{0, 0, 0}
+		pal[termbox.ColorWhite] = termbox.RGB{255, 255, 255}
+		pal[termbox.ColorRed] = termbox.RGB{255, 0, 0}
+		pal[termbox.ColorGreen] = termbox.RGB{0, 255, 0}
+		pal[termbox.ColorBlue] = termbox.RGB{0, 0, 255}
+		pal[termbox.ColorMagenta] = termbox.RGB{255, 0, 255}
+		pal[termbox.ColorYellow] = termbox.RGB{255, 255, 0}
+		pal[termbox.ColorCyan] = termbox.RGB{0, 255, 255}
+
+		diff := func(i, j byte) int {
+			v := int(i) - int(j)
+			if v < 0 {
+				return -v
+			}
+			return v
+		}
+		palLut = func(col textmate.Color) termbox.Attribute {
+			mindist := 10000000
+			mini := 0
+			for i, c := range pal {
+				if dist := diff(c.R, col.R) + diff(c.G, col.G) + diff(c.B, col.B); dist < mindist {
+					mindist = dist
+					mini = i
+				}
+			}
+			return termbox.Attribute(mini)
+		}
+	} else {
+		palLut = func(col textmate.Color) termbox.Attribute {
+			tc := termbox.RGB{col.R, col.G, col.B}
+			for i, c := range pal {
+				if c == tc {
+					return termbox.Attribute(i)
+				}
+			}
+			l := len(pal)
+			log4go.Debug("Adding colour: %d %+v %+v", l, col, tc)
+			pal = append(pal, tc)
+			termbox.SetColorPalette(pal)
+			return termbox.Attribute(l)
+		}
+	}
+}
+
+func setSchemeSettings() {
+	for i, s := range scheme.Settings {
+		var (
+			fi = defaultFg
+			bi = defaultBg
+		)
+		if fg, ok := s.Settings["foreground"]; ok {
+			fi = palLut(fg)
+			if i == 0 {
+				defaultFg = fi
+			}
+		}
+		if bg, ok := s.Settings["background"]; ok {
+			bi = palLut(bg)
+			if i == 0 {
+				defaultBg = bi
+			}
+		}
+		for _, setting := range []string{"caret", "highlight", "invisibles", "selection"} {
+			if col, ok := s.Settings[setting]; ok {
+				i := palLut(col)
+				if setting == "selection" {
+					fmt.Println(col, i)
+				}
+			}
+		}
+	}
+}
+
+func createNewView(filename string, window *backend.Window) *backend.View {
+	syntax := "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	v := window.OpenFile(filename, 0)
+
+	v.Settings().Set("trace", true)
+	v.Settings().Set("syntax", syntax)
+
+	return v
 }
 
 func main() {

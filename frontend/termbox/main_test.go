@@ -5,10 +5,11 @@
 package main
 
 import (
+	"lime/3rdparty/libs/termbox-go"
 	"testing"
 )
 
-func TestPadLineNumber(t *testing.T) {
+func TestPadLineRunes(t *testing.T) {
 	var testPadData = []struct {
 		line     int
 		total    int
@@ -27,6 +28,34 @@ func TestPadLineNumber(t *testing.T) {
 			if r != padded[i] {
 				t.Error("Expected runes to be padded")
 			}
+		}
+	}
+}
+
+func TestIntToRunes(t *testing.T) {
+	actual := intToRunes(100)
+	expected := []rune{'1', '0', '0'}
+	for i, r := range expected {
+		if actual[i] != r {
+			t.Error("Expected int to be transformed to runes")
+		}
+	}
+}
+
+func TestGetCaretStyle(t *testing.T) {
+	var testcases = []struct {
+		style    string
+		inverse  bool
+		expected termbox.Attribute
+	}{
+		{"", false, termbox.AttrUnderline},
+		{"block", false, termbox.AttrReverse},
+		{"", true, termbox.AttrReverse},
+	}
+
+	for _, tc := range testcases {
+		if style := getCaretStyle(tc.style, tc.inverse); style != tc.expected {
+			t.Errorf("Expected %s, got %s", tc.expected, style)
 		}
 	}
 }
