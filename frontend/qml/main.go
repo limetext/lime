@@ -172,9 +172,14 @@ func (t *tbfe) FormatLine(v *backend.View, line int) string {
 
 func (t *tbfe) DefaultBg() color.RGBA {
 	c := scheme.Spice(&render.ViewRegions{})
-	log4go.Debug("##############################\nHERE! %s\n###################", c)
 	c.Background.A = 0xff
 	return color.RGBA(c.Background)
+}
+
+func (t *tbfe) DefaultFg() color.RGBA {
+	c := scheme.Spice(&render.ViewRegions{})
+	c.Foreground.A = 0xff
+	return color.RGBA(c.Foreground)
 }
 
 func (t *tbfe) loop() {
