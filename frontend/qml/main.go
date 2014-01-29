@@ -172,9 +172,14 @@ func (t *tbfe) FormatLine(v *backend.View, line int) string {
 
 func (t *tbfe) DefaultBg() color.RGBA {
 	c := scheme.Spice(&render.ViewRegions{})
-	log4go.Debug("##############################\nHERE! %s\n###################", c)
 	c.Background.A = 0xff
 	return color.RGBA(c.Background)
+}
+
+func (t *tbfe) DefaultFg() color.RGBA {
+	c := scheme.Spice(&render.ViewRegions{})
+	c.Foreground.A = 0xff
+	return color.RGBA(c.Foreground)
 }
 
 func (t *tbfe) loop() {
@@ -200,7 +205,7 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
 		scheme = sc
