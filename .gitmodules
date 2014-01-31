@@ -31,3 +31,6 @@
 [submodule "3rdparty/bundles/Vintageous"]
 	path = 3rdparty/bundles/Vintageous
 	url = git://github.com/quarnster/Vintageous.git
+[submodule "3rdparty/bundles/themes/soda"]
+	path = 3rdparty/bundles/themes/soda
+	url = git://github.com/buymeasoda/soda-theme.git
