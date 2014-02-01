@@ -30,14 +30,13 @@ ApplicationWindow {
                 style: TabViewStyle {
                     frameOverlap: 0
                     tab: Item {
-                        implicitWidth: 200
-                        implicitHeight: 29
-                        Rectangle {
-                            id: tab_content
-                            color: styleData.selected ? frontend.defaultBg() : "#3D3D3A"
-                            visible: false
-                            implicitWidth: 200
-                            implicitHeight: 29
+                        implicitWidth: 180
+                        implicitHeight: 28
+                        BorderImage {
+                            source: styleData.selected ? "../../3rdparty/bundles/themes/soda/Soda Dark/tab-active.png" : "../../3rdparty/bundles/themes/soda/Soda Dark/tab-inactive.png"
+                            border { left: 5; top: 5; right: 5; bottom: 5 }
+                            width: 180
+                            height: 25
                             Text {
                                 id: tab_title
                                 anchors.centerIn: parent
@@ -45,67 +44,15 @@ ApplicationWindow {
                                 color: frontend.defaultFg()
                                 anchors.verticalCenterOffset: 1
                             }
-                            Rectangle {
-                                x: 0; y: 28
-                                width: 200; height: 1
-                                color: styleData.selected ? "transparent" : frontend.defaultBg()
-                            }
-                        }
-                        Rectangle {
-                            id: tab_mask
-                            color: "transparent"
-                            anchors.fill: tab_content
-                            visible: false
-                            Rectangle {
-                                x: 21; y: 4
-                                width: 200-42; height: 25
-                                color: "white"
-                            }
-                            Image {
-                                x: 0
-                                width: 21; height: 29
-                                source: "graphics/tab_alpha_left.png"
-                            }
-                            Image {
-                                x: 200-21
-                                width: 21; height: 29
-                                source: "graphics/tab_alpha_right.png"
-                            }
-                        }
-                        OpacityMask {
-                            id: my_tab
-                            anchors.fill: tab_content
-                            source: tab_content
-                            maskSource: tab_mask
-                        }
-                        Image {
-                            x: 0
-                            width: 21; height: 29
-                            source: styleData.selected ? "graphics/tab_active_left.png" : "graphics/tab_inactive_left.png"
-                        }
-                        Image {
-                            x: 200 - 21
-                            width: 21; height: 29
-                            source: styleData.selected ? "graphics/tab_active_right.png" : "graphics/tab_inactive_right.png"
-                        }
-                        Image {
-                            x: 21
-                            width: 200 - 42; height: 29
-                            fillMode: Image.TileHorizontally
-                            source: styleData.selected ? "graphics/tab_active_center.png" : "graphics/tab_inactive_center.png"
                         }
                     }
-                    tabBar: Rectangle {
-                        color: "#161713"
-                        Rectangle {
-                            x: 0; y: 28
-                            width: parent.width; height: 1
-                            color: frontend.defaultBg()
-                        }
+                    tabBar: Image {
+                        fillMode: Image.TileHorizontally
+                        source: "../../3rdparty/bundles/themes/soda/Soda Dark/tabset-background.png"
                     }
                     tabsMovable: true
                     frame: Rectangle { color: frontend.defaultBg() }
-                    tabOverlap: 20
+                    tabOverlap: 5
                 }
                 Tab {
                     anchors.fill: parent
