@@ -120,20 +120,6 @@ type tbfe struct {
 	settings       *FrontendSettings
 }
 
-func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.Attribute) {
-	if *x == 0 {
-		lineRunes := padLineRunes(intToRunes(*line), lineNumberRenderSize)
-
-		for _, num := range lineRunes {
-			termbox.SetCell(*x, y, num, fg, bg)
-			*x++
-		}
-
-		*line++
-	}
-
-}
-
 func (t *tbfe) renderView(v *backend.View, lay layout) {
 	p := util.Prof.Enter("render")
 	defer p.Exit()
@@ -302,6 +288,29 @@ func (t *tbfe) OkCancelDialog(msg, ok string) {
 
 func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
+}
+
+func (t tbfe) setupCallbacks() {
+	backend.OnNew.Add(func(v *backend.View) {
+		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
+	})
+
+	backend.OnModified.Add(func(v *backend.View) {
+		t.render()
+	})
+
+	backend.OnSelectionModified.Add(func(v *backend.View) {
+		t.render()
+	})
+}
+
+func (t *tbfe) setupEditor() *backend.Editor {
+	ed := backend.GetEditor()
+	ed.SetFrontend(t)
+	ed.LogInput(false)
+	ed.LogCommands(false)
+
+	return ed
 }
 
 func (t *tbfe) render() {
@@ -481,6 +490,20 @@ func padLineRunes(line []rune, totalLineSize int) (padded []rune) {
 	return
 }
 
+func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.Attribute) {
+	if *x == 0 {
+		lineRunes := padLineRunes(intToRunes(*line), lineNumberRenderSize)
+
+		for _, num := range lineRunes {
+			termbox.SetCell(*x, y, num, fg, bg)
+			*x++
+		}
+
+		*line++
+	}
+
+}
+
 func getSettings(v *backend.View) *FrontendSettings {
 	style, _ := v.Settings().Get("caret_style", "underline").(string)
 	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
@@ -510,29 +533,6 @@ func getCaretStyle(style string, inverse bool) termbox.Attribute {
 	}
 
 	return caret_style
-}
-
-func (t tbfe) setupCallbacks() {
-	backend.OnNew.Add(func(v *backend.View) {
-		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
-	})
-
-	backend.OnModified.Add(func(v *backend.View) {
-		t.render()
-	})
-
-	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.render()
-	})
-}
-
-func (t *tbfe) setupEditor() *backend.Editor {
-	ed := backend.GetEditor()
-	ed.SetFrontend(t)
-	ed.LogInput(false)
-	ed.LogCommands(false)
-
-	return ed
 }
 
 func loadTextMateScheme() {
