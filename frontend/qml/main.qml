@@ -2,6 +2,7 @@ import QtQuick 2.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 import QtQuick.Layouts 1.0
+import QtGraphicalEffects 1.0
 
 ApplicationWindow {
     id: window
@@ -22,6 +23,33 @@ ApplicationWindow {
             TabView {
                 Layout.fillHeight: true
                 id: tabs
+                style: TabViewStyle {
+                    frameOverlap: 0
+                    tab: Item {
+                        implicitWidth: 180
+                        implicitHeight: 28
+                        BorderImage {
+                            source: styleData.selected ? "../../3rdparty/bundles/themes/soda/Soda Dark/tab-active.png" : "../../3rdparty/bundles/themes/soda/Soda Dark/tab-inactive.png"
+                            border { left: 5; top: 5; right: 5; bottom: 5 }
+                            width: 180
+                            height: 25
+                            Text {
+                                id: tab_title
+                                anchors.centerIn: parent
+                                text: styleData.title
+                                color: frontend.defaultFg()
+                                anchors.verticalCenterOffset: 1
+                            }
+                        }
+                    }
+                    tabBar: Image {
+                        fillMode: Image.TileHorizontally
+                        source: "../../3rdparty/bundles/themes/soda/Soda Dark/tabset-background.png"
+                    }
+                    tabsMovable: true
+                    frame: Rectangle { color: frontend.defaultBg() }
+                    tabOverlap: 5
+                }
                 Tab {
                     anchors.fill: parent
                     title: editor.activeWindow().activeView().buffer().fileName()
@@ -73,6 +101,12 @@ ApplicationWindow {
                             clip: true
                         }
                     }
+                }
+                Tab {
+                    title: "untitled"
+                }
+                Tab {
+                    title: "untitled"
                 }
             }
             Item {
