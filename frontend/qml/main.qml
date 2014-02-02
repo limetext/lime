@@ -13,6 +13,10 @@ ApplicationWindow {
         Menu {
             title: "Hello"
             MenuItem { text: "World" }
+            MenuItem {
+                text: "Quit"
+                onTriggered: Qt.quit()
+            }
         }
     }
     Item {

@@ -205,7 +205,7 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
 		scheme = sc
