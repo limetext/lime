@@ -5,7 +5,9 @@
 package main
 
 import (
+	. "github.com/quarnster/util/text"
 	"lime/3rdparty/libs/termbox-go"
+	"lime/backend"
 	"testing"
 )
 
@@ -57,5 +59,26 @@ func TestGetCaretStyle(t *testing.T) {
 		if style := getCaretStyle(tc.style, tc.inverse); style != tc.expected {
 			t.Errorf("Expected %s, got %s", tc.expected, style)
 		}
+	}
+}
+
+func TestUpdateVisibleRegion(t *testing.T) {
+	var (
+		fe tbfe
+		e  = backend.GetEditor()
+		w  = e.NewWindow()
+		v  = w.NewFile()
+	)
+
+	fe.layout = make(map[*backend.View]layout)
+	fe.layout[v] = layout{0, 0, 100, 100 - console_height - 1, Region{}, 0}
+	fe.setupCallbacks(v)
+
+	edit := v.BeginEdit()
+	v.Insert(edit, 0, "foo")
+	v.EndEdit(edit)
+
+	if end := fe.layout[v].visible.End(); end != 3 {
+		t.Fatalf("Expected 3, got %d", end)
 	}
 }
