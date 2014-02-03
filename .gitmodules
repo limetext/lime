@@ -1,36 +1,36 @@
 [submodule "3rdparty/bundles/c.tmbundle"]
 	path = 3rdparty/bundles/c.tmbundle
-	url = git://github.com/textmate/c.tmbundle
+	url = https://github.com/textmate/c.tmbundle
 [submodule "3rdparty/bundles/property-list.tmbundle"]
 	path = 3rdparty/bundles/property-list.tmbundle
-	url = git://github.com/textmate/property-list.tmbundle
+	url = https://github.com/textmate/property-list.tmbundle
 [submodule "3rdparty/bundles/monokai.tmbundle"]
 	path = 3rdparty/bundles/monokai.tmbundle
-	url = git://github.com/textmate/monokai.tmbundle
+	url = https://github.com/textmate/monokai.tmbundle
 [submodule "3rdparty/bundles/xml.tmbundle"]
 	path = 3rdparty/bundles/xml.tmbundle
-	url = git://github.com/textmate/xml.tmbundle.git
+	url = https://github.com/textmate/xml.tmbundle.git
 [submodule "3rdparty/bundles/go.tmbundle"]
 	path = 3rdparty/bundles/go.tmbundle
-	url = git://github.com/AlanQuatermain/go-tmbundle.git
+	url = https://github.com/AlanQuatermain/go-tmbundle.git
 [submodule "3rdparty/libs/gopy"]
 	path = 3rdparty/libs/gopy
-	url = git://github.com/limetext/gopy.git
+	url = https://github.com/limetext/gopy.git
 [submodule "3rdparty/libs/rubex"]
 	path = 3rdparty/libs/rubex
-	url = git://github.com/limetext/rubex.git
+	url = https://github.com/limetext/rubex.git
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
-	url = git://github.com/limetext/termbox-go.git
+	url = https://github.com/limetext/termbox-go.git
 [submodule "3rdparty/bundles/TextMate-Themes"]
 	path = 3rdparty/bundles/TextMate-Themes
-	url = git://github.com/filmgirl/TextMate-Themes.git
+	url = https://github.com/filmgirl/TextMate-Themes.git
 [submodule "3rdparty/bundles/GoSublime"]
 	path = 3rdparty/bundles/GoSublime
-	url = git://github.com/DisposaBoy/GoSublime.git
+	url = https://github.com/DisposaBoy/GoSublime.git
 [submodule "3rdparty/bundles/Vintageous"]
 	path = 3rdparty/bundles/Vintageous
-	url = git://github.com/quarnster/Vintageous.git
+	url = https://github.com/quarnster/Vintageous.git
 [submodule "3rdparty/bundles/themes/soda"]
 	path = 3rdparty/bundles/themes/soda
-	url = git://github.com/buymeasoda/soda-theme.git
+	url = https://github.com/buymeasoda/soda-theme.git
