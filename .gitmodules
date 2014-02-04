@@ -16,9 +16,11 @@
 [submodule "3rdparty/libs/gopy"]
 	path = 3rdparty/libs/gopy
 	url = https://github.com/limetext/gopy.git
+	ignore = dirty
 [submodule "3rdparty/libs/rubex"]
 	path = 3rdparty/libs/rubex
 	url = https://github.com/limetext/rubex.git
+	ignore = dirty
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
 	url = https://github.com/limetext/termbox-go.git
@@ -31,6 +33,7 @@
 [submodule "3rdparty/bundles/Vintageous"]
 	path = 3rdparty/bundles/Vintageous
 	url = https://github.com/quarnster/Vintageous.git
+	ignore = dirty
 [submodule "3rdparty/bundles/themes/soda"]
 	path = 3rdparty/bundles/themes/soda
 	url = https://github.com/buymeasoda/soda-theme.git
