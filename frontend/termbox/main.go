@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"os"
 )
 
 var (
@@ -374,12 +375,12 @@ func (t *tbfe) renderthread() {
 	}
 }
 
-func (t *tbfe) loop() {
+func (t *tbfe) loop(file string) {
 	var (
 		ed  = t.setupEditor()
 		c   = ed.Console()
 		w   = ed.NewWindow()
-		v   = createNewView("main.go", w)
+		v   = createNewView(file, w)
 		sel = v.Sel()
 	)
 
@@ -651,6 +652,7 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 }
 
 func main() {
+	args := os.Args
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
 	defer func() {
 		py.NewLock()
@@ -665,5 +667,9 @@ func main() {
 	t.dorender = make(chan bool, render_chan_len)
 	t.layout = make(map[*backend.View]layout)
 	go t.renderthread()
-	t.loop()
+	if len(args) > 1 {
+		t.loop(args[1])
+	} else {
+		t.loop("temp")
+	}
 }
