@@ -17,6 +17,10 @@ ApplicationWindow {
     }
     Item {
         anchors.fill: parent
+        Keys.onPressed: {
+            event.accepted = frontend.handleInput(event.key, event.modifiers)
+        }
+        focus: true // Focus required for Keys.onPressed
         SplitView {
             anchors.fill: parent
             orientation: Qt.Vertical
