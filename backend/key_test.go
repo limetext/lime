@@ -5,8 +5,8 @@
 package backend
 
 import (
+	"github.com/limetext/lime/backend/loaders"
 	"io/ioutil"
-	"lime/backend/loaders"
 	"testing"
 )
 

@@ -7,9 +7,9 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/gopy/lib"
+	"github.com/limetext/lime/backend"
 	"github.com/quarnster/util/text"
-	"lime/3rdparty/libs/gopy/lib"
-	"lime/backend"
 )
 
 var _ = log4go.Error

@@ -8,10 +8,10 @@ import (
 	"code.google.com/p/log4go"
 	"encoding/json"
 	"fmt"
+	"github.com/limetext/lime/backend/loaders"
+	"github.com/limetext/lime/backend/render"
 	"image/color"
 	"io/ioutil"
-	"lime/backend/loaders"
-	"lime/backend/render"
 	"strconv"
 	"strings"
 )

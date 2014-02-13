@@ -16,9 +16,9 @@ package parser
 
 import (
 	"bytes"
+	"github.com/limetext/lime/backend/render"
 	"github.com/quarnster/parser"
 	"github.com/quarnster/util/text"
-	"lime/backend/render"
 	"sort"
 	"sync"
 )

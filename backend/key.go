@@ -9,7 +9,7 @@ import (
 	"code.google.com/p/log4go"
 	"encoding/json"
 	"fmt"
-	. "lime/backend/util"
+	. "github.com/limetext/lime/backend/util"
 	"sort"
 	"strings"
 	"unicode"

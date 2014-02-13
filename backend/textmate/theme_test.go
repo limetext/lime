@@ -6,9 +6,9 @@ package textmate
 
 import (
 	"fmt"
+	"github.com/limetext/lime/backend/loaders"
+	"github.com/limetext/lime/backend/util"
 	"io/ioutil"
-	"lime/backend/loaders"
-	"lime/backend/util"
 	"testing"
 )
 
