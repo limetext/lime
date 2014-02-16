@@ -1,11 +1,11 @@
 language: go
 
-go: 1.1
+go: 1.2
 
 install:
+  - echo 'yes' | sudo add-apt-repository ppa:fkrull/deadsnakes
   - sudo apt-get update -qq
-  - sudo apt-get install -qq cmake
-  - ln -s $(pwd) ../../../lime #Fix Travis CI checking out the code to github.com/limetext/lime instead of lime
+  - sudo apt-get install -qq libonig-dev mercurial python3.3 python3.3-dev
 
 script:
   - ./tasks/ci/lime.sh

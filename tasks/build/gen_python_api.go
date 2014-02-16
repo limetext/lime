@@ -10,9 +10,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/limetext/lime/backend"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
-	"lime/backend"
 	"os"
 	"os/exec"
 	"path/filepath"

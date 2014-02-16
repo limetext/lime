@@ -6,7 +6,7 @@ package sublime
 
 import (
 	"fmt"
-	"lime/3rdparty/libs/gopy/lib"
+	"github.com/limetext/gopy/lib"
 )
 
 func (o *Settings) Py_get(tu *py.Tuple, kw *py.Dict) (py.Object, error) {

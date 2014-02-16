@@ -7,9 +7,9 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	"github.com/quarnster/util/text" //"time"
-	"lime/3rdparty/libs/gopy/lib"
-	"lime/backend"
+	"github.com/limetext/gopy/lib"
+	"github.com/limetext/lime/backend" //"time"
+	"github.com/quarnster/util/text"
 )
 
 var (

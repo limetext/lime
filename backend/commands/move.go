@@ -6,9 +6,9 @@ package commands
 
 import (
 	"fmt"
+	. "github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/util"
 	"github.com/quarnster/util/text"
-	. "lime/backend"
-	"lime/backend/util"
 )
 
 const (

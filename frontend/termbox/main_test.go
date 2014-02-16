@@ -5,9 +5,9 @@
 package main
 
 import (
+	"github.com/limetext/lime/backend"
+	"github.com/limetext/termbox-go"
 	. "github.com/quarnster/util/text"
-	"lime/3rdparty/libs/termbox-go"
-	"lime/backend"
 	"testing"
 )
 

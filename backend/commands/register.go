@@ -6,7 +6,7 @@ package commands
 
 import (
 	"code.google.com/p/log4go"
-	"lime/backend"
+	"github.com/limetext/lime/backend"
 )
 
 type cmd struct {

@@ -5,7 +5,7 @@
 package commands
 
 import (
-	. "lime/backend"
+	. "github.com/limetext/lime/backend"
 	"strings"
 	"unicode"
 )

@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/limetext/lime/backend/loaders/plist"
 	"github.com/quarnster/parser"
-	"lime/backend/loaders/plist"
 	"strings"
 )
 

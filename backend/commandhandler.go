@@ -7,7 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	. "lime/backend/util"
+	. "github.com/limetext/lime/backend/util"
 	"reflect"
 	"regexp"
 	"strings"

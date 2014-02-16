@@ -7,9 +7,9 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"fmt"
-	"lime/3rdparty/libs/gopy/lib"
-	"lime/backend"
-	"lime/backend/render"
+	"github.com/limetext/gopy/lib"
+	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/render"
 	"os"
 	"strings"
 	"time"

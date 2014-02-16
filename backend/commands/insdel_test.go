@@ -5,8 +5,8 @@
 package commands
 
 import (
+	. "github.com/limetext/lime/backend"
 	. "github.com/quarnster/util/text"
-	. "lime/backend"
 	"reflect"
 	"strings"
 	"testing"

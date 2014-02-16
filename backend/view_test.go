@@ -6,10 +6,10 @@ package backend
 
 import (
 	"fmt"
+	"github.com/limetext/lime/backend/textmate"
+	"github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
-	"lime/backend/textmate"
-	"lime/backend/util"
 	"math/rand"
 	"reflect"
 	"testing"
