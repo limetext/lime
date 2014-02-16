@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Colors.
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RESET="\e[0m"
+
 function fold_start {
     if [ "$TRAVIS" == "true" ]; then
         echo -en "travis_fold:start:$1\r"
@@ -13,27 +19,31 @@ function fold_end {
     fi
 }
 
-cd build
+function do_test {
+	go test ./$1/...
+	build_result=$?
+	echo -ne "${YELLOW}=>${RESET} test $1 - "
+	if [ "$build_result" == "0" ]; then
+	    echo -e "${GREEN}SUCCEEDED${RESET}"
+	else
+	    echo -e "${RED}FAILED${RESET}"
+	fi
+}
 
-fold_start "cmake"
-cmake ..
-fold_end "cmake"
+fold_start "termbox"
+go get github.com/limetext/lime/frontend/termbox
+fold_end "termbox"
 
-fold_start "make"
-make
-build_result=$?
-fold_end "make"
+# Installing qml dependencies fails atm.
+# fold_start "qml"
+# go get github.com/limetext/lime/frontend/qml
+# fold_end "qml"
 
-# Print colored build result.
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-RESET="\e[0m"
-echo -ne "${YELLOW}=>${RESET} BUILD - "
-if [ "$build_result" == "0" ]; then
-    echo -e "${GREEN}SUCCEEDED${RESET}"
-else
-    echo -e "${RED}FAILED${RESET}"
-fi
+do_test "backend"
+fail1=$build_result
 
-make test
+do_test "frontend/termbox"
+fail2=$build_result
+
+let ex=$fail1+$fail2
+exit $ex
