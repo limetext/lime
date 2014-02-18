@@ -52,10 +52,10 @@ ApplicationWindow {
                 }
                 Tab {
                     anchors.fill: parent
-                    title: editor.activeWindow().activeView().buffer().fileName()
+                    title: editor.activeWindow.activeView.buffer().filename
                     Item {
                         id: viewItem
-                        property var myView: editor.activeWindow().activeView()
+                        property var myView: editor.activeWindow.activeView
                         property var viewLines: myView.buffer().rowCol(myView.buffer().size())[0]
                         Rectangle  {
                             color: frontend.defaultBg()
