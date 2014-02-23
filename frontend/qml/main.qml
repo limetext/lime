@@ -59,8 +59,7 @@ ApplicationWindow {
                     title: editor.activeWindow.activeView.buffer().filename
                     Item {
                         id: viewItem
-                        property var myView: editor.activeWindow.activeView
-                        property var viewLines: myView.buffer().rowCol(myView.buffer().size())[0]
+                        property var myView: frontend.view(editor.activeWindow.activeView)
                         Rectangle  {
                             color: frontend.defaultBg()
                             anchors.fill: parent
@@ -68,9 +67,10 @@ ApplicationWindow {
                         ListView {
                             id: view
                             anchors.fill: parent
-                            model: viewLines
+                            model: myView.len
                             delegate: Text {
-                                text: frontend.formatLine(myView, index)
+                                property var line: myView.line(index)
+                                text: line.text
                                 textFormat: TextEdit.RichText
                                 color: "white"
                             }
@@ -116,17 +116,17 @@ ApplicationWindow {
             Item {
                 id: consoleView
                 height: 100
-                property var myView: editor.console()
-                property var viewLines: myView.buffer().rowCol(myView.buffer().size())[0]
+                property var myView: frontend.console
                 Rectangle {
                     color: frontend.defaultBg()
                     anchors.fill: parent
                 }
                 ListView {
                     anchors.fill: parent
-                    model: consoleView.viewLines
+                    model: consoleView.myView.len
                     delegate: Text {
-                        text: frontend.formatLine(consoleView.myView, index)
+                        property var line: consoleView.myView.line(index)
+                        text: line.text
                         textFormat: TextEdit.RichText
                         color: "white"
                     }

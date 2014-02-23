@@ -226,26 +226,39 @@ const (
 	keypad_mod = 0x20000000
 )
 
-type layout struct {
-	x, y          int
-	width, height int
-	visible       Region
-	lastUpdate    int
-}
+type (
+	layout struct {
+		x, y          int
+		width, height int
+		visible       Region
+		lastUpdate    int
+	}
 
-type tbfe struct {
-	layout         map[*backend.View]layout
-	status_message string
-	dorender       chan bool
-	lock           sync.Mutex
-	dirty          bool
-	Len            int
-}
+	tbfe struct {
+		layout         map[*backend.View]layout
+		status_message string
+		lock           sync.Mutex
+		Len            int
+		views          map[*backend.View]*frontendView
+		Console        *frontendView
+	}
+	lineStruct struct {
+		Text string
+	}
+	frontendView struct {
+		bv            *backend.View
+		Len           int
+		FormattedLine []*lineStruct
+	}
+)
 
 func htmlcol(c render.Colour) string {
 	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
 
+func (t *tbfe) View(v *backend.View) *frontendView {
+	return t.views[v]
+}
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	p := util.Prof.Enter("clip")
 	defer p.Exit()
@@ -340,30 +353,66 @@ func (t *tbfe) scroll(b Buffer, pos, delta int) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
-func (t *tbfe) FormatLine(v *backend.View, line int) string {
-	buf := bytes.NewBuffer(nil)
-	vr := v.Buffer().Line(v.Buffer().TextPoint(line, 0))
-	log4go.Debug("FormatLine: %d, %s", line, vr)
-	if vr.Size() == 0 {
-		return ""
+func (fv *frontendView) Line(index int) *lineStruct {
+	return fv.FormattedLine[index]
+}
+
+func (fv *frontendView) bufferChanged(buf Buffer, pos, delta int) {
+	prof := util.Prof.Enter("frontendView.bufferChanged")
+	defer prof.Exit()
+	row1, _ := buf.RowCol(pos)
+	row2, _ := buf.RowCol(pos + delta)
+	if row1 > row2 {
+		row1, row2 = row2, row1
 	}
-	recipie := v.Transform(scheme, vr).Transcribe()
+
+	for i := row1; i <= row2; i++ {
+		fv.formatLine(i)
+	}
+}
+
+func (fv *frontendView) formatLine(line int) {
+	prof := util.Prof.Enter("frontendView.formatLine")
+	defer prof.Exit()
+	buf := bytes.NewBuffer(nil)
+	vr := fv.bv.Buffer().Line(fv.bv.Buffer().TextPoint(line, 0))
+	for line >= len(fv.FormattedLine) {
+		fv.FormattedLine = append(fv.FormattedLine, &lineStruct{Text: ""})
+		fv.Len = len(fv.FormattedLine)
+		qml.Changed(fv, &fv.Len)
+	}
+	if vr.Size() == 0 {
+		// TODO: draw cursor if here
+		if fv.FormattedLine[line].Text != "" {
+			fv.FormattedLine[line].Text = ""
+			qml.Changed(fv.FormattedLine[line], fv.FormattedLine[line])
+		}
+		return
+	}
+	recipie := fv.bv.Transform(scheme, vr).Transcribe()
 	highlight_line := false
-	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
+	if b, ok := fv.bv.Settings().Get("highlight_line", highlight_line).(bool); ok {
 		highlight_line = b
 	}
 	lastEnd := vr.Begin()
+
 	for _, reg := range recipie {
 		if lastEnd != reg.Region.Begin() {
-			fmt.Fprintf(buf, "<span>%s</span>", v.Buffer().Substr(Region{lastEnd, reg.Region.Begin()}))
+			fmt.Fprintf(buf, "<span>%s</span>", fv.bv.Buffer().Substr(Region{lastEnd, reg.Region.Begin()}))
 		}
-		fmt.Fprintf(buf, "<span style=\"white-space:pre; color:#%s; background:#%s\">%s</span>", htmlcol(reg.Flavour.Foreground), htmlcol(reg.Flavour.Background), v.Buffer().Substr(reg.Region))
+		fmt.Fprintf(buf, "<span style=\"white-space:pre; color:#%s; background:#%s\">%s</span>", htmlcol(reg.Flavour.Foreground), htmlcol(reg.Flavour.Background), fv.bv.Buffer().Substr(reg.Region))
 		lastEnd = reg.Region.End()
 	}
 	if lastEnd != vr.End() {
-		io.WriteString(buf, v.Buffer().Substr(Region{lastEnd, vr.End()}))
+		io.WriteString(buf, fv.bv.Buffer().Substr(Region{lastEnd, vr.End()}))
 	}
-	return buf.String()
+
+	str := buf.String()
+
+	if fv.FormattedLine[line].Text != str {
+		fv.FormattedLine[line].Text = str
+		qml.Changed(fv.FormattedLine[line], fv.FormattedLine[line])
+	}
 }
 
 func (t *tbfe) DefaultBg() color.RGBA {
@@ -387,13 +436,20 @@ func (t *tbfe) loop() {
 	engine.Context().SetVar("editor", backend.GetEditor())
 
 	backend.OnNew.Add(func(v *backend.View) {
-		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) { t.dirty = true })
-	})
-	backend.OnModified.Add(func(v *backend.View) {
-		t.dirty = true
-	})
-	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.dirty = true
+		fv := &frontendView{bv: v}
+		v.Buffer().AddCallback(fv.bufferChanged)
+		v.Settings().AddOnChange("blah", func(name string) {
+			if name == "lime.syntax.updated" {
+				// force redraw, as the syntax regions might have changed...
+				for i := range fv.FormattedLine {
+					fv.formatLine(i)
+				}
+			}
+		})
+
+		t.views[v] = fv
+		t.Len = len(t.views)
+		qml.Changed(t, &t.Len)
 	})
 
 	ed := backend.GetEditor()
@@ -401,6 +457,10 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
+
+	t.Console = &frontendView{bv: c}
+	c.Buffer().AddCallback(t.Console.bufferChanged)
+
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
@@ -431,7 +491,7 @@ func (t *tbfe) loop() {
 	}
 	t.Show(v, Region{100, 100})
 	t.Show(v, Region{1, 1})
-	t.Len, _ = v.Buffer().RowCol(v.Buffer().Size())
+	//	t.Len, _ = v.Buffer().RowCol(v.Buffer().Size())
 
 	ed.Init()
 	sublime.Init()
@@ -442,7 +502,6 @@ func (t *tbfe) loop() {
 	}
 	window := component.CreateWindow(nil)
 	window.Show()
-	qml.Changed(t, &t.Len)
 
 	log4go.Debug("Done")
 	window.Wait()
@@ -493,7 +552,7 @@ func main() {
 	}()
 
 	var t tbfe
-	t.dorender = make(chan bool, render_chan_len)
 	t.layout = make(map[*backend.View]layout)
+	t.views = make(map[*backend.View]*frontendView)
 	t.loop()
 }
