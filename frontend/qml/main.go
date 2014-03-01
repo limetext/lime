@@ -454,9 +454,6 @@ func (t *tbfe) loop() {
 	c.Buffer().AddCallback(t.Console.bufferChanged)
 	c.Buffer().AddCallback(t.scroll)
 
-	ed.Init()
-	sublime.Init()
-
 	component, err := engine.LoadFile("main.qml")
 	if err != nil {
 		log4go.Exit(err)
@@ -495,6 +492,8 @@ func (t *tbfe) loop() {
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
 
+	ed.Init()
+	sublime.Init()
 	wg.Wait()
 }
 
