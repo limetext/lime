@@ -15,6 +15,8 @@ ApplicationWindow {
             MenuItem { text: "World" }
         }
     }
+    property var myWindow
+
     Item {
         anchors.fill: parent
         Keys.onPressed: {
@@ -54,84 +56,28 @@ ApplicationWindow {
                     frame: Rectangle { color: frontend.defaultBg() }
                     tabOverlap: 5
                 }
-                Tab {
-                    anchors.fill: parent
-                    title: editor.activeWindow.activeView.buffer().filename
-                    Item {
-                        id: viewItem
-                        property var myView: frontend.view(editor.activeWindow.activeView)
-                        Rectangle  {
-                            color: frontend.defaultBg()
-                            anchors.fill: parent
-                        }
-                        ListView {
-                            id: view
-                            anchors.fill: parent
-                            model: myView.len
-                            delegate: Text {
-                                property var line: myView.line(index)
-                                text: line.text
-                                textFormat: TextEdit.RichText
-                                color: "white"
-                            }
-                            states: [
-                                State {
-                                    name: "ShowBars"
-                                    when: view.movingVertically || view.movingHorizontally
-                                    PropertyChanges {
-                                        target: verticalScrollBar
-                                        opacity: 0.5
-                                    }
-                                },
-                                State {
-                                    name: "HideBars"
-                                    when: !view.movingVertically && !view.movingHorizontally
-                                    PropertyChanges {
-                                        target: verticalScrollBar
-                                        opacity: 0
-                                    }
-                                }
-                            ]
-                            Rectangle {
-                                id: verticalScrollBar
-                                y: view.visibleArea.yPosition * view.height
-                                width: 10
-                                radius: width
-                                height: view.visibleArea.heightRatio * view.height
-                                anchors.right: view.right
-                                opacity: 0
-                                Behavior on opacity { PropertyAnimation {} }
-                            }
-                            clip: true
-                        }
+                Repeater {
+                    id: rpmod
+                    function tmp() {
+                        var ret = myWindow ? myWindow.len : 0;
+                        console.log(ret);
+                        return ret;
+                    }
+                    model: tmp()
+                    delegate: Tab {
+                        title: myWindow.view(index).title()
+                        LimeView { myView: myWindow.view(index) }
                     }
                 }
-                Tab {
-                    title: "untitled"
-                }
-                Tab {
-                    title: "untitled"
+
+                onCurrentIndexChanged: {
+                    myWindow.back().setActiveView(myWindow.view(currentIndex).back());
                 }
             }
-            Item {
+            LimeView {
                 id: consoleView
+                myView: frontend.console
                 height: 100
-                property var myView: frontend.console
-                Rectangle {
-                    color: frontend.defaultBg()
-                    anchors.fill: parent
-                }
-                ListView {
-                    anchors.fill: parent
-                    model: consoleView.myView.len
-                    delegate: Text {
-                        property var line: consoleView.myView.line(index)
-                        text: line.text
-                        textFormat: TextEdit.RichText
-                        color: "white"
-                    }
-                    clip: true
-                }
             }
         }
     }

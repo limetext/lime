@@ -21,6 +21,7 @@ import (
 	"io"
 	"runtime"
 	"sync"
+	"time"
 )
 
 var (
@@ -227,24 +228,23 @@ const (
 )
 
 type (
-	layout struct {
-		x, y          int
-		width, height int
-		visible       Region
-		lastUpdate    int
-	}
-
 	tbfe struct {
-		layout         map[*backend.View]layout
 		status_message string
 		lock           sync.Mutex
-		Len            int
-		views          map[*backend.View]*frontendView
+		windows        map[*backend.Window]*frontendWindow
 		Console        *frontendView
+		qmlDispatch    chan qmlDispatch
 	}
 	lineStruct struct {
 		Text string
 	}
+	frontendWindow struct {
+		bw     *backend.Window
+		Len    int
+		views  []*frontendView
+		window *qml.Window
+	}
+	qmlDispatch  struct{ value, field interface{} }
 	frontendView struct {
 		bv            *backend.View
 		Len           int
@@ -252,81 +252,28 @@ type (
 	}
 )
 
+var (
+	t *tbfe
+)
+
 func htmlcol(c render.Colour) string {
 	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
 
-func (t *tbfe) View(v *backend.View) *frontendView {
-	return t.views[v]
+func (fw *frontendWindow) View(idx int) *frontendView {
+	return fw.views[idx]
 }
-func (t *tbfe) clip(v *backend.View, s, e int) Region {
-	p := util.Prof.Enter("clip")
-	defer p.Exit()
-	h := t.layout[v].height
-	if e-s > h {
-		e = s + h
-	} else if e-s < h {
-		s = e - h
-	}
-	if e2, _ := v.Buffer().RowCol(v.Buffer().TextPoint(e, 0)); e2 < e {
-		e = e2
-	}
-	if s < 0 {
-		s = 0
-	}
-	e = s + h
-	r := Region{v.Buffer().TextPoint(s, 0), v.Buffer().TextPoint(e, 0)}
-	return v.Buffer().LineR(r)
+func (t *tbfe) Window(w *backend.Window) *frontendWindow {
+	return t.windows[w]
 }
 
 func (t *tbfe) Show(v *backend.View, r Region) {
-	t.lock.Lock()
-	l := t.layout[v]
-	t.lock.Unlock()
-	if l.visible.Covers(r) {
-		return
-	}
-	p := util.Prof.Enter("show")
-	defer p.Exit()
-
-	lv := l.visible
-
-	s1, _ := v.Buffer().RowCol(lv.Begin())
-	e1, _ := v.Buffer().RowCol(lv.End())
-	s2, _ := v.Buffer().RowCol(r.Begin())
-	e2, _ := v.Buffer().RowCol(r.End())
-
-	r1 := Region{s1, e1}
-	r2 := Region{s2, e2}
-
-	r3 := r1.Cover(r2)
-	diff := 0
-	if d1, d2 := Abs(r1.Begin()-r3.Begin()), Abs(r1.End()-r3.End()); d1 > d2 {
-		diff = r3.Begin() - r1.Begin()
-	} else {
-		diff = r3.End() - r1.End()
-	}
-	r3.A = r1.Begin() + diff
-	r3.B = r1.End() + diff
-
-	r3 = t.clip(v, r3.A, r3.B)
-	l.visible = r3
-	t.lock.Lock()
-	t.layout[v] = l
-	t.lock.Unlock()
+	// TODO
 }
 
 func (t *tbfe) VisibleRegion(v *backend.View) Region {
-	t.lock.Lock()
-	r, ok := t.layout[v]
-	t.lock.Unlock()
-	if !ok || r.lastUpdate != v.Buffer().ChangeCount() {
-		t.Show(v, r.visible)
-		t.lock.Lock()
-		r = t.layout[v]
-		t.lock.Unlock()
-	}
-	return r.visible
+	// TODO
+	return Region{0, v.Buffer().Size()}
 }
 
 func (t *tbfe) StatusMessage(msg string) {
@@ -357,6 +304,51 @@ func (fv *frontendView) Line(index int) *lineStruct {
 	return fv.FormattedLine[index]
 }
 
+func (fv *frontendView) Title() string {
+	return fv.bv.Buffer().FileName()
+}
+
+func (fv *frontendView) Back() *backend.View {
+	return fv.bv
+}
+func (fw *frontendWindow) Back() *backend.Window {
+	return fw.bw
+}
+
+// Apparently calling qml.Changed also triggers a re-draw, meaning that typed text is at the
+// mercy of how quick Qt happens to be rendering.
+// Try setting batching_enabled = false to see the effects of non-batching
+func (t *tbfe) qmlBatchLoop() {
+	queue := make(map[qmlDispatch]bool)
+	t.qmlDispatch = make(chan qmlDispatch, 10)
+	for {
+		if len(queue) > 0 {
+			select {
+			case <-time.After(time.Millisecond * 20):
+				// Nothing happened for 20 milliseconds, so dispatch all queued changes
+				for k := range queue {
+					qml.Changed(k.value, k.field)
+				}
+				queue = make(map[qmlDispatch]bool)
+			case d := <-t.qmlDispatch:
+				queue[d] = true
+			}
+		} else {
+			queue[<-t.qmlDispatch] = true
+		}
+	}
+}
+
+const batching_enabled = true
+
+func (t *tbfe) qmlChanged(value, field interface{}) {
+	if !batching_enabled {
+		qml.Changed(value, field)
+	} else {
+		t.qmlDispatch <- qmlDispatch{value, field}
+	}
+}
+
 func (fv *frontendView) bufferChanged(buf Buffer, pos, delta int) {
 	prof := util.Prof.Enter("frontendView.bufferChanged")
 	defer prof.Exit()
@@ -379,13 +371,13 @@ func (fv *frontendView) formatLine(line int) {
 	for line >= len(fv.FormattedLine) {
 		fv.FormattedLine = append(fv.FormattedLine, &lineStruct{Text: ""})
 		fv.Len = len(fv.FormattedLine)
-		qml.Changed(fv, &fv.Len)
+		t.qmlChanged(fv, &fv.Len)
 	}
 	if vr.Size() == 0 {
 		// TODO: draw cursor if here
 		if fv.FormattedLine[line].Text != "" {
 			fv.FormattedLine[line].Text = ""
-			qml.Changed(fv.FormattedLine[line], fv.FormattedLine[line])
+			t.qmlChanged(fv.FormattedLine[line], fv.FormattedLine[line])
 		}
 		return
 	}
@@ -411,7 +403,7 @@ func (fv *frontendView) formatLine(line int) {
 
 	if fv.FormattedLine[line].Text != str {
 		fv.FormattedLine[line].Text = str
-		qml.Changed(fv.FormattedLine[line], fv.FormattedLine[line])
+		t.qmlChanged(fv.FormattedLine[line], fv.FormattedLine[line])
 	}
 }
 
@@ -447,9 +439,10 @@ func (t *tbfe) loop() {
 			}
 		})
 
-		t.views[v] = fv
-		t.Len = len(t.views)
-		qml.Changed(t, &t.Len)
+		w2 := t.windows[v.Window()]
+		w2.views = append(w2.views, fv)
+		w2.Len = len(w2.views)
+		t.qmlChanged(w2, &w2.Len)
 	})
 
 	ed := backend.GetEditor()
@@ -457,10 +450,33 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-
 	t.Console = &frontendView{bv: c}
 	c.Buffer().AddCallback(t.Console.bufferChanged)
+	c.Buffer().AddCallback(t.scroll)
 
+	ed.Init()
+	sublime.Init()
+
+	component, err := engine.LoadFile("main.qml")
+	if err != nil {
+		log4go.Exit(err)
+	}
+
+	wg := sync.WaitGroup{}
+	backend.OnNewWindow.Add(func(w *backend.Window) {
+		wg.Add(1)
+		fw := &frontendWindow{bw: w, window: component.CreateWindow(nil)}
+		t.windows[w] = fw
+		fw.window.Show()
+		fw.window.Set("myWindow", fw)
+
+		go func() {
+			fw.window.Wait()
+			wg.Done()
+		}()
+	})
+
+	// TODO: should be done backend side
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
@@ -473,38 +489,13 @@ func (t *tbfe) loop() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
-	v.Settings().Set("trace", true)
+	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
-	c.Buffer().AddCallback(t.scroll)
+	v = w.OpenFile("../../backend/editor.go", 0)
+	// TODO: should be done backend side
+	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
 
-	sel := v.Sel()
-	sel.Clear()
-	sel.Add(Region{0, 0})
-
-	{
-		w, h := 800, 600
-		t.lock.Lock()
-		t.layout[v] = layout{0, 0, w, h - console_height - 1, Region{}, 0}
-		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
-		t.lock.Unlock()
-		t.Show(v, Region{1, 1})
-	}
-	t.Show(v, Region{100, 100})
-	t.Show(v, Region{1, 1})
-	//	t.Len, _ = v.Buffer().RowCol(v.Buffer().Size())
-
-	ed.Init()
-	sublime.Init()
-
-	component, err := engine.LoadFile("main.qml")
-	if err != nil {
-		log4go.Exit(err)
-	}
-	window := component.CreateWindow(nil)
-	window.Show()
-
-	log4go.Debug("Done")
-	window.Wait()
+	wg.Wait()
 }
 
 func (t *tbfe) HandleInput(keycode int, modifiers int) bool {
@@ -551,8 +542,7 @@ func main() {
 		py.Finalize()
 	}()
 
-	var t tbfe
-	t.layout = make(map[*backend.View]layout)
-	t.views = make(map[*backend.View]*frontendView)
+	t = &tbfe{windows: make(map[*backend.Window]*frontendWindow)}
+	go t.qmlBatchLoop()
 	t.loop()
 }
