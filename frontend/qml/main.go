@@ -320,7 +320,7 @@ func (fw *frontendWindow) Back() *backend.Window {
 // Try setting batching_enabled = false to see the effects of non-batching
 func (t *tbfe) qmlBatchLoop() {
 	queue := make(map[qmlDispatch]bool)
-	t.qmlDispatch = make(chan qmlDispatch, 10)
+	t.qmlDispatch = make(chan qmlDispatch, 1000)
 	for {
 		if len(queue) > 0 {
 			select {
@@ -339,7 +339,7 @@ func (t *tbfe) qmlBatchLoop() {
 	}
 }
 
-const batching_enabled = true
+const batching_enabled = false
 
 func (t *tbfe) qmlChanged(value, field interface{}) {
 	if !batching_enabled {

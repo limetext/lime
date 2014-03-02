@@ -1,8 +1,10 @@
 import QtQuick 2.0
+import QtQuick.Layouts 1.0
 
 Item {
     id: viewItem
-    property var myView //: frontend.window(editor.activeWindow).view(editor.activeWindow.activeView)
+    property var myView
+    property bool isMinimap: false
     Rectangle  {
         color: frontend.defaultBg()
         anchors.fill: parent
@@ -18,6 +20,7 @@ Item {
         model: myView ? myView.len : 0
         delegate: Text {
             property var line: myView.line(index)
+            font.pointSize: isMinimap ? 4 : 12
             text: line.text
             textFormat: TextEdit.RichText
             color: "white"
