@@ -396,7 +396,6 @@ func (t *tbfe) loop() {
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
-		termbox.Close()
 		fmt.Println(util.Prof)
 	}()
 
@@ -660,6 +659,12 @@ func main() {
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}
+	defer func() {
+		termbox.Close()
+		if err := recover(); err != nil {
+			log4go.Crash(err)
+		}
+	}()
 
 	var t tbfe
 	t.dorender = make(chan bool, render_chan_len)
