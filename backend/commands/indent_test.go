@@ -13,19 +13,51 @@ import (
 func TestIndent(t *testing.T) {
 	type Test struct {
 		text string
-		expect string
+		translate_tabs_to_spaces interface{}
+		tab_size interface{}
 		sel []Region
+		expect string
 	}
 	tests := []Test{
-		{
-			"Life is short\nYou need Python\n",
-			"\tLife is short\n\tYou need Python\n",
-			[]Region{{3, 5}, {9, 10}, {16, 20}},
+		{	// translate_tabs_to_spaces = false
+			// indent should be "\t"
+			"a\n b\n  c\n   d\n",
+			false,
+			4,
+			[]Region{{0, 1}},
+			"\ta\n b\n  c\n   d\n",
 		},
-		{
-			"Life is short\nYou need Python\n",
-			"\tLife is short\n\tYou need Python\n",
-			[]Region{{3, 20}},
+		{	// translate_tabs_to_spaces = nil
+			// indent should be "\t"
+			"a\n b\n  c\n   d\n",
+			nil,
+			1,
+			[]Region{{0, 1}},
+			"\ta\n b\n  c\n   d\n",
+		},
+		{	// translate_tabs_to_spaces = true and tab_size = 2
+			// indent should be "  "
+			"a\n b\n  c\n   d\n",
+			true,
+			2,
+			[]Region{{0, 1}},
+			"  a\n b\n  c\n   d\n",
+		},
+		{	// translate_tabs_to_spaces = true and tab_size = nil
+			// indent should be "    "
+			"a\n b\n  c\n   d\n",
+			true,
+			nil,
+			[]Region{{0, 1}},
+			"    a\n b\n  c\n   d\n",
+		},
+		{	// region include the 1st line and the 4th line
+			// indent should add to the begining of 1st and 4th line
+			"a\n b\n  c\n   d\n",
+			false,
+			1,
+			[]Region{{0, 1}, {11, 12}},
+			"\ta\n b\n  c\n\t   d\n",
 		},
 	}
 	ed := GetEditor()
@@ -41,6 +73,8 @@ func TestIndent(t *testing.T) {
 		for _, r := range test.sel {
 			v.Sel().Add(r)
 		}
+		v.Settings().Set("translate_tabs_to_spaces", test.translate_tabs_to_spaces)
+		v.Settings().Set("tab_size", test.tab_size)
 
 		ed.CommandHandler().RunTextCommand(v, "indent", nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
