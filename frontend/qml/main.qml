@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
+import QtQuick.Dialogs 1.0
 import QtQuick.Layouts 1.0
 import QtGraphicalEffects 1.0
 
@@ -11,8 +12,17 @@ ApplicationWindow {
     menuBar: MenuBar {
         id: menu
         Menu {
-            title: "Hello"
-            MenuItem { text: "World" }
+            title: qsTr("&File")
+            MenuItem {
+                text: qsTr("&New")
+                shortcut: "Ctrl+N"
+                onTriggered: editor.newWindow()
+            }
+            MenuItem {
+                text: qsTr("&Open")
+                shortcut: "Ctrl+O"
+                onTriggered: openDialog.open()
+            }
         }
     }
     property var myWindow
@@ -116,6 +126,22 @@ ApplicationWindow {
                 myView: frontend.console
                 height: 100
             }
+        }
+    }
+
+    FileDialog {
+        id: openDialog
+        title: qsTr("Please choose a file:")
+        onAccepted: {
+            var _url = openDialog.fileUrl.toString()
+            if(_url.length >= 7 && _url.slice(0, 7) == "file://") {
+                _url = _url.slice(7)
+            }
+            console.log("Choosed: " + _url);
+            myWindow.back().openFile(_url, 0);
+        }
+        onRejected: {
+            console.log("Canceled.")
         }
     }
 }
