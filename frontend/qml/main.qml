@@ -78,7 +78,7 @@ ApplicationWindow {
                         }
                         model: tmp()
                         delegate: Tab {
-                            title: myWindow.view(index).title()
+                            title: myWindow.view(index).title.text
                             LimeView { myView: myWindow.view(index) }
                         }
                     }
@@ -115,7 +115,7 @@ ApplicationWindow {
                         id: minimapArea
                         y: parent.percentage(parent.children[1])*(parent.height-height)
                         width: parent.width
-                        height: parent.realView.visibleArea.heightRatio*parent.children[1].contentHeight
+                        height: parent.realView ? parent.realView.visibleArea.heightRatio*parent.children[1].contentHeight : parent.height
                         color: "white"
                         opacity: 0.1
                     }
