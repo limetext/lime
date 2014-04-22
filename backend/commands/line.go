@@ -15,6 +15,19 @@ type (
 	JoinCommand struct {
 		DefaultCommand
 	}
+
+	SelectLinesCommand struct {
+		DefaultCommand
+		forward bool
+	}
+
+	SwapLineUpCommand struct {
+		DefaultCommand
+	}
+
+	SwapLineDownCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *JoinCommand) Run(v *View, e *Edit) error {
@@ -56,5 +69,8 @@ func (c *JoinCommand) Run(v *View, e *Edit) error {
 func init() {
 	register([]cmd{
 		{"join", &JoinCommand{}},
+		{"select_lines", &SelectLinesCommand{}},
+		{"swap_line_up", &SwapLineUpCommand{}},
+		{"swap_line_down", &SwapLineDownCommand{}},
 	})
 }
