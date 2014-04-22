@@ -12,6 +12,7 @@ import (
 	"github.com/limetext/lime/backend/render"
 	"image/color"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -46,10 +47,23 @@ func LoadTheme(filename string) (*Theme, error) {
 	return &scheme, nil
 }
 
+func (s ScopeSetting) String() (ret string) {
+	ret = fmt.Sprintf("%s - %s\n", s.Name, s.Scope)
+	keys := make([]string, 0, len(s.Settings))
+	for k := range s.Settings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		ret += fmt.Sprintf("\t\t%s: %s\n", k, s.Settings[k])
+	}
+	return
+}
+
 func (t Theme) String() (ret string) {
 	ret = fmt.Sprintf("%s - %s\n", t.Name, t.UUID)
 	for i := range t.Settings {
-		ret += fmt.Sprintf("\t%s\n", t.Settings[i])
+		ret += fmt.Sprintf("\t%s", t.Settings[i])
 	}
 	return
 }
