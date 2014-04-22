@@ -6,6 +6,7 @@ package commands
 
 import (
 	. "github.com/limetext/lime/backend"
+	. "github.com/quarnster/util/text"
 	"strings"
 )
 
@@ -39,8 +40,8 @@ func (c *JoinCommand) Run(v *View, e *Edit) error {
 		t = strings.Replace(t, "\r", "\n", -1)
 		slice := strings.Split(t, "\n")
 		t = ""
-		for i, s := range slice {
-			if i == 0 {
+		for j, s := range slice {
+			if j == 0 {
 				t += s
 				continue
 			}
@@ -63,6 +64,48 @@ func (c *JoinCommand) Run(v *View, e *Edit) error {
 		v.Replace(e, liner, line)
 	}
 
+	return nil
+}
+
+func (c *SwapLineUpCommand) Run(v *View, e *Edit) error {
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		// Expand to all lines under selection
+		fline := v.Buffer().Line(r.Begin())
+		lline := v.Buffer().Line(r.End())
+		r = Region{fline.Begin(), lline.End()}
+		t := v.Buffer().Substr(r)
+		// Select line before region
+		bline := v.Buffer().Line(r.Begin() - 1)
+		bt := v.Buffer().Substr(bline)
+		v.Replace(e, r, bt)
+		v.Replace(e, bline, t)
+	}
+
+	return nil
+}
+
+func (c *SwapLineDownCommand) Run(v *View, e *Edit) error {
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		// Expand to all lines under selection
+		fline := v.Buffer().Line(r.Begin())
+		lline := v.Buffer().Line(r.End())
+		r = Region{fline.Begin(), lline.End()}
+		t := v.Buffer().Substr(r)
+		// Select line before region
+		nline := v.Buffer().Line(r.End() + 1)
+		nt := v.Buffer().Substr(nline)
+		v.Replace(e, nline, t)
+		v.Replace(e, r, nt)
+	}
+
+	return nil
+}
+
+func (c *SelectLinesCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
