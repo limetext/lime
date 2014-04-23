@@ -19,7 +19,7 @@ type (
 
 	SelectLinesCommand struct {
 		DefaultCommand
-		forward bool
+		Forward bool
 	}
 
 	SwapLineUpCommand struct {
@@ -106,6 +106,38 @@ func (c *SwapLineDownCommand) Run(v *View, e *Edit) error {
 }
 
 func (c *SelectLinesCommand) Run(v *View, e *Edit) error {
+	var (
+		re      []Region
+		line, l Region
+		d       int
+	)
+
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		// Get the distance of the selection to the begining of line
+		if c.Forward {
+			line = v.Buffer().FullLine(r.End())
+			l = v.Buffer().Line(line.End() + 1)
+			d = r.End() - line.Begin()
+		} else {
+			line = v.Buffer().FullLine(r.Begin())
+			l = v.Buffer().Line(line.Begin() - 1)
+			d = r.Begin() - line.Begin()
+		}
+		// If the next line lenght is more than the calculated distance
+		// Put new region at the exact distance
+		// If not put region at the end of the next|before line
+		if l.Size() < d {
+			re = append(re, Region{l.End(), l.End()})
+		} else {
+			re = append(re, Region{l.Begin() + d, l.Begin() + d})
+		}
+	}
+	for _, r := range re {
+		v.Sel().Add(r)
+	}
+
 	return nil
 }
 

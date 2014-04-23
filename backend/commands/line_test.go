@@ -78,23 +78,35 @@ func TestSelectLines(t *testing.T) {
 			[]Region{{1, 1}, {5, 5}},
 		},
 		{
+			"abcde\nfg",
+			[]Region{{4, 4}},
+			true,
+			[]Region{{4, 4}, {8, 8}},
+		},
+		{
+			"Testing select lines command\nin\nlime text",
+			[]Region{{8, 14}, {30, 30}},
+			true,
+			[]Region{{8, 14}, {30, 30}, {31, 31}, {33, 33}},
+		},
+		{
 			"abc\n\ndefg",
 			[]Region{{6, 6}},
 			false,
 			[]Region{{6, 6}, {4, 4}},
 		},
 		{
-			"abcde\nfg",
-			[]Region{{4, 4}},
-			true,
-			[]Region{{4, 4}, {8, 8}},
+			"Testing select lines command\nin\nlime text",
+			[]Region{{30, 36}, {29, 29}},
+			false,
+			[]Region{{30, 36}, {29, 29}, {0, 0}, {1, 1}},
 		},
 	}
 
 	ed := GetEditor()
 	w := ed.NewWindow()
 
-	for _, test := range tests {
+	for i, test := range tests {
 		v := w.NewFile()
 		e := v.BeginEdit()
 
@@ -108,6 +120,26 @@ func TestSelectLines(t *testing.T) {
 
 		ed.CommandHandler().RunTextCommand(v, "select_lines", Args{"forward": test.forward})
 		// TODO: Comparing regions
+		d := v.Sel()
+		if d.Len() != len(test.expect) {
+			t.Errorf("Test %d:\nExcepted: '%d' regions, but got: '%d' regions", i, len(test.expect), d.Len())
+			t.Errorf("%+v  %+v", test.expect, d.Regions())
+		} else {
+			var found bool
+			for _, r := range test.expect {
+				found = false
+				for _, r2 := range d.Regions() {
+					if r2 == r {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Test %d:\nRegion %+v not found in view regions: %+v", i, r, d.Regions())
+				}
+			}
+		}
+
 	}
 }
 
