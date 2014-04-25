@@ -29,6 +29,10 @@ type (
 	SwapLineDownCommand struct {
 		DefaultCommand
 	}
+
+	SplitSelectionIntoLinesCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *JoinCommand) Run(v *View, e *Edit) error {
@@ -107,7 +111,7 @@ func (c *SwapLineDownCommand) Run(v *View, e *Edit) error {
 
 func (c *SelectLinesCommand) Run(v *View, e *Edit) error {
 	var (
-		re      []Region
+		rs      []Region
 		line, l Region
 		d       int
 	)
@@ -129,14 +133,34 @@ func (c *SelectLinesCommand) Run(v *View, e *Edit) error {
 		// Put new region at the exact distance
 		// If not put region at the end of the next|before line
 		if l.Size() < d {
-			re = append(re, Region{l.End(), l.End()})
+			rs = append(rs, Region{l.End(), l.End()})
 		} else {
-			re = append(re, Region{l.Begin() + d, l.Begin() + d})
+			rs = append(rs, Region{l.Begin() + d, l.Begin() + d})
 		}
 	}
-	for _, r := range re {
-		v.Sel().Add(r)
+	v.Sel().AddAll(rs)
+
+	return nil
+}
+
+func (c *SplitSelectionIntoLinesCommand) Run(v *View, e *Edit) error {
+	var rs []Region
+
+	sel := v.Sel()
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		lines := v.Buffer().Lines(r)
+		for i := 0; i < len(lines); i++ {
+			if i != 0 {
+				// Remove line endings
+				r2 := v.Buffer().FullLine(lines[i-1].End())
+				lines[i] = lines[i].Clip(r2)
+			}
+			rs = append(rs, lines[i].Intersection(r))
+		}
 	}
+	v.Sel().Clear()
+	v.Sel().AddAll(rs)
 
 	return nil
 }
@@ -147,5 +171,6 @@ func init() {
 		{"select_lines", &SelectLinesCommand{}},
 		{"swap_line_up", &SwapLineUpCommand{}},
 		{"swap_line_down", &SwapLineDownCommand{}},
+		{"split_selection_into_lines", &SplitSelectionIntoLinesCommand{}},
 	})
 }

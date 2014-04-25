@@ -51,9 +51,7 @@ func TestJoin(t *testing.T) {
 		v.EndEdit(e)
 
 		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
+		v.Sel().AddAll(test.sel)
 
 		ed.CommandHandler().RunTextCommand(v, "join", nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
@@ -114,16 +112,14 @@ func TestSelectLines(t *testing.T) {
 		v.EndEdit(e)
 
 		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
+		v.Sel().AddAll(test.sel)
 
 		ed.CommandHandler().RunTextCommand(v, "select_lines", Args{"forward": test.forward})
-		// TODO: Comparing regions
+		// Comparing regions
 		d := v.Sel()
 		if d.Len() != len(test.expect) {
-			t.Errorf("Test %d:\nExcepted: '%d' regions, but got: '%d' regions", i, len(test.expect), d.Len())
-			t.Errorf("%+v  %+v", test.expect, d.Regions())
+			t.Errorf("Test %d: Excepted '%d' regions, but got '%d' regions", i, len(test.expect), d.Len())
+			t.Errorf("%+v, %+v", test.expect, d.Regions())
 		} else {
 			var found bool
 			for _, r := range test.expect {
@@ -139,7 +135,6 @@ func TestSelectLines(t *testing.T) {
 				}
 			}
 		}
-
 	}
 }
 
@@ -187,9 +182,7 @@ func TestSwapLine(t *testing.T) {
 		v.EndEdit(e)
 
 		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
+		v.Sel().AddAll(test.sel)
 
 		ed.CommandHandler().RunTextCommand(v, "swap_line_up", nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
@@ -205,13 +198,73 @@ func TestSwapLine(t *testing.T) {
 		v.EndEdit(e)
 
 		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
+		v.Sel().AddAll(test.sel)
 
 		ed.CommandHandler().RunTextCommand(v, "swap_line_down", nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
 			t.Errorf("Test %d:\nExcepted: '%s'\nbut got: '%s'", i, test.expect, d)
+		}
+	}
+}
+
+func TestSplitToLines(t *testing.T) {
+	type SplitToLinesTest struct {
+		text   string
+		sel    []Region
+		expect []Region
+	}
+
+	tests := []SplitToLinesTest{
+		{
+			"ab\ncd\nef",
+			[]Region{{4, 7}},
+			[]Region{{4, 5}, {6, 7}},
+		},
+		{
+			"ab\ncd\nef",
+			[]Region{{0, 8}},
+			[]Region{{0, 2}, {3, 5}, {6, 8}},
+		},
+		{
+			"ab\ncd\nef",
+			[]Region{{0, 4}, {4, 7}},
+			[]Region{{0, 2}, {3, 4}, {4, 5}, {6, 7}},
+		},
+	}
+
+	ed := GetEditor()
+	w := ed.NewWindow()
+
+	for i, test := range tests {
+		v := w.NewFile()
+		e := v.BeginEdit()
+
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+
+		v.Sel().Clear()
+		v.Sel().AddAll(test.sel)
+
+		ed.CommandHandler().RunTextCommand(v, "split_selection_into_lines", nil)
+		// Comparing regions
+		d := v.Sel()
+		if d.Len() != len(test.expect) {
+			t.Errorf("Test %d: Excepted '%d' regions, but got '%d' regions", i, len(test.expect), d.Len())
+			t.Errorf("%+v, %+v", test.expect, d.Regions())
+		} else {
+			var found bool
+			for _, r := range test.expect {
+				found = false
+				for _, r2 := range d.Regions() {
+					if r2 == r {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("Test %d:\nRegion %+v not found in view regions: %+v", i, r, d.Regions())
+				}
+			}
 		}
 	}
 }
