@@ -37,3 +37,6 @@
 [submodule "3rdparty/bundles/themes/soda"]
 	path = 3rdparty/bundles/themes/soda
 	url = https://github.com/buymeasoda/soda-theme.git
+[submodule "3rdparty/bundles/python.tmbundle"]
+	path = 3rdparty/bundles/python.tmbundle
+	url = git://github.com/textmate/python.tmbundle.git
