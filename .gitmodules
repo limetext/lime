@@ -40,3 +40,60 @@
 [submodule "3rdparty/bundles/python.tmbundle"]
 	path = 3rdparty/bundles/python.tmbundle
 	url = git://github.com/textmate/python.tmbundle.git
+[submodule "3rdparty/bundles/Diff.tmbundle"]
+	path = 3rdparty/bundles/Diff.tmbundle
+	url = git://github.com/textmate/Diff.tmbundle.git
+[submodule "3rdparty/bundles/ruby.tmbundle"]
+	path = 3rdparty/bundles/ruby.tmbundle
+	url = git://github.com/textmate/ruby.tmbundle.git
+[submodule "3rdparty/bundles/perl.tmbundle"]
+	path = 3rdparty/bundles/perl.tmbundle
+	url = git://github.com/textmate/perl.tmbundle.git
+[submodule "3rdparty/bundles/sql.tmbundle"]
+	path = 3rdparty/bundles/sql.tmbundle
+	url = git://github.com/textmate/sql.tmbundle.git
+[submodule "3rdparty/bundles/html.tmbundle"]
+	path = 3rdparty/bundles/html.tmbundle
+	url = git://github.com/textmate/html.tmbundle.git
+[submodule "3rdparty/bundles/php.tmbundle"]
+	path = 3rdparty/bundles/php.tmbundle
+	url = git://github.com/textmate/php.tmbundle.git
+[submodule "3rdparty/bundles/make.tmbundle"]
+	path = 3rdparty/bundles/make.tmbundle
+	url = git://github.com/textmate/make.tmbundle.git
+[submodule "3rdparty/bundles/java.tmbundle"]
+	path = 3rdparty/bundles/java.tmbundle
+	url = git://github.com/textmate/java.tmbundle.git
+[submodule "3rdparty/bundles/javascript.tmbundle"]
+	path = 3rdparty/bundles/javascript.tmbundle
+	url = git://github.com/textmate/javascript.tmbundle.git
+[submodule "3rdparty/bundles/css.tmbundle"]
+	path = 3rdparty/bundles/css.tmbundle
+	url = git://github.com/textmate/css.tmbundle.git
+[submodule "3rdparty/bundles/shellscript.tmbundle"]
+	path = 3rdparty/bundles/shellscript.tmbundle
+	url = git://github.com/textmate/shellscript.tmbundle.git
+[submodule "3rdparty/bundles/json.tmbundle"]
+	path = 3rdparty/bundles/json.tmbundle
+	url = git://github.com/textmate/json.tmbundle.git
+[submodule "3rdparty/bundles/markdown.tmbundle"]
+	path = 3rdparty/bundles/markdown.tmbundle
+	url = git://github.com/textmate/markdown.tmbundle.git
+[submodule "3rdparty/bundles/haskell.tmbundle"]
+	path = 3rdparty/bundles/haskell.tmbundle
+	url = git://github.com/textmate/haskell.tmbundle.git
+[submodule "3rdparty/bundles/lua.tmbundle"]
+	path = 3rdparty/bundles/lua.tmbundle
+	url = git://github.com/textmate/lua.tmbundle.git
+[submodule "3rdparty/bundles/yaml.tmbundle"]
+	path = 3rdparty/bundles/yaml.tmbundle
+	url = git://github.com/textmate/yaml.tmbundle.git
+[submodule "3rdparty/bundles/d.tmbundle"]
+	path = 3rdparty/bundles/d.tmbundle
+	url = git://github.com/textmate/d.tmbundle.git
+[submodule "3rdparty/bundles/cmake.tmbundle"]
+	path = 3rdparty/bundles/cmake.tmbundle
+	url = git://github.com/textmate/cmake.tmbundle.git
+[submodule "3rdparty/bundles/ini.tmbundle"]
+	path = 3rdparty/bundles/ini.tmbundle
+	url = git://github.com/textmate/ini.tmbundle.git
