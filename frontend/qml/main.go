@@ -15,8 +15,8 @@ import (
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
-	"github.com/niemeyer/qml"
 	. "github.com/quarnster/util/text"
+	"gopkg.in/qml.v0"
 	"image/color"
 	"io"
 	"runtime"
@@ -249,6 +249,7 @@ type (
 		bv            *backend.View
 		Len           int
 		FormattedLine []*lineStruct
+		Title         lineStruct
 	}
 )
 
@@ -302,10 +303,6 @@ func (t *tbfe) scroll(b Buffer, pos, delta int) {
 
 func (fv *frontendView) Line(index int) *lineStruct {
 	return fv.FormattedLine[index]
-}
-
-func (fv *frontendView) Title() string {
-	return fv.bv.Buffer().FileName()
 }
 
 func (fv *frontendView) Back() *backend.View {
@@ -439,10 +436,28 @@ func (t *tbfe) loop() {
 			}
 		})
 
+		fv.Title.Text = v.Buffer().FileName()
+		if len(fv.Title.Text) == 0 {
+			fv.Title.Text = "untitled"
+		}
+
 		w2 := t.windows[v.Window()]
 		w2.views = append(w2.views, fv)
 		w2.Len = len(w2.views)
 		t.qmlChanged(w2, &w2.Len)
+	})
+
+	backend.OnLoad.Add(func(v *backend.View) {
+		w2 := t.windows[v.Window()]
+		i := 0
+		for i, _ = range w2.views {
+			if w2.views[i].bv == v {
+				break
+			}
+		}
+		v2 := w2.views[i]
+		v2.Title.Text = v.Buffer().FileName()
+		t.qmlChanged(v2, &v2.Title)
 	})
 
 	ed := backend.GetEditor()

@@ -14,6 +14,7 @@ import (
 	"github.com/quarnster/parser"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,7 +50,12 @@ type (
 		Name string
 	}
 
-	Captures map[string]Named
+	Capture struct {
+		Key int
+		Named
+	}
+
+	Captures []Capture
 
 	MatchObject []int
 
@@ -201,6 +207,31 @@ func (r *Regex) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (c *Captures) UnmarshalJSON(data []byte) error {
+	tmp := make(map[string]Named)
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	for k, v := range tmp {
+		i, _ := strconv.ParseInt(k, 10, 32)
+		*c = append(*c, Capture{Key: int(i), Named: v})
+	}
+	sort.Sort(c)
+	return nil
+}
+
+func (c *Captures) Len() int {
+	return len(*c)
+}
+
+func (c *Captures) Less(i, j int) bool {
+	return (*c)[i].Key < (*c)[j].Key
+}
+
+func (c *Captures) Swap(i, j int) {
+	(*c)[i], (*c)[j] = (*c)[j], (*c)[i]
+}
+
 func (m MatchObject) fix(add int) {
 	for i := range m {
 		if m[i] != -1 {
@@ -309,7 +340,7 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 	return
 }
 
-func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, mo MatchObject, parent *parser.Node, cap Captures) {
+func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, mo MatchObject, parent *parser.Node, capt Captures) {
 	ranges := make([]text.Region, len(mo)/2)
 	parentIndex := make([]int, len(ranges))
 	parents := make([]*parser.Node, len(parentIndex))
@@ -328,13 +359,9 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 		}
 	}
 
-	for k, v := range cap {
-		i64, err := strconv.ParseInt(k, 10, 32)
-		i := int(i64)
-		if err != nil || i >= len(parents) {
-			continue
-		}
-		if ranges[i].A == -1 {
+	for _, v := range capt {
+		i := v.Key
+		if i >= len(parents) || ranges[i].A == -1 {
 			continue
 		}
 		child := &parser.Node{Name: v.Name, Range: ranges[i], P: d}
