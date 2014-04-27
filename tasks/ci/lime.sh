@@ -34,6 +34,11 @@ function do_test {
 	fi
 }
 
+# Just to fetch all dependencies needed
+fold_start "termbox bootstrap"
+go get -d -u github.com/limetext/lime/frontend/termbox
+fold_end "termbox bootstrap"
+
 fold_start "Gen Python"
 go run tasks/build/gen_python_api.go
 fold_end "Gen Python"
@@ -42,6 +47,7 @@ fold_start "Add License"
 go run tasks/build/fix.go
 fold_end "Add License"
 
+# Actual build now that the python api has been refreshed
 fold_start "termbox"
 go get github.com/limetext/lime/frontend/termbox
 fold_end "termbox"
