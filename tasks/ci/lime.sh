@@ -34,6 +34,14 @@ function do_test {
 	fi
 }
 
+fold_start "Gen Python"
+go run tasks/build/gen_python_api.go
+fold_end "Gen Python"
+
+fold_start "Add License"
+go run tasks/build/fix.go
+fold_end "Add License"
+
 fold_start "termbox"
 go get github.com/limetext/lime/frontend/termbox
 fold_end "termbox"

@@ -161,8 +161,9 @@ func (t *tbfe) MessageDialog(msg string) {
 }
 
 // TODO(q): Actually show a dialog
-func (t *tbfe) OkCancelDialog(msg, ok string) {
+func (t *tbfe) OkCancelDialog(msg, ok string) bool {
 	log4go.Info(msg, ok)
+	return false
 }
 
 func (t *tbfe) scroll(b Buffer, pos, delta int) {

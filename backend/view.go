@@ -12,6 +12,8 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -37,7 +39,6 @@ type (
 		regions     render.ViewRegionMap
 		editstack   []*Edit
 		lock        sync.Mutex
-		modified    bool
 		reparseChan chan parseReq
 	}
 	parseReq struct {
@@ -471,6 +472,62 @@ func (v *View) SetOverwriteStatus(s bool) {
 	v.overwrite = s
 }
 
+// Returns whether the underlying buffer has any unsaved modifications.
+// Note that Scratch buffers are never considered dirty.
+func (v *View) IsDirty() bool {
+	if v.IsScratch() {
+		return false
+	}
+	lastSave, _ := v.buffer.Settings().Get("lime.last_save_change_count", -1).(int)
+	return v.buffer.ChangeCount() != lastSave
+}
+
+// Saves the file
+func (v *View) Save() error {
+	return v.SaveAs(v.buffer.FileName())
+}
+
+// Saves the file to the specified filename
+func (v *View) SaveAs(name string) (err error) {
+	OnPreSave.Call(v)
+	atomic, _ := v.Settings().Get("atomic_save", true).(bool)
+	var f *os.File
+	if atomic {
+		f, err = ioutil.TempFile("", "lime")
+	} else {
+		f, err = os.Create(name)
+	}
+	if err != nil {
+		return err
+	}
+	data := []byte(v.buffer.Substr(Region{0, v.buffer.Size()}))
+	for len(data) != 0 {
+		var n int
+		n, err = f.Write(data)
+		if n > 0 {
+			data = data[n:]
+		}
+		if err != nil {
+			f.Close()
+			if atomic {
+				os.Remove(f.Name())
+			}
+			return err
+		}
+	}
+	f.Close()
+	if atomic {
+		if err = os.Rename(f.Name(), name); err != nil {
+			os.Remove(f.Name())
+			return err
+		}
+	}
+
+	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
+	OnPostSave.Call(v)
+	return nil
+}
+
 // Returns the CommandHistory entry at the given relative index.
 //
 // When "modifying_only" is set to true, only commands that actually changed
@@ -558,4 +615,21 @@ func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Rec
 	rs.Regions.AddAll(v.selection.Regions())
 	rr["lime.selection"] = rs
 	return render.Transform(scheme, rr, viewport)
+}
+
+// Initiate the "close" operation of this view.
+func (v *View) Close() {
+	OnPreClose.Call(v)
+	if v.IsDirty() {
+		close_anyway := GetEditor().Frontend().OkCancelDialog("File has been modified since last save, close anyway?", "Close")
+		if !close_anyway {
+			return
+		}
+	}
+	// TODO(.): There can be multiple views into a single buffer,
+	// need to do some reference counting to see when it should be
+	// closed
+	v.buffer.Close()
+	v.window.remove(v)
+	OnClose.Call(v)
 }

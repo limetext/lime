@@ -37,13 +37,33 @@ type (
 		watcher       *fsnotify.Watcher
 		watchedFiles  map[string]WatchedFile
 	}
+
+	// The Frontend interface defines the API
+	// for functionality that that is frontend specific.
 	Frontend interface {
+		// Probe the frontend for the currently
+		// visible region of the given view.
 		VisibleRegion(v *View) Region
+
+		// Make the frontend show the specified region of the
+		// given view.
 		Show(v *View, r Region)
+
+		// Sets the status message shown in the status bar
 		StatusMessage(string)
+
+		// Displays an error message to the usser
 		ErrorMessage(string)
+
+		// Displays a message dialog to the user
 		MessageDialog(string)
-		OkCancelDialog(msg string, okname string)
+
+		// Displays an ok / cancel dialog to the user.
+		// "okname" if provided will be used as the text
+		// instead of "Ok" for the ok button.
+		// Returns true when ok was pressed, and false when
+		// cancel was pressed.
+		OkCancelDialog(msg string, okname string) bool
 	}
 	myLogWriter struct {
 		log chan string
@@ -53,12 +73,12 @@ type (
 
 const DEFAULT_SUBLIME_SETTINGS_PATH = "../../backend/packages/Default/Default.sublime-settings"
 
-func (h *DummyFrontend) StatusMessage(msg string)      {}
-func (h *DummyFrontend) ErrorMessage(msg string)       {}
-func (h *DummyFrontend) MessageDialog(msg string)      {}
-func (h *DummyFrontend) OkCancelDialog(string, string) {}
-func (h *DummyFrontend) Show(v *View, r Region)        {}
-func (h *DummyFrontend) VisibleRegion(v *View) Region  { return Region{} }
+func (h *DummyFrontend) StatusMessage(msg string)           {}
+func (h *DummyFrontend) ErrorMessage(msg string)            {}
+func (h *DummyFrontend) MessageDialog(msg string)           {}
+func (h *DummyFrontend) OkCancelDialog(string, string) bool { return true }
+func (h *DummyFrontend) Show(v *View, r Region)             {}
+func (h *DummyFrontend) VisibleRegion(v *View) Region       { return Region{} }
 
 func newMyLogWriter() *myLogWriter {
 	ret := &myLogWriter{make(chan string, 100)}

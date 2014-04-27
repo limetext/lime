@@ -40,13 +40,16 @@ type (
 )
 
 var evmap = map[string]*backend.ViewEvent{
-	"on_modified":    &backend.OnModified,
-	"on_activated":   &backend.OnActivated,
-	"on_deactivated": &backend.OnDeactivated,
-	"on_load":        &backend.OnLoad,
-	"on_new":         &backend.OnNew,
-	"on_pre_save":    &backend.OnPreSave,
-	"on_post_save":   &backend.OnPostSave,
+	"on_new":                &backend.OnNew,
+	"on_load":               &backend.OnLoad,
+	"on_activated":          &backend.OnActivated,
+	"on_deactivated":        &backend.OnDeactivated,
+	"on_pre_close":          &backend.OnPreClose,
+	"on_close":              &backend.OnClose,
+	"on_pre_save":           &backend.OnPreSave,
+	"on_post_save":          &backend.OnPostSave,
+	"on_modified":           &backend.OnModified,
+	"on_selection_modified": &backend.OnSelectionModified,
 }
 
 func (c *ViewEventGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {

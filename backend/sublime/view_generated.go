@@ -1,4 +1,4 @@
-// Copyright 2013 The lime Authors.
+// Copyright 2014 The lime Authors.
 // Use of this source code is governed by a 2-clause
 // BSD-style license that can be found in the LICENSE file.
 
@@ -234,6 +234,18 @@ func (o *View) Py_insert(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 	ret0 := o.data.Insert(arg1, arg2, arg3)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = toPython(ret0)
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
+func (o *View) Py_is_dirty() (py.Object, error) {
+	ret0 := o.data.IsDirty()
 	var err error
 	var pyret0 py.Object
 

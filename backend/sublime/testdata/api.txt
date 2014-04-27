@@ -253,6 +253,7 @@ View
 	has_non_empty_selection_region
 	id
 	insert
+	is_dirty
 	is_scratch
 	line
 	lines

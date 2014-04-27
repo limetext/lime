@@ -101,6 +101,7 @@ var (
 	OnLoad              ViewEvent //< Called when loading a view's buffer has finished
 	OnActivated         ViewEvent //< Called when a view gains input focus.
 	OnDeactivated       ViewEvent //< Called when a view loses input focus.
+	OnPreClose          ViewEvent //< Called when a view is about to be closed.
 	OnClose             ViewEvent //< Called when a view has been closed.
 	OnPreSave           ViewEvent //< Called just before a view's buffer is saved.
 	OnPostSave          ViewEvent //< Called after a view's buffer has been saved.

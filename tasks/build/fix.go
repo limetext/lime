@@ -66,5 +66,5 @@ func patch(path string, fi os.FileInfo, err error) error {
 }
 
 func main() {
-	log.Println("done: ", filepath.Walk("../", patch))
+	log.Println("done: ", filepath.Walk("./", patch))
 }
