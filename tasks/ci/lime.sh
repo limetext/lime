@@ -35,9 +35,9 @@ function do_test {
 }
 
 # Just to fetch all dependencies needed
-fold_start "termbox bootstrap"
+fold_start "bootstrap"
 go get -d -u github.com/limetext/lime/frontend/termbox
-fold_end "termbox bootstrap"
+fold_end "bootstrap"
 
 fold_start "Gen Python"
 go run tasks/build/gen_python_api.go
