@@ -94,7 +94,7 @@ func newEdit(v *View) *Edit {
 	return ret
 }
 
-// Returns a string describing this edit object. Should typically not be manually called.
+// Returns a string describing this Edit object. Should typically not be manually called.
 func (e *Edit) String() string {
 	return fmt.Sprintf("%s: %v, %v, %v", e.command, e.args, e.bypassUndo, e.composite)
 }
@@ -104,7 +104,7 @@ func (e *Edit) Apply() {
 	e.composite.Apply()
 }
 
-// Reverses the application of this edit object. Should typically not be manually called.
+// Reverses the application of this Edit object. Should typically not be manually called.
 func (e *Edit) Undo() {
 	e.composite.Undo()
 	e.v.Sel().Clear()
@@ -125,8 +125,8 @@ func (v *View) setBuffer(b Buffer) error {
 	return nil
 }
 
-// flush is called every time the underlying buffer is changed.
-// It calls "Adjust" on all the regions associated with this view,
+// Flush is called every time the underlying buffer is changed.
+// It calls Adjust() on all the regions associated with this view,
 // triggers the "OnModified" event, and adds a reparse request
 // to the parse go-routine.
 func (v *View) flush(position, delta int) {
@@ -150,21 +150,21 @@ func (v *View) flush(position, delta int) {
 	v.reparse(false)
 }
 
-// parsethread would be the go-routine used for dealing with reparsing the
+// parsethread() would be the go-routine used for dealing with reparsing the
 // current buffer when it has been modified. Each opened view has its own
-// go-routine parsethread which sits idle and waits for requests to be sent
+// go-routine parsethread() which sits idle and waits for requests to be sent
 // on this view's reparseChan.
 //
 // The Buffer's ChangeCount, as well as the parse request's "forced" attribute
 // is used to determined if a parse actually needs to happen or not.
 //
-// If it is decided that a reparse should take place, a snapshot of the buffer is
+// If it is decided that a reparse should take place, a snapshot of the Buffer is
 // taken and a parse is performed. Upon completion of this parse operation,
 // and if the snapshot of the buffer has not already become outdated,
 // then the regions of the view associated with syntax highlighting is updated.
 //
-// Changes made the buffer during the time when there is no accurate
-// parse of the buffer is a monkey patched version of the old syntax highlighting
+// Changes made to the Buffer during the time when there is no accurate
+// parse of the buffer is a monkey-patched version of the old syntax highlighting
 // regions, which in most instances will be accurate.
 //
 // See package lime/backend/parser for more details.
@@ -235,7 +235,7 @@ func (v *View) parsethread() {
 
 // Send a reparse request via the reparse channel.
 // If "forced" is set to true, then a reparse will be made
-// even if the buffer appears to not have changed.
+// even if the Buffer appears to not have changed.
 //
 // The actual parsing is done in a separate go-routine, for which the
 // "lime.syntax.updated" setting will be set once it has finished.
@@ -256,7 +256,7 @@ func (v *View) ScopeName(point int) string {
 	return ""
 }
 
-// Returns the Region of the inner most scope that contains "point".
+// Returns the Region of the innermost scope that contains "point".
 // See package lime/backend/parser for details.
 func (v *View) ExtractScope(point int) Region {
 	v.lock.Lock()
@@ -267,7 +267,7 @@ func (v *View) ExtractScope(point int) Region {
 	return Region{}
 }
 
-// ScoreSelector takes a point and a selector string and returns a score
+// ScoreSelector() takes a point and a selector string and returns a score
 // as to how good that specific selector matches the scope name at
 // that point.
 func (v *View) ScoreSelector(point int, selector string) int {
@@ -285,7 +285,7 @@ func (v *View) ScoreSelector(point int, selector string) int {
 	return 0
 }
 
-// Sel returns a pointer to the RegionSet used by this View
+// Sel() returns a pointer to the RegionSet used by this View
 // to mark possibly multiple cursor positions and selection
 // regions.
 //
@@ -306,18 +306,18 @@ func (v *View) Sel() *RegionSet {
 	return &v.selection
 }
 
-// Returns the window this view belongs to.
+// Returns the window this View belongs to.
 func (v *View) Window() *Window {
 	return v.window
 }
 
-// Returns the underlying buffer that this view is a view into.
+// Returns the underlying Buffer that this View is a view into.
 func (v *View) Buffer() Buffer {
 	return v.buffer
 }
 
 // Inserts text at the given position in the provided edit object.
-// Tabs are depending on the view's settings translated to spaces.
+// Tabs are (sometimes, depending on the View's settings) translated to spaces.
 // The return value is the length of the string that was inserted.
 func (v *View) Insert(edit *Edit, point int, value string) int {
 	if t, ok := v.Settings().Get("translate_tabs_to_spaces", false).(bool); ok && t && strings.Contains(value, "\t") {
@@ -357,12 +357,12 @@ func (v *View) Insert(edit *Edit, point int, value string) int {
 	return len(value)
 }
 
-// Adds an Erase action of the given region to the provided edit object.
+// Adds an Erase action of the given Region to the provided Edit object.
 func (v *View) Erase(edit *Edit, r Region) {
 	edit.composite.AddExec(NewEraseAction(v.buffer, r))
 }
 
-// Adds a Replace action of the given region to the provided edit object.
+// Adds a Replace action of the given Region to the provided Edit object.
 func (v *View) Replace(edit *Edit, r Region, value string) {
 	edit.composite.AddExec(NewReplaceAction(v.buffer, r, value))
 }
@@ -383,14 +383,14 @@ func (v *View) BeginEdit() *Edit {
 // Ends the given Edit object.
 func (v *View) EndEdit(edit *Edit) {
 	if edit.invalid {
-		// This happens when nesting edits and the "child" edit ends after the parent edit.
+		// This happens when nesting Edits and the child Edit ends after the parent edit.
 		log4go.Fine("This edit has already been invalidated: %v, %v", edit, v.editstack)
 		return
 	}
 
-	// Find the position of this edit object in this view's edit stack.
+	// Find the position of this Edit object in this View's Edit stack.
 	// If plugins, commands, etc are well-behaved the ended edit should be
-	// last in the stack, but "shit happens" and we cannot count on this being the case.
+	// last in the stack, but shit happens and we cannot count on this being the case.
 	i := len(v.editstack) - 1
 	for i := len(v.editstack) - 1; i >= 0; i-- {
 		if v.editstack[i] == edit {
@@ -410,7 +410,7 @@ func (v *View) EndEdit(edit *Edit) {
 		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
 	}
 
-	// Invalidate all edits "below" and including this edit.
+	// Invalidate all Edits "below" and including this Edit.
 	for j := len(v.editstack) - 1; j >= i; j-- {
 		current_edit := v.editstack[j]
 		current_edit.invalid = true
@@ -425,23 +425,23 @@ func (v *View) EndEdit(edit *Edit) {
 		}
 		switch {
 		case i == 0:
-			// Good behaved, no nested edits!
+			// Well-behaved, no nested edits!
 			fallthrough
 		case j != i:
-			// BOO! Someone begun another edit without finishing the first one first.
-			// In this instance, the parent edit ended before the child.
+			// BOO! Someone began another Edit without finishing the first one.
+			// In this instance, the parent Edit ended before the child.
 			// TODO(.): What would be the correct way to handle this?
 			v.undoStack.Add(edit)
 		default:
-			// BOO! Also bad behaved. This edit object was begun after the parent begun,
-			// but was at least finished before the parent finished.
+			// BOO! Also poorly-behaved. This Edit object began after the parent began,
+			// but was at finished before the parent finished.
 			//
-			// Adding it as a child of the parent edit so that undoing the parent
+			// Add it as a child of the parent Edit so that undoing the parent
 			// will undo this edit as well.
 			v.editstack[i-1].composite.Add(current_edit)
 		}
 	}
-	// Pop this edit and all the children from the edit stack.
+	// Pop this Edit and all the children off the Edit stack.
 	v.editstack = v.editstack[:i]
 	if selection_modified {
 		OnSelectionModified.Call(v)
@@ -472,7 +472,7 @@ func (v *View) SetOverwriteStatus(s bool) {
 	v.overwrite = s
 }
 
-// Returns whether the underlying buffer has any unsaved modifications.
+// Returns whether the underlying Buffer has any unsaved modifications.
 // Note that Scratch buffers are never considered dirty.
 func (v *View) IsDirty() bool {
 	if v.IsScratch() {
@@ -531,7 +531,7 @@ func (v *View) SaveAs(name string) (err error) {
 // Returns the CommandHistory entry at the given relative index.
 //
 // When "modifying_only" is set to true, only commands that actually changed
-// the buffer in some way (as opposed to just moving the cursor around) are counted as
+// the Buffer in some way (as opposed to just moving the cursor around) are counted as
 // an index. That would be a "hard" command as it is referred to in UndoStack.Undo.
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
 	// TODO(.): merge history when possible
@@ -576,7 +576,7 @@ func (v *View) AddRegions(key string, regions []Region, scope, icon string, flag
 	v.regions[key] = vr
 }
 
-// Returns the regions associated by the given key.
+// Returns the Regions associated with the given key.
 func (v *View) GetRegions(key string) (ret []Region) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
@@ -587,7 +587,7 @@ func (v *View) GetRegions(key string) (ret []Region) {
 	return
 }
 
-// Removes the regions associated with the given key from the view.
+// Removes the Regions associated with the given key from the view.
 func (v *View) EraseRegions(key string) {
 	v.lock.Lock()
 	defer v.lock.Unlock()
@@ -599,8 +599,8 @@ func (v *View) UndoStack() *UndoStack {
 	return &v.undoStack
 }
 
-// Transform takes a ColourScheme and a viewport and returns a Recipe suitable
-// for rendering the contents of this view that is visible in that viewport.
+// Transform() takes a ColourScheme and a viewport and returns a Recipe suitable
+// for rendering the contents of this View that is visible in that viewport.
 func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Recipe {
 	v.lock.Lock()
 	defer v.lock.Unlock()
@@ -626,7 +626,7 @@ func (v *View) Close() {
 			return
 		}
 	}
-	// TODO(.): There can be multiple views into a single buffer,
+	// TODO(.): There can be multiple views into a single Buffer,
 	// need to do some reference counting to see when it should be
 	// closed
 	v.buffer.Close()
