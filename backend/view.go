@@ -434,7 +434,7 @@ func (v *View) EndEdit(edit *Edit) {
 			v.undoStack.Add(edit)
 		default:
 			// BOO! Also poorly-behaved. This Edit object began after the parent began,
-			// but was at finished before the parent finished.
+			// but was finished before the parent finished.
 			//
 			// Add it as a child of the parent Edit so that undoing the parent
 			// will undo this edit as well.
