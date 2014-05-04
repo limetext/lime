@@ -185,6 +185,7 @@ func (e *Editor) loadSetting(path string) {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", path)
+		e.Watch(NewWatchedSettingFile(path))
 	}
 }
 
