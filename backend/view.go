@@ -73,7 +73,7 @@ func newView(w *Window) *View {
 		syn, _ := ret.Settings().Get("syntax", "").(string)
 		if syn != ret.cursyntax {
 			ret.cursyntax = syn
-			defer ret.reparse(true)
+			ret.reparse(true)
 		}
 	})
 
@@ -202,14 +202,14 @@ func (v *View) parsethread() {
 			log4go.Error("Couldn't create syntaxhighlighter: %v", err)
 			return
 		}
-		v.lock.Lock()
-		defer v.lock.Unlock()
 		// Only set if it isn't invalid already, otherwise the
 		// current syntax highlighting will be more accurate
 		// as it will have had incremental adjustments done to it
 		if v.buffer.ChangeCount() != lastParse {
 			return
 		}
+		v.lock.Lock()
+		defer v.lock.Unlock()
 		v.syntax = syn
 		for k := range v.regions {
 			if strings.HasPrefix(k, "lime.syntax") {

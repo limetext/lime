@@ -221,6 +221,29 @@ func TestScopeName(t *testing.T) {
 	}
 }
 
+func TestStress(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
+	var (
+		ed = GetEditor()
+		w  = ed.NewWindow()
+		v  = w.OpenFile("../frontend/termbox/main.go", 0)
+	)
+	syntax := "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	v.Settings().Set("syntax", syntax)
+	for i := 0; i < 1000; i++ {
+		e := v.BeginEdit()
+		for i := 0; i < 100; i++ {
+			v.Insert(e, 0, "h")
+		}
+		for i := 0; i < 100; i++ {
+			v.Erase(e, Region{0, 1})
+		}
+		v.EndEdit(e)
+	}
+}
+
 func TestTransform(t *testing.T) {
 	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
 	if err != nil {
