@@ -19,6 +19,10 @@ type (
 	WatchedUserFile struct {
 		view *View
 	}
+
+	WatchedSettingFile struct {
+		path string
+	}
 )
 
 func NewWatchedUserFile(view *View) *WatchedUserFile {
@@ -41,4 +45,17 @@ func (o *WatchedUserFile) Reload() {
 		view.Replace(edit, Region{0, end}, string(d))
 		view.EndEdit(edit)
 	}
+}
+
+func NewWatchedSettingFile(path string) *WatchedSettingFile {
+	return &WatchedSettingFile{path}
+}
+
+func (o *WatchedSettingFile) Name() string {
+	return o.path
+}
+
+func (o *WatchedSettingFile) Reload() {
+	editor := GetEditor()
+	editor.loadSetting(o.path)
 }
