@@ -337,7 +337,7 @@ func (t *tbfe) qmlBatchLoop() {
 	}
 }
 
-const batching_enabled = false
+const batching_enabled = true
 
 func (t *tbfe) qmlChanged(value, field interface{}) {
 	if !batching_enabled {
