@@ -29,6 +29,10 @@ type (
 	// The Command interface implements the basic interface
 	// that is shared between the different more specific
 	// command type interfaces.
+	//
+	// In the traditional Model-view-controller design,
+	// Commands are roughly equivalent to the action-taking
+	// controller piece.
 	Command interface {
 		// Returns whether the Command is enabled or not.
 		IsEnabled() bool
