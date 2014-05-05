@@ -272,6 +272,34 @@ func TestTransform(t *testing.T) {
 	}
 }
 
+func TestSaveAs(t *testing.T) {
+	test := struct {
+		data []byte
+		file string
+	}{
+		[]byte("abc"),
+		"testdata/test",
+	}
+	var (
+		w Window
+		v = w.NewFile()
+		e = v.BeginEdit()
+	)
+	v.Insert(e, 0, string(test.data))
+	v.EndEdit(e)
+	err := v.SaveAs(test.file)
+	if err != nil {
+		t.Fatalf("Can't save to `%s`: %s", test.file, err)
+	}
+	data, err := ioutil.ReadFile(test.file)
+	if err != nil {
+		t.Fatalf("Can't read `%s`: %s", test.file, err)
+	}
+	if string(data) != string(test.data) {
+		t.Errorf("Expected `%s` contain %v, but got %s", test.file, test.data, data)
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
