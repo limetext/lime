@@ -14,6 +14,7 @@ import (
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"os"
+	"path"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -489,11 +490,16 @@ func (v *View) Save() error {
 
 // Saves the file to the specified filename
 func (v *View) SaveAs(name string) (err error) {
+	var atomic bool
 	OnPreSave.Call(v)
-	atomic, _ := v.Settings().Get("atomic_save", true).(bool)
+	if v.buffer.FileName() != "" {
+		atomic, _ = v.Settings().Get("atomic_save", true).(bool)
+	} else {
+		atomic = false
+	}
 	var f *os.File
 	if atomic {
-		f, err = ioutil.TempFile("", "lime")
+		f, err = ioutil.TempFile(path.Dir(v.buffer.FileName()), "lime")
 	} else {
 		f, err = os.Create(name)
 	}
@@ -519,7 +525,13 @@ func (v *View) SaveAs(name string) (err error) {
 	if atomic {
 		if err = os.Rename(f.Name(), name); err != nil {
 			os.Remove(f.Name())
-			return err
+			// When we wan't to save as a file in another directory
+			// we can not go with os.Rename so we need to force
+			// not atomic saving sometimes as 4th test in TestSaveAsOpenFile
+			hold, _ := v.Settings().Get("atomic_save", true).(bool)
+			v.Settings().Set("atomic_save", false)
+			v.SaveAs(name)
+			v.Settings().Set("atomic_save", hold)
 		}
 	}
 

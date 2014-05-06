@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 // This file was generated as part of a build step and shouldn't be manually modified
+
 package sublime
 
 import (

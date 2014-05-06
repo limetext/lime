@@ -18,7 +18,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var re = regexp.MustCompile(`\p{Lu}`)
@@ -371,7 +373,7 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorefunc func(name stri
 
 const path = "./backend/sublime"
 
-var keep = regexp.MustCompile(`^(.+(_test|_manual)\.go|.+\.py)$`)
+var keep = regexp.MustCompile(`^(.+(_test|_manual)\.go|.+\.py)|(doc\.go)$`)
 
 func cleanup() {
 	f, err := os.Open(path)
@@ -442,11 +444,18 @@ func main() {
 	data[len(data)-1][1] += fmt.Sprintf(`var sublime_methods = []py.Method{
 		%s
 	}`, sublime_methods)
+	var year = strconv.FormatInt(int64(time.Now().Year()), 10)
+
 	for _, gen := range data {
 		if gen[0] == "" {
 			continue
 		}
-		wr := `// This file was generated as part of a build step and shouldn't be manually modified
+		wr := `// Copyright ` + year + ` The lime Authors.
+			// Use of this source code is governed by a 2-clause
+			// BSD-style license that can be found in the LICENSE file.
+
+			// This file was generated as part of a build step and shouldn't be manually modified
+
 			package sublime
 
 			import (
