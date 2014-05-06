@@ -40,7 +40,7 @@ func (w *Window) NewFile() *View {
 func (w *Window) Views() []*View {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	ret := make([]*View, 0, len(w.views))
+	ret := make([]*View, len(w.views))
 	copy(ret, w.views)
 	return ret
 }
