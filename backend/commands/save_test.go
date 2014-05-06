@@ -6,15 +6,21 @@ package commands
 
 import (
 	. "github.com/limetext/lime/backend"
-	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-var testfile string = "../testdata/save_test.txt"
+var testfile string = "../testdata/Default.sublime-settings"
 
 func TestSave(t *testing.T) {
+	hold, err := ioutil.ReadFile(testfile)
+	if err != nil {
+		t.Fatalf("Couldn't read test file %s", testfile)
+	}
+	if err := ioutil.WriteFile(testfile, []byte("Before text"), 0644); err != nil {
+		t.Fatalf("Couldn't write test file %s", testfile)
+	}
 	tests := []struct {
 		text   string
 		expect string
@@ -28,7 +34,6 @@ func TestSave(t *testing.T) {
 			"Before text\n",
 		},
 	}
-
 	ed := GetEditor()
 	w := ed.NewWindow()
 
@@ -44,20 +49,43 @@ func TestSave(t *testing.T) {
 		v.EndEdit(e)
 
 		ed.CommandHandler().RunTextCommand(v, "save", nil)
-		if data := v.Buffer().Substr(Region{0, v.Buffer().Size()}); test.expect != data {
-			t.Errorf("Test %d: Expected %s, but got %s", i, test.expect, data)
+		if data, _ := ioutil.ReadFile(testfile); test.expect != string(data) {
+			t.Errorf("Test %d: Expected %s, but got %s", i, test.expect, string(data))
 		}
+	}
+	if err := ioutil.WriteFile(testfile, hold, 0644); err != nil {
+		t.Fatalf("Couldn't write back test file %s", testfile)
 	}
 }
 
 func TestSaveAs(t *testing.T) {
+	hold, err := ioutil.ReadFile(testfile)
+	if err != nil {
+		t.Fatalf("Couldn't read test file %s", testfile)
+	}
+	if err := ioutil.WriteFile(testfile, []byte(""), 0644); err != nil {
+		t.Fatalf("Couldn't write test file %s", testfile)
+	}
 	ed := GetEditor()
 	w := ed.NewWindow()
 	v := w.OpenFile(testfile, 0)
+	e := v.BeginEdit()
+	v.Insert(e, 0, "Testing save_as command")
+	v.BeginEdit()
+
 	name := "../testdata/save_as_test.txt"
 
 	ed.CommandHandler().RunTextCommand(v, "save_as", Args{"name": name})
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		t.Errorf("The new test file %s wasn't created", name)
+	}
+	if data, _ := ioutil.ReadFile(name); "Testing save_as command" != string(data) {
+		t.Errorf("Expected %s, but got %s", "Testing save_as command", string(data))
+	}
+	if err := os.Remove(name); err != nil {
+		t.Errorf("Couldn't remove test file %s", name)
+	}
+	if err := ioutil.WriteFile(testfile, hold, 0644); err != nil {
+		t.Fatalf("Couldn't write back test file %s", testfile)
 	}
 }
