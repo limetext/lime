@@ -11,6 +11,7 @@ import (
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -269,6 +270,108 @@ func TestTransform(t *testing.T) {
 	c := v.Transform(sc, Region{0, 100}).Transcribe()
 	if !reflect.DeepEqual(a, c) {
 		t.Errorf("not equal:\n%v\n%v", a, c)
+	}
+}
+
+func TestSaveAsNewFile(t *testing.T) {
+	tests := []struct {
+		text   string
+		atomic bool
+		file   string
+	}{
+		{
+			"abc",
+			false,
+			"testdata/test",
+		},
+		{
+			"abc",
+			true,
+			"testdata/test",
+		},
+	}
+	for i, test := range tests {
+		var (
+			w Window
+			v = w.NewFile()
+			e = v.BeginEdit()
+		)
+		v.Settings().Set("atomic_save", test.atomic)
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+		if err := v.SaveAs(test.file); err != nil {
+			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.file, err)
+		}
+		data, err := ioutil.ReadFile(test.file)
+		if err != nil {
+			t.Fatalf("Test %d: Can't read `%s`: %s", i, test.file, err)
+		}
+		if string(data) != test.text {
+			t.Errorf("Test %d: Expected `%s` contain %s, but got %s", i, test.file, test.text, data)
+		}
+		if err = os.Remove(test.file); err != nil {
+			t.Errorf("Test %d: Couldn't remove test file %s", i, test.file)
+		}
+	}
+}
+
+func TestSaveAsOpenFile(t *testing.T) {
+	var testfile string = "testdata/Default.sublime-settings"
+	buf, err := ioutil.ReadFile(testfile)
+	if err != nil {
+		t.Fatalf("Can't read test file `%s`: %s", testfile, err)
+	}
+	tests := []struct {
+		atomic bool
+		as     string
+	}{
+		{
+			true,
+			"User.sublime-settings",
+		},
+		{
+			true,
+			"testdata/User.sublime-settings",
+		},
+		{
+			true,
+			"../User.sublime-settings",
+		},
+		{
+			true,
+			os.TempDir() + "/User.sublime-settings",
+		},
+		{
+			false,
+			"User.sublime-settings",
+		},
+		{
+			false,
+			"testdata/User.sublime-settings",
+		},
+	}
+	for i, test := range tests {
+		var (
+			w Window
+			v = w.OpenFile(testfile, 0)
+		)
+		v.Settings().Set("atomic_save", test.atomic)
+		if err := v.SaveAs(test.as); err != nil {
+			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
+		}
+		if _, err := os.Stat(test.as); os.IsNotExist(err) {
+			t.Fatalf("Test %d: The file `%s` wasn't created", i, test.as)
+		}
+		data, err := ioutil.ReadFile(test.as)
+		if err != nil {
+			t.Fatalf("Test %d: Can't read `%s`: %s", i, test.as, err)
+		}
+		if string(data) != string(buf) {
+			t.Errorf("Test %d: Expected `%s` contain %s, but got %s", i, test.as, string(buf), data)
+		}
+		if err := os.Remove(test.as); err != nil {
+			t.Errorf("Test %d: Couldn't remove test file %s", i, test.as)
+		}
 	}
 }
 
