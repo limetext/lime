@@ -89,3 +89,45 @@ func TestSaveAs(t *testing.T) {
 		t.Fatalf("Couldn't write back test file %s", testfile)
 	}
 }
+
+func TestSaveAll(t *testing.T) {
+	var err error
+	holds := make(map[int][]byte)
+	tests := []struct {
+		file   string
+		expect string
+	}{
+		{
+			"../testdata/Default.sublime-settings",
+			"Testing save all 1",
+		},
+		{
+			"../testdata/Default.sublime-keymap",
+			"Testing save all 2",
+		},
+	}
+	ed := GetEditor()
+	w := ed.NewWindow()
+	for i, test := range tests {
+		holds[i], err = ioutil.ReadFile(test.file)
+		if err != nil {
+			t.Fatalf("Test %d: Couldn't read file %s", i, test.file)
+		}
+		if err := ioutil.WriteFile(test.file, []byte(""), 0644); err != nil {
+			t.Fatalf("Test %d: Couldn't write test file %s", i, test.file)
+		}
+		v := w.OpenFile(test.file, 0)
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.expect)
+		v.EndEdit(e)
+	}
+	ed.CommandHandler().RunWindowCommand(w, "save_all", nil)
+	for i, test := range tests {
+		if data, _ := ioutil.ReadFile(test.file); string(data) != test.expect {
+			t.Errorf("Test %d: Expected to get `%s`, but got `%s`", i, test.expect, string(data))
+		}
+	}
+	for i, test := range tests {
+		ioutil.WriteFile(test.file, holds[i], 0644)
+	}
+}

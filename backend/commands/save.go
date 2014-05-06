@@ -17,6 +17,10 @@ type (
 		DefaultCommand
 		Name string
 	}
+
+	SaveAllCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *SaveCommand) Run(v *View, e *Edit) error {
@@ -35,9 +39,19 @@ func (c *SaveAsCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func (c *SaveAllCommand) Run(w *Window) error {
+	for _, v := range w.Views() {
+		if err := v.Save(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func init() {
 	register([]cmd{
 		{"save", &SaveCommand{}},
 		{"save_as", &SaveAsCommand{}},
+		{"save_all", &SaveAllCommand{}},
 	})
 }
