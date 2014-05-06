@@ -535,6 +535,10 @@ func (v *View) SaveAs(name string) (err error) {
 		}
 	}
 
+	ed := GetEditor()
+	ed.UnWatch(v.buffer.FileName())
+	ed.Watch(name)
+
 	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
 	OnPostSave.Call(v)
 	return nil
