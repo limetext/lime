@@ -350,7 +350,7 @@ func (e *Editor) Watch(file WatchedFile) {
 }
 
 func (e *Editor) UnWatch(name string) {
-	delete(e.watchedFiles[name])
+	delete(e.watchedFiles, name)
 }
 
 func (e *Editor) observeFiles() {
