@@ -107,6 +107,12 @@ func TestSaveAll(t *testing.T) {
 		},
 	}
 	ed := GetEditor()
+	fe := ed.Frontend()
+	if dfe, ok := fe.(*DummyFrontend); ok {
+		// Make it *not* reload the file
+		dfe.DefaultAction = false
+	}
+
 	w := ed.NewWindow()
 	for i, test := range tests {
 		holds[i], err = ioutil.ReadFile(test.file)
@@ -121,10 +127,14 @@ func TestSaveAll(t *testing.T) {
 		v.Insert(e, 0, test.expect)
 		v.EndEdit(e)
 	}
-	ed.CommandHandler().RunWindowCommand(w, "save_all", nil)
+	if err := ed.CommandHandler().RunWindowCommand(w, "save_all", nil); err != nil {
+		t.Errorf("failed to run save_all: %s", err)
+	}
 	for i, test := range tests {
-		if data, _ := ioutil.ReadFile(test.file); string(data) != test.expect {
-			t.Errorf("Test %d: Expected to get `%s`, but got `%s`", i, test.expect, string(data))
+		if data, err := ioutil.ReadFile(test.file); err != nil {
+			t.Errorf("failed to read in file: %s", err)
+		} else if s := string(data); s != test.expect {
+			t.Errorf("Test %d: Expected to get `%s`, but got `%s`", i, test.expect, s)
 		}
 	}
 	for i, test := range tests {
