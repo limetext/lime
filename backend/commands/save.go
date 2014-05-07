@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"fmt"
 	. "github.com/limetext/lime/backend"
 )
 
@@ -26,6 +27,7 @@ type (
 func (c *SaveCommand) Run(v *View, e *Edit) error {
 	err := v.Save()
 	if err != nil {
+		GetEditor().Frontend().ErrorMessage(fmt.Sprintf("Failed to save %s:n%s", v.Buffer().FileName(), err))
 		return err
 	}
 	return nil
@@ -34,6 +36,7 @@ func (c *SaveCommand) Run(v *View, e *Edit) error {
 func (c *SaveAsCommand) Run(v *View, e *Edit) error {
 	err := v.SaveAs(c.Name)
 	if err != nil {
+		GetEditor().Frontend().ErrorMessage(fmt.Sprintf("Failed to save as %s:n%s", c.Name, err))
 		return err
 	}
 	return nil
@@ -42,6 +45,7 @@ func (c *SaveAsCommand) Run(v *View, e *Edit) error {
 func (c *SaveAllCommand) Run(w *Window) error {
 	for _, v := range w.Views() {
 		if err := v.Save(); err != nil {
+			GetEditor().Frontend().ErrorMessage(fmt.Sprintf("Failed to save %s:n%s", v.Buffer().FileName(), err))
 			return err
 		}
 	}
