@@ -68,17 +68,23 @@ type (
 	myLogWriter struct {
 		log chan string
 	}
-	DummyFrontend struct{}
+	DummyFrontend struct {
+		// Default return value for OkCancelDialog
+		DefaultAction bool
+	}
 )
 
 const DEFAULT_SUBLIME_SETTINGS_PATH = "../../backend/packages/Default/Default.sublime-settings"
 
-func (h *DummyFrontend) StatusMessage(msg string)           {}
-func (h *DummyFrontend) ErrorMessage(msg string)            {}
-func (h *DummyFrontend) MessageDialog(msg string)           {}
-func (h *DummyFrontend) OkCancelDialog(string, string) bool { return true }
-func (h *DummyFrontend) Show(v *View, r Region)             {}
-func (h *DummyFrontend) VisibleRegion(v *View) Region       { return Region{} }
+func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
+func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
+func (h *DummyFrontend) MessageDialog(msg string) { log4go.Info(msg) }
+func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
+	log4go.Info(msg)
+	return h.DefaultAction
+}
+func (h *DummyFrontend) Show(v *View, r Region)       {}
+func (h *DummyFrontend) VisibleRegion(v *View) Region { return Region{} }
 
 func newMyLogWriter() *myLogWriter {
 	ret := &myLogWriter{make(chan string, 100)}
@@ -342,14 +348,16 @@ func (e *Editor) GetClipboard() string {
 }
 
 func (e *Editor) Watch(file WatchedFile) {
+	log4go.Finest("Watch(%v)", file)
 	if err := e.watcher.Watch(file.Name()); err != nil {
-		log4go.Error("Could not watch file: ", file.Name())
+		log4go.Error("Could not watch file: %v", err)
 	} else {
 		e.watchedFiles[file.Name()] = file
 	}
 }
 
 func (e *Editor) UnWatch(name string) {
+	log4go.Finest("UnWatch(%s)", name)
 	delete(e.watchedFiles, name)
 }
 
