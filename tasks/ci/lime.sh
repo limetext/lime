@@ -35,8 +35,10 @@ function do_test {
 }
 
 # Just to fetch all dependencies needed
+# Do *not* add "-u", or pull requests will not actually be built,
+# instead it'll checkout master
 fold_start "bootstrap"
-go get -d -u github.com/limetext/lime/frontend/termbox
+go get -d github.com/limetext/lime/frontend/termbox
 fold_end "bootstrap"
 
 fold_start "Gen Python"
