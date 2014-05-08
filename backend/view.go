@@ -500,32 +500,24 @@ func (v *View) SaveAs(name string) (err error) {
 			return err
 		}
 	} else {
-		f, err := ioutil.TempFile(path.Dir(v.buffer.FileName()), "lime")
+		n, err := ioutil.TempDir(path.Dir(v.buffer.FileName()), "lime")
 		if err != nil {
 			return err
 		}
-		data := []byte(v.buffer.Substr(Region{0, v.buffer.Size()}))
-		for len(data) != 0 {
-			var n int
-			n, err = f.Write(data)
-			if n > 0 {
-				data = data[n:]
-			}
-			if err != nil {
-				f.Close()
-				os.Remove(f.Name())
-				return err
-			}
+		tmpf := n + string(os.PathSeparator) + "tmp"
+		if err := v.nonAtomicSave(tmpf); err != nil {
+			return err
 		}
-		f.Close()
-		if err = os.Rename(f.Name(), name); err != nil {
-			os.Remove(f.Name())
+		if err := os.Rename(tmpf, name); err != nil {
 			// When we wan't to save as a file in another directory
-			// we can not go with os.Rename so we need to force
+			// we can not go withc os.Rename so we need to force
 			// not atomic saving sometimes as 4th test in TestSaveAsOpenFile
 			if err := v.nonAtomicSave(name); err != nil {
 				return err
 			}
+		}
+		if err := os.RemoveAll(n); err != nil {
+			return err
 		}
 	}
 
@@ -543,23 +535,10 @@ func (v *View) SaveAs(name string) (err error) {
 }
 
 func (v *View) nonAtomicSave(name string) error {
-	f, err := os.Create(name)
-	if err != nil {
+	data := []byte(v.buffer.Substr(Region{0, v.buffer.Size()}))
+	if err := ioutil.WriteFile(name, data, 0644); err != nil {
 		return err
 	}
-	data := []byte(v.buffer.Substr(Region{0, v.buffer.Size()}))
-	for len(data) != 0 {
-		var n int
-		n, err = f.Write(data)
-		if n > 0 {
-			data = data[n:]
-		}
-		if err != nil {
-			f.Close()
-			return err
-		}
-	}
-	f.Close()
 	return nil
 }
 
