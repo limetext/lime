@@ -112,7 +112,6 @@ func TestSaveAll(t *testing.T) {
 		// Make it *not* reload the file
 		dfe.DefaultAction = false
 	}
-
 	w := ed.NewWindow()
 	for i, test := range tests {
 		holds[i], err = ioutil.ReadFile(test.file)

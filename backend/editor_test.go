@@ -6,6 +6,7 @@ package backend
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 )
@@ -43,6 +44,34 @@ func TestWatch(t *testing.T) {
 
 	if editor.watchedFiles["editor_test.go"] != observedFile {
 		t.Fatal("Expected editor to watch the specified file")
+	}
+}
+
+func TestWatchOnSaveAs(t *testing.T) {
+	var testfile string = "testdata/Default.sublime-settings"
+	tests := []struct {
+		as string
+	}{
+		{
+			"User.sublime-settings",
+		},
+		{
+			"testdata/User.sublime-settings",
+		},
+	}
+	ed := GetEditor()
+	w := ed.NewWindow()
+	for i, test := range tests {
+		v := w.OpenFile(testfile, 0)
+		if err := v.SaveAs(test.as); err != nil {
+			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
+		}
+		if _, exist := ed.watchedFiles[test.as]; !exist {
+			t.Errorf("Test %d: Should watch %s file", i, test.as)
+		}
+		if err := os.Remove(test.as); err != nil {
+			t.Errorf("Test %d: Couldn't remove test file %s", i, test.as)
+		}
 	}
 }
 
