@@ -220,9 +220,6 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 	t.lock.Lock()
 	l := t.layout[v]
 	t.lock.Unlock()
-	if l.visible.Covers(r) {
-		return
-	}
 	p := util.Prof.Enter("show")
 	defer p.Exit()
 
