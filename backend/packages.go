@@ -4,6 +4,162 @@
 
 package backend
 
-func PackagesPath() string {
-	return "TODO"
+import (
+	// "code.google.com/p/log4go" Later
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"reflect"
+	"strings"
+)
+
+type (
+	Package interface {
+		Name() string
+		Get() interface{}
+		Path() string
+	}
+
+	Plugin struct {
+		setting *Setting
+		keymap  *KeyMap
+		path    string
+		files   []os.FileInfo
+	}
+
+	Setting struct {
+		path string
+		data []byte
+	}
+
+	KeyMap struct {
+		path string
+		data []byte
+	}
+)
+
+const (
+	DEFAULT_SUBLIME_SETTINGS    = "packages/Default/Default.sublime-settings"
+	DEFAULT_SUBLIME_KEYBINDINGS = "packages/Default/Default.sublime-keymap"
+	SUBLIME_USER_PACKAGES_PATH  = "../3rdparty/bundles/"
+)
+
+var packages = make(map[string][]Package)
+
+func NewPlugin(path string) *Plugin {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	fi, err := f.Readdir(-1)
+	if err != nil {
+		return nil
+	}
+	p := &Plugin{path: path}
+	files := make([]os.FileInfo, 0)
+	for _, f := range fi {
+		if strings.HasSuffix(f.Name(), ".py") {
+			files = append(files, f)
+		} else if strings.HasSuffix(f.Name(), ".sublime-settings") {
+			p.setting = NewSetting(path + string(os.PathSeparator) + f.Name())
+		} else if strings.HasSuffix(f.Name(), ".sublime-keymap") {
+			p.keymap = NewKeyMap(path + string(os.PathSeparator) + f.Name())
+		}
+	}
+	p.files = files
+	return p
+}
+
+func (p *Plugin) Get() interface{} {
+	return p.files
+}
+
+func (p *Plugin) Name() string {
+	return path.Base(p.path)
+}
+
+func (p *Plugin) Path() string {
+	return p.path
+}
+
+func NewSetting(path string) *Setting {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	return &Setting{path, d}
+}
+
+func (p *Setting) Get() interface{} {
+	return p.data
+}
+
+func (p *Setting) Name() string {
+	return path.Base(p.path)
+}
+
+func (p *Setting) Path() string {
+	return p.path
+}
+
+func NewKeyMap(path string) *KeyMap {
+	d, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return &KeyMap{path, d}
+}
+
+func (p *KeyMap) Get() interface{} {
+	return p.data
+}
+
+func (p *KeyMap) Name() string {
+	return path.Base(p.path)
+}
+
+func (p *KeyMap) Path() string {
+	return p.path
+}
+
+func add(key string, p Package) {
+	if !reflect.ValueOf(p).IsNil() {
+		packages[key] = append(packages[key], p)
+	}
+}
+
+func init() {
+	add("settings", NewSetting(DEFAULT_SUBLIME_SETTINGS))
+	add("keymaps", NewKeyMap(DEFAULT_SUBLIME_KEYBINDINGS))
+
+	f, err := os.Open(SUBLIME_USER_PACKAGES_PATH)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	dirs, err := f.Readdirnames(-1)
+	if err != nil {
+		return
+	}
+	for _, dir := range dirs {
+		dir2 := SUBLIME_USER_PACKAGES_PATH + dir
+		f2, err := os.Open(dir2)
+		if err != nil {
+			continue
+		}
+		defer f2.Close()
+		fi, err := f2.Readdir(-1)
+		if err != nil {
+			continue
+		}
+		for _, f := range fi {
+			if strings.HasSuffix(f.Name(), ".py") {
+				add("plugins", NewPlugin(dir2))
+				break
+			}
+		}
+	}
 }

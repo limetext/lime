@@ -510,7 +510,7 @@ func (v *View) SaveAs(name string) (err error) {
 		}
 		if err := os.Rename(tmpf, name); err != nil {
 			// When we wan't to save as a file in another directory
-			// we can not go withc os.Rename so we need to force
+			// we can't go with os.Rename so we need to force
 			// not atomic saving sometimes as 4th test in TestSaveAsOpenFile
 			if err := v.nonAtomicSave(name); err != nil {
 				return err
