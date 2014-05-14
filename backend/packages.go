@@ -16,8 +16,16 @@ import (
 
 type (
 	Package interface {
+		// Returns the name of the package for sth
+		// like settings is the filename and for
+		// plugins is the dir name
 		Name() string
+		// Returns the useful data that we need
+		// from this package for example for a
+		// plugin will be the python files or for
+		// a keymap will be the file data
 		Get() interface{}
+		// Returns the path that the package exists
 		Path() string
 	}
 
@@ -82,6 +90,14 @@ func (p *Plugin) Name() string {
 
 func (p *Plugin) Path() string {
 	return p.path
+}
+
+func (p *Plugin) Setting() *Setting {
+	return p.setting
+}
+
+func (p *Plugin) KeyMap() *KeyMap {
+	return p.keymap
 }
 
 func NewSetting(path string) *Setting {
