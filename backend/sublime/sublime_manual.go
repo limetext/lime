@@ -11,53 +11,20 @@ import (
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/render"
 	"os"
-	"strings"
 	"time"
 )
 
 func scanpath(path string, m *py.Module) {
-	sys, err := py.Import("sys")
-	if err != nil {
-		log4go.Debug(err)
-	} else {
-		defer sys.Decref()
-	}
-
-	// This should probably be done by the Editor as it needs to scan through for themes, keybinding, settings etc
-	f, err := os.Open(path)
-	if err != nil {
-		log4go.Warn(err)
-		return
-	}
-	defer f.Close()
-	dirs, err := f.Readdirnames(-1)
-	if err != nil {
-		log4go.Warn(err)
-		return
-	}
-	for _, dir := range dirs {
-		if dir != "Vintageous" && dir != "Default" && dir != "plugins" {
+	plugins := backend.Scanpath(path)
+	for _, p := range plugins {
+		if p.Name() != "Vintageous" && p.Name() != "Default" && p.Name() != "plugins" {
 			// TODO obviously
 			continue
 		}
-		dir2 := path + dir
-		f2, err := os.Open(dir2)
-		if err != nil {
-			log4go.Warn(err)
-			continue
-		}
-		defer f2.Close()
-		fi, err := f2.Readdir(-1)
-		if err != nil {
-			log4go.Warn(err)
-		}
+		fi := p.Get().([]os.FileInfo)
 		for _, f := range fi {
 			fn := f.Name()
-			if !strings.HasSuffix(fn, ".py") {
-				continue
-			}
-			//m.Incref()
-			s, err := py.NewUnicode(dir + "." + fn[:len(fn)-3])
+			s, err := py.NewUnicode(p.Name() + "." + fn[:len(fn)-3])
 			if err != nil {
 				log4go.Error(err)
 				continue
@@ -67,12 +34,6 @@ func scanpath(path string, m *py.Module) {
 			} else if r != nil {
 				r.Decref()
 			}
-			// if i, err := sys.Base().CallMethodObjArgs("getrefcount", s); err != nil {
-			// 	log4go.Error(err)
-			// } else {
-			// 	log4go.Debug("m refs: %d", i.(*py.Long).Int64())
-			// 	i.Decref()
-			// }
 		}
 	}
 }
@@ -211,10 +172,36 @@ func init() {
 func Init() {
 	l := py.NewLock()
 	defer l.Unlock()
-	if m, err := py.Import("sublime_plugin"); err != nil {
+	m, err := py.Import("sublime_plugin")
+	if err != nil {
 		panic(err)
+	}
+	sys, err := py.Import("sys")
+	if err != nil {
+		log4go.Debug(err)
 	} else {
-		// scanpath("../packages/", m)
-		scanpath("../../3rdparty/bundles/", m)
+		defer sys.Decref()
+	}
+
+	for _, p := range backend.Packages["plugins"] {
+		if p.Name() != "Vintageous" && p.Name() != "Default" && p.Name() != "plugins" {
+			// TODO obviously
+			continue
+		}
+		fi := p.Get().([]os.FileInfo)
+		for _, f := range fi {
+			fn := f.Name()
+			s, err := py.NewUnicode(p.Name() + "." + fn[:len(fn)-3])
+			fmt.Println(p.Name() + "." + fn[:len(fn)-3])
+			if err != nil {
+				log4go.Error(err)
+				continue
+			}
+			if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+				log4go.Error(err)
+			} else if r != nil {
+				r.Decref()
+			}
+		}
 	}
 }

@@ -40,12 +40,12 @@ type (
 )
 
 const (
-	DEFAULT_SUBLIME_SETTINGS    = "packages/Default/Default.sublime-settings"
-	DEFAULT_SUBLIME_KEYBINDINGS = "packages/Default/Default.sublime-keymap"
-	SUBLIME_USER_PACKAGES_PATH  = "../3rdparty/bundles/"
+	DEFAULT_SUBLIME_SETTINGS    = "../../backend/packages/Default/Default.sublime-settings"
+	DEFAULT_SUBLIME_KEYBINDINGS = "../../backend/packages/Default/Default.sublime-keymap"
+	SUBLIME_USER_PACKAGES_PATH  = "../../3rdparty/bundles/"
 )
 
-var packages = make(map[string][]Package)
+var Packages = make(map[string][]Package)
 
 func NewPlugin(path string) *Plugin {
 	f, err := os.Open(path)
@@ -127,8 +127,40 @@ func (p *KeyMap) Path() string {
 
 func add(key string, p Package) {
 	if !reflect.ValueOf(p).IsNil() {
-		packages[key] = append(packages[key], p)
+		Packages[key] = append(Packages[key], p)
 	}
+}
+
+func Scanpath(path string) []*Plugin {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+	dirs, err := f.Readdirnames(-1)
+	if err != nil {
+		return nil
+	}
+	plugins := make([]*Plugin, 0)
+	for _, dir := range dirs {
+		dir2 := path + dir
+		f2, err := os.Open(dir2)
+		if err != nil {
+			continue
+		}
+		defer f2.Close()
+		fi, err := f2.Readdir(-1)
+		if err != nil {
+			continue
+		}
+		for _, f := range fi {
+			if strings.HasSuffix(f.Name(), ".py") {
+				plugins = append(plugins, NewPlugin(dir2))
+				break
+			}
+		}
+	}
+	return plugins
 }
 
 func init() {
