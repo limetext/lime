@@ -6,7 +6,6 @@ package backend
 
 import (
 	// "code.google.com/p/log4go" Later
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -25,15 +24,13 @@ type (
 		// plugin will be the python files or for
 		// a keymap will be the file data
 		Get() interface{}
-		// Returns the path that the package exists
-		Path() string
 	}
 
 	Plugin struct {
-		setting *Setting
-		keymap  *KeyMap
-		path    string
-		files   []os.FileInfo
+		settings []*Setting
+		keymaps  []*KeyMap
+		path     string
+		files    []os.FileInfo
 	}
 
 	Setting struct {
@@ -53,8 +50,14 @@ const (
 	SUBLIME_USER_PACKAGES_PATH  = "../../3rdparty/bundles/"
 )
 
+// We store all scaned packages here with appropriate
+// key like plugins, settings, keymaps, etc
+// plugins specific settings or keymaps won't be in here
+// we should access them from the plugin itself
 var Packages = make(map[string][]Package)
 
+// Initializes a new plugin whith loading all of the
+// settings, keymaps and python files inside the path
 func NewPlugin(path string) *Plugin {
 	f, err := os.Open(path)
 	if err != nil {
@@ -71,9 +74,9 @@ func NewPlugin(path string) *Plugin {
 		if strings.HasSuffix(f.Name(), ".py") {
 			files = append(files, f)
 		} else if strings.HasSuffix(f.Name(), ".sublime-settings") {
-			p.setting = NewSetting(path + string(os.PathSeparator) + f.Name())
+			p.settings = append(p.settings, NewSetting(path+string(os.PathSeparator)+f.Name()))
 		} else if strings.HasSuffix(f.Name(), ".sublime-keymap") {
-			p.keymap = NewKeyMap(path + string(os.PathSeparator) + f.Name())
+			p.keymaps = append(p.keymaps, NewKeyMap(path+string(os.PathSeparator)+f.Name()))
 		}
 	}
 	p.files = files
@@ -88,27 +91,26 @@ func (p *Plugin) Name() string {
 	return path.Base(p.path)
 }
 
-func (p *Plugin) Path() string {
-	return p.path
+func (p *Plugin) Settings() []*Setting {
+	return p.settings
 }
 
-func (p *Plugin) Setting() *Setting {
-	return p.setting
-}
-
-func (p *Plugin) KeyMap() *KeyMap {
-	return p.keymap
+func (p *Plugin) KeyMaps() []*KeyMap {
+	return p.keymaps
 }
 
 func NewSetting(path string) *Setting {
-	d, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil
-	}
-	return &Setting{path, d}
+	return &Setting{path, nil}
 }
 
 func (p *Setting) Get() interface{} {
+	if p.data == nil {
+		d, err := ioutil.ReadFile(p.path)
+		if err != nil {
+			return nil
+		}
+		p.data = d
+	}
 	return p.data
 }
 
@@ -116,29 +118,23 @@ func (p *Setting) Name() string {
 	return path.Base(p.path)
 }
 
-func (p *Setting) Path() string {
-	return p.path
-}
-
 func NewKeyMap(path string) *KeyMap {
-	d, err := ioutil.ReadFile(path)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-	return &KeyMap{path, d}
+	return &KeyMap{path, nil}
 }
 
 func (p *KeyMap) Get() interface{} {
+	if p.data == nil {
+		d, err := ioutil.ReadFile(p.path)
+		if err != nil {
+			return nil
+		}
+		p.data = d
+	}
 	return p.data
 }
 
 func (p *KeyMap) Name() string {
 	return path.Base(p.path)
-}
-
-func (p *KeyMap) Path() string {
-	return p.path
 }
 
 func add(key string, p Package) {
