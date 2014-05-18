@@ -19,11 +19,15 @@ type (
 		// like settings is the filename and for
 		// plugins is the dir name
 		Name() string
+
 		// Returns the useful data that we need
 		// from this package for example for a
 		// plugin will be the python files or for
 		// a keymap will be the file data
 		Get() interface{}
+
+		// Reloads the package data
+		Reload()
 	}
 
 	Plugin struct {
@@ -99,6 +103,30 @@ func (p *Plugin) KeyMaps() []*KeyMap {
 	return p.keymaps
 }
 
+func (p *Plugin) Reload() {
+	f, err := os.Open(p.path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	fi, err := f.Readdir(-1)
+	if err != nil {
+		return
+	}
+	p.files = make([]os.FileInfo, 0)
+	p.settings = make([]*Setting, 0)
+	p.keymaps = make([]*KeyMap, 0)
+	for _, f := range fi {
+		if strings.HasSuffix(f.Name(), ".py") {
+			p.files = append(p.files, f)
+		} else if strings.HasSuffix(f.Name(), ".sublime-settings") {
+			p.settings = append(p.settings, NewSetting(p.path+string(os.PathSeparator)+f.Name()))
+		} else if strings.HasSuffix(f.Name(), ".sublime-keymap") {
+			p.keymaps = append(p.keymaps, NewKeyMap(p.path+string(os.PathSeparator)+f.Name()))
+		}
+	}
+}
+
 func NewSetting(path string) *Setting {
 	return &Setting{path, nil}
 }
@@ -118,6 +146,14 @@ func (p *Setting) Name() string {
 	return path.Base(p.path)
 }
 
+func (p *Setting) Reload() {
+	d, err := ioutil.ReadFile(p.path)
+	if err != nil {
+		return
+	}
+	p.data = d
+}
+
 func NewKeyMap(path string) *KeyMap {
 	return &KeyMap{path, nil}
 }
@@ -135,6 +171,14 @@ func (p *KeyMap) Get() interface{} {
 
 func (p *KeyMap) Name() string {
 	return path.Base(p.path)
+}
+
+func (p *KeyMap) Reload() {
+	d, err := ioutil.ReadFile(p.path)
+	if err != nil {
+		return
+	}
+	p.data = d
 }
 
 func add(key string, p Package) {
@@ -175,35 +219,12 @@ func Scanpath(path string) []*Plugin {
 	return plugins
 }
 
+// Loading the default packages
 func init() {
 	add("settings", NewSetting(DEFAULT_SUBLIME_SETTINGS))
 	add("keymaps", NewKeyMap(DEFAULT_SUBLIME_KEYBINDINGS))
-
-	f, err := os.Open(SUBLIME_USER_PACKAGES_PATH)
-	if err != nil {
-		return
-	}
-	defer f.Close()
-	dirs, err := f.Readdirnames(-1)
-	if err != nil {
-		return
-	}
-	for _, dir := range dirs {
-		dir2 := SUBLIME_USER_PACKAGES_PATH + dir
-		f2, err := os.Open(dir2)
-		if err != nil {
-			continue
-		}
-		defer f2.Close()
-		fi, err := f2.Readdir(-1)
-		if err != nil {
-			continue
-		}
-		for _, f := range fi {
-			if strings.HasSuffix(f.Name(), ".py") {
-				add("plugins", NewPlugin(dir2))
-				break
-			}
-		}
+	plugins := Scanpath(SUBLIME_USER_PACKAGES_PATH)
+	for _, p := range plugins {
+		add("plugins", p)
 	}
 }

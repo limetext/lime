@@ -11,7 +11,6 @@ import (
 	"github.com/limetext/lime/backend/loaders"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
-	"io/ioutil"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -73,8 +72,6 @@ type (
 		DefaultAction bool
 	}
 )
-
-const DEFAULT_SUBLIME_SETTINGS_PATH = "../../backend/packages/Default/Default.sublime-settings"
 
 func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
 func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
@@ -162,41 +159,36 @@ func (e *Editor) Init() {
 	ed.loadSettings()
 }
 
-func (e *Editor) loadKeybinding(fn string) {
-	d, err := ioutil.ReadFile(fn)
-	if err != nil {
-		log4go.Error("Couldn't load file %s: %s", fn, err)
-	}
+func (e *Editor) loadKeybinding(pkg *KeyMap) {
 	var bindings KeyBindings
-	if err := loaders.LoadJSON(d, &bindings); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {
 		log4go.Error(err)
 	} else {
-		log4go.Info("Loaded %s", fn)
+		log4go.Info("Loaded %s", pkg.Name())
+		e.Watch(NewWatchedPackage(pkg))
 	}
 	e.keyBindings.merge(&bindings)
 }
 
 func (e *Editor) loadKeybindings() {
-	// TODO(q): should search for keybindings
-	e.loadKeybinding("../../backend/packages/Default/Default.sublime-keymap")
-	e.loadKeybinding("../../3rdparty/bundles/Vintageous/Default.sublime-keymap")
+	for _, p := range Packages["keymaps"] {
+		e.loadKeybinding(p.(*KeyMap))
+	}
 }
 
-func (e *Editor) loadSetting(path string) {
-	d, err := ioutil.ReadFile(path)
-	if err != nil {
-		log4go.Error("Couldn't load file %s: %s", path, err)
-	}
-	if err := loaders.LoadJSON(d, e.Settings()); err != nil {
+func (e *Editor) loadSetting(pkg *Setting) {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), e.Settings()); err != nil {
 		log4go.Error(err)
 	} else {
-		log4go.Info("Loaded %s", path)
-		e.Watch(NewWatchedSettingFile(path))
+		log4go.Info("Loaded %s", pkg.Name())
+		e.Watch(NewWatchedPackage(pkg))
 	}
 }
 
 func (e *Editor) loadSettings() {
-	e.loadSetting(DEFAULT_SUBLIME_SETTINGS_PATH)
+	for _, p := range Packages["settings"] {
+		e.loadSetting(p.(*Setting))
+	}
 }
 
 func (e *Editor) PackagesPath() string {
