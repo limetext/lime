@@ -159,7 +159,7 @@ func (e *Editor) Init() {
 	ed.loadSettings()
 }
 
-func (e *Editor) loadKeybinding(pkg *KeyMap) {
+func (e *Editor) LoadKeybinding(pkg *KeyMap) {
 	var bindings KeyBindings
 	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {
 		log4go.Error(err)
@@ -172,11 +172,11 @@ func (e *Editor) loadKeybinding(pkg *KeyMap) {
 
 func (e *Editor) loadKeybindings() {
 	for _, p := range Packages["keymaps"] {
-		e.loadKeybinding(p.(*KeyMap))
+		e.LoadKeybinding(p.(*KeyMap))
 	}
 }
 
-func (e *Editor) loadSetting(pkg *Setting) {
+func (e *Editor) LoadSetting(pkg *Setting) {
 	if err := loaders.LoadJSON(pkg.Get().([]byte), e.Settings()); err != nil {
 		log4go.Error(err)
 	} else {
@@ -187,7 +187,7 @@ func (e *Editor) loadSetting(pkg *Setting) {
 
 func (e *Editor) loadSettings() {
 	for _, p := range Packages["settings"] {
-		e.loadSetting(p.(*Setting))
+		e.LoadSetting(p.(*Setting))
 	}
 }
 

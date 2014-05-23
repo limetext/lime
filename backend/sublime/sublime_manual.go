@@ -11,31 +11,44 @@ import (
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/render"
 	"os"
+	"path"
 	"time"
 )
 
 func scanpath(path string, m *py.Module) {
 	plugins := backend.Scanpath(path)
 	for _, p := range plugins {
-		if p.Name() != "Vintageous" && p.Name() != "Default" && p.Name() != "plugins" {
-			// TODO obviously
-			continue
+		loadPlugin(p, m)
+	}
+}
+
+func loadPlugin(pkg *backend.Plugin, m *py.Module) {
+	if path.Base(pkg.Name()) != "Vintageous" && path.Base(pkg.Name()) != "Default" && path.Base(pkg.Name()) != "plugins" {
+		// TODO obviously
+		return
+	}
+	fi := pkg.Get().([]os.FileInfo)
+	for _, f := range fi {
+		fn := f.Name()
+		s, err := py.NewUnicode(pkg.Name() + "." + fn[:len(fn)-3])
+		if err != nil {
+			log4go.Error(err)
+			return
 		}
-		fi := p.Get().([]os.FileInfo)
-		for _, f := range fi {
-			fn := f.Name()
-			s, err := py.NewUnicode(p.Name() + "." + fn[:len(fn)-3])
-			if err != nil {
-				log4go.Error(err)
-				continue
-			}
-			if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-				log4go.Error(err)
-			} else if r != nil {
-				r.Decref()
-			}
+		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+			log4go.Error(err)
+		} else if r != nil {
+			r.Decref()
 		}
 	}
+	ed := backend.GetEditor()
+	for _, p := range pkg.Settings() {
+		ed.LoadSetting(p)
+	}
+	for _, p := range pkg.KeyMaps() {
+		ed.LoadKeybinding(p)
+	}
+	ed.Watch(backend.NewWatchedPackage(pkg))
 }
 
 func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
@@ -184,24 +197,6 @@ func Init() {
 	}
 
 	for _, p := range backend.Packages["plugins"] {
-		if p.Name() != "Vintageous" && p.Name() != "Default" && p.Name() != "plugins" {
-			// TODO obviously
-			continue
-		}
-		fi := p.Get().([]os.FileInfo)
-		for _, f := range fi {
-			fn := f.Name()
-			s, err := py.NewUnicode(p.Name() + "." + fn[:len(fn)-3])
-			fmt.Println(p.Name() + "." + fn[:len(fn)-3])
-			if err != nil {
-				log4go.Error(err)
-				continue
-			}
-			if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-				log4go.Error(err)
-			} else if r != nil {
-				r.Decref()
-			}
-		}
+		loadPlugin(p.(*backend.Plugin), m)
 	}
 }

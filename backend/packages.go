@@ -8,16 +8,13 @@ import (
 	// "code.google.com/p/log4go" Later
 	"io/ioutil"
 	"os"
-	"path"
 	"reflect"
 	"strings"
 )
 
 type (
 	Package interface {
-		// Returns the name of the package for sth
-		// like settings is the filename and for
-		// plugins is the dir name
+		// Returns the path of the package
 		Name() string
 
 		// Returns the useful data that we need
@@ -92,7 +89,7 @@ func (p *Plugin) Get() interface{} {
 }
 
 func (p *Plugin) Name() string {
-	return path.Base(p.path)
+	return p.path
 }
 
 func (p *Plugin) Settings() []*Setting {
@@ -125,6 +122,12 @@ func (p *Plugin) Reload() {
 			p.keymaps = append(p.keymaps, NewKeyMap(p.path+string(os.PathSeparator)+f.Name()))
 		}
 	}
+	for _, s := range p.settings {
+		s.Reload()
+	}
+	for _, k := range p.keymaps {
+		k.Reload()
+	}
 }
 
 func NewSetting(path string) *Setting {
@@ -143,7 +146,7 @@ func (p *Setting) Get() interface{} {
 }
 
 func (p *Setting) Name() string {
-	return path.Base(p.path)
+	return p.path
 }
 
 func (p *Setting) Reload() {
@@ -152,6 +155,8 @@ func (p *Setting) Reload() {
 		return
 	}
 	p.data = d
+	e := GetEditor()
+	e.LoadSetting(p)
 }
 
 func NewKeyMap(path string) *KeyMap {
@@ -170,7 +175,7 @@ func (p *KeyMap) Get() interface{} {
 }
 
 func (p *KeyMap) Name() string {
-	return path.Base(p.path)
+	return p.path
 }
 
 func (p *KeyMap) Reload() {
@@ -179,6 +184,8 @@ func (p *KeyMap) Reload() {
 		return
 	}
 	p.data = d
+	e := GetEditor()
+	e.LoadKeybinding(p)
 }
 
 func add(key string, p Package) {
