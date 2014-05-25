@@ -41,14 +41,6 @@ func loadPlugin(pkg *backend.Plugin, m *py.Module) {
 			r.Decref()
 		}
 	}
-	ed := backend.GetEditor()
-	for _, p := range pkg.Settings() {
-		ed.LoadSetting(p)
-	}
-	for _, p := range pkg.KeyMaps() {
-		ed.LoadKeybinding(p)
-	}
-	ed.Watch(backend.NewWatchedPackage(pkg))
 }
 
 func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {

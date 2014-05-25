@@ -25,7 +25,7 @@ func (d *DummyWatchedFile) Reload() {
 
 func TestConfigLoading(t *testing.T) {
 	editor := GetEditor()
-	editor.LoadSetting(NewSetting("testdata/Default.sublime-settings"))
+	editor.loadSetting(NewSetting("testdata/Default.sublime-settings"))
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size")
@@ -78,7 +78,7 @@ func TestWatchOnSaveAs(t *testing.T) {
 func TestWatchingSettings(t *testing.T) {
 	var path string = "testdata/Default.sublime-settings"
 	editor := GetEditor()
-	editor.LoadSetting(NewSetting(path))
+	editor.loadSetting(NewSetting(path))
 
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
