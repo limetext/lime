@@ -330,6 +330,10 @@ func (fv *frontendView) Line(index int) *lineStruct {
 	return fv.FormattedLine[index]
 }
 
+func (fv *frontendView) Setting(name string) interface{} {
+	return fv.Back().Settings().Get(name, nil)
+}
+
 func (fv *frontendView) Back() *backend.View {
 	return fv.bv
 }
@@ -549,9 +553,13 @@ func (t *qmlfrontend) loop() {
 	v := w.OpenFile("main.go", 0)
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, 0})
 	v = w.OpenFile("../../backend/editor.go", 0)
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.Sel().Clear()
+	v.Sel().Add(Region{0, 0})
 
 	ed.Init()
 	sublime.Init()

@@ -5,12 +5,15 @@ Item {
     id: viewItem
     property var myView
     property bool isMinimap: false
+    property double fontSize: isMinimap ? 4 : 12
+    function sel() {
+        return myView.back().sel();
+    }
     Rectangle  {
         color: frontend.defaultBg()
         anchors.fill: parent
     }
     onMyViewChanged: {
-        console.log("myview changed");
         view.myView = myView;
     }
     ListView {
@@ -21,7 +24,7 @@ Item {
         property bool showBars: false
         delegate: Text {
             property var line: myView.line(index)
-            font.pointSize: isMinimap ? 4 : 12
+            font.pointSize: viewItem.fontSize
             text: line.text
             textFormat: TextEdit.RichText
             color: "white"
@@ -94,4 +97,64 @@ Item {
 
         clip: true
     }
+    Repeater {
+        model: (!isMinimap && sel()) ? sel().len() : 0
+        delegate: Text {
+            property var rowcol
+            Timer {
+                interval: 100
+                running: true
+                repeat: true
+                function measure(mysel, rowcol) {
+                    var line = myView.back().buffer().line(mysel.b);
+                    // TODO(.): would be better to use proper font metrics
+                    // TODO(.): This assignment makes qml panic with the confusing error
+                    // "panic: cannot use int as a int"
+                    // line.b = mysel.b;
+                    var str = myView.back().buffer().substr(line);
+                    str = str.substr(0, rowcol[1]);
+                    parent.textFormat = TextEdit.RichText;
+                    var old = parent.text;
+                    parent.text = "<span style=\"white-space:pre\">" + str + "</spanl>";
+                    var ret = parent.width;
+                    parent.textFormat = TextEdit.PlainText;
+                    parent.text = old;
+
+                    if (ret == null) {
+                        ret = 0;
+                    }
+                    return ret;
+                }
+                onTriggered: {
+                    // TODO(.): not too happy about actively polling like this
+                    var s = sel();
+                    if (index >= s.len()) {
+                        return;
+                    }
+                    var mysel = s.get(index);
+                    parent.rowcol = myView.back().buffer().rowCol(mysel.b);
+                    var width = measure(mysel, parent.rowcol);
+
+                    parent.x = width;
+                    parent.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
+
+                    var style = myView.setting("caret_style");
+                    var inv = myView.setting("inverse_caret_state");
+                    if (style == "underscore") {
+                        if (inv) {
+                            text = "_";
+                        } else {
+                            text = "|";
+                            parent.x -= 2;
+                        }
+                    }
+                }
+
+            }
+            y: rowcol[0]*(view.contentHeight/view.count)-view.contentY;
+            font.pointSize: fontSize
+            color: "white"
+        }
+    }
+
 }
