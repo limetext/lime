@@ -9,6 +9,9 @@ ApplicationWindow {
     id: window
     width: 800
     height: 600
+
+    property var myWindow
+
     menuBar: MenuBar {
         id: menu
         Menu {
@@ -25,7 +28,46 @@ ApplicationWindow {
             }
         }
     }
-    property var myWindow
+
+	statusBar: StatusBar {
+        id: statusBar
+
+        RowLayout {
+            anchors.fill: parent 
+            id: statusBarRowLayout
+            spacing: 15
+
+            RowLayout {
+                anchors.fill: parent
+                spacing: 3
+
+                Label {
+                    text: "git branch: master"
+                }
+
+                Label {
+                    text: "INSERT MODE"
+                }
+
+                Label {
+                    id: statusBarCaretPos
+                    text: "Line xx, Column yy"
+                }
+            }
+
+            Label {
+                id: statusBarIndent
+                text: "Tab Size/Spaces: 4"
+                Layout.alignment: Qt.AlignRight
+            }
+
+            Label {
+                id: statusBarLanguage
+                text: "Go"
+                Layout.alignment: Qt.AlignRight
+            }
+        }
+    }
 
     Item {
         anchors.fill: parent
