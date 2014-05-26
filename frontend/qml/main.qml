@@ -32,6 +32,14 @@ ApplicationWindow {
 	statusBar: StatusBar {
         id: statusBar
 
+        property color textColor: "#969696"
+
+        Image {
+            anchors.fill: parent
+            fillMode: Image.TileHorizontally
+            source: "../../3rdparty/bundles/themes/soda/Soda Dark/status-bar-background.png"
+        }
+
         RowLayout {
             anchors.fill: parent 
             id: statusBarRowLayout
@@ -43,27 +51,32 @@ ApplicationWindow {
 
                 Label {
                     text: "git branch: master"
+                    color: statusBar.textColor
                 }
 
                 Label {
                     text: "INSERT MODE"
+                    color: statusBar.textColor
                 }
 
                 Label {
                     id: statusBarCaretPos
                     text: "Line xx, Column yy"
+                    color: statusBar.textColor
                 }
             }
 
             Label {
                 id: statusBarIndent
                 text: "Tab Size/Spaces: 4"
+                color: statusBar.textColor
                 Layout.alignment: Qt.AlignRight
             }
 
             Label {
                 id: statusBarLanguage
                 text: "Go"
+                color: statusBar.textColor
                 Layout.alignment: Qt.AlignRight
             }
         }
