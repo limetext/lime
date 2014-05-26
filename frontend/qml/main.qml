@@ -29,19 +29,18 @@ ApplicationWindow {
         }
     }
 
-	statusBar: StatusBar {
+    statusBar: StatusBar {
         id: statusBar
+        style: StatusBarStyle {
+            background: Image {
+               source: "../../3rdparty/bundles/themes/soda/Soda Dark/status-bar-background.png"
+            }
+        }
 
         property color textColor: "#969696"
 
-        Image {
-            anchors.fill: parent
-            fillMode: Image.TileHorizontally
-            source: "../../3rdparty/bundles/themes/soda/Soda Dark/status-bar-background.png"
-        }
-
         RowLayout {
-            anchors.fill: parent 
+            anchors.fill: parent
             id: statusBarRowLayout
             spacing: 15
 
