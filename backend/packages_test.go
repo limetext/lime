@@ -11,15 +11,16 @@ func TestPlugin(t *testing.T) {
 		path   string
 		suffix string
 		files  []string
-		sets   []string
-		keys   []string
+		pkcts  []string
 	}{
 		{
 			"testdata/Vintageous",
 			".py",
 			[]string{"action_cmds.py", "state.py", "transformers.py"},
-			[]string{"testdata/Vintageous/Vintageous.sublime-settings"},
-			[]string{"testdata/Vintageous/Default.sublime-keymap"},
+			[]string{
+				"testdata/Vintageous/Vintageous.sublime-settings",
+				"testdata/Vintageous/Default.sublime-keymap",
+			},
 		},
 	}
 	for i, test := range tests {
@@ -39,28 +40,16 @@ func TestPlugin(t *testing.T) {
 				t.Errorf("Test %d: Expected to find %s in %s plugin", i, f, p.Name())
 			}
 		}
-		for _, f := range test.sets {
+		for _, f := range test.pkcts {
 			found := false
-			for _, s := range p.Settings() {
-				if f == s.Name() {
+			for _, pckt := range p.Packets() {
+				if f == pckt.Name() {
 					found = true
 					break
 				}
 			}
 			if !found {
-				t.Errorf("Test %d: Expected to find %s in %s plugin settings", i, f, p.Name())
-			}
-		}
-		for _, f := range test.keys {
-			found := false
-			for _, k := range p.KeyMaps() {
-				if f == k.Name() {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Test %d: Expected to find %s in %s plugin keymaps", i, f, p.Name())
+				t.Errorf("Test %d: Expected to find %s in %s plugin packets", i, f, p.Name())
 			}
 		}
 	}
@@ -70,7 +59,7 @@ func TestPluginReload(t *testing.T) {
 
 }
 
-func TestSetting(t *testing.T) {
+func TestPacket(t *testing.T) {
 	tests := []struct {
 		path string
 		data string
@@ -81,7 +70,7 @@ func TestSetting(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		s := NewSetting(test.path)
+		s := NewPacket(test.path)
 		d, err := ioutil.ReadFile(test.path)
 		if err != nil {
 			t.Fatalf("Test %d: Can't read file: %s", i, err)
@@ -98,6 +87,46 @@ func TestSetting(t *testing.T) {
 		}
 		if err := ioutil.WriteFile(test.path, d, 0644); err != nil {
 			t.Fatalf("Test %d: Can't write back file: %s", i, err)
+		}
+	}
+}
+
+func TestPckts(t *testing.T) {
+	test := struct {
+		pckts  []string
+		expect map[string][]string
+	}{
+		[]string{
+			"testdata/Default.sublime-settings",
+			"testdata/Vintageous/Default.sublime-keymap",
+			"testdata/Vintageous/Vintageous.sublime-settings",
+		},
+		map[string][]string{
+			"setting": []string{
+				"testdata/Default.sublime-settings",
+				"testdata/Vintageous/Vintageous.sublime-settings",
+			},
+			"keymap": []string{
+				"testdata/Vintageous/Default.sublime-keymap",
+			},
+		},
+	}
+	for _, p := range test.pckts {
+		add(NewPacket(p))
+	}
+	for key, ns := range test.expect {
+		ps := Packets.Type(key)
+		for _, p := range ns {
+			found := false
+			for _, p1 := range ps {
+				if p == p1.Name() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Expected to find %s in %s plugin packets", p, ps)
+			}
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"code.google.com/p/log4go"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -27,20 +28,19 @@ type (
 		Reload()
 	}
 
+	Pckts []*Packet
+
 	Plugin struct {
-		path     string
-		suffix   string
-		files    []os.FileInfo
-		settings []*Setting
-		keymaps  []*KeyMap
+		path    string
+		suffix  string
+		files   []os.FileInfo
+		packets Pckts
 	}
 
-	Setting struct {
-		path string
-		data []byte
-	}
-
-	KeyMap struct {
+	// Packets are small packages containing 1 file
+	// individual settings, keymaps, snippets and etc
+	// are Packet
+	Packet struct {
 		path string
 		data []byte
 	}
@@ -52,11 +52,9 @@ const (
 	SUBLIME_USER_PACKAGES_PATH  = "../../3rdparty/bundles/"
 )
 
-// We store default packages here with appropriate
-// key like plugins, settings, keymaps, etc plugins
-// specific settings or keymaps won't be in here
-// they should be accessed from the plugin itself
-var Packages = make(map[string][]Package)
+// Valid packet types
+// TODO: command, snippet and etc should be here
+var types = []string{"setting", "keymap"}
 
 // Initializes a new plugin whith loading all of the
 // settings, keymaps and python files inside the path
@@ -73,18 +71,20 @@ func NewPlugin(path string, suffix string) *Plugin {
 		return nil
 	}
 	files := make([]os.FileInfo, 0)
-	sets := make([]*Setting, 0)
-	keys := make([]*KeyMap, 0)
+	pckts := make([]*Packet, 0)
 	for _, f := range fi {
-		if strings.HasSuffix(f.Name(), suffix) {
+		if suffix != "" && strings.HasSuffix(f.Name(), suffix) {
 			files = append(files, f)
-		} else if strings.HasSuffix(f.Name(), ".sublime-settings") {
-			sets = append(sets, NewSetting(path+string(os.PathSeparator)+f.Name()))
-		} else if strings.HasSuffix(f.Name(), ".sublime-keymap") {
-			keys = append(keys, NewKeyMap(path+string(os.PathSeparator)+f.Name()))
+		} else {
+			s := filepath.Ext(f.Name())
+			for _, t := range types {
+				if strings.Contains(s, t) {
+					pckts = append(pckts, NewPacket(path+string(os.PathSeparator)+f.Name()))
+				}
+			}
 		}
 	}
-	return &Plugin{path, suffix, files, sets, keys}
+	return &Plugin{path, suffix, files, pckts}
 }
 
 func (p *Plugin) Get() interface{} {
@@ -95,26 +95,19 @@ func (p *Plugin) Name() string {
 	return p.path
 }
 
-func (p *Plugin) Settings() []*Setting {
-	return p.settings
-}
-
-func (p *Plugin) KeyMaps() []*KeyMap {
-	return p.keymaps
+func (p *Plugin) Packets() []*Packet {
+	return p.packets
 }
 
 func (p *Plugin) Reload() {
 	p = NewPlugin(p.path, p.suffix)
-	for _, s := range p.settings {
-		s.Reload()
-	}
-	for _, k := range p.keymaps {
-		k.Reload()
+	for _, pckt := range p.packets {
+		pckt.Reload()
 	}
 }
 
-func NewSetting(path string) *Setting {
-	return &Setting{path, nil}
+func NewPacket(path string) *Packet {
+	return &Packet{path, nil}
 }
 
 func loadData(path string) []byte {
@@ -126,55 +119,48 @@ func loadData(path string) []byte {
 	return d
 }
 
-func (p *Setting) Get() interface{} {
+func (p *Packet) Get() interface{} {
 	if p.data == nil {
 		p.data = loadData(p.path)
 	}
 	return p.data
 }
 
-func (p *Setting) Name() string {
+func (p *Packet) Name() string {
 	return p.path
 }
 
-func (p *Setting) Reload() {
+func (p *Packet) Reload() {
 	p.data = loadData(p.path)
 	e := GetEditor()
 	e.loadSetting(p)
 }
 
-func NewKeyMap(path string) *KeyMap {
-	return &KeyMap{path, nil}
-}
-
-func (p *KeyMap) Get() interface{} {
-	if p.data == nil {
-		p.data = loadData(p.path)
+func (p *Pckts) Type(key string) []*Packet {
+	pckts := make([]*Packet, 0)
+	for _, pckt := range Packets {
+		if strings.Contains(filepath.Ext(pckt.Name()), key) {
+			pckts = append(pckts, pckt)
+		}
 	}
-	return p.data
+	return pckts
 }
 
-func (p *KeyMap) Name() string {
-	return p.path
-}
-
-func (p *KeyMap) Reload() {
-	p.data = loadData(p.path)
-	e := GetEditor()
-	e.loadKeybinding(p)
-}
-
-func add(key string, p Package) {
+func add(p *Packet) {
 	if !reflect.ValueOf(p).IsNil() {
-		Packages[key] = append(Packages[key], p)
+		Packets = append(Packets, p)
 	}
 }
 
-// Loading the default packages
+// We'll store loaded packets on startup here
+// plugins specific packets won't be in here
+// they should be accessed from the plugin itself
+var Packets Pckts
+
+// Loading the default packets
 func init() {
-	add("settings", NewSetting(DEFAULT_SUBLIME_SETTINGS))
-	add("keymaps", NewKeyMap(DEFAULT_SUBLIME_KEYBINDINGS))
-	// TODO: for now we just load vintageous plugin but we should
-	// scan this path and add all plugins
-	add("plugins", NewPlugin(SUBLIME_USER_PACKAGES_PATH+string(os.PathSeparator)+"Vintageous", ".py"))
+	Packets = make([]*Packet, 0)
+
+	add(NewPacket(DEFAULT_SUBLIME_SETTINGS))
+	add(NewPacket(DEFAULT_SUBLIME_KEYBINDINGS))
 }
