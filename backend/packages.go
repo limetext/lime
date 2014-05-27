@@ -184,11 +184,11 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 		defer f2.Close()
 		fi, err := f2.Readdir(-1)
 		if err != nil {
-			log4go.Warn(err)
+			continue
 		}
 		for _, f := range fi {
 			fn := f.Name()
-			if !strings.HasSuffix(fn, ".py") {
+			if strings.HasSuffix(fn, suffix) {
 				plugins = append(plugins, NewPlugin(dir2, suffix))
 				break
 			}
