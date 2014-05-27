@@ -8,7 +8,7 @@ import (
 	"code.google.com/p/log4go"
 	"io/ioutil"
 	"os"
-	p "path"
+	pt "path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -74,7 +74,7 @@ func NewPlugin(path string, suffix string) *Plugin {
 			s := filepath.Ext(f.Name())
 			for _, t := range types {
 				if strings.Contains(s, t) {
-					pckts = append(pckts, NewPacket(p.Join(path, f.Name())))
+					pckts = append(pckts, NewPacket(pt.Join(path, f.Name())))
 				}
 			}
 		}
@@ -90,8 +90,16 @@ func (p *Plugin) Name() string {
 	return p.path
 }
 
-func (p *Plugin) Packets() []*Packet {
-	return p.packets
+func (p *Plugin) LoadPackets() {
+	ed := GetEditor()
+	for _, pkg := range p.packets.Type("settings") {
+		log4go.Info("Loading packet %s for plugin %s", pkg.Name(), p.Name())
+		ed.loadSetting(pkg)
+	}
+	for _, pkg := range p.packets.Type("keymap") {
+		log4go.Info("Loading packet %s for plugin %s", pkg.Name(), p.Name())
+		ed.loadKeybinding(pkg)
+	}
 }
 
 func (p *Plugin) Reload() {
@@ -135,9 +143,9 @@ func (p *Packet) Reload() {
 	e.loadSetting(p)
 }
 
-func (p *Pckts) Type(key string) []*Packet {
+func (p Pckts) Type(key string) []*Packet {
 	pckts := make([]*Packet, 0)
-	for _, pckt := range Packets {
+	for _, pckt := range p {
 		if strings.Contains(filepath.Ext(pckt.Name()), key) {
 			pckts = append(pckts, pckt)
 		}
@@ -167,7 +175,7 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 		return nil
 	}
 	for _, dir := range dirs {
-		dir2 := path + dir
+		dir2 := pt.Join(path, dir)
 		f2, err := os.Open(dir2)
 		if err != nil {
 			log4go.Warn(err)

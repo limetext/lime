@@ -46,7 +46,7 @@ func TestPlugin(t *testing.T) {
 		}
 		for _, f := range test.pkcts {
 			found := false
-			for _, pckt := range p.Packets() {
+			for _, pckt := range p.packets {
 				if f == pckt.Name() {
 					found = true
 					break
@@ -82,7 +82,7 @@ func TestPluginReload(t *testing.T) {
 	}
 	p.Reload()
 	found = false
-	for _, p := range p.Packets() {
+	for _, p := range p.packets {
 		if p.Name() == "testdata/Closetag/test.settings" {
 			found = true
 			break
