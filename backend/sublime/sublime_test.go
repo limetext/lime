@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestSublime(t *testing.T) {
@@ -33,7 +34,10 @@ func TestSublime(t *testing.T) {
 	if m, err := py.Import("sublime_plugin"); err != nil {
 		t.Fatal(err)
 	} else {
-		scanpath("testdata/", m)
+		plugins := backend.ScanPlugins("testdata/", ".py")
+		for _, p := range plugins {
+			loadPlugin(p, m)
+		}
 	}
 
 	subl, err := py.Import("sublime")
@@ -65,6 +69,44 @@ func TestSublime(t *testing.T) {
 			}
 		}
 	}
+
+	// Testing plugin reload
+	data := []byte(`import sublime, sublime_plugin
+
+class TestToxt(sublime_plugin.TextCommand):
+    def run(self, edit):
+        print("my view's id is: %d" % self.view.id())
+        self.view.insert(edit, 0, "Tada")
+		`)
+	if err := ioutil.WriteFile("testdata/plugins/reload.py", data, 0644); err != nil {
+		t.Fatalf("Couldn't write file: %s", err)
+	}
+	data = []byte(`try:
+    import traceback
+    import sublime
+    print("new file")
+    v = sublime.test_window.new_file()
+    print("running command")
+    v.run_command("test_toxt")
+    print("command ran")
+    assert v.substr(sublime.Region(0, v.size())) == "Tada"
+except:
+    traceback.print_exc()
+    raise
+		`)
+	time.Sleep(time.Millisecond * 10)
+	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
+		t.Fatalf("Couldn't write file: %s", err)
+	}
+	log4go.Debug("Running %s", "reload_test.py")
+	if _, err := py.Import("reload_test"); err != nil {
+		log4go.Error(err)
+		t.Error(err)
+	} else {
+		log4go.Debug("Ran %s", "reload_test.py")
+	}
+	os.Remove("testdata/plugins/reload.py")
+	os.Remove("testdata/reload_test.py")
 
 	var f func(indent string, v py.Object, buf *bytes.Buffer)
 	f = func(indent string, v py.Object, buf *bytes.Buffer) {
