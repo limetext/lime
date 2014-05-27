@@ -230,7 +230,7 @@ func Init() {
 	go observePlugins()
 
 	// TODO: add all plugins after supporting all commands
-	plugins := backend.ScanPlugins(backend.LIME_USER_PACKAGES_PATH+string(os.PathSeparator)+"Vintageous", ".py")
+	plugins := backend.ScanPlugins(path.Join(backend.LIME_USER_PACKAGES_PATH, "Vintageous"), ".py")
 	for _, p := range plugins {
 		loadPlugin(p, m)
 	}

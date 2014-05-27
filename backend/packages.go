@@ -8,6 +8,7 @@ import (
 	"code.google.com/p/log4go"
 	"io/ioutil"
 	"os"
+	p "path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -73,7 +74,7 @@ func NewPlugin(path string, suffix string) *Plugin {
 			s := filepath.Ext(f.Name())
 			for _, t := range types {
 				if strings.Contains(s, t) {
-					pckts = append(pckts, NewPacket(path+string(os.PathSeparator)+f.Name()))
+					pckts = append(pckts, NewPacket(p.Join(path, f.Name())))
 				}
 			}
 		}

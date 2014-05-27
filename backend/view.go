@@ -504,7 +504,7 @@ func (v *View) SaveAs(name string) (err error) {
 		if err != nil {
 			return err
 		}
-		tmpf := n + string(os.PathSeparator) + "tmp"
+		tmpf := path.Join(n, "tmp")
 		if err := v.nonAtomicSave(tmpf); err != nil {
 			return err
 		}
