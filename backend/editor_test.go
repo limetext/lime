@@ -11,15 +11,15 @@ import (
 	"time"
 )
 
-type DummyWatchedFile struct {
+type DummyWatched struct {
 	name string
 }
 
-func (d *DummyWatchedFile) Name() string {
+func (d *DummyWatched) Name() string {
 	return d.name
 }
 
-func (d *DummyWatchedFile) Reload() {
+func (d *DummyWatched) Reload() {
 	// noop
 }
 
@@ -39,7 +39,7 @@ func TestConfigLoading(t *testing.T) {
 
 func TestWatch(t *testing.T) {
 	editor := GetEditor()
-	observedFile := &DummyWatchedFile{"editor_test.go"}
+	observedFile := &DummyWatched{"editor_test.go"}
 	editor.Watch(observedFile)
 
 	if editor.watchedFiles["editor_test.go"] != observedFile {

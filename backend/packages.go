@@ -100,7 +100,10 @@ func (p *Plugin) Packets() []*Packet {
 }
 
 func (p *Plugin) Reload() {
-	p = NewPlugin(p.path, p.suffix)
+	log4go.Info("Reloading plugin %s", p.Name())
+	p1 := NewPlugin(p.path, p.suffix)
+	p.files = p1.files
+	p.packets = p1.packets
 	for _, pckt := range p.packets {
 		pckt.Reload()
 	}
@@ -131,6 +134,7 @@ func (p *Packet) Name() string {
 }
 
 func (p *Packet) Reload() {
+	log4go.Info("Reloading %s", p.Name())
 	p.data = loadData(p.path)
 	e := GetEditor()
 	e.loadSetting(p)
@@ -150,6 +154,48 @@ func add(p *Packet) {
 	if !reflect.ValueOf(p).IsNil() {
 		Packets = append(Packets, p)
 	}
+}
+
+// Scaning path for finding plugins that contain files
+// whith specific suffix
+func ScanPath(path string, suffix string) []*Plugin {
+	ps := make([]*Plugin, 0)
+	f, err := os.Open(path)
+	if err != nil {
+		log4go.Warn(err)
+		return nil
+	}
+	defer f.Close()
+	dirs, err := f.Readdirnames(-1)
+	if err != nil {
+		log4go.Warn(err)
+		return nil
+	}
+	for _, dir := range dirs {
+		if dir != "Vintageous" && dir != "Default" && dir != "plugins" && dir != "Closetag" {
+			// TODO obviously
+			continue
+		}
+		dir2 := path + dir
+		f2, err := os.Open(dir2)
+		if err != nil {
+			log4go.Warn(err)
+			continue
+		}
+		defer f2.Close()
+		fi, err := f2.Readdir(-1)
+		if err != nil {
+			log4go.Warn(err)
+		}
+		for _, f := range fi {
+			fn := f.Name()
+			if !strings.HasSuffix(fn, ".py") {
+				ps = append(ps, NewPlugin(dir2, suffix))
+				break
+			}
+		}
+	}
+	return ps
 }
 
 // We'll store loaded packets on startup here

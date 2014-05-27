@@ -56,7 +56,73 @@ func TestPlugin(t *testing.T) {
 }
 
 func TestPluginReload(t *testing.T) {
+	p := NewPlugin("testdata/Closetag", ".vim")
+	if err := ioutil.WriteFile("testdata/Closetag/test.vim", []byte("testing"), 0644); err != nil {
+		t.Fatalf("Couldn't write file: %s", err)
+	}
+	if err := ioutil.WriteFile("testdata/Closetag/test.settings", []byte("testing packets"), 0644); err != nil {
+		t.Fatalf("Couldn't write file: %s", err)
+	}
+	p.Reload()
+	fi := p.Get().([]os.FileInfo)
+	found := false
+	for _, f := range fi {
+		if f.Name() == "test.vim" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected to find test.vim file in %s", p.Name())
+	}
+	found = false
+	for _, p := range p.Packets() {
+		if p.Name() == "testdata/Closetag/test.settings" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected to find testdata/Closetag/test.settings file in %s", p.Name())
+	}
+}
 
+func TestScanPath(t *testing.T) {
+	tests := []struct {
+		path   string
+		suffix string
+		expect []string
+	}{
+		{
+			"testdata/",
+			".py",
+			[]string{
+				"testdata/Vintageous",
+			},
+		},
+		{
+			"testdata/",
+			".vim",
+			[]string{
+				"testdata/Closetag",
+			},
+		},
+	}
+	for i, test := range tests {
+		plugins := ScanPath(test.path, test.suffix)
+		for _, f := range test.expect {
+			found := false
+			for _, p := range plugins {
+				if f == p.Name() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Test %d: Expected ScanPath find %s plugin", i, f)
+			}
+		}
+	}
 }
 
 func TestPacket(t *testing.T) {

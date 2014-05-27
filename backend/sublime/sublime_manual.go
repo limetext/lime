@@ -7,6 +7,7 @@ package sublime
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/render"
@@ -14,34 +15,6 @@ import (
 	"path"
 	"time"
 )
-
-func scanpath(path string, m *py.Module) {
-	plugins := backend.Scanpath(path)
-	for _, p := range plugins {
-		loadPlugin(p, m)
-	}
-}
-
-func loadPlugin(pkg *backend.Plugin, m *py.Module) {
-	if path.Base(pkg.Name()) != "Vintageous" && path.Base(pkg.Name()) != "Default" && path.Base(pkg.Name()) != "plugins" {
-		// TODO obviously
-		return
-	}
-	fi := pkg.Get().([]os.FileInfo)
-	for _, f := range fi {
-		fn := f.Name()
-		s, err := py.NewUnicode(pkg.Name() + "." + fn[:len(fn)-3])
-		if err != nil {
-			log4go.Error(err)
-			return
-		}
-		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-			log4go.Error(err)
-		} else if r != nil {
-			r.Decref()
-		}
-	}
-}
 
 func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 	if tu.Size() != 1 {
@@ -173,6 +146,67 @@ func init() {
 	py.AddToPath("../../backend/sublime/")
 }
 
+func loadPlugin(p *backend.Plugin, m *py.Module) {
+	fi := p.Get().([]os.FileInfo)
+	for _, f := range fi {
+		fn := f.Name()
+		s, err := py.NewUnicode(p.Name() + "." + fn[:len(fn)-3])
+		if err != nil {
+			log4go.Error(err)
+			return
+		}
+		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+			log4go.Error(err)
+		} else if r != nil {
+			r.Decref()
+		}
+	}
+	watch(backend.NewWatchedPackage(p))
+}
+
+var (
+	watcher        *fsnotify.Watcher
+	watchedPlugins map[string]*backend.WatchedPackage
+)
+
+func watch(plugin *backend.WatchedPackage) {
+	log4go.Finest("Watch(%v)", plugin)
+	if err := watcher.Watch(plugin.Name()); err != nil {
+		log4go.Error("Could not watch plugin: %v", err)
+	} else {
+		watchedPlugins[plugin.Name()] = plugin
+	}
+}
+
+func unWatch(name string) {
+	if err := watcher.RemoveWatch(name); err != nil {
+		log4go.Error("Couldn't unwatch file: %v", err)
+	}
+	log4go.Finest("UnWatch(%s)", name)
+	delete(watchedPlugins, name)
+}
+
+func observePlugins() {
+	for {
+		select {
+		case ev := <-watcher.Event:
+			if ev.IsModify() {
+				if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
+					p.Reload()
+					m, err := py.Import("sublime_plugin")
+					if err != nil {
+						log4go.Error("Could not import sublime_plugin: %v", err)
+					} else {
+						loadPlugin(p.Package().(*backend.Plugin), m)
+					}
+				}
+			}
+		case err := <-watcher.Error:
+			log4go.Error("error:", err)
+		}
+	}
+}
+
 // TODO
 func Init() {
 	l := py.NewLock()
@@ -188,7 +222,15 @@ func Init() {
 		defer sys.Decref()
 	}
 
-	for _, p := range backend.Packages["plugins"] {
-		loadPlugin(p.(*backend.Plugin), m)
+	watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		log4go.Error("Could not create watcher due to: %v", err)
+	}
+	watchedPlugins = make(map[string]*backend.WatchedPackage)
+	go observePlugins()
+
+	plugins := backend.ScanPath("../../3rdparty/bundles/", ".py")
+	for _, p := range plugins {
+		loadPlugin(p, m)
 	}
 }

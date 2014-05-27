@@ -34,7 +34,7 @@ type (
 		clipboard     string
 		keyInput      chan (KeyPress)
 		watcher       *fsnotify.Watcher
-		watchedFiles  map[string]WatchedFile
+		watchedFiles  map[string]Watched
 	}
 
 	// The Frontend interface defines the API
@@ -134,7 +134,7 @@ func GetEditor() *Editor {
 			},
 			keyInput:     make(chan KeyPress, 32),
 			watcher:      newWatcher(),
-			watchedFiles: make(map[string]WatchedFile),
+			watchedFiles: make(map[string]Watched),
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
@@ -339,7 +339,7 @@ func (e *Editor) GetClipboard() string {
 	return e.clipboard
 }
 
-func (e *Editor) Watch(file WatchedFile) {
+func (e *Editor) Watch(file Watched) {
 	log4go.Finest("Watch(%v)", file)
 	if err := e.watcher.Watch(file.Name()); err != nil {
 		log4go.Error("Could not watch file: %v", err)
@@ -349,6 +349,9 @@ func (e *Editor) Watch(file WatchedFile) {
 }
 
 func (e *Editor) UnWatch(name string) {
+	if err := e.watcher.RemoveWatch(name); err != nil {
+		log4go.Error("Couldn't unwatch file: %v", err)
+	}
 	log4go.Finest("UnWatch(%s)", name)
 	delete(e.watchedFiles, name)
 }
@@ -358,7 +361,9 @@ func (e *Editor) observeFiles() {
 		select {
 		case ev := <-e.watcher.Event:
 			if ev.IsModify() {
-				e.watchedFiles[ev.Name].Reload()
+				if f, exist := e.watchedFiles[ev.Name]; exist {
+					f.Reload()
+				}
 			}
 		case err := <-e.watcher.Error:
 			log4go.Error("error:", err)

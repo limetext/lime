@@ -12,7 +12,7 @@ import (
 )
 
 type (
-	WatchedFile interface {
+	Watched interface {
 		Name() string
 		Reload()
 	}
@@ -72,4 +72,8 @@ func (o *WatchedPackage) Name() string {
 
 func (o *WatchedPackage) Reload() {
 	o.pkg.Reload()
+}
+
+func (o *WatchedPackage) Package() Package {
+	return o.pkg
 }
