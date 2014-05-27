@@ -34,7 +34,7 @@ func TestSublime(t *testing.T) {
 	if m, err := py.Import("sublime_plugin"); err != nil {
 		t.Fatal(err)
 	} else {
-		plugins := backend.ScanPath("testdata/", ".py")
+		plugins := backend.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
 			loadPlugin(p, m)
 		}

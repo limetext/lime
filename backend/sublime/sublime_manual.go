@@ -229,7 +229,8 @@ func Init() {
 	watchedPlugins = make(map[string]*backend.WatchedPackage)
 	go observePlugins()
 
-	plugins := backend.ScanPath("../../3rdparty/bundles/", ".py")
+	// TODO: add all plugins after supporting all commands
+	plugins := backend.ScanPlugins(backend.LIME_USER_PACKAGES_PATH+string(os.PathSeparator)+"Vintageous", ".py")
 	for _, p := range plugins {
 		loadPlugin(p, m)
 	}

@@ -14,12 +14,12 @@ func TestPlugin(t *testing.T) {
 		pkcts  []string
 	}{
 		{
-			"testdata/Vintageous",
+			"testdata/Vintage",
 			".py",
 			[]string{"action_cmds.py", "state.py", "transformers.py"},
 			[]string{
-				"testdata/Vintageous/Vintageous.sublime-settings",
-				"testdata/Vintageous/Default.sublime-keymap",
+				"testdata/Vintage/Vintageous.sublime-settings",
+				"testdata/Vintage/Default.sublime-keymap",
 			},
 		},
 	}
@@ -60,9 +60,6 @@ func TestPluginReload(t *testing.T) {
 	if err := ioutil.WriteFile("testdata/Closetag/test.vim", []byte("testing"), 0644); err != nil {
 		t.Fatalf("Couldn't write file: %s", err)
 	}
-	if err := ioutil.WriteFile("testdata/Closetag/test.settings", []byte("testing packets"), 0644); err != nil {
-		t.Fatalf("Couldn't write file: %s", err)
-	}
 	p.Reload()
 	fi := p.Get().([]os.FileInfo)
 	found := false
@@ -72,9 +69,14 @@ func TestPluginReload(t *testing.T) {
 			break
 		}
 	}
+	os.Remove("testdata/Closetag/test.vim")
 	if !found {
 		t.Errorf("Expected to find test.vim file in %s", p.Name())
 	}
+	if err := ioutil.WriteFile("testdata/Closetag/test.settings", []byte("testing packets"), 0644); err != nil {
+		t.Fatalf("Couldn't write file: %s", err)
+	}
+	p.Reload()
 	found = false
 	for _, p := range p.Packets() {
 		if p.Name() == "testdata/Closetag/test.settings" {
@@ -85,9 +87,10 @@ func TestPluginReload(t *testing.T) {
 	if !found {
 		t.Errorf("Expected to find testdata/Closetag/test.settings file in %s", p.Name())
 	}
+	os.Remove("testdata/Closetag/test.settings")
 }
 
-func TestScanPath(t *testing.T) {
+func TestScanPlugins(t *testing.T) {
 	tests := []struct {
 		path   string
 		suffix string
@@ -97,7 +100,7 @@ func TestScanPath(t *testing.T) {
 			"testdata/",
 			".py",
 			[]string{
-				"testdata/Vintageous",
+				"testdata/Vintage",
 			},
 		},
 		{
@@ -109,7 +112,7 @@ func TestScanPath(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		plugins := ScanPath(test.path, test.suffix)
+		plugins := ScanPlugins(test.path, test.suffix)
 		for _, f := range test.expect {
 			found := false
 			for _, p := range plugins {
@@ -119,7 +122,46 @@ func TestScanPath(t *testing.T) {
 				}
 			}
 			if !found {
-				t.Errorf("Test %d: Expected ScanPath find %s plugin", i, f)
+				t.Errorf("Test %d: Expected ScanPlugins find %s plugin", i, f)
+			}
+		}
+	}
+}
+
+func TestScanPackets(t *testing.T) {
+	tests := []struct {
+		path   string
+		expect []string
+	}{
+		{
+			"packages",
+			[]string{
+				"packages/Default/Default.sublime-keymap",
+				"packages/Default/Default.sublime-settings",
+			},
+		},
+		{
+			"testdata",
+			[]string{
+				"testdata/Default.sublime-settings",
+				"testdata/Vintage/Default.sublime-commands",
+				"testdata/Vintage/Default.sublime-keymap",
+				"testdata/Default.sublime-keymap",
+			},
+		},
+	}
+	for i, test := range tests {
+		packets := ScanPackets(test.path)
+		for _, f := range test.expect {
+			found := false
+			for _, p := range packets {
+				if f == p.Name() {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("Test %d: Expected ScanPackets find %s packet", i, f)
 			}
 		}
 	}
@@ -131,7 +173,7 @@ func TestPacket(t *testing.T) {
 		data string
 	}{
 		{
-			"testdata/Vintageous/Vintageous.sublime-settings",
+			"testdata/Vintage/Vintageous.sublime-settings",
 			"Testing packages",
 		},
 	}
@@ -164,16 +206,16 @@ func TestPckts(t *testing.T) {
 	}{
 		[]string{
 			"testdata/Default.sublime-settings",
-			"testdata/Vintageous/Default.sublime-keymap",
-			"testdata/Vintageous/Vintageous.sublime-settings",
+			"testdata/Vintage/Default.sublime-keymap",
+			"testdata/Vintage/Vintageous.sublime-settings",
 		},
 		map[string][]string{
 			"setting": []string{
 				"testdata/Default.sublime-settings",
-				"testdata/Vintageous/Vintageous.sublime-settings",
+				"testdata/Vintage/Vintageous.sublime-settings",
 			},
 			"keymap": []string{
-				"testdata/Vintageous/Default.sublime-keymap",
+				"testdata/Vintage/Default.sublime-keymap",
 			},
 		},
 	}

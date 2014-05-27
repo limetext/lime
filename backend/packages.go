@@ -46,15 +46,9 @@ type (
 	}
 )
 
-const (
-	DEFAULT_SUBLIME_SETTINGS    = "../../backend/packages/Default/Default.sublime-settings"
-	DEFAULT_SUBLIME_KEYBINDINGS = "../../backend/packages/Default/Default.sublime-keymap"
-	SUBLIME_USER_PACKAGES_PATH  = "../../3rdparty/bundles/"
-)
-
 // Valid packet types
 // TODO: command, snippet and etc should be here
-var types = []string{"setting", "keymap"}
+var types = []string{"settings", "keymap", "commands"}
 
 // Initializes a new plugin whith loading all of the
 // settings, keymaps and python files inside the path
@@ -158,8 +152,8 @@ func add(p *Packet) {
 
 // Scaning path for finding plugins that contain files
 // whith specific suffix
-func ScanPath(path string, suffix string) []*Plugin {
-	ps := make([]*Plugin, 0)
+func ScanPlugins(path string, suffix string) []*Plugin {
+	plugins := make([]*Plugin, 0)
 	f, err := os.Open(path)
 	if err != nil {
 		log4go.Warn(err)
@@ -172,10 +166,6 @@ func ScanPath(path string, suffix string) []*Plugin {
 		return nil
 	}
 	for _, dir := range dirs {
-		if dir != "Vintageous" && dir != "Default" && dir != "plugins" && dir != "Closetag" {
-			// TODO obviously
-			continue
-		}
 		dir2 := path + dir
 		f2, err := os.Open(dir2)
 		if err != nil {
@@ -190,12 +180,33 @@ func ScanPath(path string, suffix string) []*Plugin {
 		for _, f := range fi {
 			fn := f.Name()
 			if !strings.HasSuffix(fn, ".py") {
-				ps = append(ps, NewPlugin(dir2, suffix))
+				plugins = append(plugins, NewPlugin(dir2, suffix))
 				break
 			}
 		}
 	}
-	return ps
+	return plugins
+}
+
+func ScanPackets(path string) []*Packet {
+	packets := make([]*Packet, 0)
+	walkFn := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log4go.Error("Error on walking: %s", err)
+			return err
+		}
+		s := filepath.Ext(info.Name())
+		for _, t := range types {
+			if strings.Contains(s, t) {
+				packets = append(packets, NewPacket(path))
+			}
+		}
+		return nil
+	}
+	if err := filepath.Walk(path, walkFn); err != nil {
+		log4go.Error("Can't walk: %s", err)
+	}
+	return packets
 }
 
 // We'll store loaded packets on startup here
@@ -207,6 +218,9 @@ var Packets Pckts
 func init() {
 	Packets = make([]*Packet, 0)
 
-	add(NewPacket(DEFAULT_SUBLIME_SETTINGS))
-	add(NewPacket(DEFAULT_SUBLIME_KEYBINDINGS))
+	pckts := ScanPackets(LIME_DEFAULTS_PATH)
+	pckts = append(pckts, ScanPackets(LIME_USER_PACKETS_PATH)...)
+	for _, p := range pckts {
+		add(p)
+	}
 }

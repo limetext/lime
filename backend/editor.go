@@ -73,6 +73,12 @@ type (
 	}
 )
 
+const (
+	LIME_USER_PACKAGES_PATH = "../../3rdparty/bundles/"
+	LIME_USER_PACKETS_PATH  = "../../3rdparty/bundles/User"
+	LIME_DEFAULTS_PATH      = "../../backend/packages/Default/"
+)
+
 func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
 func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
 func (h *DummyFrontend) MessageDialog(msg string) { log4go.Info(msg) }
