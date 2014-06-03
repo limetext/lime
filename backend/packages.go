@@ -10,7 +10,6 @@ import (
 	"os"
 	pt "path"
 	"path/filepath"
-	"reflect"
 	"strings"
 )
 
@@ -19,69 +18,59 @@ type (
 		// Returns the path of the package
 		Name() string
 
-		// Returns the useful data that we need
-		// from this package for example for a
-		// plugin will be the python files or for
-		// a keymap will be the file data
+		// Depending on the implemented package
+		// returns useful data for python plugin is
+		// python files for setting is file content
 		Get() interface{}
 
-		// Reloads the package data
+		// Reloads package data
 		Reload()
 	}
 
-	Pckts []*Packet
-
+	// Plugin is a Package type containing some files
+	// with specific suffix that could be interpreted by
+	// lime text api(currently python) and some
+	// settings, snippets, commands and etc as packets
 	Plugin struct {
 		path    string
 		suffix  string
 		files   []os.FileInfo
-		packets Pckts
+		packets pckts
 	}
 
-	// Packets are small packages containing 1 file
-	// individual settings, keymaps, snippets and etc
+	// Packets are small packages containing 1 file.
+	// Individual settings, keymaps, snippets and etc
 	// are Packet
-	Packet struct {
+	packet struct {
 		path string
-		data []byte
 	}
+
+	// Useful for managing packets for plugins
+	// and loading user packets for editor
+	pckts []*packet
 )
 
-// Valid packet types
-// TODO: command, snippet and etc should be here
+// This is useful when we are loading new plugin or
+// scanning for user settings, snippets and etc we
+// will add files which their suffix contains one of
+// these keywords
+// TODO: commands, snippets etc should be here
 var types = []string{"settings", "keymap", "commands"}
 
 // Initializes a new plugin whith loading all of the
-// settings, keymaps and python files inside the path
+// settings, keymaps and etc. Suffix variable show's
+// which file types we need for plugin for example if
+// the plugin is written in python the suffix should
+// be ".py". We will use this function at initialization
+// to add user plugins and on new_plugin command
 func NewPlugin(path string, suffix string) *Plugin {
-	f, err := os.Open(path)
-	if err != nil {
-		log4go.Error("Couldn't open dir: %s", err)
-		return nil
-	}
-	defer f.Close()
-	fi, err := f.Readdir(-1)
-	if err != nil {
-		log4go.Error("Couldn't read dir: %s", err)
-		return nil
-	}
-	files := make([]os.FileInfo, 0)
-	pckts := make([]*Packet, 0)
-	for _, f := range fi {
-		if suffix != "" && strings.HasSuffix(f.Name(), suffix) {
-			files = append(files, f)
-		} else {
-			s := filepath.Ext(f.Name())
-			for _, t := range types {
-				if strings.Contains(s, t) {
-					pckts = append(pckts, NewPacket(pt.Join(path, f.Name())))
-				}
-			}
-		}
-	}
-	return &Plugin{path, suffix, files, pckts}
+	var p *Plugin = &Plugin{path, suffix, nil, nil}
+	p.Reload()
+	return p
 }
 
+// Returns slice of files with plugin suffix
+// loaded at initialization
 func (p *Plugin) Get() interface{} {
 	return p.files
 }
@@ -90,34 +79,59 @@ func (p *Plugin) Name() string {
 	return p.path
 }
 
+// When the plugin is initialized we won't
+// load plguin packets until we are asked to
+// so here we will load all plugin packets
 func (p *Plugin) LoadPackets() {
-	ed := GetEditor()
-	for _, pkg := range p.packets.Type("settings") {
-		log4go.Info("Loading packet %s for plugin %s", pkg.Name(), p.Name())
-		ed.loadSetting(pkg)
-	}
-	for _, pkg := range p.packets.Type("keymap") {
-		log4go.Info("Loading packet %s for plugin %s", pkg.Name(), p.Name())
-		ed.loadKeybinding(pkg)
-	}
-}
-
-func (p *Plugin) Reload() {
-	log4go.Info("Reloading plugin %s", p.Name())
-	p1 := NewPlugin(p.path, p.suffix)
-	p.files = p1.files
-	p.packets = p1.packets
 	for _, pckt := range p.packets {
 		pckt.Reload()
 	}
 }
 
-func NewPacket(path string) *Packet {
-	return &Packet{path, nil}
+// On plugin reload we will scan for plugin files
+// and packets in plugin path
+func (p *Plugin) Reload() {
+	var (
+		files []os.FileInfo
+		pckts []*packet
+	)
+	log4go.Info("Reloading plugin %s", p.Name())
+	f, err := os.Open(p.path)
+	if err != nil {
+		log4go.Error("Couldn't open dir: %s", err)
+		return
+	}
+	defer f.Close()
+	fi, err := f.Readdir(-1)
+	if err != nil {
+		log4go.Error("Couldn't read dir: %s", err)
+		return
+	}
+	for _, f := range fi {
+		if p.suffix != "" && strings.HasSuffix(f.Name(), p.suffix) {
+			files = append(files, f)
+		} else {
+			s := filepath.Ext(f.Name())
+			for _, t := range types {
+				if strings.Contains(s, t) {
+					pckts = append(pckts, NewPacket(pt.Join(p.path, f.Name())))
+				}
+			}
+		}
+	}
+	p.files = files
+	p.packets = pckts
 }
 
-func loadData(path string) []byte {
-	d, err := ioutil.ReadFile(path)
+// Initializes new packet with specific path
+func NewPacket(path string) *packet {
+	return &packet{path}
+}
+
+// Returns packet file data if any error occurred
+// on reading file we will return nil
+func (p *packet) Get() interface{} {
+	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
 		log4go.Error("Couldn't read file: %s", err)
 		return nil
@@ -125,26 +139,33 @@ func loadData(path string) []byte {
 	return d
 }
 
-func (p *Packet) Get() interface{} {
-	if p.data == nil {
-		p.data = loadData(p.path)
-	}
-	return p.data
-}
-
-func (p *Packet) Name() string {
+func (p *packet) Name() string {
 	return p.path
 }
 
-func (p *Packet) Reload() {
-	log4go.Info("Reloading %s", p.Name())
-	p.data = loadData(p.path)
-	e := GetEditor()
-	e.loadSetting(p)
+// Forces editor to load the packet again
+func (p *packet) Reload() {
+	ed := GetEditor()
+	if p.group() == "settings" {
+		ed.loadSetting(p)
+	} else if p.group() == "keymap" {
+		ed.loadKeybinding(p)
+	}
 }
 
-func (p Pckts) Type(key string) []*Packet {
-	pckts := make([]*Packet, 0)
+// Returns packet type(settings, commands, keymaps, ...)
+func (p *packet) group() string {
+	for _, key := range types {
+		if strings.Contains(filepath.Ext(p.Name()), key) {
+			return key
+		}
+	}
+	return ""
+}
+
+// Returns packets with specific type
+func (p pckts) filter(key string) []*packet {
+	var pckts []*packet
 	for _, pckt := range p {
 		if strings.Contains(filepath.Ext(pckt.Name()), key) {
 			pckts = append(pckts, pckt)
@@ -153,16 +174,10 @@ func (p Pckts) Type(key string) []*Packet {
 	return pckts
 }
 
-func add(p *Packet) {
-	if !reflect.ValueOf(p).IsNil() {
-		Packets = append(Packets, p)
-	}
-}
-
 // Scaning path for finding plugins that contain files
 // whith specific suffix
 func ScanPlugins(path string, suffix string) []*Plugin {
-	plugins := make([]*Plugin, 0)
+	var plugins []*Plugin
 	f, err := os.Open(path)
 	if err != nil {
 		log4go.Warn(err)
@@ -197,8 +212,10 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 	return plugins
 }
 
-func ScanPackets(path string) []*Packet {
-	packets := make([]*Packet, 0)
+// Initialize scan for loading user and limetext defaults
+// i.e settings, commands, snippets etc
+func ScanPackets(path string) []*packet {
+	var packets []*packet
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			log4go.Error("Error on walking: %s", err)
@@ -218,18 +235,15 @@ func ScanPackets(path string) []*Packet {
 	return packets
 }
 
-// We'll store loaded packets on startup here
-// plugins specific packets won't be in here
-// they should be accessed from the plugin itself
-var Packets Pckts
+// All user individual settings, snippets etc
+// will be in here for later loading by editor
+var packets pckts
 
 // Loading the default packets
 func init() {
-	Packets = make([]*Packet, 0)
-
-	pckts := ScanPackets(LIME_DEFAULTS_PATH)
-	pckts = append(pckts, ScanPackets(LIME_USER_PACKETS_PATH)...)
-	for _, p := range pckts {
-		add(p)
+	pcts := ScanPackets(LIME_DEFAULTS_PATH)
+	pcts = append(pcts, ScanPackets(LIME_USER_PACKETS_PATH)...)
+	for _, p := range pcts {
+		packets = append(packets, p)
 	}
 }

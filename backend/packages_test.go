@@ -224,10 +224,10 @@ func TestPckts(t *testing.T) {
 		},
 	}
 	for _, p := range test.pckts {
-		add(NewPacket(p))
+		packets = append(packets, NewPacket(p))
 	}
 	for key, ns := range test.expect {
-		ps := Packets.Type(key)
+		ps := packets.filter(key)
 		for _, p := range ns {
 			found := false
 			for _, p1 := range ps {
