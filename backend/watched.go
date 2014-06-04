@@ -12,7 +12,7 @@ import (
 )
 
 type (
-	WatchedFile interface {
+	Watched interface {
 		Name() string
 		Reload()
 	}
@@ -21,8 +21,8 @@ type (
 		view *View
 	}
 
-	WatchedSettingFile struct {
-		path string
+	WatchedPackage struct {
+		pkg Package
 	}
 )
 
@@ -62,15 +62,18 @@ func (o *WatchedUserFile) Reload() {
 	}
 }
 
-func NewWatchedSettingFile(path string) *WatchedSettingFile {
-	return &WatchedSettingFile{path}
+func NewWatchedPackage(pkg Package) *WatchedPackage {
+	return &WatchedPackage{pkg}
 }
 
-func (o *WatchedSettingFile) Name() string {
-	return o.path
+func (o *WatchedPackage) Name() string {
+	return o.pkg.Name()
 }
 
-func (o *WatchedSettingFile) Reload() {
-	editor := GetEditor()
-	editor.loadSetting(o.path)
+func (o *WatchedPackage) Reload() {
+	o.pkg.Reload()
+}
+
+func (o *WatchedPackage) Package() Package {
+	return o.pkg
 }
