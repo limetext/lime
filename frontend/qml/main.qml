@@ -149,6 +149,7 @@ ApplicationWindow {
                     Layout.preferredWidth: 100
                     width: 100
                     isMinimap: true
+                    cursor: Qt.ArrowCursor
                     property var realView
                     property var oldView
 

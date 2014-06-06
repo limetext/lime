@@ -6,6 +6,7 @@ Item {
     property var myView
     property bool isMinimap: false
     property double fontSize: isMinimap ? 4 : 12
+    property var cursor: Qt.IBeamCursor
     function sel() {
         return myView.back().sel();
     }
@@ -22,12 +23,27 @@ Item {
         anchors.fill: parent
         model: myView ? myView.len : 0
         property bool showBars: false
+        property var cursor: parent.cursor
         delegate: Text {
             property var line: myView.line(index)
             font.pointSize: viewItem.fontSize
             text: line.text
             textFormat: TextEdit.RichText
             color: "white"
+            MouseArea {
+                x: 0
+                y: 0
+                height: parent.parent.height
+                width: view.width
+                onClicked: {
+                    // TODO: If ctrl key is pressed or we are selecting text
+                    // we should do sth else
+                    if (!isMinimap) {
+                        myView.back().sel().clear()
+                        myView.layoutToText(index, mouse.x, parent.width)
+                    }
+                }
+            }
         }
         states: [
             State {
@@ -53,6 +69,7 @@ Item {
             height: parent.height
             width: parent.width-verticalScrollBar.width
             propagateComposedEvents: true
+            cursorShape: parent.cursor
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
                 wheel.accepted = true;
