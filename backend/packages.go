@@ -147,7 +147,9 @@ func (p *packet) Name() string {
 func (p *packet) Reload() {
 	ed := GetEditor()
 	if p.group() == "settings" {
-		ed.loadSetting(p)
+		// This should be commented until we have complete
+		// settings hierarchy
+		// ed.loadSetting(p)
 	} else if p.group() == "keymap" {
 		ed.loadKeybinding(p)
 	}

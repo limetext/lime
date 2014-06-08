@@ -20,7 +20,6 @@ import (
 	"gopkg.in/qml.v0"
 	"image/color"
 	"io"
-	"math"
 	"runtime"
 	"strings"
 	"sync"
@@ -435,36 +434,7 @@ func (fv *frontendView) formatLine(line int) {
 	}
 }
 
-// Converting mouse click position to text position
-// and adding appropriate region to view regionsets
-// row is the line we are x is mouse x position and
-// w is line width we will calculate x/w and multiply
-// it to text length then rounding for finding closest
-// text position to mouse click
-func (fv *frontendView) LayoutToText(row, x, w int) {
-	log4go.Info("%q", fv.Line(row))
-	r := float64(x) / float64(w)
-	p := fv.bv.Buffer().TextPoint(row, 0)
-	lineR := fv.bv.Buffer().Line(p)
-	line := fv.bv.Buffer().Substr(lineR)
-	if x > w {
-		p += len(line)
-		fv.bv.Sel().Add(Region{p, p})
-		return
-	}
-
-	tab := ""
-	tab_size, ok := fv.bv.Settings().Get("tab_size", 4).(int)
-	if !ok {
-		tab_size = 4
-	}
-	for i := 0; i < tab_size; i++ {
-		tab += " "
-	}
-	line = strings.Replace(line, "\t", tab, -1)
-
-	col := int(math.Floor(float64(len(line))*r + 0.5))
-	p = p + col
+func (fv *frontendView) AddR(p int) {
 	fv.bv.Sel().Add(Region{p, p})
 }
 
@@ -572,7 +542,7 @@ func (t *qmlfrontend) loop() (err error) {
 	})
 
 	// TODO: should be done backend side
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
 		scheme = sc

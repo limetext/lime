@@ -19,5 +19,8 @@
     "caret_blink_phase": 1.0,
 
     // Whether to render line numbers
-    "line_numbers": true
+    "line_numbers": true,
+
+    "font_face": "Helvetica",
+    "font_size": 12
 }

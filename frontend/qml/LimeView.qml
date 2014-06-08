@@ -5,7 +5,8 @@ Item {
     id: viewItem
     property var myView
     property bool isMinimap: false
-    property double fontSize: isMinimap ? 4 : 12
+    property double fontSize: isMinimap ? 4 : parseFloat(myView.setting("font_size"))
+    property string fontFace: String(myView.setting("font_face"))
     property var cursor: Qt.IBeamCursor
     function sel() {
         if (!myView || !myView.back()) return null;
@@ -33,24 +34,11 @@ Item {
         property var cursor: parent.cursor
         delegate: Text {
             property var line: myView.line(index)
+            font.family: viewItem.fontFace
             font.pointSize: viewItem.fontSize
             text: line.text
             textFormat: TextEdit.RichText
             color: "white"
-            MouseArea {
-                x: 0
-                y: 0
-                height: parent.parent.height
-                width: view.width
-                onClicked: {
-                    // TODO: If ctrl key is pressed or we are selecting text
-                    // we should do sth else
-                    if (!isMinimap) {
-                        myView.back().sel().clear()
-                        myView.layoutToText(index, mouse.x, parent.width)
-                    }
-                }
-            }
         }
         states: [
             State {
@@ -77,6 +65,41 @@ Item {
             width: parent.width-verticalScrollBar.width
             propagateComposedEvents: true
             cursorShape: parent.cursor
+            function measure(el, line, mouse) {
+                var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));
+                // If we are clicking out of line width return end of line column
+                if(mouse.x > el.width) return myView.back().buffer().rowCol(line.b)[1]
+                var str  = myView.back().buffer().substr(line);
+                // We try to start searching from somewhere close to click position
+                var col  = Math.floor(0.5 + str.length * mouse.x/el.width);
+
+                // Trying to find closest column to clicked position
+                el.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
+                var d = Math.abs(mouse.x - el.width)
+                var add = (mouse.x > el.width) ? 1 : -1
+                while(Math.abs(mouse.x - el.width) <= d) {
+                    d = el.width - mouse.x
+                    col += add
+                    el.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
+                }
+                col -= add
+
+                el.text = el.line.text;
+                return col
+            }
+            onClicked: {
+                // TODO: If ctrl key is pressed or we are selecting text
+                // we should do sth else
+                if (!isMinimap) {
+                    var item  = view.itemAt(0, mouse.y)
+                    var index = view.indexAt(0, mouse.y)
+                    if (item != null) {
+                        var col   = measure(item, index, mouse)
+                        myView.back().sel().clear()
+                        myView.addR(myView.back().buffer().textPoint(index, col))
+                    }
+                }
+            }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
                 wheel.accepted = true;
@@ -143,7 +166,7 @@ Item {
                     str = str.substr(0, rowcol[1]);
                     parent.textFormat = TextEdit.RichText;
                     var old = parent.text;
-                    parent.text = "<span style=\"white-space:pre\">" + str + "</spanl>";
+                    parent.text = "<span style=\"white-space:pre\">" + str + "</span>";
                     var ret = parent.width;
                     parent.textFormat = TextEdit.PlainText;
                     parent.text = old;
@@ -181,6 +204,7 @@ Item {
 
             }
             y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
+            font.family: viewItem.fontFace
             font.pointSize: fontSize
             color: "white"
         }
