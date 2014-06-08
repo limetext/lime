@@ -101,7 +101,20 @@ ApplicationWindow {
                         tab: Item {
                             implicitWidth: 180
                             implicitHeight: 28
+			     ToolTip {
+				    id: tooltip
+				    width: 550
+				    backgroundColor: "#BECCCC66"
+				    textColor: "black"
+				    font.pointSize: 8
+				    text: styleData.title
+				}
                             BorderImage {
+				     MouseArea {
+					 anchors.fill: parent
+					 hoverEnabled : true
+					 onEntered: console.log("entered")
+				     }
                                 source: styleData.selected ? "../../3rdparty/bundles/themes/soda/Soda Dark/tab-active.png" : "../../3rdparty/bundles/themes/soda/Soda Dark/tab-inactive.png"
                                 border { left: 5; top: 5; right: 5; bottom: 5 }
                                 width: 180
@@ -109,7 +122,7 @@ ApplicationWindow {
                                 Text {
                                     id: tab_title
                                     anchors.centerIn: parent
-                                    text: styleData.title
+                                    text: styleData.title.replace(/^.*[\\\/]/, '')
                                     color: frontend.defaultFg()
                                     anchors.verticalCenterOffset: 1
                                 }
