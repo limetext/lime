@@ -140,14 +140,36 @@ ApplicationWindow {
                         model: tmp()
                         delegate: Tab {
                             title: myWindow.view(index).title.text
-                            LimeView { myView: myWindow.view(index) }
+                            LimeView {
+                                id: view
+                                myView: myWindow.view(index)
+                                Timer {
+                                    // TODO(.): Why is view null sometimes?
+                                    //          Is it just a variant of https://github.com/go-qml/qml/issues/68?
+                                    interval: 100
+                                    running: view.myView == null
+                                    repeat: true
+                                    onTriggered: {
+                                        view.myView = myWindow.view(index);
+                                        if (index == tabs.currentIndex) {
+                                            tabs.resetminimap();
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    onCurrentIndexChanged: {
+                    function resetminimap() {
                         myWindow.back().setActiveView(myWindow.view(currentIndex).back());
+
                         minimap.myView = myWindow.view(currentIndex);
                         minimap.realView = tabs.getTab(currentIndex).item.children[1];
+                    }
+                    Component.onCompleted: {
+                        resetminimap();
+                    }
+                    onCurrentIndexChanged: {
+                        resetminimap();
                     }
                 }
                 LimeView {
@@ -186,6 +208,17 @@ ApplicationWindow {
             LimeView {
                 id: consoleView
                 myView: frontend.console
+                Timer {
+                    // TODO(.): Why is view null sometimes?
+                    //          Is it just a variant of https://github.com/go-qml/qml/issues/68?
+                    interval: 100
+                    running: consoleView.myView == null
+                    repeat: true
+                    onTriggered: {
+                        consoleView.myView = myWindow.view(index);
+                    }
+                }
+
                 height: 100
             }
         }
