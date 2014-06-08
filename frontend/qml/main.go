@@ -480,8 +480,7 @@ func (t *qmlfrontend) DefaultFg() color.RGBA {
 	return color.RGBA(c.Foreground)
 }
 
-func (t *qmlfrontend) loop() {
-	qml.Init(nil)
+func (t *qmlfrontend) loop() (err error) {
 
 	backend.OnNew.Add(func(v *backend.View) {
 		fv := &frontendView{bv: v}
@@ -530,12 +529,10 @@ func (t *qmlfrontend) loop() {
 
 	const qmlMainFile = "main.qml"
 	var (
-		qmlFiles  = []string{qmlMainFile, "LimeView.qml"}
 		engine    *qml.Engine
 		component qml.Object
 		// WaitGroup keeping track of open windows
-		wg  sync.WaitGroup
-		err error
+		wg sync.WaitGroup
 	)
 
 	// create and setup a new engine, destroying
@@ -544,10 +541,11 @@ func (t *qmlfrontend) loop() {
 	// This is needed to re-load qml files to get
 	// the new file contents from disc as otherwise
 	// the old file would still be what is referenced.
-	newEngine := func() error {
+	newEngine := func() (err error) {
 		if engine != nil {
 			log4go.Debug("calling destroy")
-			engine.Destroy()
+			// TODO(.): calling this appears to make the editor *very* crash-prone, just let it leak for now
+			// engine.Destroy()
 			engine = nil
 		}
 		log4go.Debug("calling newEngine")
@@ -559,7 +557,7 @@ func (t *qmlfrontend) loop() {
 
 		log4go.Debug("loadfile")
 		component, err = engine.LoadFile(qmlMainFile)
-		return err
+		return
 	}
 	if err := newEngine(); err != nil {
 		log4go.Error(err)
@@ -605,12 +603,8 @@ func (t *qmlfrontend) loop() {
 		return
 	}
 	defer watch.Close()
-	for _, file := range qmlFiles {
-		if err := watch.Watch(file); err != nil {
-			log4go.Error("Unable to watch qml file \"%s\": %s", file, err)
-		}
-		defer watch.RemoveWatch(file)
-	}
+	watch.Watch(".")
+	defer watch.RemoveWatch(".")
 
 	reloadRequested := false
 
@@ -618,7 +612,7 @@ func (t *qmlfrontend) loop() {
 		for {
 			select {
 			case ev := <-watch.Event:
-				if ev.IsModify() && !ev.IsAttrib() {
+				if ev != nil && strings.HasSuffix(ev.Name, ".qml") && ev.IsModify() && !ev.IsAttrib() {
 					reloadRequested = true
 					// Close all open windows to de-reference all
 					// qml objects
@@ -675,6 +669,7 @@ func (t *qmlfrontend) loop() {
 			v.launch(&wg, component)
 		}
 	}
+	return
 }
 
 func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
@@ -723,5 +718,8 @@ func main() {
 
 	t = &qmlfrontend{windows: make(map[*backend.Window]*frontendWindow)}
 	go t.qmlBatchLoop()
+	qml.Init(nil)
 	t.loop()
+	//TODO: for qml.v1
+	//	qml.Run(nil, t.loop)
 }

@@ -1,56 +1,57 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.1
 import QtGraphicalEffects 1.0
- 
- 
+
+
 Item {
     id: toolTipRoot
     height: toolTipContainer.height
-    visible: false
+    width: toolTipContainer.width
+    visible: mouseItem.containsMouse
     clip: false
-    z: 999999999
- 
+    z: parent.parent.parent.z+100
+
     property alias text: toolTip.text
     property alias backgroundColor: content.color
     property alias textColor: toolTip.color
     property alias font: toolTip.font
- 
-    function onMouseHover(x, y)
-    {
-        toolTipRoot.x = x;
-        toolTipRoot.y = y + 5;
+
+
+    MouseArea {
+        id: mouseItem
+        anchors.fill: parent;
+        hoverEnabled: true;
+        acceptedButtons: Qt.NoButton
+        onPositionChanged: {
+            toolTipRoot.x = mouse.x;
+            toolTipRoot.y = mouse.y + 5;
+        }
     }
- 
-    function onVisibleStatus(flag)
-    {
-        toolTipRoot.visible = flag;
-    }
- 
+
     Component.onCompleted: {
-        var newObject = Qt.createQmlObject('import QtQuick 2.0; MouseArea {signal mouserHover(int x, int y); signal showChanged(bool flag); anchors.fill:parent; hoverEnabled: true; onPositionChanged: {mouserHover(mouseX, mouseY)} onEntered: {showChanged(true)} onExited:{showChanged(false)}}',
-            toolTipRoot.parent, "mouseItem");
-        newObject.mouserHover.connect(onMouseHover);
-        newObject.showChanged.connect(onVisibleStatus);
+        mouseItem.parent = toolTipRoot.parent;
     }
- 
+
     Item {
         id: toolTipContainer
         width: content.width + toolTipShadow.radius
         height: content.height + toolTipShadow.radius
- 
+        z: toolTipRoot.z
+
         Rectangle {
             id: content
-            width: toolTipRoot.width
+            width: toolTip.width + 10
             height: toolTip.contentHeight + 10
- 
+
             Text {
+                x: 5
+                y: 5
                 id: toolTip
-                anchors {fill: parent; margins: 5}
                 wrapMode: Text.WrapAnywhere
             }
         }
     }
- 
+
     DropShadow {
         id: toolTipShadow
         z: toolTipRoot.z
