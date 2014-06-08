@@ -7,9 +7,11 @@ Item {
     id: toolTipRoot
     height: toolTipContainer.height
     width: toolTipContainer.width
-    visible: mouseItem.containsMouse
+    visible: false
     clip: false
     z: parent.parent.parent.z+100
+    opacity: visible ? 1 : 0
+    Behavior on opacity { PropertyAnimation { duration: 250} }
 
     property alias text: toolTip.text
     property alias backgroundColor: content.color
@@ -25,6 +27,17 @@ Item {
         onPositionChanged: {
             toolTipRoot.x = mouse.x;
             toolTipRoot.y = mouse.y + 5;
+        }
+        Timer {
+            interval: 500
+            running: mouseItem.containsMouse
+            repeat: false
+            onTriggered: {
+                toolTipRoot.visible = true;
+            }
+        }
+        onExited: {
+            toolTipRoot.visible = false;
         }
     }
 
@@ -42,7 +55,6 @@ Item {
             id: content
             width: toolTip.width + 10
             height: toolTip.contentHeight + 10
-
             Text {
                 x: 5
                 y: 5
