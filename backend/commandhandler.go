@@ -96,8 +96,10 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 	if c, ok := ch.WindowCommands[name].(WindowCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
 			log4go.Debug("Command initialization failed: %s", err)
+			return err
 		} else if err := wnd.runCommand(c, name); err != nil {
 			log4go.Logf(lvl+1, "Command execution failed: %s", err)
+			return err
 		} else {
 			log4go.Logf(lvl, "Ran Window command: %s %s", name, time.Since(t))
 		}
@@ -119,13 +121,16 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 	if c, ok := ch.TextCommands[name].(TextCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
 			log4go.Debug("Command initialization failed: %s", err)
+			return err
 		} else if err := view.runCommand(c, name); err != nil {
 			log4go.Logf(lvl, "Command execution failed: %s", err)
+			return err
 		}
 	} else if w := view.Window(); w != nil {
 		if c, ok := ch.WindowCommands[name].(WindowCommand); c != nil && ok {
 			if err := w.runCommand(c, name); err != nil {
 				log4go.Logf(lvl, "Command execution failed: %s", err)
+				return err
 			}
 		}
 	}
@@ -144,8 +149,10 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	if c, ok := ch.ApplicationCommands[name].(ApplicationCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
 			log4go.Debug("Command initialization failed: %s", err)
+			return err
 		} else if err := c.Run(); err != nil && ch.verbose {
 			log4go.Debug("Command execution failed: %s", err)
+			return err
 		}
 	}
 	return nil
