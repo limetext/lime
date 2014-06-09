@@ -10,14 +10,15 @@ import (
 	"testing"
 )
 
+type Test struct {
+	text                     string
+	translate_tabs_to_spaces interface{}
+	tab_size                 interface{}
+	sel                      []Region
+	expect                   string
+}
+
 func TestIndent(t *testing.T) {
-	type Test struct {
-		text                     string
-		translate_tabs_to_spaces interface{}
-		tab_size                 interface{}
-		sel                      []Region
-		expect                   string
-	}
 	tests := []Test{
 		{ // translate_tabs_to_spaces = false
 			// indent should be "\t"
@@ -60,6 +61,11 @@ func TestIndent(t *testing.T) {
 			"\ta\n b\n  c\n\t   d\n",
 		},
 	}
+
+	runTest(t, tests, "indent")
+}
+
+func runTest(t *testing.T, tests []Test, command string) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 
@@ -76,9 +82,9 @@ func TestIndent(t *testing.T) {
 		v.Settings().Set("translate_tabs_to_spaces", test.translate_tabs_to_spaces)
 		v.Settings().Set("tab_size", test.tab_size)
 
-		ed.CommandHandler().RunTextCommand(v, "indent", nil)
+		ed.CommandHandler().RunTextCommand(v, command, nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
-			t.Errorf("Test %d: Excepted %s, but got %s", i, test.expect, d)
+			t.Errorf("Test %d: Excepted \n%s, but got \n%s", i, test.expect, d)
 		}
 	}
 }
