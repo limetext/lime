@@ -65,6 +65,53 @@ func TestIndent(t *testing.T) {
 	runTest(t, tests, "indent")
 }
 
+func TestUnindent(t *testing.T) {
+	tests := []Test{
+		{ // translate_tabs_to_spaces = false
+			// indent should be "\t"
+			"\ta\n  b\n      c\n\t  d\n",
+			false,
+			4,
+			[]Region{{0, 19}},
+			"a\nb\n  c\n  d\n",
+		},
+		{ // translate_tabs_to_spaces = nil
+			// indent should be "\t"
+			"\ta\n b\n  c\n   d\n",
+			nil,
+			1,
+			[]Region{{0, 1}},
+			"a\n b\n  c\n   d\n",
+		},
+		{ // translate_tabs_to_spaces = true and tab_size = 2
+			// indent should be "  "
+			"  a\n b\n  c\n   d\n",
+			true,
+			2,
+			[]Region{{0, 1}},
+			"a\n b\n  c\n   d\n",
+		},
+		{ // translate_tabs_to_spaces = true and tab_size = nil
+			// indent should be "    "
+			"    a\n b\n  c\n   d\n",
+			true,
+			nil,
+			[]Region{{0, 1}},
+			"a\n b\n  c\n   d\n",
+		},
+		{ // region include the 1st line and the 4th line
+			// unindent should remove from the begining of 1st and 4th line
+			"\ta\n b\n  c\n \t   d\n",
+			false,
+			1,
+			[]Region{{0, 1}, {11, 12}},
+			"a\n b\n  c\n\t   d\n",
+		},
+	}
+
+	runTest(t, tests, "unindent")
+}
+
 func runTest(t *testing.T, tests []Test, command string) {
 	ed := GetEditor()
 	w := ed.NewWindow()
