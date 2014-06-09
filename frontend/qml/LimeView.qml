@@ -23,6 +23,7 @@ Item {
         id: view
         property var myView
         anchors.fill: parent
+        interactive: false
         onMyViewChanged: {
             if (myView != null) {
                 model = myView.len;
@@ -59,6 +60,10 @@ Item {
             }
         ]
         MouseArea {
+            property string state: ""
+            property var col: new Object()
+            property var index: new Object()
+            property var item: new Object()
             x: 0
             y: 0
             height: parent.height
@@ -87,18 +92,32 @@ Item {
                 el.text = el.line.text;
                 return col
             }
-            onClicked: {
-                // TODO: If ctrl key is pressed or we are selecting text
-                // we should do sth else
+            onReleased: {
+                // TODO:
+                // Changing caret position doesn't work on empty lines
+                // Multi cursor on holding ctrl key
                 if (!isMinimap) {
-                    var item  = view.itemAt(0, mouse.y)
-                    var index = view.indexAt(0, mouse.y)
-                    if (item != null) {
-                        var col   = measure(item, index, mouse)
+                    item.r  = view.itemAt(0, mouse.y)
+                    index.r = view.indexAt(0, mouse.y)
+                    if (item.r != null) {
+                        col.r = measure(item.r, index.r, mouse)
                         myView.back().sel().clear()
-                        myView.addR(myView.back().buffer().textPoint(index, col))
+                        myView.addR(myView.back().buffer().textPoint(index.r, col.r))
+                    }
+                    if (state == "selection") {
+                        // TODO: Add background for the selection part
+                        console.log(JSON.stringify(index), JSON.stringify(col))
                     }
                 }
+                state = ""
+            }
+            onPressed: {
+                item.p  = view.itemAt(0, mouse.y)
+                index.p = view.indexAt(0, mouse.y)
+                col.p   = (item.p != null) ? measure(item.p, index.p, mouse) : null
+            }
+            onPressAndHold: {
+                state = "selection"
             }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
@@ -201,7 +220,6 @@ Item {
                         }
                     }
                 }
-
             }
             y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
             font.family: viewItem.fontFace
