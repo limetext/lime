@@ -60,10 +60,7 @@ Item {
             }
         ]
         MouseArea {
-            property string state: ""
-            property var col: new Object()
-            property var index: new Object()
-            property var item: new Object()
+            property var point: new Object()
             x: 0
             y: 0
             height: parent.height
@@ -92,32 +89,39 @@ Item {
                 el.text = el.line.text;
                 return col
             }
-            onReleased: {
+            onPositionChanged: {
+                var item  = view.itemAt(0, mouse.y)
+                var index = view.indexAt(0, mouse.y)
+                if (item != null) {
+                    var col   = measure(item, index, mouse)
+                    point.r = myView.back().buffer().textPoint(index, col)
+                    if (point.p != null && point.p != point.r) {
+                        if (point.r > point.p)
+                            myView.addR(point.p, point.r)
+                        else
+                            myView.addR(point.r, point.p)
+                    }
+                }
+                point.r = null
+            }
+            onPressed: {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
                 // Multi cursor on holding ctrl key
+                // After changing caret position the line doesn't respond to inputs
                 if (!isMinimap) {
-                    item.r  = view.itemAt(0, mouse.y)
-                    index.r = view.indexAt(0, mouse.y)
-                    if (item.r != null) {
-                        col.r = measure(item.r, index.r, mouse)
-                        myView.back().sel().clear()
-                        myView.addR(myView.back().buffer().textPoint(index.r, col.r))
+                    var item  = view.itemAt(0, mouse.y)
+                    var index = view.indexAt(0, mouse.y)
+                    if (item != null) {
+                        var col = measure(item, index, mouse)
+                        point.p = myView.back().buffer().textPoint(index, col)
+                        // If ctrl is not pressed clear the regions
+                        if (!false)
+                            myView.back().sel().clear()
+                        myView.addR(point.p, point.p)
                     }
-                    if (state == "selection") {
-                        // TODO: Add background for the selection part
-                        console.log(JSON.stringify(index), JSON.stringify(col))
-                    }
+                    regs.model = sel().len()
                 }
-                state = ""
-            }
-            onPressed: {
-                item.p  = view.itemAt(0, mouse.y)
-                index.p = view.indexAt(0, mouse.y)
-                col.p   = (item.p != null) ? measure(item.p, index.p, mouse) : null
-            }
-            onPressAndHold: {
-                state = "selection"
             }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
@@ -164,36 +168,43 @@ Item {
         clip: true
     }
     Repeater {
+        id: regs
         model: (!isMinimap && sel()) ? sel().len() : 0
-        delegate: Text {
+        Rectangle {
             property var rowcol
+            property var cursor: children[0]
+            color: "white"
+            radius: 1
+            opacity: 0.6
+            Text {
+                anchors.left: parent.right
+                color: "white"
+                font.family: viewItem.fontFace
+                font.pointSize: fontSize
+            }
             Timer {
                 interval: 100
                 running: true
                 repeat: true
-                function measure(mysel, rowcol) {
+                function measure(p, rowcol) {
                     var back = myView.back();
                     if (!back) { return 0; }
                     var buf = back.buffer();
                     if (!buf) { return 0; }
-                    var line = buf.line(mysel.b);
+                    var line = buf.line(p);
                     // TODO(.): would be better to use proper font metrics
                     // TODO(.): This assignment makes qml panic with the confusing error
                     // "panic: cannot use int as a int"
-                    // line.b = mysel.b;
+                    // line.b = p;
                     var str = buf.substr(line);
                     str = str.substr(0, rowcol[1]);
-                    parent.textFormat = TextEdit.RichText;
-                    var old = parent.text;
-                    parent.text = "<span style=\"white-space:pre\">" + str + "</span>";
-                    var ret = parent.width;
-                    parent.textFormat = TextEdit.PlainText;
-                    parent.text = old;
+                    cursor.textFormat = TextEdit.RichText;
+                    cursor.text = "<span style=\"white-space:pre\">" + str + "</span>";
+                    var ret = cursor.width;
+                    cursor.textFormat = TextEdit.PlainText;
+                    cursor.text = "";
 
-                    if (ret == null) {
-                        ret = 0;
-                    }
-                    return ret;
+                    return (ret == null) ? 0 : ret;
                 }
                 onTriggered: {
                     // TODO(.): not too happy about actively polling like this
@@ -202,30 +213,37 @@ Item {
                     if (index >= s.len()) {
                         return;
                     }
-                    var mysel = s.get(index);
-                    parent.rowcol = myView.back().buffer().rowCol(mysel.b);
-                    var width = measure(mysel, parent.rowcol);
+                    parent.width = 0
+                    parent.height = 0
 
-                    parent.x = width;
-                    parent.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
+                    var mysel = s.get(index);
+                    parent.rowcol = myView.back().buffer().rowCol(mysel.a);
+                    var begin = measure(mysel.a, parent.rowcol);
+
+                    if (mysel.a != mysel.b) {
+                        var rcb = myView.back().buffer().rowCol(mysel.b);
+                        var end = measure(mysel.b, rcb);
+                        parent.width = end - begin
+                        parent.height = cursor.height
+                        parent.rowcol = rcb
+                    }
+
+                    parent.x = begin;
+                    cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
 
                     var style = myView.setting("caret_style");
                     var inv = myView.setting("inverse_caret_state");
                     if (style == "underscore") {
                         if (inv) {
-                            text = "_";
+                            cursor.text = "_";
                         } else {
-                            text = "|";
+                            cursor.text = "|";
                             parent.x -= 2;
                         }
                     }
                 }
             }
             y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
-            font.family: viewItem.fontFace
-            font.pointSize: fontSize
-            color: "white"
         }
     }
-
 }

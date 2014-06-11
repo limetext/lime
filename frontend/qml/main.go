@@ -434,8 +434,8 @@ func (fv *frontendView) formatLine(line int) {
 	}
 }
 
-func (fv *frontendView) AddR(p int) {
-	fv.bv.Sel().Add(Region{p, p})
+func (fv *frontendView) AddR(a int, b int) {
+	fv.bv.Sel().Add(Region{a, b})
 }
 
 func (t *qmlfrontend) DefaultBg() color.RGBA {
