@@ -38,7 +38,7 @@ type (
 	}
 
 	// The Frontend interface defines the API
-	// for functionality that that is frontend specific.
+	// for functionality that is frontend specific.
 	Frontend interface {
 		// Probe the frontend for the currently
 		// visible region of the given view.
