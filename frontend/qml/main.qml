@@ -196,6 +196,7 @@ ApplicationWindow {
                         }
                         realView.contentYChanged.connect(scroll);
                         oldView = realView;
+                        scroll();
                     }
                     function percentage(view) {
                         return view.visibleArea.yPosition/(1-view.visibleArea.heightRatio);
