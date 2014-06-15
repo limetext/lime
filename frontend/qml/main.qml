@@ -196,7 +196,6 @@ ApplicationWindow {
                         }
                         realView.contentYChanged.connect(scroll);
                         oldView = realView;
-                        scroll();
                     }
                     function percentage(view) {
                         return view.visibleArea.yPosition/(1-view.visibleArea.heightRatio);
@@ -210,8 +209,11 @@ ApplicationWindow {
                         opacity: 0.1
                         onYChanged: {
                             if (ma.drag.active) {
-                                parent.realView.contentY = y*(parent.realView.contentHeight-parent.realView.height)/(parent.realView.height-height);
+                                parent.realView.contentY = y*(parent.realView.contentHeight-parent.realView.height)/(parent.height-height);
                             }
+                        }
+                        onHeightChanged: {
+                            parent.scroll();
                         }
                         MouseArea {
                             id: ma
@@ -219,8 +221,8 @@ ApplicationWindow {
                             anchors.fill: parent
                             drag.minimumX: 0
                             drag.minimumY: 0
-                            drag.maximumY: parent.parent.height-parent.height
-                            drag.maximumX: parent.parent.width-parent.width
+                            drag.maximumY: parent.parent.height-height
+                            drag.maximumX: parent.parent.width-width
                         }
                     }
                 }

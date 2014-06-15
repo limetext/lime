@@ -22,6 +22,7 @@ Item {
     ListView {
         id: view
         property var myView
+        boundsBehavior: Flickable.StopAtBounds
         anchors.fill: parent
         interactive: false
         cacheBuffer: contentHeight
