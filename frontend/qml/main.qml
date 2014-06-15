@@ -182,7 +182,13 @@ ApplicationWindow {
                     property var realView
                     property var oldView
 
-                    function scroll() { children[1].contentY = percentage(realView)*(children[1].contentHeight-height); }
+                    function scroll() {
+                        var p = percentage(realView);
+                        children[1].contentY = p*(children[1].contentHeight-height);
+                        if (!ma.drag.active) {
+                            minimapArea.y =  p*(height-minimapArea.height)
+                        }
+                    }
 
                     onRealViewChanged: {
                         if (oldView) {
@@ -197,11 +203,24 @@ ApplicationWindow {
                     id: minimap
                     Rectangle {
                         id: minimapArea
-                        y: parent.percentage(parent.children[1])*(parent.height-height)
                         width: parent.width
                         height: parent.realView ? parent.realView.visibleArea.heightRatio*parent.children[1].contentHeight : parent.height
                         color: "white"
                         opacity: 0.1
+                        onYChanged: {
+                            if (ma.drag.active) {
+                                parent.realView.contentY = y*(parent.realView.contentHeight-parent.realView.height)/(parent.realView.height-height);
+                            }
+                        }
+                        MouseArea {
+                            id: ma
+                            drag.target: parent
+                            anchors.fill: parent
+                            drag.minimumX: 0
+                            drag.minimumY: 0
+                            drag.maximumY: parent.parent.height-parent.height
+                            drag.maximumX: parent.parent.width-parent.width
+                        }
                     }
                 }
             }
