@@ -69,6 +69,19 @@ Item {
             width: parent.width-verticalScrollBar.width
             propagateComposedEvents: true
             cursorShape: parent.cursor
+            Text {
+                // just used to measure the text.
+                // If we change an actual displayed item's text,
+                // there's a risk (or is it always happening?)
+                // that the backend stored text data is no longer
+                // connected with that text item and hence changes
+                // made backend side aren't propagated.
+                id: dummy
+                font.family: viewItem.fontFace
+                font.pointSize: viewItem.fontSize
+                textFormat: TextEdit.RichText
+                visible: false
+            }
             function measure(el, line, mouse) {
                 var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));
                 // If we are clicking out of line width return end of line column
@@ -78,17 +91,16 @@ Item {
                 var col  = Math.floor(0.5 + str.length * mouse.x/el.width);
 
                 // Trying to find closest column to clicked position
-                el.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
-                var d = Math.abs(mouse.x - el.width)
-                var add = (mouse.x > el.width) ? 1 : -1
-                while(Math.abs(mouse.x - el.width) <= d) {
-                    d = el.width - mouse.x
+                dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
+                var d = Math.abs(mouse.x - dummy.width)
+                var add = (mouse.x > dummy.width) ? 1 : -1
+                while(Math.abs(mouse.x - dummy.width) <= d) {
+                    d = dummy.width - mouse.x
                     col += add
-                    el.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
+                    dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
                 }
                 col -= add
 
-                el.text = el.line.text;
                 return col
             }
             onPositionChanged: {
