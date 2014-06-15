@@ -24,6 +24,7 @@ Item {
         property var myView
         anchors.fill: parent
         interactive: false
+        cacheBuffer: contentHeight
         onMyViewChanged: {
             if (myView != null) {
                 model = myView.len;
