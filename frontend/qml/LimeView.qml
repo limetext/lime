@@ -86,20 +86,20 @@ Item {
                 textFormat: TextEdit.RichText
                 visible: false
             }
-            function measure(el, line, mouse) {
+            function measure(el, line, x) {
                 var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));
                 // If we are clicking out of line width return end of line column
-                if(mouse.x > el.width) return myView.back().buffer().rowCol(line.b)[1]
+                if(x > el.width) return myView.back().buffer().rowCol(line.b)[1]
                 var str  = myView.back().buffer().substr(line);
                 // We try to start searching from somewhere close to click position
-                var col  = Math.floor(0.5 + str.length * mouse.x/el.width);
+                var col  = Math.floor(0.5 + str.length * x/el.width);
 
                 // Trying to find closest column to clicked position
                 dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
-                var d = Math.abs(mouse.x - dummy.width)
-                var add = (mouse.x > dummy.width) ? 1 : -1
-                while(Math.abs(mouse.x - dummy.width) <= d) {
-                    d = dummy.width - mouse.x;
+                var d = Math.abs(x - dummy.width);
+                var add = (x > dummy.width) ? 1 : -1
+                while(Math.abs(x - dummy.width) <= d) {
+                    d = dummy.width - x;
                     col += add;
                     dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
                 }
@@ -108,11 +108,11 @@ Item {
                 return col;
             }
             onPositionChanged: {
-                var item  = view.itemAt(0, mouse.y);
-                var index = view.indexAt(0, mouse.y);
+                var item  = view.itemAt(0, mouse.y+view.contentY);
+                var index = view.indexAt(0, mouse.y+view.contentY);
                 var s = sel();
                 if (item != null && sel != null) {
-                    var col = measure(item, index, mouse);
+                    var col = measure(item, index, mouse.x);
                     point.r = myView.back().buffer().textPoint(index, col);
                     if (point.p != null && point.p != point.r) {
                         // Remove the last region and replace it with new one
@@ -128,19 +128,20 @@ Item {
                 // Changing caret position doesn't work on empty lines
                 // Multi cursor on holding ctrl key
                 if (!isMinimap) {
-                    var item  = view.itemAt(0, mouse.y)
-                    var index = view.indexAt(0, mouse.y)
+                    var item  = view.itemAt(0, mouse.y+view.contentY)
+                    var index = view.indexAt(0, mouse.y+view.contentY)
                     if (item != null) {
-                        var col = measure(item, index, mouse)
+                        var col = measure(item, index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
                         // If ctrl is not pressed clear the regions
-                        if (!false) sel().clear()
+                        if (!false) sel().clear();
                         sel().add(myView.region(point.p, point.p))
                     }
                 }
             }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
+                console.log("a")
                 wheel.accepted = true;
             }
         }
