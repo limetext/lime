@@ -331,6 +331,15 @@ func (fv *frontendView) Line(index int) *lineStruct {
 	return fv.FormattedLine[index]
 }
 
+func (fv *frontendView) Lines() int {
+	var count int = 0
+	regs := fv.bv.Sel().Regions()
+	for _, r := range regs {
+		count += len(fv.bv.Buffer().Lines(r))
+	}
+	return count
+}
+
 func (fv *frontendView) Setting(name string) interface{} {
 	return fv.Back().Settings().Get(name, nil)
 }
@@ -434,8 +443,8 @@ func (fv *frontendView) formatLine(line int) {
 	}
 }
 
-func (fv *frontendView) AddR(a int, b int) {
-	fv.bv.Sel().Add(Region{a, b})
+func (fv *frontendView) Region(a int, b int) Region {
+	return Region{a, b}
 }
 
 func (t *qmlfrontend) DefaultBg() color.RGBA {

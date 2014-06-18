@@ -5,8 +5,8 @@ Item {
     id: viewItem
     property var myView
     property bool isMinimap: false
-    property double fontSize: isMinimap ? 4 : parseFloat(myView.setting("font_size"))
-    property string fontFace: String(myView.setting("font_face"))
+    property double fontSize: isMinimap ? 4 : 12
+    property string fontFace: "Helvatica"
     property var cursor: Qt.IBeamCursor
     function sel() {
         if (!myView || !myView.back()) return null;
@@ -18,6 +18,10 @@ Item {
     }
     onMyViewChanged: {
         view.myView = myView;
+        if (myView != null) {
+            viewItem.fontSize = isMinimap ? 4 : parseFloat(myView.setting("font_size"));
+            viewItem.fontFace = String(myView.setting("font_face"));
+        }
     }
     ListView {
         id: view
@@ -95,34 +99,34 @@ Item {
                 var d = Math.abs(mouse.x - dummy.width)
                 var add = (mouse.x > dummy.width) ? 1 : -1
                 while(Math.abs(mouse.x - dummy.width) <= d) {
-                    d = dummy.width - mouse.x
-                    col += add
+                    d = dummy.width - mouse.x;
+                    col += add;
                     dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
                 }
-                col -= add
+                col -= add;
 
-                return col
+                return col;
             }
             onPositionChanged: {
-                var item  = view.itemAt(0, mouse.y)
-                var index = view.indexAt(0, mouse.y)
-                if (item != null) {
-                    var col   = measure(item, index, mouse)
-                    point.r = myView.back().buffer().textPoint(index, col)
+                var item  = view.itemAt(0, mouse.y);
+                var index = view.indexAt(0, mouse.y);
+                var s = sel();
+                if (item != null && sel != null) {
+                    var col = measure(item, index, mouse);
+                    point.r = myView.back().buffer().textPoint(index, col);
                     if (point.p != null && point.p != point.r) {
-                        if (point.r > point.p)
-                            myView.addR(point.p, point.r)
-                        else
-                            myView.addR(point.r, point.p)
+                        // Remove the last region and replace it with new one
+                        var r = s.get(s.len()-1);
+                        s.substract(r);
+                        s.add(myView.region(point.p, point.r));
                     }
                 }
-                point.r = null
+                point.r = null;
             }
             onPressed: {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
                 // Multi cursor on holding ctrl key
-                // After changing caret position the line doesn't respond to inputs
                 if (!isMinimap) {
                     var item  = view.itemAt(0, mouse.y)
                     var index = view.indexAt(0, mouse.y)
@@ -130,11 +134,9 @@ Item {
                         var col = measure(item, index, mouse)
                         point.p = myView.back().buffer().textPoint(index, col)
                         // If ctrl is not pressed clear the regions
-                        if (!false)
-                            myView.back().sel().clear()
-                        myView.addR(point.p, point.p)
+                        if (!false) sel().clear()
+                        sel().add(myView.region(point.p, point.p))
                     }
-                    regs.model = sel().len()
                 }
             }
             onWheel: {
@@ -188,76 +190,105 @@ Item {
             property var rowcol
             property var cursor: children[0]
             color: "white"
-            radius: 1
+            radius: 2
             opacity: 0.6
+            height: cursor.height
             Text {
-                anchors.left: parent.right
                 color: "white"
                 font.family: viewItem.fontFace
                 font.pointSize: fontSize
             }
-            Timer {
-                interval: 100
-                running: true
-                repeat: true
-                function measure(p, rowcol) {
-                    var back = myView.back();
-                    if (!back) { return 0; }
-                    var buf = back.buffer();
-                    if (!buf) { return 0; }
-                    var line = buf.line(p);
-                    // TODO(.): would be better to use proper font metrics
-                    // TODO(.): This assignment makes qml panic with the confusing error
-                    // "panic: cannot use int as a int"
-                    // line.b = p;
-                    var str = buf.substr(line);
-                    str = str.substr(0, rowcol[1]);
-                    cursor.textFormat = TextEdit.RichText;
-                    cursor.text = "<span style=\"white-space:pre\">" + str + "</span>";
-                    var ret = cursor.width;
-                    cursor.textFormat = TextEdit.PlainText;
-                    cursor.text = "";
+            y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
+        }
+    }
+    Timer {
+        interval: 100
+        running: true
+        repeat: true
+        function measure(p, rowcol, cursor, buf) {
+            var line = buf.line(p);
+            if (!line) return 0;
+            var str  = buf.substr(line);
+            if (!str) return 0;
 
-                    return (ret == null) ? 0 : ret;
+            str = str.substr(0, rowcol[1]);
+            cursor.textFormat = TextEdit.RichText;
+            cursor.text = "<span style=\"white-space:pre\">" + str + "</span>";
+            var ret = cursor.width;
+            cursor.textFormat = TextEdit.PlainText;
+            cursor.text = "";
+
+            return (ret == null) ? 0 : ret;
+        }
+        // Works like buffer.Lines()
+        function lines(sel, buf) {
+            if (!sel) return;
+            var lines  = new Array();
+            var sel = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a};
+            var rc = {a: buf.rowCol(sel.a), b: buf.rowCol(sel.b)};
+
+            for(var i = rc.a[0]; i <= rc.b[0]; i++) {
+                var mysel = buf.line(buf.textPoint(i, 0));
+                // Sometimes null don't know why
+                if (!mysel) continue;
+                var a = (i == rc.a[0]) ? sel.a : mysel.a;
+                var b = (i == rc.b[0]) ? sel.b : mysel.b;
+                var res = (b > a) ? {a: a, b: b} : {a: b, b: a};
+                lines.push(res);
+            }
+            return lines;
+        }
+        onTriggered: {
+            // TODO(.): not too happy about actively polling like this
+            var s = sel();
+            if (!s) return;
+            var back = myView.back()
+            if (!back) return;
+            var buf = back.buffer();
+            if (!buf) return;
+            var of = 0;
+            regs.model = myView.lines();
+            for(var i = 0; i < s.len(); i++) {
+                var rect = regs.itemAt(i);
+                var mysel = s.get(i);
+                if (!mysel || !rect) continue;
+
+                var rowcol;
+                var lns = lines(mysel, buf);
+
+                if (mysel.b <= mysel.a) lns.reverse();
+                for(var j = 0; j < lns.length; j++,of++) {
+                    rect = regs.itemAt(i+of);
+                    if (!rect) continue;
+                    rowcol = buf.rowCol(lns[j].a);
+                    rect.rowcol = rowcol;
+                    rect.x = measure(lns[j].a, rowcol, rect.cursor, buf);
+                    rowcol = buf.rowCol(lns[j].b);
+                    var tmp = measure(lns[j].b, rowcol, rect.cursor, buf)
+                    rect.width = tmp - rect.x;
                 }
-                onTriggered: {
-                    // TODO(.): not too happy about actively polling like this
-                    var s = sel();
-                    if (!s) return;
-                    if (index >= s.len()) {
-                        return;
-                    }
-                    parent.width = 0
-                    parent.height = 0
 
-                    var mysel = s.get(index);
-                    parent.rowcol = myView.back().buffer().rowCol(mysel.a);
-                    var begin = measure(mysel.a, parent.rowcol);
+                if (!rect) continue;
+                rect.cursor.x = (mysel.b <= mysel.a) ? -3 : rect.width;
+                rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);;
 
-                    if (mysel.a != mysel.b) {
-                        var rcb = myView.back().buffer().rowCol(mysel.b);
-                        var end = measure(mysel.b, rcb);
-                        parent.width = end - begin
-                        parent.height = cursor.height
-                        parent.rowcol = rcb
-                    }
-
-                    parent.x = begin;
-                    cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
-
-                    var style = myView.setting("caret_style");
-                    var inv = myView.setting("inverse_caret_state");
-                    if (style == "underscore") {
-                        if (inv) {
-                            cursor.text = "_";
-                        } else {
-                            cursor.text = "|";
-                            parent.x -= 2;
-                        }
+                var style = myView.setting("caret_style");
+                var inv = myView.setting("inverse_caret_state");
+                if (style == "underscore") {
+                    if (inv) {
+                        rect.cursor.text = "_";
+                    } else {
+                        rect.cursor.text = "|";
+                        rect.x -= 2;
                     }
                 }
             }
-            y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
+            // Clearing
+            for(var i = of+s.len()+1; i < regs.count; i++) {
+                var rect = regs.itemAt(i);
+                if (rect == null) continue;
+                rect.width = 0;
+            }
         }
     }
 }
