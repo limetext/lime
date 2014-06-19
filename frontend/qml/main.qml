@@ -11,6 +11,7 @@ ApplicationWindow {
     height: 600
 
     property var myWindow
+    property bool ctrl
 
     menuBar: MenuBar {
         id: menu
@@ -84,7 +85,11 @@ ApplicationWindow {
     Item {
         anchors.fill: parent
         Keys.onPressed: {
+            ctrl = (event.modifiers && Qt.ControlModifier) ? true : false;
             event.accepted = frontend.handleInput(event.key, event.modifiers)
+        }
+        Keys.onReleased: {
+            ctrl = false;
         }
         focus: true // Focus required for Keys.onPressed
         SplitView {

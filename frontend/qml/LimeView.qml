@@ -99,7 +99,7 @@ Item {
                 var d = Math.abs(x - dummy.width);
                 var add = (x > dummy.width) ? 1 : -1
                 while(Math.abs(x - dummy.width) <= d) {
-                    d = dummy.width - x;
+                    d = Math.abs(x - dummy.width);
                     col += add;
                     dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
                 }
@@ -126,22 +126,20 @@ Item {
             onPressed: {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
-                // Multi cursor on holding ctrl key
                 if (!isMinimap) {
                     var item  = view.itemAt(0, mouse.y+view.contentY)
                     var index = view.indexAt(0, mouse.y+view.contentY)
                     if (item != null) {
                         var col = measure(item, index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
-                        // If ctrl is not pressed clear the regions
-                        if (!false) sel().clear();
+
+                        if (!ctrl) sel().clear();
                         sel().add(myView.region(point.p, point.p))
                     }
                 }
             }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
-                console.log("a")
                 wheel.accepted = true;
             }
         }
@@ -183,6 +181,7 @@ Item {
         }
 
         clip: true
+        z: 4
     }
     Repeater {
         id: regs
@@ -190,16 +189,17 @@ Item {
         Rectangle {
             property var rowcol
             property var cursor: children[0]
-            color: "white"
+            color: "#444444"
             radius: 2
-            opacity: 0.6
+            border.color: "#1c1c1c"
             height: cursor.height
             Text {
-                color: "white"
+                color: "#F8F8F0"
                 font.family: viewItem.fontFace
                 font.pointSize: fontSize
             }
             y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
+            z: 3
         }
     }
     Timer {
@@ -258,19 +258,18 @@ Item {
                 var lns = lines(mysel, buf);
 
                 if (mysel.b <= mysel.a) lns.reverse();
-                for(var j = 0; j < lns.length; j++,of++) {
+                for(var j = 0; j < lns.length; j++) {
                     rect = regs.itemAt(i+of);
-                    if (!rect) continue;
+                    of++;
                     rowcol = buf.rowCol(lns[j].a);
                     rect.rowcol = rowcol;
                     rect.x = measure(lns[j].a, rowcol, rect.cursor, buf);
                     rowcol = buf.rowCol(lns[j].b);
-                    var tmp = measure(lns[j].b, rowcol, rect.cursor, buf)
-                    rect.width = tmp - rect.x;
+                    rect.width = measure(lns[j].b, rowcol, rect.cursor, buf) - rect.x;
                 }
+                of--;
 
-                if (!rect) continue;
-                rect.cursor.x = (mysel.b <= mysel.a) ? -3 : rect.width;
+                rect.cursor.x = (mysel.b <= mysel.a) ? -3 : rect.width-2;
                 rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);;
 
                 var style = myView.setting("caret_style");
@@ -280,7 +279,6 @@ Item {
                         rect.cursor.text = "_";
                     } else {
                         rect.cursor.text = "|";
-                        rect.x -= 2;
                     }
                 }
             }
