@@ -66,6 +66,7 @@ Item {
             }
         ]
         MouseArea {
+            enabled: !isMinimap
             property var point: new Object()
             x: 0
             y: 0
