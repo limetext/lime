@@ -11,6 +11,7 @@ import (
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/textmate"
 	. "github.com/limetext/lime/backend/util"
+	"github.com/limetext/rubex"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 	"os"
@@ -646,4 +647,133 @@ func (v *View) Close() {
 	v.buffer.Close()
 	v.window.remove(v)
 	OnClose.Call(v)
+}
+
+const (
+	CLASS_WORD_START = 1 << iota
+	CLASS_WORD_END
+	CLASS_PUNCTUATION_START
+	CLASS_PUNCTUATION_END
+	CLASS_SUB_WORD_START
+	CLASS_SUB_WORD_END
+	CLASS_LINE_START
+	CLASS_LINE_END
+	CLASS_EMPTY_LINE
+	CLASS_MIDLE_WORD
+	CLASS_WORD_START_WITH_PUNCTUATION
+	CLASS_WORD_END_WITH_PUNCTUATION
+	CLASS_OPENNING_PARENTHESES
+	CLASS_CLOSING_PARENTHESES
+)
+
+func (v *View) Classify(point int) (res int) {
+	var a, b string = "", ""
+	if point > 0 {
+		a = v.buffer.Substr(Region{point - 1, point})
+	}
+	if point < v.buffer.Size() {
+		b = v.buffer.Substr(Region{point, point + 1})
+	}
+
+	// Special cases
+	if v.buffer.Size() == 0 || point < 0 || point > v.buffer.Size() {
+		res = 3520
+		return
+	}
+	if re, err := rubex.Compile("[A-Z]"); err != nil {
+		log4go.Error(err)
+	} else {
+		if re.MatchString(b) {
+			res |= CLASS_SUB_WORD_START
+			res |= CLASS_SUB_WORD_END
+		}
+	}
+	if a == "," {
+		res |= CLASS_OPENNING_PARENTHESES
+	}
+	if b == "," {
+		res |= CLASS_CLOSING_PARENTHESES
+	}
+	if a == "," && b == "," {
+		res = 0
+		return
+	}
+	// Word start & end
+	if re, err := rubex.Compile("\\w"); err != nil {
+		log4go.Error(err)
+	} else {
+		if re.MatchString(b) && !re.MatchString(a) {
+			res |= CLASS_WORD_START
+		}
+		if re.MatchString(a) && !re.MatchString(b) {
+			res |= CLASS_WORD_END
+		}
+	}
+	// Punc start & end
+	if re, err := rubex.Compile("[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]"); err != nil {
+		log4go.Error(err)
+	} else {
+		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
+			res |= CLASS_PUNCTUATION_START
+		}
+		if (re.MatchString(a) || a == "") && !re.MatchString(b) {
+			res |= CLASS_PUNCTUATION_END
+		}
+	}
+	// SubWord start & end
+
+	// Line start & end
+	if a == "\n" || a == "" {
+		res |= CLASS_LINE_START
+	}
+	if b == "\n" || b == "" {
+		res |= CLASS_LINE_END
+	}
+	// Empty line
+	if (a == "\n" && b == "\n") || (a == "" && b == "") {
+		res |= CLASS_EMPTY_LINE
+	}
+	// Middle word
+	if re, err := rubex.Compile("\\w"); err != nil {
+		log4go.Error(err)
+	} else {
+		if re.MatchString(a) && re.MatchString(b) {
+			res |= CLASS_MIDLE_WORD
+		}
+	}
+	// Word start & end with punc
+	if re, err := rubex.Compile("\\s"); err != nil {
+		log4go.Error(err)
+	} else {
+		if (res&CLASS_PUNCTUATION_START == CLASS_PUNCTUATION_START) && (re.MatchString(a) || a == "") {
+			res |= CLASS_WORD_START_WITH_PUNCTUATION
+		}
+		if (res&CLASS_PUNCTUATION_END == CLASS_PUNCTUATION_END) && (re.MatchString(b) || b == "") {
+			res |= CLASS_WORD_END_WITH_PUNCTUATION
+		}
+	}
+	// Openning & closing parentheses
+	if re, err := rubex.Compile("[(\\[{]"); err != nil {
+		log4go.Error(err)
+	} else {
+		if re.MatchString(a) || re.MatchString(b) {
+			res |= CLASS_OPENNING_PARENTHESES
+		}
+		if re.MatchString(a) && a == b {
+			res = 0
+			return
+		}
+	}
+	if re, err := rubex.Compile("[)\\]}]"); err != nil {
+		log4go.Error(err)
+	} else {
+		if re.MatchString(a) || re.MatchString(b) {
+			res |= CLASS_CLOSING_PARENTHESES
+		}
+		if re.MatchString(a) && a == b {
+			res = 0
+			return
+		}
+	}
+	return
 }

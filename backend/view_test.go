@@ -425,3 +425,39 @@ func BenchmarkScopeNameRandom(b *testing.B) {
 		}
 	}
 }
+
+func TestClassify(t *testing.T) {
+	var w Window
+	tests := []struct {
+		text   string
+		points []int
+		expect []int
+	}{
+		{
+			"",
+			[]int{0, 10},
+			[]int{3520, 3520},
+		},
+		{
+			"abc Hi -test lime,te-xt\n\tclassify test-ing",
+			[]int{0, 4, 5, 6, 7, 8, 13, 17, 18, 20, 21, 23, 24, 25, 34, 38, 39, 42},
+			[]int{73, 49, 512, 2, 1028, 9, 1, 8198, 4105, 6, 9, 130, 64, 1, 1, 6, 9, 134},
+		},
+		{
+			"(tes)ting cl][assify\n\npare(,,)nthe\\ses\n\t\n// Use",
+			[]int{0, 4, 12, 13, 14, 20, 21, 22, 26, 27, 28, 29, 30, 34, 35, 39, 40, 41, 42, 43, 44, 47},
+			[]int{5188, 8198, 8198, 12288, 4105, 130, 448, 65, 4102, 12288, 0, 12288, 8201, 6, 9, 64, 128, 1092, 0, 2056, 49, 134},
+		},
+	}
+	for i, test := range tests {
+		v := w.NewFile()
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+		for j, point := range test.points {
+			if res := v.Classify(point); test.expect[j] != res {
+				t.Errorf("Test %d: Expected %d from view.Classify(%d) but, got %d", i, test.expect[j], point, res)
+			}
+		}
+	}
+}
