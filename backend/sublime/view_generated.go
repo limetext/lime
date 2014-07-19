@@ -44,6 +44,34 @@ func (o *View) Py_begin_edit() (py.Object, error) {
 	return pyret0, err
 }
 
+func (o *View) Py_classify(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 int
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(int); !ok {
+				return nil, fmt.Errorf("Expected type int for backend.View.Classify() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	ret0 := o.data.Classify(arg1)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = toPython(ret0)
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
 func (o *View) Py_end_edit(tu *py.Tuple) (py.Object, error) {
 	var (
 		arg1 *backend.Edit

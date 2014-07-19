@@ -666,8 +666,10 @@ const (
 	CLASS_CLOSING_PARENTHESES
 )
 
+// Classifies point, returning a bitwise OR of zero or more of defined flags
 func (v *View) Classify(point int) (res int) {
 	var a, b string = "", ""
+	ws := v.Settings().Get("word_separators", "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]").(string)
 	if point > 0 {
 		a = v.buffer.Substr(Region{point - 1, point})
 	}
@@ -683,7 +685,7 @@ func (v *View) Classify(point int) (res int) {
 	if re, err := rubex.Compile("[A-Z]"); err != nil {
 		log4go.Error(err)
 	} else {
-		if re.MatchString(b) {
+		if re.MatchString(b) && !re.MatchString(a) {
 			res |= CLASS_SUB_WORD_START
 			res |= CLASS_SUB_WORD_END
 		}
@@ -698,19 +700,8 @@ func (v *View) Classify(point int) (res int) {
 		res = 0
 		return
 	}
-	// Word start & end
-	if re, err := rubex.Compile("\\w"); err != nil {
-		log4go.Error(err)
-	} else {
-		if re.MatchString(b) && !re.MatchString(a) {
-			res |= CLASS_WORD_START
-		}
-		if re.MatchString(a) && !re.MatchString(b) {
-			res |= CLASS_WORD_END
-		}
-	}
 	// Punc start & end
-	if re, err := rubex.Compile("[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]"); err != nil {
+	if re, err := rubex.Compile(ws); err != nil {
 		log4go.Error(err)
 	} else {
 		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
@@ -718,6 +709,19 @@ func (v *View) Classify(point int) (res int) {
 		}
 		if (re.MatchString(a) || a == "") && !re.MatchString(b) {
 			res |= CLASS_PUNCTUATION_END
+		}
+		// Word start & end
+		if re1, err := rubex.Compile("\\w"); err != nil {
+			log4go.Error(err)
+		} else if re2, err := rubex.Compile("\\s"); err != nil {
+			log4go.Error(err)
+		} else {
+			if re1.MatchString(b) && (re.MatchString(a) || re2.MatchString(a) || a == "") {
+				res |= CLASS_WORD_START
+			}
+			if re1.MatchString(a) && (re.MatchString(b) || re2.MatchString(b) || b == "") {
+				res |= CLASS_WORD_END
+			}
 		}
 	}
 	// SubWord start & end

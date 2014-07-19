@@ -242,6 +242,7 @@ View
 	begin_edit
 	buffer_id
 	change_count
+	classify
 	command_history
 	end_edit
 	erase
