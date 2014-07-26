@@ -659,11 +659,11 @@ const (
 	CLASS_LINE_START
 	CLASS_LINE_END
 	CLASS_EMPTY_LINE
-	CLASS_MIDLE_WORD
+	CLASS_MIDDLE_WORD
 	CLASS_WORD_START_WITH_PUNCTUATION
 	CLASS_WORD_END_WITH_PUNCTUATION
-	CLASS_OPENNING_PARENTHESES
-	CLASS_CLOSING_PARENTHESES
+	CLASS_OPENING_PARENTHESIS
+	CLASS_CLOSING_PARENTHESIS
 )
 
 // Classifies point, returning a bitwise OR of zero or more of defined flags
@@ -691,10 +691,10 @@ func (v *View) Classify(point int) (res int) {
 		}
 	}
 	if a == "," {
-		res |= CLASS_OPENNING_PARENTHESES
+		res |= CLASS_OPENING_PARENTHESIS
 	}
 	if b == "," {
-		res |= CLASS_CLOSING_PARENTHESES
+		res |= CLASS_CLOSING_PARENTHESIS
 	}
 	if a == "," && b == "," {
 		res = 0
@@ -742,7 +742,7 @@ func (v *View) Classify(point int) (res int) {
 		log4go.Error(err)
 	} else {
 		if re.MatchString(a) && re.MatchString(b) {
-			res |= CLASS_MIDLE_WORD
+			res |= CLASS_MIDDLE_WORD
 		}
 	}
 	// Word start & end with punc
@@ -761,7 +761,7 @@ func (v *View) Classify(point int) (res int) {
 		log4go.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
-			res |= CLASS_OPENNING_PARENTHESES
+			res |= CLASS_OPENING_PARENTHESIS
 		}
 		if re.MatchString(a) && a == b {
 			res = 0
@@ -772,7 +772,7 @@ func (v *View) Classify(point int) (res int) {
 		log4go.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
-			res |= CLASS_CLOSING_PARENTHESES
+			res |= CLASS_CLOSING_PARENTHESIS
 		}
 		if re.MatchString(a) && a == b {
 			res = 0
