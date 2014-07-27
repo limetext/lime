@@ -13,6 +13,8 @@ try:
     v = sublime.test_window.active_view()
     sublime.test_window.run_command("test_window")
     assert v.substr(sublime.Region(0, v.size())) == "window hello"
+    assert sublime.CLASS_PUNCTUATION_START == 4
+    assert sublime.CLASS_OPENING_PARENTHESIS == 4096
 except:
     traceback.print_exc()
     raise
