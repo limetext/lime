@@ -7,6 +7,7 @@ package commands
 import (
 	. "github.com/limetext/lime/backend"
 	"github.com/quarnster/util/text"
+	"strings"
 )
 
 type (
@@ -29,6 +30,13 @@ type (
 	// current selection or the current selection if it is not empty.
 	RightDeleteCommand struct {
 		DefaultCommand
+	}
+
+	// The DeleteWordCommand deletes one word to right or left
+	// depending on forward variable
+	DeleteWordCommand struct {
+		DefaultCommand
+		Forward bool
 	}
 )
 
@@ -116,10 +124,75 @@ func (c *RightDeleteCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func (c *DeleteWordCommand) Run(v *View, e *Edit) error {
+	var class int
+	if c.Forward {
+		class = CLASS_WORD_END | CLASS_PUNCTUATION_END | CLASS_LINE_START
+	} else {
+		class = CLASS_WORD_START | CLASS_PUNCTUATION_START | CLASS_LINE_END | CLASS_LINE_START
+	}
+
+	sel := v.Sel()
+	var rs []text.Region
+	for i := 0; i < sel.Len(); i++ {
+		r := sel.Get(i)
+		if r.Empty() {
+			p := c.findByClass(r.A, class, v)
+			if c.Forward {
+				r = text.Region{r.A, p}
+			} else {
+				r = text.Region{p, r.A}
+			}
+		}
+		rs = append(rs, r)
+	}
+	sel.Clear()
+	sel.AddAll(rs)
+	if c.Forward {
+		GetEditor().CommandHandler().RunTextCommand(v, "right_delete", nil)
+	} else {
+		GetEditor().CommandHandler().RunTextCommand(v, "left_delete", nil)
+	}
+	return nil
+}
+
+func (c *DeleteWordCommand) findByClass(point int, class int, v *View) int {
+	var end, d int
+	if c.Forward {
+		d = 1
+		end = v.Buffer().Size()
+		if point > end {
+			point = end
+		}
+		s := v.Buffer().Substr(text.Region{point, point + 2})
+		if strings.Contains(s, "\t") && strings.Contains(s, " ") {
+			class = CLASS_WORD_START | CLASS_PUNCTUATION_START | CLASS_LINE_END
+		}
+	} else {
+		d = -1
+		end = 0
+		if point < end {
+			point = end
+		}
+		s := v.Buffer().Substr(text.Region{point - 2, point})
+		if strings.Contains(s, "\t") && strings.Contains(s, " ") {
+			class = CLASS_WORD_END | CLASS_PUNCTUATION_END | CLASS_LINE_START
+		}
+	}
+	point += d
+	for ; point != end; point += d {
+		if v.Classify(point)&class != 0 {
+			return point
+		}
+	}
+	return point
+}
+
 func init() {
 	register([]cmd{
 		{"insert", &InsertCommand{}},
 		{"left_delete", &LeftDeleteCommand{}},
 		{"right_delete", &RightDeleteCommand{}},
+		{"delete_word", &DeleteWordCommand{}},
 	})
 }

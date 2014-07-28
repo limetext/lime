@@ -197,3 +197,55 @@ func TestInsert(t *testing.T) {
 		ch.RunTextCommand(v, "undo", nil)
 	}
 }
+
+func TestDeleteWord(t *testing.T) {
+	tests := []struct {
+		text    string
+		sel     []Region
+		forward bool
+		expect  string
+	}{
+		{
+			"word",
+			[]Region{{4, 4}},
+			false,
+			"",
+		},
+		{
+			"'(}[word",
+			[]Region{{7, 7}, {4, 4}},
+			false,
+			"d",
+		},
+		{
+			"testing forwar|d\ndelete word",
+			[]Region{{0, 2}, {11, 11}, {16, 16}},
+			true,
+			"sting for|ddelete word",
+		},
+		{
+			"simple 	test 	on outside",
+			[]Region{{-1, -1}, {6, 6}, {13, 13}, {54, 33}, {31, 31}},
+			true,
+			"simpletest  outside",
+		},
+	}
+
+	ed := GetEditor()
+	w := ed.NewWindow()
+	for i, test := range tests {
+		v := w.NewFile()
+		e := v.BeginEdit()
+
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+
+		v.Sel().Clear()
+		v.Sel().AddAll(test.sel)
+
+		ed.CommandHandler().RunTextCommand(v, "delete_word", Args{"forward": test.forward})
+		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
+			t.Errorf("Test %d:\nExcepted: '%s' but got: '%s'", i, test.expect, d)
+		}
+	}
+}
