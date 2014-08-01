@@ -308,19 +308,64 @@ func (t *qmlfrontend) StatusMessage(msg string) {
 	t.status_message = msg
 }
 
+type (
+	qmlDialog struct {
+	}
+)
+
+func (q *qmlDialog) Show(msg, icon string) (ret int) {
+	src := `import QtQuick 2.2
+import QtQuick.Dialogs 1.1
+
+Item {MessageDialog {
+	objectName: "realDialog"
+	id: messageDialog
+	title: "May I have your attention please"
+	text: "` + msg + `"
+	icon: ` + icon + `
+	standardButtons: StandardButton.Ok | StandardButton.Cancel
+	Component.onCompleted: visible = true
+}}`
+	engine := qml.NewEngine()
+	engine.Context().SetVar("q", q)
+	component, err := engine.LoadString("dialog.qml", src)
+	if err != nil {
+		log4go.Error("Unable to instanciate dialog: %s", err)
+		return 0
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	obj := component.Create(nil)
+	obj = obj.ObjectByName("realDialog")
+	obj.On("accepted", func() {
+		ret = 1
+		wg.Done()
+	})
+	obj.On("rejected", func() {
+		ret = 0
+		wg.Done()
+	})
+
+	wg.Wait()
+	engine.Destroy()
+	log4go.Debug("returning %d", ret)
+	return
+}
+
 func (t *qmlfrontend) ErrorMessage(msg string) {
 	log4go.Error(msg)
+	var q qmlDialog
+	q.Show(msg, "StandardIcon.Critical")
 }
 
-// TODO(q): Actually show a dialog
 func (t *qmlfrontend) MessageDialog(msg string) {
-	log4go.Info(msg)
+	var q qmlDialog
+	q.Show(msg, "StandardIcon.Information")
 }
 
-// TODO(q): Actually show a dialog
 func (t *qmlfrontend) OkCancelDialog(msg, ok string) bool {
-	log4go.Info(msg, ok)
-	return false
+	var q qmlDialog
+	return q.Show(msg, "StandardIcon.Question") == 1
 }
 
 func (t *qmlfrontend) scroll(b Buffer, pos, delta int) {
@@ -482,6 +527,20 @@ func (t *qmlfrontend) loop() (err error) {
 		w2.views = append(w2.views, fv)
 		w2.Len = len(w2.views)
 		t.qmlChanged(w2, &w2.Len)
+	})
+
+	backend.OnClose.Add(func(v *backend.View) {
+		w2 := t.windows[v.Window()]
+		for i := range w2.views {
+			if w2.views[i].bv == v {
+				copy(w2.views[i:], w2.views[i+1:])
+				w2.views = w2.views[:len(w2.views)-1]
+				w2.Len = len(w2.views)
+				t.qmlChanged(w2, &w2.Len)
+				return
+			}
+		}
+		log4go.Error("Couldn't find closed view...")
 	})
 
 	backend.OnLoad.Add(func(v *backend.View) {
