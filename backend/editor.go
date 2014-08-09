@@ -208,7 +208,7 @@ func (e *Editor) Console() *View {
 func (e *Editor) Windows() []*Window {
 	edl.Lock()
 	defer edl.Unlock()
-	ret := make([]*Window, 0, len(e.windows))
+	ret := make([]*Window, len(e.windows))
 	copy(ret, e.windows)
 	return ret
 }
@@ -234,6 +234,22 @@ func (e *Editor) NewWindow() *Window {
 	ed.SetActiveWindow(w)
 	OnNewWindow.Call(w)
 	return w
+}
+
+func (e *Editor) remove(w *Window) {
+	edl.Lock()
+	defer edl.Unlock()
+	for i, ww := range e.windows {
+		if w == ww {
+			end := len(e.windows) - 1
+			if i != end {
+				copy(e.windows[i:], e.windows[i+1:])
+			}
+			e.windows = e.windows[:end]
+			return
+		}
+	}
+	log4go.Error("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
 }
 
 func (e *Editor) Arch() string {

@@ -96,6 +96,15 @@ func (w *Window) ActiveView() *View {
 	return w.active_view
 }
 
+func (w *Window) Close() {
+	for _, v := range w.views {
+		v.buffer.Close()
+		w.remove(v)
+	}
+	ed := GetEditor()
+	ed.remove(w)
+}
+
 func (w *Window) runCommand(c WindowCommand, name string) error {
 	defer func() {
 		if r := recover(); r != nil {
