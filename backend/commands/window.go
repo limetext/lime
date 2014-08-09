@@ -51,11 +51,11 @@ func (c *CloseWindowAppCommand) Run() error {
 }
 
 func (c *NewWindowAppCommand) IsChecked() bool {
-	return true
+	return false
 }
 
 func (c *CloseWindowAppCommand) IsChecked() bool {
-	return true
+	return false
 }
 
 func init() {
