@@ -98,8 +98,7 @@ func (w *Window) ActiveView() *View {
 
 func (w *Window) Close() {
 	for _, v := range w.views {
-		v.buffer.Close()
-		w.remove(v)
+		v.Close()
 	}
 	ed := GetEditor()
 	ed.remove(w)
