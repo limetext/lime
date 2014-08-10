@@ -103,3 +103,13 @@ func TestWatchingSettings(t *testing.T) {
 		t.Fatal("Error in writing the default back to setting")
 	}
 }
+
+func TestNewWindow(t *testing.T) {
+	ed := GetEditor()
+	l := len(ed.Windows())
+	_ = ed.NewWindow()
+
+	if len(ed.Windows()) != l+1 {
+		t.Errorf("Expected 1 window, but got %d", len(ed.Windows()))
+	}
+}
