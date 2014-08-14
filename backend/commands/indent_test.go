@@ -60,6 +60,14 @@ func TestIndent(t *testing.T) {
 			[]Region{{0, 1}, {11, 12}},
 			"\ta\n b\n  c\n\t   d\n",
 		},
+		{ // region selected reversely
+			// should perform indent
+			"a\n b\n  c\n   d\n",
+			false,
+			1,
+			[]Region{{3, 0}},
+			"\ta\n\t b\n  c\n   d\n",
+		},
 	}
 
 	runTest(t, tests, "indent")
@@ -106,6 +114,14 @@ func TestUnindent(t *testing.T) {
 			1,
 			[]Region{{0, 1}, {11, 12}},
 			"a\n b\n  c\n\t   d\n",
+		},
+		{ // region selected reversely
+			// should perform unindent
+			"\ta\n\t b\n  c\n   d\n",
+			false,
+			4,
+			[]Region{{3, 0}},
+			"a\n b\n  c\n   d\n",
 		},
 	}
 
