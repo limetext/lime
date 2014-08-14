@@ -55,8 +55,8 @@ func (c *UnindentCommand) Run(v *View, e *Edit) error {
 	unindented_rows := map[int]struct{}{}
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
-		start_row, _ := v.Buffer().RowCol(r.A)
-		end_row, _ := v.Buffer().RowCol(r.B)
+		start_row, _ := v.Buffer().RowCol(r.Begin())
+		end_row, _ := v.Buffer().RowCol(r.End())
 		for row := start_row; row <= end_row; row++ {
 			if _, ok := unindented_rows[row]; !ok {
 				pos := v.Buffer().TextPoint(row, 0)
