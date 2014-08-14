@@ -360,8 +360,10 @@ WindowCommandGlue
 	__str__
 	__subclasshook__
 __doc__
+__loader__
 __name__
 __package__
+__spec__
 active_window
 arch
 console
