@@ -35,8 +35,8 @@ func (c *IndentCommand) Run(v *View, e *Edit) error {
 
 	for i := 0; i < sel.Len(); i++ {
 		r := sel.Get(i)
-		start_row, _ := v.Buffer().RowCol(r.A)
-		end_row, _ := v.Buffer().RowCol(r.B)
+		start_row, _ := v.Buffer().RowCol(r.Begin())
+		end_row, _ := v.Buffer().RowCol(r.End())
 		for row := start_row; row <= end_row; row++ {
 			if _, ok := indented_rows[row]; !ok {
 				// Insert an indent at the beginning of the line
