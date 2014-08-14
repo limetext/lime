@@ -5,7 +5,7 @@ go: 1.2
 install:
   - echo 'yes' | sudo add-apt-repository ppa:fkrull/deadsnakes
   - sudo apt-get update -qq
-  - sudo apt-get install -qq libonig-dev mercurial python3.3 python3.3-dev
+  - sudo apt-get install -qq libonig-dev mercurial python3.4 python3.4-dev
 
 script:
   - ./tasks/ci/lime.sh
