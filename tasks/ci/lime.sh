@@ -23,8 +23,8 @@ function fold_end {
     fi
 }
 
-function do_test {
-	go test ./$1/...
+function do_test2 {
+	go test $1 -covermode=count -coverprofile=tmp.cov
 	build_result=$?
 	echo -ne "${YELLOW}=>${RESET} test $1 - "
 	if [ "$build_result" == "0" ]; then
@@ -33,6 +33,22 @@ function do_test {
 	    echo -e "${RED}FAILED${RESET}"
 	fi
 }
+
+function do_test {
+	let a=0
+	for pkg in $(go list ./$1/...); do
+		do_test2 $pkg
+		let a=$a+$build_result
+		cat tmp.cov | sed 1d >> coverage.cov
+	done
+	build_result=$a
+}
+
+fold_start "coverage tools"
+go get code.google.com/p/go.tools/cmd/cover
+go get github.com/mattn/goveralls
+go get github.com/axw/gocov/gocov
+fold_end "coverage tools"
 
 # Just to fetch all dependencies needed
 # Do *not* add "-u", or pull requests will not actually be built,
@@ -64,6 +80,8 @@ fail1=$build_result
 
 do_test "frontend/termbox"
 fail2=$build_result
+
+$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls -coverprofile=coverage.cov -service=travis-ci
 
 let ex=$fail1+$fail2
 exit $ex
