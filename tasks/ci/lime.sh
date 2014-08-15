@@ -75,6 +75,8 @@ fold_end "termbox"
 # go get github.com/limetext/lime/frontend/qml
 # fold_end "qml"
 
+echo "mode: count" > coverage.cov
+
 do_test "backend"
 fail1=$build_result
 
