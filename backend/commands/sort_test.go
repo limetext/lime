@@ -61,6 +61,14 @@ func TestSortLines(t *testing.T) {
 			[]Region{{0, 5}},
 			"a\nb\n",
 		},
+		{ // No duplicates removal
+			"c\nb\na\nc\n",
+			true,
+			false,
+			false,
+			[]Region{{0, 8}},
+			"a\nb\nc\nc\n",
+		},
 	}
 
 	runSortTest(t, tests, "sort_lines")
