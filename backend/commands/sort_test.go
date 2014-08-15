@@ -108,6 +108,14 @@ func TestSortSelection(t *testing.T) {
 			[]Region{{0, 1}, {1, 2}, {2, 3}},
 			"ab",
 		},
+		{ // No duplicates removal
+			"cbac",
+			true,
+			false,
+			false,
+			[]Region{{0, 1}, {1, 2}, {2, 3}, {3, 4}},
+			"abcc",
+		},
 	}
 
 	runSortTest(t, tests, "sort_selection")

@@ -76,15 +76,15 @@ func (c *SortLinesCommand) Run(v *View, e *Edit) error {
 	buf := v.Buffer()
 
 	// Used as a set of int
-	sorted_rows := make(map[int]struct{})
+	sorted_rows := make(map[int]bool)
 
 	regions := []Region{}
 	texts := []string{}
 	for i := 0; i < sel.Len(); i++ {
 		// Get regions containing each line.
 		for _, r := range buf.Lines(sel.Get(i)) {
-			if _, ok := sorted_rows[r.Begin()]; !ok {
-				sorted_rows[r.Begin()] = struct{}{}
+			if ok := sorted_rows[r.Begin()]; !ok {
+				sorted_rows[r.Begin()] = true
 				regions = append(regions, r)
 				texts = append(texts, buf.Substr(r))
 			}
@@ -96,7 +96,9 @@ func (c *SortLinesCommand) Run(v *View, e *Edit) error {
 		caseSensitive: c.CaseSensitive,
 		reverse:       c.Reverse,
 	})
-	texts = removeDuplicates(c.CaseSensitive, texts)
+	if c.RemoveDuplicates {
+		texts = removeDuplicates(c.CaseSensitive, texts)
+	}
 
 	sort.Sort(regionSorter(regions))
 
@@ -133,7 +135,9 @@ func (c *SortSelectionCommand) Run(v *View, e *Edit) error {
 		caseSensitive: c.CaseSensitive,
 		reverse:       c.Reverse,
 	})
-	texts = removeDuplicates(c.CaseSensitive, texts)
+	if c.RemoveDuplicates {
+		texts = removeDuplicates(c.CaseSensitive, texts)
+	}
 
 	sort.Sort(regionSorter(regions))
 
