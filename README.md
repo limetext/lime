@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/limetext/lime.png?branch=master)](https://travis-ci.org/limetext/lime) [![GoDoc](https://godoc.org/github.com/limetext/lime?status.png)](https://godoc.org/github.com/limetext/lime)
+[![Build Status](https://travis-ci.org/limetext/lime.png?branch=master)](https://travis-ci.org/limetext/lime)
+[![Coverage Status](https://coveralls.io/repos/limetext/lime/badge.png)](https://coveralls.io/r/limetext/lime)
+[![GoDoc](https://godoc.org/github.com/limetext/lime?status.png)](https://godoc.org/github.com/limetext/lime)
 
 # What is Lime?
 
