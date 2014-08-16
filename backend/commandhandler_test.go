@@ -13,6 +13,10 @@ type (
 	DummyApplicationCommand struct {
 		DefaultCommand
 	}
+
+	DummyWindowCommand struct {
+		DefaultCommand
+	}
 )
 
 func (c *DummyApplicationCommand) Run() error {
@@ -21,6 +25,10 @@ func (c *DummyApplicationCommand) Run() error {
 
 func (c *DummyApplicationCommand) IsChecked() bool {
 	return false
+}
+
+func (c *DummyWindowCommand) Run(w *Window) error {
+	return fmt.Errorf("Ran")
 }
 
 func TestPascalCaseToSnakeCase(t *testing.T) {
@@ -59,6 +67,28 @@ func TestRegisterApplicationCommand(t *testing.T) {
 	}
 
 	err = ch.RunApplicationCommand(name, Args{})
+
+	if err == nil {
+		t.Errorf("Expected %s to run, but it didn't", name)
+	} else if err.Error() != "Ran" {
+		t.Errorf("Expected %s to run, but it got an error: %v", name, err)
+	}
+}
+
+func TestRegisterWindowCommand(t *testing.T) {
+	var w Window
+
+	name := "wnd_test_command"
+	ac := DummyWindowCommand{}
+	ch := GetEditor().CommandHandler()
+
+	err := ch.Register(name, &ac)
+
+	if err != nil {
+		t.Errorf("Got error while registering: %s", err)
+	}
+
+	err = ch.RunWindowCommand(&w, name, Args{})
 
 	if err == nil {
 		t.Errorf("Expected %s to run, but it didn't", name)
