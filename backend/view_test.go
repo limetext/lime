@@ -455,6 +455,18 @@ func TestWindow(t *testing.T) {
 	}
 }
 
+func TestSetScratch(t *testing.T) {
+	var v View
+
+	def := v.IsScratch()
+
+	v.SetScratch(!def)
+
+	if v.IsScratch() == def {
+		t.Errorf("Expected the view to be scratch = %v, but it was %v", !def, v.IsScratch())
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
