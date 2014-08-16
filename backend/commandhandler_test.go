@@ -63,7 +63,7 @@ func TestPascalCaseToSnakeCase(t *testing.T) {
 	}
 }
 
-func TestRegisterApplicationCommand(t *testing.T) {
+func TestRegisterAndRunApplicationCommand(t *testing.T) {
 	name := "app_test_command"
 	ac := DummyApplicationCommand{}
 	ch := GetEditor().CommandHandler()
@@ -83,7 +83,7 @@ func TestRegisterApplicationCommand(t *testing.T) {
 	}
 }
 
-func TestRegisterWindowCommand(t *testing.T) {
+func TestRegisterAndRunWindowCommand(t *testing.T) {
 	var w Window
 
 	name := "wnd_test_command"
@@ -105,7 +105,7 @@ func TestRegisterWindowCommand(t *testing.T) {
 	}
 }
 
-func TestRegisterTextCommand(t *testing.T) {
+func TestRegisterAndRunTextCommand(t *testing.T) {
 	ed := GetEditor()
 
 	name := "text_test_command"
