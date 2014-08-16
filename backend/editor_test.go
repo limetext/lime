@@ -113,3 +113,37 @@ func TestNewWindow(t *testing.T) {
 		t.Errorf("Expected 1 window, but got %d", len(ed.Windows()))
 	}
 }
+
+func TestRemoveWindow(t *testing.T) {
+	ed := GetEditor()
+	l := len(ed.Windows())
+
+	w := ed.NewWindow()
+	ed.remove(w)
+
+	if len(ed.Windows()) != l {
+		t.Errorf("Expected the window to be removed, but %d still remain", len(ed.Windows()))
+	}
+}
+
+func TestSetFrontend(t *testing.T) {
+	f := DummyFrontend{}
+
+	ed := GetEditor()
+	ed.SetFrontend(&f)
+
+	if ed.Frontend() != &f {
+		t.Errorf("Expected a DummyFrontend to be set, but got %T", ed.Frontend())
+	}
+}
+
+func TestClipboard(t *testing.T) {
+	ed := GetEditor()
+	s := "test"
+
+	ed.SetClipboard(s)
+
+	if ed.GetClipboard() != s {
+		t.Errorf("Expected %s to be on the clipboard, but got %s", s, ed.GetClipboard())
+	}
+}
