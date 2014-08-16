@@ -155,6 +155,7 @@ ApplicationWindow {
                                     running: view.myView == null
                                     repeat: true
                                     onTriggered: {
+                                        tabs.currentIndex = myWindow.activeViewIndex();
                                         view.myView = myWindow.view(index);
                                         if (index == tabs.currentIndex) {
                                             tabs.resetminimap();

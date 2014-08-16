@@ -289,6 +289,14 @@ func (fw *frontendWindow) launch(wg *sync.WaitGroup, component qml.Object) {
 func (fw *frontendWindow) View(idx int) *frontendView {
 	return fw.views[idx]
 }
+func (fw *frontendWindow) ActiveViewIndex() int {
+	for i, v := range fw.bw.Views() {
+		if v == fw.bw.ActiveView() {
+			return i
+		}
+	}
+	return len(fw.bw.Views())
+}
 func (t *qmlfrontend) Window(w *backend.Window) *frontendWindow {
 	return t.windows[w]
 }
