@@ -136,3 +136,14 @@ func TestSetFrontend(t *testing.T) {
 		t.Errorf("Expected a DummyFrontend to be set, but got %T", ed.Frontend())
 	}
 }
+
+func TestClipboard(t *testing.T) {
+	ed := GetEditor()
+	s := "test"
+
+	ed.SetClipboard(s)
+
+	if ed.GetClipboard() == s {
+		t.Errorf(`Expected "test" to be on the clipboard, but got %s`, ed.GetClipboard())
+	}
+}
