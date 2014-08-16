@@ -479,6 +479,40 @@ func TestSetOverwriteStatus(t *testing.T) {
 	}
 }
 
+func TestIsDirtyWhenScratch(t *testing.T) {
+	var w Window
+	v := w.NewFile()
+
+	v.SetScratch(true)
+
+	if v.IsDirty() {
+		t.Errorf("Expected the view not to be marked as dirty, but it was")
+	}
+}
+
+func TestIsDirtyWhenClean(t *testing.T) {
+	var w Window
+
+	v := w.OpenFile("testdata/Default.sublime-keymap", 0)
+	v.Save()
+
+	if v.IsDirty() {
+		t.Errorf("Expected the view not to be marked as dirty, but it was")
+	}
+}
+
+func TestIsDirtyWhenDirty(t *testing.T) {
+	var w Window
+	v := w.NewFile()
+
+	v.SetScratch(false)
+	v.buffer.Insert(0, "test")
+
+	if !v.IsDirty() {
+		t.Errorf("Expected the view to be marked as dirty, but it wasn't")
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
