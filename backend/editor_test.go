@@ -76,9 +76,9 @@ func TestWatchOnSaveAs(t *testing.T) {
 }
 
 func TestWatchingSettings(t *testing.T) {
-	// TODO: this should be uncomment after adding proper
-	// settings hiererchy
+	// TODO: This won't pass until the settings hierarchy is set up properly.
 	return
+
 	var path string = "testdata/Default.sublime-settings"
 	editor := GetEditor()
 	editor.loadSetting(NewPacket(path))
