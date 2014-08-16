@@ -375,57 +375,6 @@ func TestSaveAsOpenFile(t *testing.T) {
 	}
 }
 
-func BenchmarkScopeNameLinear(b *testing.B) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
-	const (
-		in     = "textmate/language_test.go"
-		syntax = "textmate/testdata/Go.tmLanguage"
-	)
-	b.StopTimer()
-	v.Settings().Set("syntax", syntax)
-	if d, err := ioutil.ReadFile(in); err != nil {
-		b.Fatal(err)
-	} else {
-		e := v.BeginEdit()
-		v.Insert(e, 0, string(d))
-		v.EndEdit(e)
-		b.StartTimer()
-		for j := 0; j < b.N; j++ {
-			for i := 0; i < v.buffer.Size(); i++ {
-				v.ScopeName(i)
-			}
-		}
-	}
-}
-
-func BenchmarkScopeNameRandom(b *testing.B) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
-	const (
-		in     = "textmate/language_test.go"
-		syntax = "textmate/testdata/Go.tmLanguage"
-	)
-	b.StopTimer()
-	v.Settings().Set("syntax", syntax)
-	if d, err := ioutil.ReadFile(in); err != nil {
-		b.Fatal(err)
-	} else {
-		e := v.BeginEdit()
-		v.Insert(e, 0, string(d))
-		v.EndEdit(e)
-		p := rand.Perm(b.N)
-		b.StartTimer()
-		for _, i := range p {
-			v.ScopeName(i)
-		}
-	}
-}
-
 func TestClassify(t *testing.T) {
 	var w Window
 	tests := []struct {
@@ -494,5 +443,56 @@ func TestSetBufferTwice(t *testing.T) {
 
 	if v.buffer.Name() != b1.Name() {
 		t.Errorf("Expected buffer called %s, but got %s", b1.Name(), v.buffer.Name())
+	}
+}
+
+func BenchmarkScopeNameLinear(b *testing.B) {
+	var (
+		w Window
+		v = w.NewFile()
+	)
+	const (
+		in     = "textmate/language_test.go"
+		syntax = "textmate/testdata/Go.tmLanguage"
+	)
+	b.StopTimer()
+	v.Settings().Set("syntax", syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		b.Fatal(err)
+	} else {
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		b.StartTimer()
+		for j := 0; j < b.N; j++ {
+			for i := 0; i < v.buffer.Size(); i++ {
+				v.ScopeName(i)
+			}
+		}
+	}
+}
+
+func BenchmarkScopeNameRandom(b *testing.B) {
+	var (
+		w Window
+		v = w.NewFile()
+	)
+	const (
+		in     = "textmate/language_test.go"
+		syntax = "textmate/testdata/Go.tmLanguage"
+	)
+	b.StopTimer()
+	v.Settings().Set("syntax", syntax)
+	if d, err := ioutil.ReadFile(in); err != nil {
+		b.Fatal(err)
+	} else {
+		e := v.BeginEdit()
+		v.Insert(e, 0, string(d))
+		v.EndEdit(e)
+		p := rand.Perm(b.N)
+		b.StartTimer()
+		for _, i := range p {
+			v.ScopeName(i)
+		}
 	}
 }
