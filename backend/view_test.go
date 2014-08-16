@@ -446,6 +446,15 @@ func TestSetBufferTwice(t *testing.T) {
 	}
 }
 
+func TestWindow(t *testing.T) {
+	w := GetEditor().NewWindow()
+	v := w.NewFile()
+
+	if v.Window() != w {
+		t.Errorf("Expected the set window to be the one that spawned the view, but it isn't.")
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
