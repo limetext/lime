@@ -513,6 +513,19 @@ func TestIsDirtyWhenDirty(t *testing.T) {
 	}
 }
 
+func TestCloseView(t *testing.T) {
+	w := GetEditor().NewWindow()
+	l := len(w.Views())
+
+	v := w.OpenFile("testdata/Default.sublime-keymap", 0)
+	v.Save()
+	v.Close()
+
+	if len(w.Views()) != l {
+		t.Errorf("Expected %d views, but got %d", l, len(w.Views()))
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
