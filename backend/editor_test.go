@@ -113,3 +113,14 @@ func TestNewWindow(t *testing.T) {
 		t.Errorf("Expected 1 window, but got %d", len(ed.Windows()))
 	}
 }
+
+func TestSetFrontend(t *testing.T) {
+	f := DummyFrontend{}
+
+	ed := GetEditor()
+	ed.SetFrontend(&f)
+
+	if ed.Frontend() != &f {
+		t.Errorf("Expected a DummyFrontend to be set, but got %T", ed.Frontend())
+	}
+}
