@@ -461,3 +461,38 @@ func TestClassify(t *testing.T) {
 		}
 	}
 }
+
+func TestSetBuffer(t *testing.T) {
+	var v View
+
+	b := NewBuffer()
+	b.SetName("test")
+
+	_ = v.setBuffer(b)
+
+	if v.buffer.Name() != b.Name() {
+		t.Errorf("Expected buffer called %s, but got %s", b.Name(), v.buffer.Name())
+	}
+}
+
+func TestSetBufferTwice(t *testing.T) {
+	var v View
+
+	b1 := NewBuffer()
+	b1.SetName("test1")
+
+	_ = v.setBuffer(b1)
+
+	b2 := NewBuffer()
+	b2.SetName("test2")
+
+	err := v.setBuffer(b2)
+
+	if err == nil {
+		t.Errorf("Expected setting the second buffer to cause an error, but it didn't.")
+	}
+
+	if v.buffer.Name() != b1.Name() {
+		t.Errorf("Expected buffer called %s, but got %s", b1.Name(), v.buffer.Name())
+	}
+}
