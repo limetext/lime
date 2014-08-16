@@ -114,6 +114,18 @@ func TestNewWindow(t *testing.T) {
 	}
 }
 
+func TestRemoveWindow(t *testing.T) {
+	ed := GetEditor()
+	l := len(ed.Windows())
+
+	w := ed.NewWindow()
+	ed.remove(w)
+
+	if len(ed.Windows()) != l {
+		t.Errorf("Expected the window to be removed, but %d still remain", len(ed.Windows()))
+	}
+}
+
 func TestSetFrontend(t *testing.T) {
 	f := DummyFrontend{}
 
