@@ -127,3 +127,74 @@ func TestRegisterAndRunTextCommand(t *testing.T) {
 		t.Errorf("Expected %s to run, but it got an error: %v", name, err)
 	}
 }
+
+func TestUnregisterAndRunApplicationCommand(t *testing.T) {
+	name := "app_test_command_unregister"
+	ac := DummyApplicationCommand{}
+	ch := GetEditor().CommandHandler()
+
+	_ = ch.Register(name, &ac)
+	err := ch.Unregister(name)
+
+	if err != nil {
+		t.Errorf("Got error while unregistering: %s", err)
+	}
+
+	err = ch.RunApplicationCommand(name, Args{})
+
+	if err != nil {
+		t.Errorf("Expected %s not to run, but it did", name)
+		if err.Error() != "Ran" {
+			t.Errorf("Expected %s not to run, but it got an error: %v", name, err)
+		}
+	}
+}
+
+func TestUnregisterAndRunWindowCommand(t *testing.T) {
+	var w Window
+
+	name := "wnd_test_command_unregister"
+	wc := DummyWindowCommand{}
+	ch := GetEditor().CommandHandler()
+
+	_ = ch.Register(name, &wc)
+	err := ch.Unregister(name)
+
+	if err != nil {
+		t.Errorf("Got error while unregistering: %s", err)
+	}
+
+	err = ch.RunWindowCommand(&w, name, Args{})
+
+	if err != nil {
+		t.Errorf("Expected %s not to run, but it did", name)
+		if err.Error() != "Ran" {
+			t.Errorf("Expected %s not to run, but it got an error: %v", name, err)
+		}
+	}
+}
+
+func TestUnegisterAndRunTextCommand(t *testing.T) {
+	ed := GetEditor()
+
+	name := "text_test_command"
+	tc := DummyTextCommand{}
+	ch := ed.CommandHandler()
+
+	_ = ch.Register(name, &tc)
+	err := ch.Unregister(name)
+
+	if err != nil {
+		t.Errorf("Got error while unregistering: %s", err)
+	}
+
+	v := ed.NewWindow().NewFile()
+	err = ch.RunTextCommand(v, name, Args{})
+
+	if err != nil {
+		t.Errorf("Expected %s not to run, but it did", name)
+		if err.Error() != "Ran" {
+			t.Errorf("Expected %s not to run, but it got an error: %v", name, err)
+		}
+	}
+}
