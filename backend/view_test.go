@@ -467,6 +467,18 @@ func TestSetScratch(t *testing.T) {
 	}
 }
 
+func TestSetOverwriteStatus(t *testing.T) {
+	var v View
+
+	def := v.OverwriteStatus()
+
+	v.SetOverwriteStatus(!def)
+
+	if v.OverwriteStatus() == def {
+		t.Errorf("Expected the view to be overwrite = %v, but it was %v", !def, v.OverwriteStatus())
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window
