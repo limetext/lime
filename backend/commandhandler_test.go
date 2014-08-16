@@ -174,7 +174,7 @@ func TestUnregisterAndRunWindowCommand(t *testing.T) {
 	}
 }
 
-func TestUnegisterAndRunTextCommand(t *testing.T) {
+func TestUnregisterAndRunTextCommand(t *testing.T) {
 	ed := GetEditor()
 
 	name := "text_test_command"
