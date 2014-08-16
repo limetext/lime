@@ -17,3 +17,15 @@ func TestNewFile(t *testing.T) {
 		t.Errorf("Expected 1 view, but got %d", len(w.Views()))
 	}
 }
+
+func TestClose(t *testing.T) {
+	ed := GetEditor()
+	l := len(ed.Windows())
+	w := ed.NewWindow()
+
+	w.Close()
+
+	if len(ed.Windows()) != l {
+		t.Errorf("Expected window to close, but we have %d still open", len(ed.Windows()))
+	}
+}

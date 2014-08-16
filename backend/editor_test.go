@@ -113,16 +113,3 @@ func TestNewWindow(t *testing.T) {
 		t.Errorf("Expected 1 window, but got %d", len(ed.Windows()))
 	}
 }
-
-func TestCloseWindow(t *testing.T) {
-	ed := GetEditor()
-	l := len(ed.Windows())
-	w := ed.NewWindow()
-
-	w.Close()
-
-	if len(ed.Windows()) != l {
-		t.Errorf("Expected window to close, but we have %d still open", len(ed.Windows()))
-	}
-}
-
