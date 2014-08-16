@@ -24,7 +24,7 @@ function fold_end {
 }
 
 function do_test2 {
-	go test $1 -covermode=count -coverprofile=tmp.cov
+	go test "$1" -covermode=count -coverprofile=tmp.cov
 	build_result=$?
 	echo -ne "${YELLOW}=>${RESET} test $1 - "
 	if [ "$build_result" == "0" ]; then
@@ -36,8 +36,8 @@ function do_test2 {
 
 function do_test {
 	let a=0
-	for pkg in $(go list ./$1/...); do
-		do_test2 $pkg
+	for pkg in $(go list "./$1/..."); do
+		do_test2 "$pkg"
 		let a=$a+$build_result
 		cat tmp.cov | sed 1d >> coverage.cov
 	done
@@ -83,7 +83,7 @@ fail1=$build_result
 do_test "frontend/termbox"
 fail2=$build_result
 
-$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls -coverprofile=coverage.cov -service=travis-ci
+"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
 
 let ex=$fail1+$fail2
 exit $ex
