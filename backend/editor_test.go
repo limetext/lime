@@ -143,7 +143,7 @@ func TestClipboard(t *testing.T) {
 
 	ed.SetClipboard(s)
 
-	if ed.GetClipboard() == s {
-		t.Errorf(`Expected "test" to be on the clipboard, but got %s`, ed.GetClipboard())
+	if ed.GetClipboard() != s {
+		t.Errorf("Expected %s to be on the clipboard, but got %s", s, ed.GetClipboard())
 	}
 }
