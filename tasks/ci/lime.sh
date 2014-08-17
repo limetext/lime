@@ -89,7 +89,7 @@ fail2=$build_result
 
 let ex=$fail1+$fail2
 
-if [ "$build_result" == "0" ]; then
+if [ "$ex" == "0" ]; then
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
 fi
 
