@@ -42,7 +42,9 @@ function do_test {
 	for pkg in $(go list "./$1/..."); do
 		do_test2 "$pkg"
 		let a=$a+$build_result
-		sed 1d tmp.cov >> coverage.cov
+		if [ -f tmp.cov ]; then
+			sed 1d tmp.cov >> coverage.cov
+		fi
 	done
 	build_result=$a
 }
