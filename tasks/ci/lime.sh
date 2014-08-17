@@ -25,10 +25,11 @@ function fold_end {
 
 function do_test2 {
 	go test "$1" -covermode=count -coverprofile=tmp.cov
+	build_result=$?
 	# Can't do race tests at the same time as coverage as it'll report
 	# lots of false positives then..
 	go test -race "$1"
-	build_result=$?
+	let build_result=$build_result+$?
 	echo -ne "${YELLOW}=>${RESET} test $1 - "
 	if [ "$build_result" == "0" ]; then
 	    echo -e "${GREEN}SUCCEEDED${RESET}"
