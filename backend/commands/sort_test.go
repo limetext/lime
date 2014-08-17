@@ -61,6 +61,14 @@ func TestSortLines(t *testing.T) {
 			[]Region{{0, 5}},
 			"a\nb\n",
 		},
+		{ // Remove duplicates case insensitive
+			"a\nb\nA",
+			false,
+			false,
+			true,
+			[]Region{{0, 5}},
+			"a\nb\n",
+		},
 		{ // No duplicates removal
 			"c\nb\na\nc\n",
 			true,
@@ -111,6 +119,14 @@ func TestSortSelection(t *testing.T) {
 		{ // Remove duplicates
 			"aba",
 			true,
+			false,
+			true,
+			[]Region{{0, 1}, {1, 2}, {2, 3}},
+			"ab",
+		},
+		{ // Remove duplicates case insensitive
+			"abA",
+			false,
 			false,
 			true,
 			[]Region{{0, 1}, {1, 2}, {2, 3}},
