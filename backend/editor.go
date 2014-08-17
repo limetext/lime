@@ -69,7 +69,7 @@ type (
 		log chan string
 	}
 	DummyFrontend struct {
-		sync.Mutex
+		m sync.Mutex
 		// Default return value for OkCancelDialog
 		defaultAction bool
 	}
@@ -82,8 +82,8 @@ const (
 )
 
 func (h *DummyFrontend) SetDefaultAction(action bool) {
-	h.Lock()
-	defer h.Unlock()
+	h.m.Lock()
+	defer h.m.Unlock()
 	h.defaultAction = action
 }
 func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
@@ -91,8 +91,8 @@ func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
 func (h *DummyFrontend) MessageDialog(msg string) { log4go.Info(msg) }
 func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
 	log4go.Info(msg)
-	h.Lock()
-	defer h.Unlock()
+	h.m.Lock()
+	defer h.m.Unlock()
 	return h.defaultAction
 }
 func (h *DummyFrontend) Show(v *View, r Region)       {}

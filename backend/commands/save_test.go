@@ -110,7 +110,7 @@ func TestSaveAll(t *testing.T) {
 	fe := ed.Frontend()
 	if dfe, ok := fe.(*DummyFrontend); ok {
 		// Make it *not* reload the file
-		dfe.DefaultAction = false
+		dfe.SetDefaultAction(false)
 	}
 	w := ed.NewWindow()
 	for i, test := range tests {

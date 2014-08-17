@@ -431,7 +431,7 @@ func main() {
 			sn),
 		},
 		{"./backend/sublime/frontend_generated.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().Frontend()),
-			regexp.MustCompile("Show|VisibleRegion").MatchString,
+			regexp.MustCompile("Show|VisibleRegion|DefaultAction").MatchString,
 			"backend.GetEditor().Frontend().",
 			sn),
 		},
