@@ -15,7 +15,7 @@ func TestOnFileChange(t *testing.T) {
 	fe := GetEditor().Frontend()
 	if dfe, ok := fe.(*DummyFrontend); ok {
 		// Make it trigger a reload
-		dfe.DefaultAction = true
+		dfe.SetDefaultAction(true)
 	}
 
 	var (

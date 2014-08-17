@@ -69,8 +69,9 @@ type (
 		log chan string
 	}
 	DummyFrontend struct {
+		sync.Mutex
 		// Default return value for OkCancelDialog
-		DefaultAction bool
+		defaultAction bool
 	}
 )
 
@@ -80,12 +81,19 @@ const (
 	LIME_DEFAULTS_PATH      = "../../backend/packages/Default/"
 )
 
+func (h *DummyFrontend) SetDefaultAction(action bool) {
+	h.Lock()
+	defer h.Unlock()
+	h.defaultAction = action
+}
 func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
 func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
 func (h *DummyFrontend) MessageDialog(msg string) { log4go.Info(msg) }
 func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
 	log4go.Info(msg)
-	return h.DefaultAction
+	h.Lock()
+	defer h.Unlock()
+	return h.defaultAction
 }
 func (h *DummyFrontend) Show(v *View, r Region)       {}
 func (h *DummyFrontend) VisibleRegion(v *View) Region { return Region{} }
