@@ -2,7 +2,7 @@
 
 # Just so that our oniguruma.pc is found if
 # the user doesn't have an oniguruma.pc.
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/../rubex
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/../../../github.com/limetext/rubex
 
 # Colors.
 RED="\e[31m"
