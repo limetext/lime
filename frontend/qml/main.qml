@@ -18,14 +18,52 @@ ApplicationWindow {
         Menu {
             title: qsTr("&File")
             MenuItem {
-                text: qsTr("&New")
+                text: qsTr("&New File")
                 shortcut: "Ctrl+N"
+                onTriggered: myWindow.back().newFile()
+            }
+            MenuItem {
+                text: qsTr("&Open File...")
+                shortcut: "Ctrl+O"
+                onTriggered: openDialog.open()
+            }
+            MenuItem {
+                text: qsTr("&Save")
+                shortcut: "Ctrl+S"
+                onTriggered: myWindow.view(tabs.currentIndex).back().save()
+            }
+            MenuItem {
+                text: qsTr("&Save As...")
+                shortcut: "Shift+Ctrl+S"
+                // TODO(.) : qml doesn't have a ready dialog like FileDialog
+                // onTriggered: saveAsDialog.open()
+            }
+            MenuSeparator{}
+            MenuItem {
+                text: qsTr("&New Window")
+                shortcut: "Shift+Ctrl+N"
                 onTriggered: editor.newWindow()
             }
             MenuItem {
-                text: qsTr("&Open")
-                shortcut: "Ctrl+O"
-                onTriggered: openDialog.open()
+                text: qsTr("&Close Window")
+                shortcut: "Shift+Ctrl+W"
+                onTriggered: myWindow.back().close()
+            }
+            MenuSeparator{}
+            MenuItem {
+                text: qsTr("&Close File")
+                shortcut: "Ctrl+W"
+                onTriggered: myWindow.view(tabs.currentIndex).back().close()
+            }
+            MenuItem {
+                text: qsTr("&Close All Files")
+                onTriggered: myWindow.back().closeAllViews()
+            }
+            MenuSeparator{}
+            MenuItem {
+                text: qsTr("&Quit")
+                shortcut: "Ctrl+Q"
+                onTriggered: Qt.quit();
             }
         }
     }
@@ -106,7 +144,7 @@ ApplicationWindow {
                         tab: Item {
                             implicitWidth: 180
                             implicitHeight: 28
-                             ToolTip {
+                            ToolTip {
                                 id: tooltip
                                 backgroundColor: "#BECCCC66"
                                 textColor: "black"
@@ -155,7 +193,6 @@ ApplicationWindow {
                                     running: view.myView == null
                                     repeat: true
                                     onTriggered: {
-                                        tabs.currentIndex = myWindow.activeViewIndex();
                                         view.myView = myWindow.view(index);
                                         if (index == tabs.currentIndex) {
                                             tabs.resetminimap();
@@ -164,8 +201,14 @@ ApplicationWindow {
                                 }
                             }
                         }
+                        onItemAdded: {
+                            if (myWindow.activeViewIndex() < tabs.count)
+                                tabs.currentIndex = myWindow.activeViewIndex()
+                        }
                     }
                     function resetminimap() {
+                        // TODO(.): This is conflicts on new file on new file the
+                        //          active_view should be the new file but it changes to first tab
                         myWindow.back().setActiveView(myWindow.view(currentIndex).back());
 
                         minimap.myView = myWindow.view(currentIndex);
@@ -254,7 +297,11 @@ ApplicationWindow {
 
     FileDialog {
         id: openDialog
-        title: qsTr("Please choose a file:")
+        title: qsTr("Open File")
+        // TODO(.) : folder should be set to current view directory
+        // folder: myWindow.view(tabs.currentIndex).title.text
+        // TODO(.) : Selecting multiple files should be enabled
+        // selectMultiple: true
         onAccepted: {
             var _url = openDialog.fileUrl.toString()
             if(_url.length >= 7 && _url.slice(0, 7) == "file://") {

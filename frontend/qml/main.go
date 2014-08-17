@@ -290,12 +290,12 @@ func (fw *frontendWindow) View(idx int) *frontendView {
 	return fw.views[idx]
 }
 func (fw *frontendWindow) ActiveViewIndex() int {
-	for i, v := range fw.bw.Views() {
-		if v == fw.bw.ActiveView() {
+	for i, v := range fw.views {
+		if v.bv == fw.bw.ActiveView() {
 			return i
 		}
 	}
-	return len(fw.bw.Views())
+	return len(fw.views)
 }
 func (t *qmlfrontend) Window(w *backend.Window) *frontendWindow {
 	return t.windows[w]

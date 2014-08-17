@@ -97,11 +97,15 @@ func (w *Window) ActiveView() *View {
 }
 
 func (w *Window) Close() {
+	w.CloseAllViews()
+	ed := GetEditor()
+	ed.remove(w)
+}
+
+func (w *Window) CloseAllViews() {
 	for _, v := range w.views {
 		v.Close()
 	}
-	ed := GetEditor()
-	ed.remove(w)
 }
 
 func (w *Window) runCommand(c WindowCommand, name string) error {
