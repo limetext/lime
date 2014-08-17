@@ -53,6 +53,14 @@ func TestSortLines(t *testing.T) {
 			[]Region{{0, 1}, {4, 5}},
 			"a\nc\nb",
 		},
+		{ // Noncontinuous selection, out of order
+			"b\nc\na",
+			true,
+			false,
+			false,
+			[]Region{{4, 5}, {0, 1}},
+			"a\nc\nb",
+		},
 		{ // Remove duplicates
 			"a\nb\na",
 			true,
@@ -114,6 +122,14 @@ func TestSortSelection(t *testing.T) {
 			false,
 			false,
 			[]Region{{0, 1}, {2, 3}},
+			"acb",
+		},
+		{ // Noncontinuous selection, out of order
+			"bca",
+			true,
+			false,
+			false,
+			[]Region{{2, 3}, {0, 1}},
 			"acb",
 		},
 		{ // Remove duplicates
