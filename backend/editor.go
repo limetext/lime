@@ -35,6 +35,7 @@ type (
 		keyInput      chan (KeyPress)
 		watcher       *fsnotify.Watcher
 		watchedFiles  map[string]Watched
+		watchLock     sync.Mutex
 	}
 
 	// The Frontend interface defines the API
@@ -366,7 +367,9 @@ func (e *Editor) Watch(file Watched) {
 	if err := e.watcher.Watch(file.Name()); err != nil {
 		log4go.Error("Could not watch file: %v", err)
 	} else {
+		e.watchLock.Lock()
 		e.watchedFiles[file.Name()] = file
+		e.watchLock.Unlock()
 	}
 }
 
@@ -383,7 +386,10 @@ func (e *Editor) observeFiles() {
 		select {
 		case ev := <-e.watcher.Event:
 			if ev.IsModify() {
-				if f, exist := e.watchedFiles[ev.Name]; exist {
+				e.watchLock.Lock()
+				f, exist := e.watchedFiles[ev.Name]
+				e.watchLock.Unlock()
+				if exist {
 					f.Reload()
 				}
 			}
