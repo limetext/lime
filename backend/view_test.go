@@ -526,6 +526,27 @@ func TestCloseView(t *testing.T) {
 	}
 }
 
+func TestCloseView2(t *testing.T) {
+	const testfile = "testdata/Default.sublime-keymap"
+	fe := GetEditor().Frontend()
+	if dfe, ok := fe.(*DummyFrontend); ok {
+		// Make it trigger a reload
+		dfe.SetDefaultAction(true)
+	}
+
+	// Make sure a closed view isn't reloaded after it has been closed
+	w := GetEditor().NewWindow()
+	v := w.OpenFile(testfile, 0)
+	v.Close()
+	if data, err := ioutil.ReadFile(testfile); err != nil {
+		t.Errorf("Couldn't load file: %s", err)
+		return
+	} else if err = ioutil.WriteFile(testfile, data, 0644); err != nil {
+		t.Errorf("Couldn't save file: %s", err)
+		return
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window

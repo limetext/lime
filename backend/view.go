@@ -641,12 +641,19 @@ func (v *View) Close() {
 			return
 		}
 	}
+	// Call the event first while there's still access possible to the underlying
+	// buffer
+	OnClose.Call(v)
+
+	v.window.remove(v)
+
 	// TODO(.): There can be multiple views into a single Buffer,
 	// need to do some reference counting to see when it should be
 	// closed
 	v.buffer.Close()
-	v.window.remove(v)
-	OnClose.Call(v)
+	if n := v.buffer.FileName(); n != "" {
+		GetEditor().UnWatch(n)
+	}
 }
 
 const (
