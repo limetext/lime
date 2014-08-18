@@ -25,10 +25,11 @@ function fold_end {
 
 function do_test2 {
 	go test "$1" -covermode=count -coverprofile=tmp.cov
+	build_result=$?
 	# Can't do race tests at the same time as coverage as it'll report
 	# lots of false positives then..
 	go test -race "$1"
-	build_result=$?
+	let build_result=$build_result+$?
 	echo -ne "${YELLOW}=>${RESET} test $1 - "
 	if [ "$build_result" == "0" ]; then
 	    echo -e "${GREEN}SUCCEEDED${RESET}"
@@ -86,7 +87,10 @@ fail1=$build_result
 do_test "frontend/termbox"
 fail2=$build_result
 
-"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
-
 let ex=$fail1+$fail2
+
+if [ "$ex" == "0" ]; then
+	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
+fi
+
 exit $ex
