@@ -161,12 +161,12 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 func (ch *commandHandler) Unregister(name string) error {
 	if _, ok := ch.ApplicationCommands[name]; ok {
 		ch.ApplicationCommands[name] = nil
+	} else if _, ok := ch.WindowCommands[name]; ok {
+		ch.WindowCommands[name] = nil
 	} else if _, ok := ch.TextCommands[name]; ok {
 		ch.TextCommands[name] = nil
-	} else if _, ok := ch.WindowCommands[name]; !ok {
-		return fmt.Errorf("%s wasn't a registered command", name)
 	} else {
-		ch.WindowCommands[name] = nil
+		return fmt.Errorf("%s wasn't a registered command", name)
 	}
 	return nil
 }
