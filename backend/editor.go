@@ -376,8 +376,8 @@ func (e *Editor) Watch(file Watched) {
 		log4go.Error("Could not watch file: %v", err)
 	} else {
 		e.watchLock.Lock()
+		defer e.watchLock.Unlock()
 		e.watchedFiles[file.Name()] = file
-		e.watchLock.Unlock()
 	}
 }
 
@@ -386,6 +386,8 @@ func (e *Editor) UnWatch(name string) {
 		log4go.Error("Couldn't unwatch file: %v", err)
 	}
 	log4go.Finest("UnWatch(%s)", name)
+	e.watchLock.Lock()
+	defer e.watchLock.Unlock()
 	delete(e.watchedFiles, name)
 }
 
