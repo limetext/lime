@@ -6,7 +6,7 @@ Item {
     property var myView
     property bool isMinimap: false
     property double fontSize: isMinimap ? 4 : 12
-    property string fontFace: "Helvatica"
+    property string fontFace: "Helvetica"
     property var cursor: Qt.IBeamCursor
     function sel() {
         if (!myView || !myView.back()) return null;
