@@ -146,6 +146,50 @@ func TestLeftDelete(t *testing.T) {
 	}
 }
 
+func TestRightDelete(t *testing.T) {
+        ed := GetEditor()
+        w := ed.NewWindow()
+        v := w.NewFile()
+
+        type Test struct {
+                in, out []Region
+                text    string
+                ins     string
+        }
+
+        tests := []Test{
+                {[]Region{{0, 0}, {1, 1}, {2, 2}, {3, 3}}, []Region{{0, 0}}, "5678", "12345678"},
+                {[]Region{{1, 1}, {3, 3}, {5, 5}, {7, 7}}, []Region{{1, 1}, {2, 2}, {3, 3}, {4, 4}}, "1357", "12345678"},
+                {[]Region{{1, 3}}, []Region{{1, 1}}, "145678", "12345678"},
+                {[]Region{{3, 1}}, []Region{{1, 1}}, "145678", "12345678"},
+        }
+
+        for i, test := range tests {
+                v.Sel().Clear()
+                e := v.BeginEdit()
+                v.Insert(e, 0, test.ins)
+                v.EndEdit(e)
+
+                v.Sel().Clear()
+                for _, r := range test.in {
+                        v.Sel().Add(r)
+                }
+                var s2 RegionSet
+                for _, r := range test.out {
+                        s2.Add(r)
+                }
+
+                ed.CommandHandler().RunTextCommand(v, "right_delete", nil)
+                if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.text {
+                        t.Errorf("Test %02d: Expected %s, but got %s", i, test.text, d)
+                } else if !reflect.DeepEqual(*v.Sel(), s2) {
+                        t.Errorf("Test %02d: Expected %v, but have %v", i, s2, v.Sel())
+                }
+                ed.CommandHandler().RunTextCommand(v, "undo", nil)
+                ed.CommandHandler().RunTextCommand(v, "undo", nil)
+        }
+}
+
 func TestInsert(t *testing.T) {
 	ed := GetEditor()
 	ch := ed.CommandHandler()
