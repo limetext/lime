@@ -17,7 +17,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
-	"gopkg.in/qml.v0"
+	"gopkg.in/qml.v1"
 	"image/color"
 	"io"
 	"runtime"
@@ -764,8 +764,5 @@ func main() {
 
 	t = &qmlfrontend{windows: make(map[*backend.Window]*frontendWindow)}
 	go t.qmlBatchLoop()
-	qml.Init(nil)
-	t.loop()
-	//TODO: for qml.v1
-	//	qml.Run(nil, t.loop)
+	qml.Run(t.loop)
 }
