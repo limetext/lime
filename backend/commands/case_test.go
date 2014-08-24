@@ -48,12 +48,14 @@ func TestTitleCase(t *testing.T) {
 			// library.  I'm going to try to get them to fix it...  If not, maybe we'll have
 			// to write our own Title Casing function.
 			[]Region{{24, 51}},
+
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 			"Give a man a match, and He'Ll Be Warm For A Minute, but set him on fire, and he'll be warm for the rest of his life.",
 		},
 		/*multiple selection*/
 		{
 			[]Region{{0, 17}, {52, 71}},
+
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 			"Give A Man A Match, and he'll be warm for a minute, But Set Him On Fire, and he'll be warm for the rest of his life.",
 		},
@@ -61,12 +63,14 @@ func TestTitleCase(t *testing.T) {
 		/*no selection*/
 		{
 			nil,
+
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 		},
 		/*unicode*/
 		{
 			[]Region{{0, 12}},
+
 			"ничего себе!",
 			"Ничего Себе!",
 		},
@@ -74,23 +78,25 @@ func TestTitleCase(t *testing.T) {
 
 		{
 			[]Region{{0, 9}},
+
 			"千里之行﹐始于足下",
 			"千里之行﹐始于足下",
 		},
 	}
 	RunCaseTest("title_case", &tests, t)
-
 }
 
 func TestSwapCase(t *testing.T) {
 	tests := []CaseTest{
 		{
 			[]Region{{0, 13}},
+
 			"Hello, World!",
 			"hELLO, wORLD!",
 		},
 		{
 			[]Region{{0, 11}},
+
 			"ПрИвЕт, МиР",
 			"пРиВеТ, мИр",
 		},
@@ -101,9 +107,9 @@ func TestSwapCase(t *testing.T) {
 func TestUpperCase(t *testing.T) {
 	tests := []CaseTest{
 		/*single selection*/
-
 		{
 			[]Region{{0, 76}},
+
 			"Try not to become a man of success, but rather try to become a man of value.",
 			"TRY NOT TO BECOME A MAN OF SUCCESS, BUT RATHER TRY TO BECOME A MAN OF VALUE.",
 		},
@@ -122,9 +128,9 @@ func TestUpperCase(t *testing.T) {
 			"Try not to become a man of success, but rather try to become a man of value.",
 		},
 		/*unicode*/
-
 		{
 			[]Region{{0, 74}},
+
 			"чем больше законов и постановлений, тем больше разбойников и преступлений!",
 			"ЧЕМ БОЛЬШЕ ЗАКОНОВ И ПОСТАНОВЛЕНИЙ, ТЕМ БОЛЬШЕ РАЗБОЙНИКОВ И ПРЕСТУПЛЕНИЙ!",
 		},
@@ -132,6 +138,7 @@ func TestUpperCase(t *testing.T) {
 
 		{
 			[]Region{{0, 9}},
+
 			"千里之行﹐始于足下",
 			"千里之行﹐始于足下",
 		},
@@ -173,6 +180,7 @@ func TestLowerCase(t *testing.T) {
 
 		{
 			[]Region{{0, 9}},
+
 			"千里之行﹐始于足下",
 			"千里之行﹐始于足下",
 		},

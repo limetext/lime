@@ -24,9 +24,9 @@ type (
 		RunApplicationCommand(string, Args) error
 	}
 
-	appcmd         map[string]interface{}
-	textcmd        map[string]interface{}
-	wndcmd         map[string]interface{}
+	appcmd         map[string]Command
+	textcmd        map[string]Command
+	wndcmd         map[string]Command
 	commandHandler struct {
 		ApplicationCommands appcmd
 		TextCommands        textcmd
