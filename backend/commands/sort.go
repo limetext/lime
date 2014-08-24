@@ -184,8 +184,8 @@ func removeDuplicates(caseSensitive bool, xs []string) []string {
 }
 
 func init() {
-	register([]cmd{
-		{"sort_lines", &SortLinesCommand{}},
-		{"sort_selection", &SortSelectionCommand{}},
+	register([]Command{
+		&SortLinesCommand{},
+		&SortSelectionCommand{},
 	})
 }

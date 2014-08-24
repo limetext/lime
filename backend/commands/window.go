@@ -59,9 +59,12 @@ func (c *CloseWindowAppCommand) IsChecked() bool {
 }
 
 func init() {
-	register([]cmd{
-		{"new_window", &NewWindowCommand{}},
-		{"close_window", &CloseWindowCommand{}},
+	register([]Command{
+		&NewWindowCommand{},
+		&CloseWindowCommand{},
+	})
+
+	registerByName([]namedCmd{
 		{"new_window", &NewWindowAppCommand{}},
 		{"close_window", &CloseWindowAppCommand{}},
 	})

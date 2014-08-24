@@ -166,11 +166,11 @@ func (c *SplitSelectionIntoLinesCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
-		{"join", &JoinCommand{}},
-		{"select_lines", &SelectLinesCommand{}},
-		{"swap_line_up", &SwapLineUpCommand{}},
-		{"swap_line_down", &SwapLineDownCommand{}},
-		{"split_selection_into_lines", &SplitSelectionIntoLinesCommand{}},
+	register([]Command{
+		&JoinCommand{},
+		&SelectLinesCommand{},
+		&SwapLineUpCommand{},
+		&SwapLineDownCommand{},
+		&SplitSelectionIntoLinesCommand{},
 	})
 }

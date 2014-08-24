@@ -209,9 +209,9 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
-		{"move", &MoveCommand{}},
-		{"move_to", &MoveToCommand{}},
-		{"scroll_lines", &ScrollLinesCommand{}},
+	register([]Command{
+		&MoveCommand{},
+		&MoveToCommand{},
+		&ScrollLinesCommand{},
 	})
 }

@@ -17,6 +17,7 @@ import (
 type (
 	CommandHandler interface {
 		Unregister(string) error
+		RegisterWithDefault(cmd interface{}) error
 		Register(name string, cmd interface{}) error
 		// TODO(q): Do the commands need to be split in separate lists?
 		RunWindowCommand(*Window, string, Args) error
@@ -24,9 +25,9 @@ type (
 		RunApplicationCommand(string, Args) error
 	}
 
-	appcmd         map[string]interface{}
-	textcmd        map[string]interface{}
-	wndcmd         map[string]interface{}
+	appcmd         map[string]Command
+	textcmd        map[string]Command
+	wndcmd         map[string]Command
 	commandHandler struct {
 		ApplicationCommands appcmd
 		TextCommands        textcmd
@@ -48,6 +49,11 @@ func PascalCaseToSnakeCase(in string) string {
 		return "_" + strings.ToLower(in)
 	})
 
+}
+
+func DefaultName(cmd interface{}) string {
+	name := reflect.TypeOf(cmd).Elem().Name()
+	return PascalCaseToSnakeCase(strings.TrimSuffix(name, "Command"))
 }
 
 // If the cmd implements the CustomInit interface, its Init function
@@ -169,6 +175,10 @@ func (ch *commandHandler) Unregister(name string) error {
 		return fmt.Errorf("%s wasn't a registered command", name)
 	}
 	return nil
+}
+
+func (ch *commandHandler) RegisterWithDefault(cmd interface{}) error {
+	return ch.Register(DefaultName(cmd), cmd)
 }
 
 func (ch *commandHandler) Register(name string, cmd interface{}) error {

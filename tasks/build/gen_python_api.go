@@ -426,7 +426,7 @@ func main() {
 				return "(o *View) " + mn
 			})},
 		{"./backend/sublime/commands_generated.go", generatemethodsEx(reflect.TypeOf(backend.GetEditor().CommandHandler()),
-			regexp.MustCompile("RunWindowCommand|RunTextCommand|RunApplicationCommand").MatchString,
+			regexp.MustCompile("RunWindowCommand|RunTextCommand|RunApplicationCommand|RegisterWithDefault").MatchString,
 			"backend.GetEditor().CommandHandler().",
 			sn),
 		},

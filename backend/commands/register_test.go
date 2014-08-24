@@ -5,8 +5,8 @@
 package commands
 
 import (
-	. "github.com/limetext/lime/backend"
 	"fmt"
+	. "github.com/limetext/lime/backend"
 	"testing"
 )
 
@@ -22,15 +22,33 @@ func (c *DummyApplicationCommand) IsChecked() bool {
 	return false
 }
 
-func TestRegister(t *testing.T) {
+func TestRegisterByName(t *testing.T) {
 	ed := GetEditor()
 
 	name := "dummy"
 
-	register([]cmd {
+	registerByName([]namedCmd{
 		{name, &DummyApplicationCommand{}},
 	})
 
+	err := ed.CommandHandler().RunApplicationCommand(name, nil)
+
+	if err == nil {
+		t.Errorf("Expected %s to run, but it didn't", name)
+	} else if err.Error() != "Ran" {
+		t.Errorf("Expected %s to run, but it got an error: %v", name, err)
+	}
+}
+
+func TestRegister(t *testing.T) {
+	ed := GetEditor()
+	ac := &DummyApplicationCommand{}
+
+	register([]Command{
+		ac,
+	})
+
+	name := DefaultName(ac)
 	err := ed.CommandHandler().RunApplicationCommand(name, nil)
 
 	if err == nil {
