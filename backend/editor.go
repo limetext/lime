@@ -382,12 +382,12 @@ func (e *Editor) Watch(file Watched) {
 }
 
 func (e *Editor) UnWatch(name string) {
+	e.watchLock.Lock()
+	defer e.watchLock.Unlock()
 	if err := e.watcher.RemoveWatch(name); err != nil {
 		log4go.Error("Couldn't unwatch file: %v", err)
 	}
 	log4go.Finest("UnWatch(%s)", name)
-	e.watchLock.Lock()
-	defer e.watchLock.Unlock()
 	delete(e.watchedFiles, name)
 }
 
@@ -396,12 +396,14 @@ func (e *Editor) observeFiles() {
 		select {
 		case ev := <-e.watcher.Event:
 			if ev.IsModify() {
-				e.watchLock.Lock()
-				f, exist := e.watchedFiles[ev.Name]
-				e.watchLock.Unlock()
-				if exist {
-					f.Reload()
-				}
+				func() {
+					e.watchLock.Lock()
+					defer e.watchLock.Unlock()
+					f, exist := e.watchedFiles[ev.Name]
+					if exist {
+						f.Reload()
+					}
+				}()
 			}
 		case err := <-e.watcher.Error:
 			log4go.Error("error:", err)

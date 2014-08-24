@@ -233,6 +233,7 @@ func (v *View) parsethread() {
 			}
 		}
 	}
+	v.cleanup()
 }
 
 // Send a reparse request via the reparse channel.
@@ -241,7 +242,14 @@ func (v *View) parsethread() {
 //
 // The actual parsing is done in a separate go-routine, for which the
 // "lime.syntax.updated" setting will be set once it has finished.
+//
+// Note that it's presumed that the function calling this function
+// has locked the view!
 func (v *View) reparse(forced bool) {
+	if v.isClosed() {
+		// No point in issuing a re-parse if the view has been closed
+		return
+	}
 	if len(v.reparseChan) < cap(v.reparseChan) || forced {
 		v.reparseChan <- parseReq{forced}
 	}
@@ -632,6 +640,21 @@ func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Rec
 	return render.Transform(scheme, rr, viewport)
 }
 
+func (v *View) cleanup() {
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	// TODO(.): There can be multiple views into a single Buffer,
+	// need to do some reference counting to see when it should be
+	// closed
+	v.buffer.Close()
+	v.buffer = nil
+}
+
+func (v *View) isClosed() bool {
+	return v.reparseChan == nil
+}
+
 // Initiate the "close" operation of this view.
 func (v *View) Close() {
 	OnPreClose.Call(v)
@@ -641,19 +664,22 @@ func (v *View) Close() {
 			return
 		}
 	}
+	if n := v.buffer.FileName(); n != "" {
+		GetEditor().UnWatch(n)
+	}
+
 	// Call the event first while there's still access possible to the underlying
 	// buffer
 	OnClose.Call(v)
 
 	v.window.remove(v)
 
-	// TODO(.): There can be multiple views into a single Buffer,
-	// need to do some reference counting to see when it should be
-	// closed
-	v.buffer.Close()
-	if n := v.buffer.FileName(); n != "" {
-		GetEditor().UnWatch(n)
-	}
+	// Closing the reparseChan, and setting to nil will eventually clean up other resources
+	// when the parseThread exits
+	v.lock.Lock()
+	defer v.lock.Unlock()
+	close(v.reparseChan)
+	v.reparseChan = nil
 }
 
 const (
