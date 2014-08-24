@@ -96,8 +96,8 @@ func getTabSize(v *View) int {
 }
 
 func init() {
-	registerByName([]namedCmd{
-		{"indent", &IndentCommand{}},
-		{"unindent", &UnindentCommand{}},
+	register([]Command{
+		&IndentCommand{},
+		&UnindentCommand{},
 	})
 }

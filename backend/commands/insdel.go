@@ -189,10 +189,10 @@ func (c *DeleteWordCommand) findByClass(point int, class int, v *View) int {
 }
 
 func init() {
-	registerByName([]namedCmd{
-		{"insert", &InsertCommand{}},
-		{"left_delete", &LeftDeleteCommand{}},
-		{"right_delete", &RightDeleteCommand{}},
-		{"delete_word", &DeleteWordCommand{}},
+	register([]Command{
+		&InsertCommand{},
+		&LeftDeleteCommand{},
+		&RightDeleteCommand{},
+		&DeleteWordCommand{},
 	})
 }
