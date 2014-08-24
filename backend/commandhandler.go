@@ -182,10 +182,6 @@ func (ch *commandHandler) RegisterWithDefault(cmd interface{}) error {
 }
 
 func (ch *commandHandler) Register(name string, cmd interface{}) error {
-	if name == "" {
-		name = DefaultName(cmd)
-	}
-
 	var r = false
 	log4go.Finest("Want to register %s", name)
 	if ac, ok := cmd.(ApplicationCommand); ok {
