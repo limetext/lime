@@ -148,7 +148,7 @@ func TestMove(t *testing.T) {
 		}
 		ed.CommandHandler().RunTextCommand(v, "move", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Move test %d failed: %v, %+v", i, sr, test)
+			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
 		}
 	}
 
@@ -180,7 +180,7 @@ func TestMove(t *testing.T) {
 
 		ed.CommandHandler().RunTextCommand(v, "move", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Move test %d failed: %v, %+v", i, sr, test)
+			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
 		}
 	}
 }
@@ -215,22 +215,16 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{0, 0}},
 		},
 		{
-			[]Region{{0, 0}},
-			"eof",
+			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 2, vbufflen - 2}},
+			"bof",
 			false,
-			[]Region{{vbufflen, vbufflen}},
+			[]Region{{0, 0}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}},
-			"bol",
+			[]Region{{vbufflen, vbufflen}, {3, 3}},
+			"bof",
 			false,
-			[]Region{{24, 24}},
-		},
-		{
 			[]Region{{0, 0}},
-			"eol",
-			false,
-			[]Region{{12, 12}},
 		},
 		{
 			[]Region{{vbufflen, vbufflen}},
@@ -239,10 +233,70 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{vbufflen, 0}},
 		},
 		{
+			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 2, vbufflen - 2}},
+			"bof",
+			true,
+			[]Region{{vbufflen - 1, 0}},
+		},
+		{
+			[]Region{{vbufflen, vbufflen}, {3, 3}},
+			"bof",
+			true,
+			[]Region{{vbufflen, 0}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+		{
+			[]Region{{0, 0}, {3, 3}},
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+		{
+			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+		{
 			[]Region{{0, 0}},
 			"eof",
 			true,
 			[]Region{{0, vbufflen}},
+		},
+		{
+			[]Region{{0, 0}, {3, 3}},
+			"eof",
+			true,
+			[]Region{{0, vbufflen}},
+		},
+		{
+			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			"eof",
+			true,
+			[]Region{{0, vbufflen}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}},
+			"bol",
+			false,
+			[]Region{{24, 24}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 3, vbufflen - 3}},
+			"bol",
+			false,
+			[]Region{{24, 24}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
+			"bol",
+			false,
+			[]Region{{24, 24}, {0, 0}},
 		},
 		{
 			[]Region{{vbufflen - 1, vbufflen - 1}},
@@ -251,10 +305,52 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{vbufflen - 1, 24}},
 		},
 		{
+			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 3, vbufflen - 3}},
+			"bol",
+			true,
+			[]Region{{vbufflen - 1, 24}},
+		},
+		{
+			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
+			"bol",
+			true,
+			[]Region{{vbufflen - 1, 24}, {3, 0}},
+		},
+		{
+			[]Region{{0, 0}},
+			"eol",
+			false,
+			[]Region{{12, 12}},
+		},
+		{
+			[]Region{{0, 0}, {3, 3}},
+			"eol",
+			false,
+			[]Region{{12, 12}},
+		},
+		{
+			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			"eol",
+			false,
+			[]Region{{12, 12}, {vbufflen - 1, vbufflen - 1}},
+		},
+		{
 			[]Region{{0, 0}},
 			"eol",
 			true,
 			[]Region{{0, 12}},
+		},
+		{
+			[]Region{{0, 0}, {3, 3}},
+			"eol",
+			true,
+			[]Region{{0, 12}},
+		},
+		{
+			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			"eol",
+			true,
+			[]Region{{0, 12}, {vbufflen - 4, vbufflen - 1}},
 		},
 	}
 
@@ -266,7 +362,7 @@ func TestMoveTo(t *testing.T) {
 		args := Args{"to": test.to, "extend": test.extend}
 		ed.CommandHandler().RunTextCommand(v, "move_to", args)
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("MoveTo test %d failed: %v, %+v", i, sr, test)
+			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
 		}
 	}
 }
