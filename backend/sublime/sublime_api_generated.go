@@ -214,7 +214,6 @@ func sublime_Version() (py.Object, error) {
 
 var sublime_methods = []py.Method{
 	{Name: "register", Func: sublime_Register},
-	{Name: "register_with_default", Func: sublime_RegisterWithDefault},
 	{Name: "unregister", Func: sublime_Unregister},
 	{Name: "error_message", Func: sublime_ErrorMessage},
 	{Name: "message_dialog", Func: sublime_MessageDialog},
