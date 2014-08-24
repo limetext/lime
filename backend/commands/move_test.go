@@ -236,17 +236,13 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 2, vbufflen - 2}},
 			"bof",
 			true,
-			[]Region{{0, vbufflen - 1}},
-			// FIXME: Directionality should be preserved.
-			// []Region{{vbufflen - 1, 0}},
+			[]Region{{vbufflen - 1, 0}},
 		},
 		{
 			[]Region{{vbufflen, vbufflen}, {3, 3}},
 			"bof",
 			true,
-			[]Region{{0, vbufflen}},
-			// FIXME: Directionality should be preserved.
-			// []Region{{vbufflen, 0}},
+			[]Region{{vbufflen, 0}},
 		},
 		{
 			[]Region{{0, 0}},
@@ -300,9 +296,7 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
 			"bol",
 			false,
-			[]Region{{0, 0}, {24, 24}},
-			// FIXME: Region order should be preserved.
-			// []Region{{24, 24}, {0, 0}},
+			[]Region{{24, 24}, {0, 0}},
 		},
 		{
 			[]Region{{vbufflen - 1, vbufflen - 1}},
@@ -314,17 +308,13 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 3, vbufflen - 3}},
 			"bol",
 			true,
-			[]Region{{24, vbufflen - 1}},
-			// FIXME: Directionality should be preserved.
-			// []Region{{vbufflen - 1, 24}},
+			[]Region{{vbufflen - 1, 24}},
 		},
 		{
 			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
 			"bol",
 			true,
-			[]Region{{3, 0}, {vbufflen - 1, 24}},
-			// FIXME: Region order should be preserved.
-			// []Region{{vbufflen - 1, 24}, {3, 0}},
+			[]Region{{vbufflen - 1, 24}, {3, 0}},
 		},
 		{
 			[]Region{{0, 0}},
