@@ -15,10 +15,10 @@ type cmd struct {
 }
 
 func register(cmds []cmd) {
-	e := backend.GetEditor()
-	for i := range cmds {
-		if err := e.CommandHandler().Register(cmds[i].name, cmds[i].cmd); err != nil {
-			log4go.Error("Failed to register command %s: %s", cmds[i].name, err)
+	ch := backend.GetEditor().CommandHandler()
+	for _, cmd := range cmds {
+		if err := ch.Register(cmd.name, cmd.cmd); err != nil {
+			log4go.Error("Failed to register command %s: %s", cmd.name, err)
 		}
 	}
 }
