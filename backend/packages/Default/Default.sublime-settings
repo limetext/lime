@@ -20,7 +20,4 @@
 
     // Whether to render line numbers
     "line_numbers": true,
-
-    "font_face": "Helvetica",
-    "font_size": 12
 }
