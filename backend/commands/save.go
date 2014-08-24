@@ -53,7 +53,7 @@ func (c *SaveAllCommand) Run(w *Window) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"save", &SaveCommand{}},
 		{"save_as", &SaveAsCommand{}},
 		{"save_all", &SaveAllCommand{}},

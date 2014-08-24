@@ -103,7 +103,7 @@ func (c *LowerCaseCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"title_case", &TitleCaseCommand{}},
 		{"swap_case", &SwapCaseCommand{}},
 		{"upper_case", &UpperCaseCommand{}},

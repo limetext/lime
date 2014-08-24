@@ -377,6 +377,7 @@ ok_cancel_dialog
 packages_path
 platform
 register
+register_with_default
 run_command
 set_clipboard
 set_timeout

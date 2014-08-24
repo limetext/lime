@@ -39,7 +39,7 @@ func (c *SetSettingCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"toggle_setting", &ToggleSettingCommand{}},
 		{"set_setting", &SetSettingCommand{}},
 	})

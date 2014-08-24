@@ -209,7 +209,7 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"move", &MoveCommand{}},
 		{"move_to", &MoveToCommand{}},
 		{"scroll_lines", &ScrollLinesCommand{}},

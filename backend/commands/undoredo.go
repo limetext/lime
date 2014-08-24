@@ -30,7 +30,7 @@ func (c *RedoCommand) Run(v *backend.View, e *backend.Edit) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"undo", &UndoCommand{hard: true}},
 		{"redo", &RedoCommand{hard: true}},
 		{"soft_undo", &UndoCommand{}},

@@ -71,7 +71,7 @@ func (c *MaybeMarkUndoGroupsForGluingCommand) Run(v *backend.View, e *backend.Ed
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"mark_undo_groups_for_gluing", &MarkUndoGroupsForGluingCommand{}},
 		{"glue_marked_undo_groups", &GlueMarkedUndoGroupsCommand{}},
 		{"maybe_mark_undo_groups_for_gluing", &MaybeMarkUndoGroupsForGluingCommand{}},

@@ -63,6 +63,14 @@ func TestPascalCaseToSnakeCase(t *testing.T) {
 	}
 }
 
+func TestDefaultName(t *testing.T) {
+	n := DefaultName(&DummyApplicationCommand{})
+
+	if n != "dummy_application" {
+		t.Errorf("Expected %s, but got %s", "dummy_application", n)
+	}
+}
+
 func TestRegisterAndRunApplicationCommand(t *testing.T) {
 	name := "app_test"
 	ac := DummyApplicationCommand{}
@@ -121,6 +129,26 @@ func TestRegisterAndRunTextCommand(t *testing.T) {
 
 	v := ed.NewWindow().NewFile()
 	err = ch.RunTextCommand(v, name, Args{})
+
+	if err == nil {
+		t.Errorf("Expected %s to run, but it didn't", name)
+	} else if err.Error() != "Ran" {
+		t.Errorf("Expected %s to run, but it got an error: %v", name, err)
+	}
+}
+
+func TestRegisterAndRunDefaultNamedCommand(t *testing.T) {
+	ac := DummyApplicationCommand{}
+	ch := GetEditor().CommandHandler()
+
+	err := ch.RegisterWithDefault(&ac)
+
+	if err != nil {
+		t.Errorf("Got error while registering: %s", err)
+	}
+
+	name := DefaultName(&ac)
+	err = ch.RunApplicationCommand(name, Args{})
 
 	if err == nil {
 		t.Errorf("Expected %s to run, but it didn't", name)

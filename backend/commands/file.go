@@ -21,7 +21,7 @@ func (c *NewFileCommand) Run(w *Window) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"new_file", &NewFileCommand{}},
 	})
 }

@@ -57,6 +57,30 @@ func sublime_Register(tu *py.Tuple) (py.Object, error) {
 	}
 }
 
+func sublime_RegisterWithDefault(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 interface{}
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(interface{}); !ok {
+				return nil, fmt.Errorf("Expected type interface {} for backend.commandHandler.RegisterWithDefault() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	if err := backend.GetEditor().CommandHandler().RegisterWithDefault(arg1); err != nil {
+		return nil, err
+	} else {
+		return toPython(nil)
+	}
+}
+
 func sublime_Unregister(tu *py.Tuple) (py.Object, error) {
 	var (
 		arg1 string

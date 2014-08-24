@@ -87,7 +87,7 @@ func (c *AllSelectionCommand) Run(v *View, e *Edit) error {
 }
 
 func init() {
-	register([]cmd{
+	registerByName([]namedCmd{
 		{"find_under_expand", &FindUnderExpandCommand{}},
 		{"single_selection", &SingleSelectionCommand{}},
 		{"select_all", &AllSelectionCommand{}},
