@@ -225,7 +225,14 @@ func (v *View) parsethread() {
 		}
 		return true
 	}
-	for pr := range v.reparseChan {
+	v.lock.Lock()
+	ch := v.reparseChan
+	v.lock.Unlock()
+	defer v.cleanup()
+	if ch == nil {
+		return
+	}
+	for pr := range ch {
 		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
 			lastParse = cc
 			if doparse() {
@@ -233,7 +240,6 @@ func (v *View) parsethread() {
 			}
 		}
 	}
-	v.cleanup()
 }
 
 // Send a reparse request via the reparse channel.
