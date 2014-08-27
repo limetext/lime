@@ -209,32 +209,32 @@ func TestMoveTo(t *testing.T) {
 
 	singleCursor := []Region{{16, 16}}
 
-	sameLineCursors 		:= []Region{{16, 16}, {17, 17}}
+	sameLineCursors := []Region{{16, 16}, {17, 17}}
 	sameLineCursorsReversed := []Region{{17, 17}, {16, 16}}
 
-	diffLineCursors 		:= []Region{{3, 3},   {17, 17}}
+	diffLineCursors := []Region{{3, 3}, {17, 17}}
 	diffLineCursorsReversed := []Region{{17, 17}, {3, 3}}
 
-	singleForwardSelection	:= []Region{{15, 18}}
-	singleBackwardSelection	:= []Region{{18, 15}}
+	singleForwardSelection := []Region{{15, 18}}
+	singleBackwardSelection := []Region{{18, 15}}
 
-	sameLineForwardSelections						:= []Region{{15, 18}, {20, 21}}
-	sameLineForwardSelectionsReversed				:= []Region{{20, 21}, {15, 18}}
-	sameLineBackwardSelections						:= []Region{{18, 15}, {21, 20}}
-	sameLineBackwardSelectionsReversed				:= []Region{{21, 20}, {18, 15}}
-	sameLineForwardThenBackwardSelections			:= []Region{{15, 18}, {21, 20}}
-	sameLineForwardThenBackwardSelectionsReversed	:= []Region{{21, 20}, {15, 18}}
-	sameLineBackwardThenForwardSelections			:= []Region{{18, 15}, {20, 21}}
-	sameLineBackwardThenForwardSelectionsReversed 	:= []Region{{20, 21}, {18, 15}}
+	sameLineForwardSelections := []Region{{15, 18}, {20, 21}}
+	sameLineForwardSelectionsReversed := []Region{{20, 21}, {15, 18}}
+	sameLineBackwardSelections := []Region{{18, 15}, {21, 20}}
+	sameLineBackwardSelectionsReversed := []Region{{21, 20}, {18, 15}}
+	sameLineForwardThenBackwardSelections := []Region{{15, 18}, {21, 20}}
+	sameLineForwardThenBackwardSelectionsReversed := []Region{{21, 20}, {15, 18}}
+	sameLineBackwardThenForwardSelections := []Region{{18, 15}, {20, 21}}
+	sameLineBackwardThenForwardSelectionsReversed := []Region{{20, 21}, {18, 15}}
 
-	diffLineForwardSelections						:= []Region{{4, 6},   {20, 21}}
-	diffLineForwardSelectionsReversed				:= []Region{{20, 21}, {4, 6}}
-	diffLineBackwardSelections						:= []Region{{6, 4},   {21, 20}}
-	diffLineBackwardSelectionsReversed				:= []Region{{21, 20}, {6, 4}}
-	diffLineForwardThenBackwardSelections			:= []Region{{4, 6},   {21, 20}}
-	diffLineForwardThenBackwardSelectionsReversed	:= []Region{{21, 20}, {4, 6}}
-	diffLineBackwardThenForwardSelections			:= []Region{{6, 4},   {20, 21}}
-	diffLineBackwardThenForwardSelectionsReversed 	:= []Region{{20, 21}, {6, 4}}
+	diffLineForwardSelections := []Region{{4, 6}, {20, 21}}
+	diffLineForwardSelectionsReversed := []Region{{20, 21}, {4, 6}}
+	diffLineBackwardSelections := []Region{{6, 4}, {21, 20}}
+	diffLineBackwardSelectionsReversed := []Region{{21, 20}, {6, 4}}
+	diffLineForwardThenBackwardSelections := []Region{{4, 6}, {21, 20}}
+	diffLineForwardThenBackwardSelectionsReversed := []Region{{21, 20}, {4, 6}}
+	diffLineBackwardThenForwardSelections := []Region{{6, 4}, {20, 21}}
+	diffLineBackwardThenForwardSelectionsReversed := []Region{{20, 21}, {6, 4}}
 
 	vbufflen := v.Buffer().Size()
 
@@ -1064,7 +1064,7 @@ func TestMoveTo(t *testing.T) {
 			diffLineForwardThenBackwardSelectionsReversed,
 			"bol",
 			true,
-			[]Region{{21, 13},{4, 0}},
+			[]Region{{21, 13}, {4, 0}},
 		},
 		{
 			diffLineBackwardThenForwardSelections,
