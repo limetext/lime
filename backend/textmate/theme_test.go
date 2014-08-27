@@ -18,7 +18,10 @@ func TestLoadTheme(t *testing.T) {
 		out string
 	}
 	tests := []Test{
-		{"testdata/Monokai.tmTheme", "testdata/Monokai.tmTheme.res"},
+		{
+			"testdata/Monokai.tmTheme",
+			"testdata/Monokai.tmTheme.res",
+		},
 	}
 	for _, test := range tests {
 		if d, err := ioutil.ReadFile(test.in); err != nil {
@@ -39,5 +42,34 @@ func TestLoadTheme(t *testing.T) {
 
 			}
 		}
+	}
+}
+
+func TestLoadThemeFromPlist(t *testing.T) {
+	f := "testdata/Monokai.tmTheme"
+	th, err := LoadTheme(f)
+	if err != nil {
+		t.Errorf("Tried to load %s, but got an error: %v", f, err)
+	}
+
+	n := "Monokai"
+	if th.Name != n {
+		t.Errorf("Tried to load %s, but got %s", f, th)
+	}
+}
+
+func TestLoadThemeFromNonPlist(t *testing.T) {
+	f := "testdata/Monokai.tmTheme.res"
+	_, err := LoadTheme(f)
+	if err == nil {
+		t.Errorf("Tried to load %s, expecting an error, but didn't get one", f)
+	}
+}
+
+func TestLoadThemeFromMissingFile(t *testing.T) {
+	f := "testdata/MissingFile"
+	_, err := LoadTheme(f)
+	if err == nil {
+		t.Errorf("Tried to load %s, expecting an error, but didn't get one", f)
 	}
 }
