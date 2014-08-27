@@ -206,151 +206,270 @@ func TestMoveTo(t *testing.T) {
 		extend bool
 		exp    []Region
 	}
+
+	singleCursor 			:= []Region{{16, 16}}
+	sameLineCursors 		:= []Region{{16, 16}, {17, 17}}
+	sameLineCursorsReversed := []Region{{17, 17}, {16, 16}}
+	diffLineCursors 		:= []Region{{3, 3},   {17, 17}}
+	diffLineCursorsReversed := []Region{{17, 17}, {3, 3}}
+
 	vbufflen := v.Buffer().Size()
+
 	tests := []MoveToTest{
+		// BOF move
 		{
-			[]Region{{vbufflen, vbufflen}},
+			singleCursor,
 			"bof",
 			false,
 			[]Region{{0, 0}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 2, vbufflen - 2}},
+			sameLineCursors,
 			"bof",
 			false,
 			[]Region{{0, 0}},
 		},
 		{
-			[]Region{{vbufflen, vbufflen}, {3, 3}},
+			sameLineCursorsReversed,
 			"bof",
 			false,
 			[]Region{{0, 0}},
 		},
 		{
-			[]Region{{vbufflen, vbufflen}},
+			diffLineCursors,
 			"bof",
-			true,
-			[]Region{{vbufflen, 0}},
-		},
-		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 2, vbufflen - 2}},
-			"bof",
-			true,
-			[]Region{{vbufflen - 1, 0}},
-		},
-		{
-			[]Region{{vbufflen, vbufflen}, {3, 3}},
-			"bof",
-			true,
-			[]Region{{vbufflen, 0}},
-		},
-		{
+			false,
 			[]Region{{0, 0}},
+		},
+		{
+			diffLineCursorsReversed,
+			"bof",
+			false,
+			[]Region{{0, 0}},
+		},
+
+		// BOF extend
+		{
+			singleCursor,
+			"bof",
+			true,
+			[]Region{{16, 0}},
+		},
+		{
+			sameLineCursors,
+			"bof",
+			true,
+			[]Region{{17, 0}},
+		},
+		{
+			sameLineCursorsReversed,
+			"bof",
+			true,
+			[]Region{{17, 0}},
+		},
+		{
+			diffLineCursors,
+			"bof",
+			true,
+			[]Region{{17, 0}},
+		},
+		{
+			diffLineCursorsReversed,
+			"bof",
+			true,
+			[]Region{{17, 0}},
+		},
+
+		// EOF move
+		{
+			singleCursor,
 			"eof",
 			false,
 			[]Region{{vbufflen, vbufflen}},
 		},
 		{
-			[]Region{{0, 0}, {3, 3}},
+			sameLineCursors,
 			"eof",
 			false,
 			[]Region{{vbufflen, vbufflen}},
 		},
 		{
-			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			sameLineCursorsReversed,
 			"eof",
 			false,
 			[]Region{{vbufflen, vbufflen}},
 		},
 		{
-			[]Region{{0, 0}},
+			diffLineCursors,
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+		{
+			diffLineCursorsReversed,
+			"eof",
+			false,
+			[]Region{{vbufflen, vbufflen}},
+		},
+
+		// EOF extend
+		{
+			singleCursor,
 			"eof",
 			true,
-			[]Region{{0, vbufflen}},
+			[]Region{{16, vbufflen}},
 		},
 		{
-			[]Region{{0, 0}, {3, 3}},
+			sameLineCursors,
 			"eof",
 			true,
-			[]Region{{0, vbufflen}},
+			[]Region{{16, vbufflen}},
 		},
 		{
-			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			sameLineCursorsReversed,
 			"eof",
 			true,
-			[]Region{{0, vbufflen}},
+			[]Region{{16, vbufflen}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}},
+			diffLineCursors,
+			"eof",
+			true,
+			[]Region{{3, vbufflen}},
+		},
+		{
+			diffLineCursorsReversed,
+			"eof",
+			true,
+			[]Region{{3, vbufflen}},
+		},
+
+		// BOL move
+		{
+			singleCursor,
 			"bol",
 			false,
-			[]Region{{24, 24}},
+			[]Region{{13, 13}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 3, vbufflen - 3}},
+			sameLineCursors,
 			"bol",
 			false,
-			[]Region{{24, 24}},
+			[]Region{{13, 13}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
+			sameLineCursorsReversed,
 			"bol",
 			false,
-			[]Region{{24, 24}, {0, 0}},
+			[]Region{{13, 13}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}},
+			diffLineCursors,
+			"bol",
+			false,
+			[]Region{{0, 0}, {13, 13}},
+		},
+		{
+			diffLineCursorsReversed,
+			"bol",
+			false,
+			[]Region{{13, 13}, {0, 0}},
+		},
+
+		// BOL extend
+		{
+			singleCursor,
 			"bol",
 			true,
-			[]Region{{vbufflen - 1, 24}},
+			[]Region{{16, 13}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {vbufflen - 3, vbufflen - 3}},
+			sameLineCursors,
 			"bol",
 			true,
-			[]Region{{vbufflen - 1, 24}},
+			[]Region{{17, 13}},
 		},
 		{
-			[]Region{{vbufflen - 1, vbufflen - 1}, {3, 3}},
+			sameLineCursorsReversed,
 			"bol",
 			true,
-			[]Region{{vbufflen - 1, 24}, {3, 0}},
+			[]Region{{17, 13}},
 		},
 		{
-			[]Region{{0, 0}},
+			diffLineCursors,
+			"bol",
+			true,
+			[]Region{{3, 0}, {17, 13}},
+		},
+		{
+			diffLineCursorsReversed,
+			"bol",
+			true,
+			[]Region{{17, 13}, {3, 0}},
+		},
+
+		// EOL move
+		{
+			singleCursor,
 			"eol",
 			false,
-			[]Region{{12, 12}},
+			[]Region{{23, 23}},
 		},
 		{
-			[]Region{{0, 0}, {3, 3}},
+			sameLineCursors,
 			"eol",
 			false,
-			[]Region{{12, 12}},
+			[]Region{{23, 23}},
 		},
 		{
-			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			sameLineCursorsReversed,
 			"eol",
 			false,
-			[]Region{{12, 12}, {vbufflen - 1, vbufflen - 1}},
+			[]Region{{23, 23}},
 		},
 		{
-			[]Region{{0, 0}},
+			diffLineCursors,
 			"eol",
-			true,
-			[]Region{{0, 12}},
+			false,
+			[]Region{{12, 12}, {23, 23}},
 		},
 		{
-			[]Region{{0, 0}, {3, 3}},
+			diffLineCursorsReversed,
+			"eol",
+			false,
+			[]Region{{23, 23}, {12, 12}},
+		},
+
+		// EOL extend
+		{
+			singleCursor,
 			"eol",
 			true,
-			[]Region{{0, 12}},
+			[]Region{{16, 23}},
 		},
 		{
-			[]Region{{0, 0}, {vbufflen - 4, vbufflen - 4}},
+			sameLineCursors,
 			"eol",
 			true,
-			[]Region{{0, 12}, {vbufflen - 4, vbufflen - 1}},
+			[]Region{{16, 23}},
+		},
+		{
+			sameLineCursorsReversed,
+			"eol",
+			true,
+			[]Region{{16, 23}},
+		},
+		{
+			diffLineCursors,
+			"eol",
+			true,
+			[]Region{{3, 12}, {17, 23}},
+		},
+		{
+			diffLineCursorsReversed,
+			"eol",
+			true,
+			[]Region{{17, 23}, {3, 12}},
 		},
 	}
 
