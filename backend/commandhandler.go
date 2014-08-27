@@ -57,7 +57,7 @@ func DefaultName(cmd interface{}) string {
 }
 
 // If the cmd implements the CustomInit interface, its Init function
-// is called, otherwise the fields of th cmd's underlying struct type
+// is called, otherwise the fields of the cmd's underlying struct type
 // will be enumerated and match against the dictionary keys in args,
 // or if the key isn't provided in args, the Zero value will be used.
 func (ch *commandHandler) init(cmd interface{}, args Args) error {
