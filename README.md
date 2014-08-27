@@ -18,7 +18,7 @@ The [frontend(s)](https://github.com/limetext/lime/issues?direction=desc&labels=
 
 [Your help is needed](https://github.com/limetext/lime#contributing) to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
 
-![Screenshot taken Aug 23 2014](http://limetext.org/assets/img/screen.png)
+![Screenshot taken Aug 27 2014](http://limetext.org/assets/img/screen.png)
 
 
 ### Why create a clone?
