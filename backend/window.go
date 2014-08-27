@@ -79,7 +79,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 	return v
 }
 
-func (w *Window) SetActiveView(v *View) {
+func (w *Window) SetActiveView(v *View) *View{
 	// w.lock.Lock()
 	// defer w.lock.Unlock()
 
@@ -90,10 +90,49 @@ func (w *Window) SetActiveView(v *View) {
 	if w.active_view != nil {
 		OnActivated.Call(w.active_view)
 	}
+
+	return v
 }
 
 func (w *Window) ActiveView() *View {
 	return w.active_view
+}
+
+func (w *Window) ActiveViewIndex() int {
+	for pos, view := range w.views {
+		if view == w.active_view {
+			return pos
+		}
+	}
+	return -1
+}
+
+func (w *Window) NextView() *View {
+	index := w.ActiveViewIndex()
+	if index == -1 {
+		return nil
+	}
+
+	index++
+	if index == len(w.views) {
+		return w.SetActiveView(w.views[0])
+	} else {
+		return w.SetActiveView(w.views[index])
+	}
+}
+
+func (w *Window) PrevView() *View {
+	index := w.ActiveViewIndex()
+	if index == -1 {
+		return nil
+	}
+
+	index--
+	if index < 0 {
+		return w.SetActiveView(w.views[len(w.views)-1])
+	} else {
+		return w.SetActiveView(w.views[index])
+	}
 }
 
 func (w *Window) Close() {
