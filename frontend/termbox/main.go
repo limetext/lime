@@ -18,6 +18,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"os"
 )
 
 var (
@@ -373,13 +374,21 @@ func (t *tbfe) renderthread() {
 }
 
 func (t *tbfe) loop() {
+
 	var (
 		ed  = t.setupEditor()
 		c   = ed.Console()
 		w   = ed.NewWindow()
-		v   = createNewView("main.go", w)
-		sel = v.Sel()
+		v *backend.View
 	)
+
+	if len(os.Args) > 1 {
+		v = createNewView(os.Args[1], w)
+	} else {
+		v = w.NewFile()
+	}
+
+	sel := v.Sel()
 
 	t.settings = getSettings(v)
 	c.Buffer().AddCallback(t.scroll)
