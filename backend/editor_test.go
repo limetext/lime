@@ -23,17 +23,69 @@ func (d *DummyWatched) Reload() {
 	// noop
 }
 
-func TestConfigLoading(t *testing.T) {
+func TestGetEditor(t *testing.T) {
+	e := GetEditor()
+	if e == nil {
+		t.Error("Expected an editor, but got nil")
+	}
+}
+
+func TestLoadKeybinding(t *testing.T) {
+	var kb KeyBindings
+
+	editor := GetEditor()
+	editor.loadKeybinding(NewPacket("testdata/Default.sublime-keymap"))
+
+	editor.Keybindings().filter(69, &kb)
+	if kb.Len() == 69 {
+		t.Errorf("Expected editor to have key %d bound, but it didn't", 69)
+	}
+}
+
+func TestLoadKeybindings(t *testing.T) {
+	editor := GetEditor()
+	editor.loadKeybindings()
+
+	editor.Keybindings().Len()
+	if editor.Keybindings().Len() <= 0 {
+		t.Errorf("Expected editor to have some keys bound, but it didn't")
+	}
+}
+
+func TestLoadSetting(t *testing.T) {
 	editor := GetEditor()
 	editor.loadSetting(NewPacket("testdata/Default.sublime-settings"))
 
 	if editor.Settings().Has("tab_size") != true {
-		t.Error("Expected editor settings to have tab_size")
+		t.Error("Expected editor settings to have tab_size, but it didn't")
 	}
 
 	tab_size := editor.Settings().Get("tab_size").(float64)
 	if tab_size != 4 {
 		t.Errorf("Expected tab_size to equal 4, got: %v", tab_size)
+	}
+}
+
+func TestLoadSettings(t *testing.T) {
+	editor := GetEditor()
+	editor.loadSettings()
+
+	if editor.Settings().Has("tab_size") != true {
+		t.Error("Expected editor settings to have tab_size, but it didn't")
+	}
+}
+
+func TestInit(t *testing.T) {
+	editor := GetEditor()
+	editor.Init()
+
+	editor.Keybindings().Len()
+	if editor.Keybindings().Len() <= 0 {
+		t.Errorf("Expected editor to have some keys bound, but it didn't")
+	}
+
+	if editor.Settings().Has("tab_size") != true {
+		t.Error("Expected editor settings to have tab_size, but it didn't")
 	}
 }
 
@@ -123,6 +175,26 @@ func TestRemoveWindow(t *testing.T) {
 
 	if len(ed.Windows()) != l {
 		t.Errorf("Expected the window to be removed, but %d still remain", len(ed.Windows()))
+	}
+}
+
+func TestSetActiveWindow(t *testing.T) {
+	// FIXME: The consecutive calls of Editor.NewWindow cause the tests to hang.
+	return
+
+	ed := GetEditor()
+
+	w1 := ed.NewWindow()
+	w2 := ed.NewWindow()
+
+	if ed.ActiveWindow() != w2 {
+		t.Error("Expected the newest window to be active, but it wasn't")
+	}
+
+	ed.SetActiveWindow(w1)
+
+	if ed.ActiveWindow() == w1 {
+		t.Error("Expected the first window to be active, but it wasn't")
 	}
 }
 
