@@ -370,8 +370,12 @@ func (e *Editor) RunCommand(name string, args Args) {
 		if err := e.CommandHandler().RunWindowCommand(wnd, name, args); err != nil {
 			log4go.Debug("Couldn't run windowcommand: %s", err)
 		}
-	} else if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
-		log4go.Debug("Couldn't run applicationcommand: %s", err)
+	} else if c := e.cmdhandler.ApplicationCommands[name]; c != nil {
+		if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
+			log4go.Debug("Couldn't run applicationcommand: %s", err)
+		}
+	} else {
+		log4go.Debug("Couldn't find command to run")
 	}
 }
 
