@@ -14,11 +14,11 @@ import (
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
 	. "github.com/quarnster/util/text"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
-	"os"
 )
 
 var (
@@ -376,10 +376,10 @@ func (t *tbfe) renderthread() {
 func (t *tbfe) loop() {
 
 	var (
-		ed  = t.setupEditor()
-		c   = ed.Console()
-		w   = ed.NewWindow()
-		v *backend.View
+		ed = t.setupEditor()
+		c  = ed.Console()
+		w  = ed.NewWindow()
+		v  *backend.View
 	)
 
 	if len(os.Args) > 1 {

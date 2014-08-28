@@ -179,9 +179,6 @@ func TestRemoveWindow(t *testing.T) {
 }
 
 func TestSetActiveWindow(t *testing.T) {
-	// FIXME: The consecutive calls of Editor.NewWindow cause the tests to hang.
-	return
-
 	ed := GetEditor()
 
 	w1 := ed.NewWindow()
@@ -193,7 +190,7 @@ func TestSetActiveWindow(t *testing.T) {
 
 	ed.SetActiveWindow(w1)
 
-	if ed.ActiveWindow() == w1 {
+	if ed.ActiveWindow() != w1 {
 		t.Error("Expected the first window to be active, but it wasn't")
 	}
 }
