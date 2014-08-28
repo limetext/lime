@@ -54,8 +54,7 @@ type (
 // scanning for user settings, snippets and etc we
 // will add files which their suffix contains one of
 // these keywords
-// TODO: commands, snippets etc should be here
-var types = []string{"settings", "keymap", "commands"}
+var types = []string{"settings", "keymap", "commands", "snippets"}
 
 // Initializes a new plugin whith loading all of the
 // settings, keymaps and etc. Suffix variable show's
@@ -134,7 +133,7 @@ func (p *packet) Get() interface{} {
 	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
 		log4go.Error("Couldn't read file: %s", err)
-		return nil
+		return []byte{}
 	}
 	return d
 }
@@ -147,9 +146,21 @@ func (p *packet) Name() string {
 func (p *packet) Reload() {
 	ed := GetEditor()
 	if p.group() == "settings" {
-		// This should be commented until we have complete
-		// settings hierarchy
-		// ed.loadSetting(p)
+		plat := "Linux"
+		switch ed.Platform() {
+		case "windows":
+			plat = "Windows"
+		case "darwin":
+			plat = "OSX"
+		}
+		switch p.Name() {
+		case LIME_DEFAULTS_PATH + "Preferences.sublime-settings":
+			ed.loadSetting(p, ed.Settings().Parent().Settings().Parent().Settings())
+		case LIME_DEFAULTS_PATH + "Preferences (" + plat + ").sublime-settings":
+			ed.loadSetting(p, ed.Settings().Parent().Settings())
+		case LIME_USER_PACKETS_PATH + "Preferences.sublime-settings":
+			ed.loadSetting(p, ed.Settings())
+		}
 	} else if p.group() == "keymap" {
 		ed.loadKeybinding(p)
 	}
@@ -215,8 +226,9 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 }
 
 // Initialize scan for loading user and limetext defaults
-// i.e settings, commands, snippets etc
-func ScanPackets(path string) []*packet {
+// except settings because for settings we have a hierarchy
+// i.e commands, snippets etc
+func scanPackets(path string) []*packet {
 	var packets []*packet
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -225,7 +237,7 @@ func ScanPackets(path string) []*packet {
 		}
 		s := filepath.Ext(info.Name())
 		for _, t := range types {
-			if strings.Contains(s, t) {
+			if t != "settings" && strings.Contains(s, t) {
 				packets = append(packets, NewPacket(path))
 			}
 		}
@@ -243,8 +255,8 @@ var packets pckts
 
 // Loading the default packets
 func init() {
-	pcts := ScanPackets(LIME_DEFAULTS_PATH)
-	pcts = append(pcts, ScanPackets(LIME_USER_PACKETS_PATH)...)
+	pcts := scanPackets(LIME_DEFAULTS_PATH)
+	pcts = append(pcts, scanPackets(LIME_USER_PACKETS_PATH)...)
 	for _, p := range pcts {
 		packets = append(packets, p)
 	}

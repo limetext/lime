@@ -54,7 +54,7 @@ func TestLoadKeybindings(t *testing.T) {
 
 func TestLoadSetting(t *testing.T) {
 	editor := GetEditor()
-	editor.loadSetting(NewPacket("testdata/Default.sublime-settings"))
+	editor.loadSetting(NewPacket("testdata/Default.sublime-settings"), editor.Settings())
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
@@ -133,7 +133,7 @@ func TestWatchingSettings(t *testing.T) {
 
 	var path string = "testdata/Default.sublime-settings"
 	editor := GetEditor()
-	editor.loadSetting(NewPacket(path))
+	editor.loadSetting(NewPacket(path), editor.Settings())
 
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -141,13 +141,11 @@ func TestScanPackets(t *testing.T) {
 			"packages",
 			[]string{
 				"packages/Default/Default.sublime-keymap",
-				"packages/Default/Default.sublime-settings",
 			},
 		},
 		{
 			"testdata",
 			[]string{
-				"testdata/Default.sublime-settings",
 				"testdata/Vintage/Default.sublime-commands",
 				"testdata/Vintage/Default.sublime-keymap",
 				"testdata/Default.sublime-keymap",
@@ -155,7 +153,7 @@ func TestScanPackets(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		packets := ScanPackets(test.path)
+		packets := scanPackets(test.path)
 		for _, f := range test.expect {
 			found := false
 			for _, p := range packets {

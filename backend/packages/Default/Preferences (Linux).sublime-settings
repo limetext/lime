@@ -1,4 +1,5 @@
 {
-    "font_face": "monospace",
-    "font_size": 12
+	"font_face": "Monospace",
+	"font_size": 10,
+    "mouse_wheel_switches_tabs": true
 }
