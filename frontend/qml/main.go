@@ -718,6 +718,13 @@ func (t *qmlfrontend) loop() (err error) {
 	return
 }
 
+// Launches the provided command in a new goroutine
+// (to avoid locking up the GUI)
+func (t *qmlfrontend) RunCommand(command string) {
+	ed := backend.GetEditor()
+	go ed.RunCommand(command, make(backend.Args))
+}
+
 func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
 	log4go.Debug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
 	shift := false
@@ -756,6 +763,9 @@ func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
 }
 
 func main() {
+	// Need to lock the OS thread as OSX GUI requires GUI stuff to run in the main thread
+	runtime.LockOSThread()
+
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()

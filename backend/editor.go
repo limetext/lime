@@ -324,18 +324,7 @@ func (e *Editor) inputthread() {
 
 		if action := possible_actions.Action(v); action != nil {
 			p2 := Prof.Enter("hi.perform")
-			// TODO: what's the command precedence?
-			if c := e.cmdhandler.TextCommands[action.Command]; c != nil {
-				if err := e.CommandHandler().RunTextCommand(v, action.Command, action.Args); err != nil {
-					log4go.Debug("Couldn't run textcommand: %s", err)
-				}
-			} else if c := e.cmdhandler.WindowCommands[action.Command]; c != nil {
-				if err := e.CommandHandler().RunWindowCommand(wnd, action.Command, action.Args); err != nil {
-					log4go.Debug("Couldn't run windowcommand: %s", err)
-				}
-			} else if err := e.CommandHandler().RunApplicationCommand(action.Command, action.Args); err != nil {
-				log4go.Debug("Couldn't run applicationcommand: %s", err)
-			}
+			e.RunCommand(action.Command, action.Args)
 			p2.Exit()
 		} else if possible_actions.keyOff > 1 {
 			lastBindings = e.keyBindings
@@ -363,7 +352,27 @@ func (e *Editor) LogCommands(l bool) {
 }
 
 func (e *Editor) RunCommand(name string, args Args) {
-	e.CommandHandler().RunApplicationCommand(name, args)
+	// TODO?
+	var (
+		wnd *Window
+		v   *View
+	)
+	if wnd = e.ActiveWindow(); wnd != nil {
+		v = wnd.ActiveView()
+	}
+
+	// TODO: what's the command precedence?
+	if c := e.cmdhandler.TextCommands[name]; c != nil {
+		if err := e.CommandHandler().RunTextCommand(v, name, args); err != nil {
+			log4go.Debug("Couldn't run textcommand: %s", err)
+		}
+	} else if c := e.cmdhandler.WindowCommands[name]; c != nil {
+		if err := e.CommandHandler().RunWindowCommand(wnd, name, args); err != nil {
+			log4go.Debug("Couldn't run windowcommand: %s", err)
+		}
+	} else if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
+		log4go.Debug("Couldn't run applicationcommand: %s", err)
+	}
 }
 
 func (e *Editor) SetClipboard(n string) {

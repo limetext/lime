@@ -20,17 +20,17 @@ ApplicationWindow {
             MenuItem {
                 text: qsTr("&New File")
                 shortcut: "Ctrl+N"
-                onTriggered: myWindow.back().newFile()
+                onTriggered: frontend.runCommand("new_file");
             }
             MenuItem {
                 text: qsTr("&Open File...")
                 shortcut: "Ctrl+O"
-                onTriggered: openDialog.open()
+                onTriggered: frontend.runCommand("open_file");
             }
             MenuItem {
                 text: qsTr("&Save")
                 shortcut: "Ctrl+S"
-                onTriggered: myWindow.view(tabs.currentIndex).back().save()
+                onTriggered: frontend.runCommand("save");
             }
             MenuItem {
                 text: qsTr("&Save As...")
@@ -42,28 +42,28 @@ ApplicationWindow {
             MenuItem {
                 text: qsTr("&New Window")
                 shortcut: "Shift+Ctrl+N"
-                onTriggered: editor.newWindow()
+                onTriggered: frontend.runCommand("new_window");
             }
             MenuItem {
                 text: qsTr("&Close Window")
                 shortcut: "Shift+Ctrl+W"
-                onTriggered: myWindow.back().close()
+                onTriggered: frontend.runCommand("close_window");
             }
             MenuSeparator{}
             MenuItem {
                 text: qsTr("&Close File")
                 shortcut: "Ctrl+W"
-                onTriggered: myWindow.view(tabs.currentIndex).back().close()
+                onTriggered: frontend.runCommand("close");
             }
             MenuItem {
                 text: qsTr("&Close All Files")
-                onTriggered: myWindow.back().closeAllViews()
+                onTriggered: frontend.runCommand("close_all");
             }
             MenuSeparator{}
             MenuItem {
                 text: qsTr("&Quit")
                 shortcut: "Ctrl+Q"
-                onTriggered: Qt.quit();
+                onTriggered: Qt.quit(); // frontend.runCommand("quit");
             }
         }
     }
