@@ -78,6 +78,7 @@ type (
 var (
 	LIME_USER_PACKAGES_PATH = "../../3rdparty/bundles/"
 	LIME_USER_PACKETS_PATH  = "../../3rdparty/bundles/User/"
+	LIME_PACKAGES_PATH      = "../../backend/packages/"
 	LIME_DEFAULTS_PATH      = "../../backend/packages/Default/"
 )
 
