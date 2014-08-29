@@ -67,11 +67,31 @@ func TestLoadSetting(t *testing.T) {
 }
 
 func TestLoadSettings(t *testing.T) {
+	LIME_USER_PACKAGES_PATH = "../3rdparty/bundles/"
+	LIME_USER_PACKETS_PATH = "../3rdparty/bundles/User/"
+	LIME_DEFAULTS_PATH = "packages/Default/"
+
 	editor := GetEditor()
 	editor.loadSettings()
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
+	}
+
+	plat := editor.Settings().Parent()
+	switch editor.Platform() {
+	case "windows":
+		if plat.Settings().Get("font_face", "") != "Consolas" {
+			t.Errorf("Expected windows font_face be Consolas, but is %s", plat.Settings().Get("font_face", ""))
+		}
+	case "darwin":
+		if plat.Settings().Get("font_face", "") != "Menlo Regular" {
+			t.Errorf("Expected OSX font_face be Menlo Regular, but is %s", plat.Settings().Get("font_face", ""))
+		}
+	default:
+		if plat.Settings().Get("font_face", "") != "Monospace" {
+			t.Errorf("Expected Linux font_face be Monospace, but is %s", plat.Settings().Get("font_face", ""))
+		}
 	}
 }
 
