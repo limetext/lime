@@ -51,8 +51,8 @@ func Diff(a, b string) string {
 	if a == b {
 		return ""
 	}
-	a = strings.Replace(a, "\r", "", -1)
-	b = strings.Replace(b, "\r", "", -1)
+	a = strings.Replace(a, "\r\n", "\n", -1)
+	b = strings.Replace(b, "\r\n", "\n", -1)
 	if a == b {
 		return ""
 	}
