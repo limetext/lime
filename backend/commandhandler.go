@@ -9,7 +9,6 @@ import (
 	"fmt"
 	. "github.com/limetext/lime/backend/util"
 	"reflect"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -36,20 +35,6 @@ type (
 		verbose             bool
 	}
 )
-
-var casere = regexp.MustCompile(`([A-Z])`)
-
-func PascalCaseToSnakeCase(in string) string {
-	first := true
-	return casere.ReplaceAllStringFunc(in, func(in string) string {
-		if first {
-			first = false
-			return strings.ToLower(in)
-		}
-		return "_" + strings.ToLower(in)
-	})
-
-}
 
 func DefaultName(cmd interface{}) string {
 	name := reflect.TypeOf(cmd).Elem().Name()
