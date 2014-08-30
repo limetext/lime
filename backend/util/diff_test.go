@@ -136,7 +136,7 @@ func TestDiff(t *testing.T) {
 		out := Diff(test.a, test.b)
 
 		if out != test.exp {
-			t.Errorf("Test %d: Expected %q, but got %q", i, test.exp, out)
+			t.Errorf("Test %d: Expected:\n%s\n\nBut got:\n%s", i, test.exp, out)
 		}
 	}
 }
