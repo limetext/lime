@@ -7,6 +7,7 @@ package backend
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 )
@@ -67,9 +68,9 @@ func TestLoadSetting(t *testing.T) {
 }
 
 func TestLoadSettings(t *testing.T) {
-	LIME_USER_PACKAGES_PATH = "../3rdparty/bundles/"
-	LIME_USER_PACKETS_PATH = "../3rdparty/bundles/User/"
-	LIME_DEFAULTS_PATH = "packages/Default/"
+	LIME_USER_PACKAGES_PATH = path.Join("..", "3rdparty", "bundles")
+	LIME_USER_PACKETS_PATH = path.Join("..", "3rdparty", "bundles", "User")
+	LIME_DEFAULTS_PATH = path.Join("packages", "Default")
 
 	editor := GetEditor()
 	editor.loadSettings()

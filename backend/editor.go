@@ -11,6 +11,7 @@ import (
 	"github.com/limetext/lime/backend/loaders"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
+	"path"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -76,10 +77,10 @@ type (
 )
 
 var (
-	LIME_USER_PACKAGES_PATH = "../../3rdparty/bundles/"
-	LIME_USER_PACKETS_PATH  = "../../3rdparty/bundles/User/"
-	LIME_PACKAGES_PATH      = "../../backend/packages/"
-	LIME_DEFAULTS_PATH      = "../../backend/packages/Default/"
+	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "3rdparty", "bundles")
+	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "3rdparty", "bundles", "User")
+	LIME_PACKAGES_PATH      = path.Join("..", "..", "backend", "packages")
+	LIME_DEFAULTS_PATH      = path.Join("..", "..", "backend", "packages", "Default")
 )
 
 func (h *DummyFrontend) SetDefaultAction(action bool) {
@@ -209,7 +210,8 @@ func (e *Editor) loadSettings() {
 	platSettings.Settings().SetParent(defSettings)
 	ed.Settings().SetParent(platSettings)
 
-	defPckt := NewPacket(LIME_DEFAULTS_PATH+"Preferences.sublime-settings", defSettings.Settings())
+	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
+	defPckt := NewPacket(p, defSettings.Settings())
 	e.loadSetting(defPckt)
 
 	plat := "Linux"
@@ -219,15 +221,17 @@ func (e *Editor) loadSettings() {
 	case "darwin":
 		plat = "OSX"
 	}
-	platPckt := NewPacket(LIME_DEFAULTS_PATH+"Preferences ("+plat+").sublime-settings", platSettings.Settings())
+	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+plat+").sublime-settings")
+	platPckt := NewPacket(p, platSettings.Settings())
 	e.loadSetting(platPckt)
 
-	userPckt := NewPacket(LIME_USER_PACKETS_PATH+"Preferences.sublime-settings", e.Settings())
+	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
+	userPckt := NewPacket(p, e.Settings())
 	e.loadSetting(userPckt)
 }
 
 func (e *Editor) PackagesPath() string {
-	return "../../3rdparty/bundles/"
+	return LIME_USER_PACKAGES_PATH
 }
 
 func (e *Editor) Console() *View {

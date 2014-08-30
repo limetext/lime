@@ -146,9 +146,9 @@ func init() {
 			panic(err)
 		}
 	}
-	py.AddToPath("../../backend/packages/")
-	py.AddToPath("../../3rdparty/bundles/")
-	py.AddToPath("../../backend/sublime/")
+	py.AddToPath(path.Join("..", "..", "backend", "packages"))
+	py.AddToPath(path.Join("..", "..", "3rdparty", "bundles"))
+	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 
 func loadPlugin(p *backend.Plugin, m *py.Module) {
