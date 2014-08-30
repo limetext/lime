@@ -12,6 +12,7 @@
 // It should be possible to hook in for example libclang,
 // go/ast and other "proper" code parsers. Do these interfaces
 // make sense for those or should they be changed?
+
 package parser
 
 import (
