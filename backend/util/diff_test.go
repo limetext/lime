@@ -88,12 +88,12 @@ func TestDiff(t *testing.T) {
 		{
 			"t3\nst\nstr\nin\ng",
 			"te\nst\nstr\nin\ng",
-			"- t3\n+ te\n  st\n  str\n  in\n  g",
+			"- t3\n+ te\n  st\n  str\n  in",
 		},
 		{
 			"te\nst\nstr\nin\ng",
 			"t3\nst\nstr\nin\ng",
-			"- te\n+ t3\n  st\n  str\n  in\n  g",
+			"- te\n+ t3\n  st\n  str\n  in",
 		},
 
 		{
@@ -119,16 +119,104 @@ func TestDiff(t *testing.T) {
 		},
 
 		{
-			"T\ne\ns\nt\n\n\n\n\n\n\ns\nt\nr\n1ng",
-			"t\ne\ns\nt\n\n\n\n\n\n\ns\nt\nr\ning",
+			"T\ne\nst\ns\nt\nr\n1ng",
+			"t\ne\nst\ns\nt\nr\ning",
+			"- T\n+ t\n  e\n  st\n  s\n  t\n  r\n- 1ng\n+ ing",
+		},
+		{
+			"t\ne\ns\nt\ns\nt\nr\ning",
+			"T\ne\ns\nt\ns\nt\nr\n1ng",
+			"- t\n+ T\n  e\n  s\n  t\n  s\n  t\n  r\n- ing\n+ 1ng",
+		},
+
+		{
+			"T\ne\ns\nt\ns\nt\nr\n1ng",
+			"t\ne\ns\nt\ns\nt\nr\ning",
+			"- T\n+ t\n  e\n  s\n  t\n  s\n  t\n  r\n- 1ng\n+ ing",
+		},
+		{
+			"t\ne\ns\nt\ns\nt\nr\ning",
+			"T\ne\ns\nt\ns\nt\nr\n1ng",
+			"- t\n+ T\n  e\n  s\n  t\n  s\n  t\n  r\n- ing\n+ 1ng",
+		},
+
+		{
+			"T\ne\ns\nt\n\ns\nt\nr\n1ng",
+			"t\ne\ns\nt\n\ns\nt\nr\ning",
 			// TODO: No divider?
 			"- T\n+ t\n  e\n  s\n  t\n  s\n  t\n  r\n- 1ng\n+ ing",
 		},
 		{
-			"t\ne\ns\nt\n\n\n\n\n\n\ns\nt\nr\ning",
-			"T\ne\ns\nt\n\n\n\n\n\n\ns\nt\nr\n1ng",
+			"t\ne\ns\nt\n\ns\nt\nr\ning",
+			"T\ne\ns\nt\n\ns\nt\nr\n1ng",
 			// TODO: No divider?
 			"- t\n+ T\n  e\n  s\n  t\n  s\n  t\n  r\n- ing\n+ 1ng",
+		},
+
+		{
+			"teststr",
+			"teststring",
+			"- teststr\n+ teststring",
+		},
+		{
+			"teststring",
+			"teststr",
+			"- teststring\n+ teststr",
+		},
+
+		{
+			"test",
+			"test\nstring",
+			"  test\n+ string",
+		},
+		{
+			"test\nstring",
+			"test",
+			"  test\n- string",
+		},
+
+		{
+			"string",
+			"test\nstring",
+			"+ test\n  string",
+		},
+		{
+			"test\nstring",
+			"string",
+			"- test\n  string",
+		},
+
+		{
+			"str",
+			"test\nstr\ning",
+			"+ test\n  str\n+ ing",
+		},
+		{
+			"test\nstr\ning",
+			"str",
+			"- test\n  str\n- ing",
+		},
+
+		{
+			"ing",
+			"test\nstr\ning",
+			"+ test\n+ str\n  ing",
+		},
+		{
+			"test\nstr\ning",
+			"ing",
+			"- test\n- str\n  ing",
+		},
+
+		{
+			"test",
+			"test\nstr\ning",
+			"  test\n+ str\n+ ing",
+		},
+		{
+			"test\nstr\ning",
+			"test",
+			"  test\n- str\n- ing",
 		},
 	}
 
