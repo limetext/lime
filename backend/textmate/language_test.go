@@ -7,7 +7,6 @@ package textmate
 import (
 	"fmt"
 	"github.com/limetext/lime/backend/util"
-	lu "github.com/limetext/lime/backend/util"
 	"io/ioutil"
 	"testing"
 )
@@ -111,6 +110,5 @@ func BenchmarkLanguage(b *testing.B) {
 			lp.Parse()
 		}
 	}
-	fmt.Println(lu.Prof)
-	//	fmt.Println(lp)
+	fmt.Println(util.Prof)
 }
