@@ -12,13 +12,13 @@ import (
 )
 
 type (
-	Profileentry struct {
+	ProfileEntry struct {
 		Calls   int
 		Tottime time.Duration
 	}
 	Profiler struct {
 		mutex sync.Mutex
-		data  map[string]Profileentry
+		data  map[string]ProfileEntry
 	}
 	ProfToken struct {
 		Name  string
@@ -26,7 +26,7 @@ type (
 	}
 	ProfileResult struct {
 		Name string
-		Profileentry
+		ProfileEntry
 	}
 	prsorter struct {
 		data []ProfileResult
@@ -34,7 +34,7 @@ type (
 	}
 )
 
-var Prof = Profiler{data: make(map[string]Profileentry)}
+var Prof = Profiler{data: make(map[string]ProfileEntry)}
 
 func (p *Profiler) Enter(name string) ProfToken {
 	return ProfToken{name, time.Now()}
