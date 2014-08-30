@@ -147,7 +147,7 @@ func runTest(t *testing.T, tests []Test, command string) {
 
 		ed.CommandHandler().RunTextCommand(v, command, nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
-			t.Errorf("Test %d: Excepted \n%s, but got \n%s", i, test.expect, d)
+			t.Errorf("Test %d: Expected \n%s, but got \n%s", i, test.expect, d)
 		}
 	}
 }
