@@ -174,10 +174,6 @@ func (e *Editor) Init() {
 	ed.loadSettings()
 }
 
-func (e *Editor) Keybindings() *KeyBindings {
-	return &e.keyBindings
-}
-
 func (e *Editor) loadKeybinding(pkg *packet) {
 	var bindings KeyBindings
 	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {

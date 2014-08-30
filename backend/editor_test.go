@@ -36,7 +36,7 @@ func TestLoadKeybinding(t *testing.T) {
 	editor := GetEditor()
 	editor.loadKeybinding(NewPacket("testdata/Default.sublime-keymap"))
 
-	editor.Keybindings().filter(69, &kb)
+	editor.keyBindings.filter(69, &kb)
 	if kb.Len() == 69 {
 		t.Errorf("Expected editor to have key %d bound, but it didn't", 69)
 	}
@@ -46,8 +46,8 @@ func TestLoadKeybindings(t *testing.T) {
 	editor := GetEditor()
 	editor.loadKeybindings()
 
-	editor.Keybindings().Len()
-	if editor.Keybindings().Len() <= 0 {
+	editor.keyBindings.Len()
+	if editor.keyBindings.Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 }
@@ -79,8 +79,8 @@ func TestInit(t *testing.T) {
 	editor := GetEditor()
 	editor.Init()
 
-	editor.Keybindings().Len()
-	if editor.Keybindings().Len() <= 0 {
+	editor.keyBindings.Len()
+	if editor.keyBindings.Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 
