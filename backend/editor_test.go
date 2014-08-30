@@ -30,11 +30,11 @@ func TestGetEditor(t *testing.T) {
 	}
 }
 
-func TestLoadKeybinding(t *testing.T) {
+func TestLoadKeyBinding(t *testing.T) {
 	var kb KeyBindings
 
 	editor := GetEditor()
-	editor.loadKeybinding(NewPacket("testdata/Default.sublime-keymap"))
+	editor.loadKeyBinding(NewPacket("testdata/Default.sublime-keymap"))
 
 	editor.keyBindings.filter(69, &kb)
 	if kb.Len() == 69 {
@@ -42,9 +42,9 @@ func TestLoadKeybinding(t *testing.T) {
 	}
 }
 
-func TestLoadKeybindings(t *testing.T) {
+func TestLoadKeyBindings(t *testing.T) {
 	editor := GetEditor()
-	editor.loadKeybindings()
+	editor.loadKeyBindings()
 
 	editor.keyBindings.Len()
 	if editor.keyBindings.Len() <= 0 {

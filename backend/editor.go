@@ -170,11 +170,11 @@ func (e *Editor) SetFrontend(f Frontend) {
 }
 
 func (e *Editor) Init() {
-	ed.loadKeybindings()
+	ed.loadKeyBindings()
 	ed.loadSettings()
 }
 
-func (e *Editor) loadKeybinding(pkg *packet) {
+func (e *Editor) loadKeyBinding(pkg *packet) {
 	var bindings KeyBindings
 	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {
 		log4go.Error(err)
@@ -185,9 +185,9 @@ func (e *Editor) loadKeybinding(pkg *packet) {
 	e.keyBindings.merge(&bindings)
 }
 
-func (e *Editor) loadKeybindings() {
+func (e *Editor) loadKeyBindings() {
 	for _, p := range packets.filter("keymap") {
-		e.loadKeybinding(p)
+		e.loadKeyBinding(p)
 	}
 }
 

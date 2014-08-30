@@ -151,7 +151,7 @@ func (p *packet) Reload() {
 		// settings hierarchy
 		// ed.loadSetting(p)
 	} else if p.group() == "keymap" {
-		ed.loadKeybinding(p)
+		ed.loadKeyBinding(p)
 	}
 }
 
