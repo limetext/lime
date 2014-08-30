@@ -164,7 +164,7 @@ func (p *packet) Reload() {
 	if p.group() == "settings" {
 		ed.loadSetting(p)
 	} else if p.group() == "keymap" {
-		ed.loadKeybinding(p)
+		ed.loadKeyBinding(p)
 	}
 }
 

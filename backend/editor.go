@@ -172,15 +172,11 @@ func (e *Editor) SetFrontend(f Frontend) {
 }
 
 func (e *Editor) Init() {
-	ed.loadKeybindings()
+	ed.loadKeyBindings()
 	ed.loadSettings()
 }
 
-func (e *Editor) Keybindings() *KeyBindings {
-	return &e.keyBindings
-}
-
-func (e *Editor) loadKeybinding(pkg *packet) {
+func (e *Editor) loadKeyBinding(pkg *packet) {
 	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.MarshalTo()); err != nil {
 		log4go.Error(err)
 	} else {
@@ -190,9 +186,9 @@ func (e *Editor) loadKeybinding(pkg *packet) {
 	e.keyBindings.merge(pkg.MarshalTo().(*KeyBindings))
 }
 
-func (e *Editor) loadKeybindings() {
+func (e *Editor) loadKeyBindings() {
 	for _, p := range packets.filter("keymap") {
-		e.loadKeybinding(p)
+		e.loadKeyBinding(p)
 	}
 }
 
@@ -393,8 +389,12 @@ func (e *Editor) RunCommand(name string, args Args) {
 		if err := e.CommandHandler().RunWindowCommand(wnd, name, args); err != nil {
 			log4go.Debug("Couldn't run windowcommand: %s", err)
 		}
-	} else if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
-		log4go.Debug("Couldn't run applicationcommand: %s", err)
+	} else if c := e.cmdhandler.ApplicationCommands[name]; c != nil {
+		if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
+			log4go.Debug("Couldn't run applicationcommand: %s", err)
+		}
+	} else {
+		log4go.Debug("Couldn't find command to run")
 	}
 }
 

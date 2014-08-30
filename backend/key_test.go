@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestLoadKeyBindings(t *testing.T) {
+func TestLoadKeyBindingsFromJSON(t *testing.T) {
 	tests := []string{
 		"loaders/json/testdata/Default (OSX).sublime-keymap",
 	}

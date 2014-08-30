@@ -31,24 +31,24 @@ func TestGetEditor(t *testing.T) {
 	}
 }
 
-func TestLoadKeybinding(t *testing.T) {
+func TestLoadKeyBinding(t *testing.T) {
 	var kb KeyBindings
 
 	editor := GetEditor()
-	editor.loadKeybinding(NewPacket("testdata/Default.sublime-keymap", new(KeyBindings)))
+	editor.loadKeyBinding(NewPacket("testdata/Default.sublime-keymap", new(KeyBindings)))
 
-	editor.Keybindings().filter(69, &kb)
+	editor.keyBindings.filter(69, &kb)
 	if kb.Len() == 69 {
 		t.Errorf("Expected editor to have key %d bound, but it didn't", 69)
 	}
 }
 
-func TestLoadKeybindings(t *testing.T) {
+func TestLoadKeyBindings(t *testing.T) {
 	editor := GetEditor()
-	editor.loadKeybindings()
+	editor.loadKeyBindings()
 
-	editor.Keybindings().Len()
-	if editor.Keybindings().Len() <= 0 {
+	editor.keyBindings.Len()
+	if editor.keyBindings.Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 }
@@ -100,8 +100,8 @@ func TestInit(t *testing.T) {
 	editor := GetEditor()
 	editor.Init()
 
-	editor.Keybindings().Len()
-	if editor.Keybindings().Len() <= 0 {
+	editor.keyBindings.Len()
+	if editor.keyBindings.Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 
@@ -235,5 +235,16 @@ func TestClipboard(t *testing.T) {
 
 	if ed.GetClipboard() != s {
 		t.Errorf("Expected %s to be on the clipboard, but got %s", s, ed.GetClipboard())
+	}
+}
+
+func TestHandleInput(t *testing.T) {
+	ed := GetEditor()
+	kp := KeyPress{Key: 'i'}
+
+	ed.HandleInput(kp)
+
+	if ki := <-ed.keyInput; ki != kp {
+		t.Errorf("Expected %s to be on the input buffer, but got %s", kp, ki)
 	}
 }
