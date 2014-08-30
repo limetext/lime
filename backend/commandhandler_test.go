@@ -39,30 +39,6 @@ func (c *DummyTextCommand) Run(v *View, e *Edit) error {
 	return fmt.Errorf("Ran")
 }
 
-func TestPascalCaseToSnakeCase(t *testing.T) {
-	tests := []struct {
-		in  string
-		out string
-	}{
-		{
-			"TestString",
-			"test_string",
-		},
-		{
-			"Teststring",
-			"teststring",
-		},
-	}
-
-	for i, test := range tests {
-		out := PascalCaseToSnakeCase(test.in)
-
-		if out != test.out {
-			t.Errorf("Test %d: Expected %s, but got %s", i, test.out, out)
-		}
-	}
-}
-
 func TestDefaultName(t *testing.T) {
 	n := DefaultName(&DummyApplicationCommand{})
 
