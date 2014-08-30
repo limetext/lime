@@ -146,7 +146,7 @@ func TestScanPackets(t *testing.T) {
 		{
 			"testdata",
 			[]string{
-				"testdata/Vintage/Default.sublime-commands",
+				// "testdata/Vintage/Default.sublime-commands", not supporting commands yet
 				"testdata/Vintage/Default.sublime-keymap",
 				"testdata/Default.sublime-keymap",
 			},
@@ -180,7 +180,7 @@ func TestPacket(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		s := NewPacket(test.path)
+		s := NewPacket(test.path, nil)
 		d, err := ioutil.ReadFile(test.path)
 		if err != nil {
 			t.Fatalf("Test %d: Can't read file: %s", i, err)
@@ -222,7 +222,7 @@ func TestPckts(t *testing.T) {
 		},
 	}
 	for _, p := range test.pckts {
-		packets = append(packets, NewPacket(p))
+		packets = append(packets, NewPacket(p, nil))
 	}
 	for key, ns := range test.expect {
 		ps := packets.filter(key)

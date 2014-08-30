@@ -291,9 +291,9 @@ func (v *View) loadSettings() {
 				plat = "OSX"
 			}
 
-			ed.loadSetting(NewPacket(LIME_PACKAGES_PATH+s[1]+"/"+s[1]+".sublime-settings"), defSettings.Settings())
-			ed.loadSetting(NewPacket(LIME_PACKAGES_PATH+s[1]+"/"+s[1]+" ("+plat+").sublime-settings"), platSettings.Settings())
-			ed.loadSetting(NewPacket(LIME_USER_PACKETS_PATH+s[1]+".sublime-settings"), usrSettings.Settings())
+			ed.loadSetting(NewPacket(LIME_PACKAGES_PATH+s[1]+"/"+s[1]+".sublime-settings", defSettings.Settings()))
+			ed.loadSetting(NewPacket(LIME_PACKAGES_PATH+s[1]+"/"+s[1]+" ("+plat+").sublime-settings", platSettings.Settings()))
+			ed.loadSetting(NewPacket(LIME_USER_PACKETS_PATH+s[1]+".sublime-settings", usrSettings.Settings()))
 		}
 	} else {
 		v.Settings().SetParent(v.window)

@@ -180,14 +180,13 @@ func (e *Editor) Keybindings() *KeyBindings {
 }
 
 func (e *Editor) loadKeybinding(pkg *packet) {
-	var bindings KeyBindings
-	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.MarshalTo()); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
-	e.keyBindings.merge(&bindings)
+	e.keyBindings.merge(pkg.MarshalTo().(*KeyBindings))
 }
 
 func (e *Editor) loadKeybindings() {
@@ -196,8 +195,8 @@ func (e *Editor) loadKeybindings() {
 	}
 }
 
-func (e *Editor) loadSetting(pkg *packet, s *Settings) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), s); err != nil {
+func (e *Editor) loadSetting(pkg *packet) {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.MarshalTo()); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
@@ -210,8 +209,8 @@ func (e *Editor) loadSettings() {
 	platSettings.Settings().SetParent(defSettings)
 	ed.Settings().SetParent(platSettings)
 
-	defPckt := NewPacket(LIME_DEFAULTS_PATH + "Preferences.sublime-settings")
-	e.loadSetting(defPckt, defSettings.Settings())
+	defPckt := NewPacket(LIME_DEFAULTS_PATH+"Preferences.sublime-settings", defSettings.Settings())
+	e.loadSetting(defPckt)
 
 	plat := "Linux"
 	switch e.Platform() {
@@ -220,11 +219,11 @@ func (e *Editor) loadSettings() {
 	case "darwin":
 		plat = "OSX"
 	}
-	platPckt := NewPacket(LIME_DEFAULTS_PATH + "Preferences (" + plat + ").sublime-settings")
-	e.loadSetting(platPckt, platSettings.Settings())
+	platPckt := NewPacket(LIME_DEFAULTS_PATH+"Preferences ("+plat+").sublime-settings", platSettings.Settings())
+	e.loadSetting(platPckt)
 
-	userPckt := NewPacket(LIME_USER_PACKETS_PATH + "Preferences.sublime-settings")
-	e.loadSetting(userPckt, e.Settings())
+	userPckt := NewPacket(LIME_USER_PACKETS_PATH+"Preferences.sublime-settings", e.Settings())
+	e.loadSetting(userPckt)
 }
 
 func (e *Editor) PackagesPath() string {

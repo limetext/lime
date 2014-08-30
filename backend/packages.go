@@ -27,6 +27,12 @@ type (
 		Reload()
 	}
 
+	// This is a temporary type for being able to
+	// have packet owner in packet type for reloading
+	marshalTo interface {
+		UnmarshalJSON([]byte) error
+	}
+
 	// Plugin is a Package type containing some files
 	// with specific suffix that could be interpreted by
 	// lime text api(currently python) and some
@@ -43,6 +49,9 @@ type (
 	// are Packet
 	packet struct {
 		path string
+		// the packet content will be Unmarshal to this variable
+		// so on reload we know where we should unmarshal it again
+		marshal marshalTo
 	}
 
 	// Useful for managing packets for plugins
@@ -54,7 +63,7 @@ type (
 // scanning for user settings, snippets and etc we
 // will add files which their suffix contains one of
 // these keywords
-var types = []string{"settings", "keymap", "commands", "snippets"}
+var types = []string{"settings", "keymap"}
 
 // Initializes a new plugin whith loading all of the
 // settings, keymaps and etc. Suffix variable show's
@@ -113,7 +122,14 @@ func (p *Plugin) Reload() {
 			s := filepath.Ext(f.Name())
 			for _, t := range types {
 				if strings.Contains(s, t) {
-					pckts = append(pckts, NewPacket(pt.Join(p.path, f.Name())))
+					var pckt *packet
+					if t == "keymap" {
+						pckt = NewPacket(pt.Join(p.path, f.Name()), new(KeyBindings))
+					} else {
+						// We don't have any settings hierarchy for plugins at this moment
+						pckt = NewPacket(pt.Join(p.path, f.Name()), nil)
+					}
+					pckts = append(pckts, pckt)
 				}
 			}
 		}
@@ -123,8 +139,8 @@ func (p *Plugin) Reload() {
 }
 
 // Initializes new packet with specific path
-func NewPacket(path string) *packet {
-	return &packet{path}
+func NewPacket(path string, marshal marshalTo) *packet {
+	return &packet{path, marshal}
 }
 
 // Returns packet file data if any error occurred
@@ -146,21 +162,7 @@ func (p *packet) Name() string {
 func (p *packet) Reload() {
 	ed := GetEditor()
 	if p.group() == "settings" {
-		plat := "Linux"
-		switch ed.Platform() {
-		case "windows":
-			plat = "Windows"
-		case "darwin":
-			plat = "OSX"
-		}
-		switch p.Name() {
-		case LIME_DEFAULTS_PATH + "Preferences.sublime-settings":
-			ed.loadSetting(p, ed.Settings().Parent().Settings().Parent().Settings())
-		case LIME_DEFAULTS_PATH + "Preferences (" + plat + ").sublime-settings":
-			ed.loadSetting(p, ed.Settings().Parent().Settings())
-		case LIME_USER_PACKETS_PATH + "Preferences.sublime-settings":
-			ed.loadSetting(p, ed.Settings())
-		}
+		ed.loadSetting(p)
 	} else if p.group() == "keymap" {
 		ed.loadKeybinding(p)
 	}
@@ -174,6 +176,10 @@ func (p *packet) group() string {
 		}
 	}
 	return ""
+}
+
+func (p *packet) MarshalTo() marshalTo {
+	return p.marshal
 }
 
 // Returns packets with specific type
@@ -238,7 +244,7 @@ func scanPackets(path string) []*packet {
 		s := filepath.Ext(info.Name())
 		for _, t := range types {
 			if t != "settings" && strings.Contains(s, t) {
-				packets = append(packets, NewPacket(path))
+				packets = append(packets, NewPacket(path, new(KeyBindings)))
 			}
 		}
 		return nil
