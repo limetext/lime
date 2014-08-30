@@ -214,14 +214,7 @@ func (e *Editor) loadSettings() {
 	defPckt := NewPacket(p, defSettings.Settings())
 	e.loadSetting(defPckt)
 
-	plat := "Linux"
-	switch e.Platform() {
-	case "windows":
-		plat = "Windows"
-	case "darwin":
-		plat = "OSX"
-	}
-	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+plat+").sublime-settings")
+	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
 	platPckt := NewPacket(p, platSettings.Settings())
 	e.loadSetting(platPckt)
 
@@ -291,6 +284,16 @@ func (e *Editor) Arch() string {
 
 func (e *Editor) Platform() string {
 	return runtime.GOOS
+}
+
+func (e *Editor) plat() string {
+	switch e.Platform() {
+	case "windows":
+		return "Windows"
+	case "darwin":
+		return "OSX"
+	}
+	return "Linux"
 }
 
 func (e *Editor) Version() string {

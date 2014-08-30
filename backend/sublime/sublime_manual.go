@@ -146,8 +146,8 @@ func init() {
 			panic(err)
 		}
 	}
-	py.AddToPath(path.Join("..", "..", "backend", "packages"))
-	py.AddToPath(path.Join("..", "..", "3rdparty", "bundles"))
+	py.AddToPath(backend.LIME_PACKAGES_PATH)
+	py.AddToPath(backend.LIME_USER_PACKAGES_PATH)
 	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 

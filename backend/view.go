@@ -283,18 +283,10 @@ func (v *View) loadSettings() {
 		if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
 			log4go.Error(err)
 		} else if s := r.FindStringSubmatch(syntax); s != nil {
-			plat := "Linux"
-			switch ed.Platform() {
-			case "windows":
-				plat = "Windows"
-			case "darwin":
-				plat = "OSX"
-			}
-
 			p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
 			ed.loadSetting(NewPacket(p, defSettings.Settings()))
 
-			p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+plat+").sublime-settings")
+			p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
 			ed.loadSetting(NewPacket(p, platSettings.Settings()))
 
 			p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
