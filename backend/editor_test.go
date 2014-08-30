@@ -216,3 +216,14 @@ func TestClipboard(t *testing.T) {
 		t.Errorf("Expected %s to be on the clipboard, but got %s", s, ed.GetClipboard())
 	}
 }
+
+func TestHandleInput(t *testing.T) {
+	ed := GetEditor()
+	kp := KeyPress{Key: 'i'}
+
+	ed.HandleInput(kp)
+
+	if ki := <-ed.keyInput; ki != kp {
+		t.Errorf("Expected %s to be on the input buffer, but got %s", kp, ki)
+	}
+}
