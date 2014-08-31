@@ -233,7 +233,7 @@ func Init() {
 	plugins := backend.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
 		// TODO: add all plugins after supporting all commands
-		if p.Name() == "../../3rdparty/bundles/Vintageous" {
+		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
 			loadPlugin(p, m)
 		}
 	}

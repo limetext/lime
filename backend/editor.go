@@ -177,7 +177,7 @@ func (e *Editor) Init() {
 }
 
 func (e *Editor) loadKeyBinding(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.marshalTo); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
@@ -193,7 +193,7 @@ func (e *Editor) loadKeyBindings() {
 }
 
 func (e *Editor) loadSetting(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.marshalTo); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())

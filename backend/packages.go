@@ -7,6 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"encoding/json"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"os"
 	pt "path"
@@ -37,6 +38,7 @@ type (
 		suffix  string
 		files   []os.FileInfo
 		packets pckts
+		text.HasSettings
 	}
 
 	// Packets are small packages containing 1 file.
@@ -67,7 +69,7 @@ var types = []string{"settings", "keymap"}
 // be ".py". We will use this function at initialization
 // to add user plugins and on new_plugin command
 func NewPlugin(path string, suffix string) *Plugin {
-	var p *Plugin = &Plugin{path, suffix, nil, nil}
+	var p *Plugin = &Plugin{path: path, suffix: suffix}
 	p.Reload()
 	return p
 }
@@ -125,7 +127,7 @@ func (p *Plugin) Reload() {
 				pckt = NewPacket(pt.Join(p.path, f.Name()), new(KeyBindings))
 			} else {
 				// We don't have any settings hierarchy for plugins at this moment
-				pckt = NewPacket(pt.Join(p.path, f.Name()), nil)
+				pckt = NewPacket(pt.Join(p.path, f.Name()), p.Settings())
 			}
 			pckts = append(pckts, pckt)
 		}
