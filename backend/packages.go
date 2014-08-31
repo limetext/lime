@@ -118,20 +118,21 @@ func (p *Plugin) Reload() {
 	for _, f := range fi {
 		if p.suffix != "" && strings.HasSuffix(f.Name(), p.suffix) {
 			files = append(files, f)
-		} else {
-			s := filepath.Ext(f.Name())
-			for _, t := range types {
-				if strings.Contains(s, t) {
-					var pckt *packet
-					if t == "keymap" {
-						pckt = NewPacket(pt.Join(p.path, f.Name()), new(KeyBindings))
-					} else {
-						// We don't have any settings hierarchy for plugins at this moment
-						pckt = NewPacket(pt.Join(p.path, f.Name()), nil)
-					}
-					pckts = append(pckts, pckt)
-				}
+			continue
+		}
+		s := filepath.Ext(f.Name())
+		for _, t := range types {
+			if !strings.Contains(s, t) {
+				continue
 			}
+			var pckt *packet
+			if t == "keymap" {
+				pckt = NewPacket(pt.Join(p.path, f.Name()), new(KeyBindings))
+			} else {
+				// We don't have any settings hierarchy for plugins at this moment
+				pckt = NewPacket(pt.Join(p.path, f.Name()), nil)
+			}
+			pckts = append(pckts, pckt)
 		}
 	}
 	p.files = files

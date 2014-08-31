@@ -271,29 +271,32 @@ func (v *View) reparse(forced bool) {
 func (v *View) loadSettings() {
 	syntax := v.Settings().Get("syntax", "").(string)
 
-	if syntax != "" {
-		defSettings, usrSettings, platSettings := &HasSettings{}, &HasSettings{}, &HasSettings{}
-
-		defSettings.Settings().SetParent(v.window)
-		platSettings.Settings().SetParent(defSettings)
-		usrSettings.Settings().SetParent(platSettings)
-		v.Settings().SetParent(usrSettings)
-
-		ed := GetEditor()
-		if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
-			log4go.Error(err)
-		} else if s := r.FindStringSubmatch(syntax); s != nil {
-			p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
-			ed.loadSetting(NewPacket(p, defSettings.Settings()))
-
-			p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
-			ed.loadSetting(NewPacket(p, platSettings.Settings()))
-
-			p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
-			ed.loadSetting(NewPacket(p, usrSettings.Settings()))
-		}
-	} else {
+	if syntax == "" {
 		v.Settings().SetParent(v.window)
+		return
+	}
+
+	defSettings, usrSettings, platSettings := &HasSettings{}, &HasSettings{}, &HasSettings{}
+
+	defSettings.Settings().SetParent(v.window)
+	platSettings.Settings().SetParent(defSettings)
+	usrSettings.Settings().SetParent(platSettings)
+	v.Settings().SetParent(usrSettings)
+
+	ed := GetEditor()
+	if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
+		log4go.Error(err)
+		return
+	}
+	if s := r.FindStringSubmatch(syntax); s != nil {
+		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
+		ed.loadSetting(NewPacket(p, defSettings.Settings()))
+
+		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
+		ed.loadSetting(NewPacket(p, platSettings.Settings()))
+
+		p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
+		ed.loadSetting(NewPacket(p, usrSettings.Settings()))
 	}
 }
 
