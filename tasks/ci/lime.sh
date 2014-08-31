@@ -50,29 +50,29 @@ function test_all {
 	build_result=$a
 }
 
-fold_start "get_cov" "get coverage tools"
+fold_start "get.cov" "get coverage tools"
 go get code.google.com/p/go.tools/cmd/cover
 go get github.com/mattn/goveralls
 go get github.com/axw/gocov/gocov
-fold_end "get_cov"
+fold_end "get.cov"
 
-fold_start "get_termbox" "get termbox"
+fold_start "get.termbox" "get termbox"
 go get github.com/limetext/lime/frontend/termbox
-fold_end "get_termbox"
+fold_end "get.termbox"
 
 echo "mode: count" > coverage.cov
 
 ret=0
 
-fold_start "test_backend" "test backend"
+fold_start "test.backend" "test backend"
 test_all "backend"
 let ret=ret+$build_result
-fold_end "test_backend"
+fold_end "test.backend"
 
-fold_start "test_termbox" "test termbox"
+fold_start "test.termbox" "test termbox"
 test_all "frontend/termbox"
 let ret=ret+$build_result
-fold_end "test_termbox"
+fold_end "test.termbox"
 
 if [ "$ret" == "0" ]; then
 	fold_start "coveralls" "post to coveralls"
