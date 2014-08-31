@@ -13,7 +13,7 @@ RESET="\e[0m"
 function fold_start {
     if [ "$TRAVIS" == "true" ]; then
         echo -en "travis_fold:start:$1\r"
-        echo "\$ $1"
+        echo "\$ $2"
     fi
 }
 
@@ -50,34 +50,34 @@ function test_all {
 	build_result=$a
 }
 
-fold_start "get coverage tools"
+fold_start "get_cov" "get coverage tools"
 go get code.google.com/p/go.tools/cmd/cover
 go get github.com/mattn/goveralls
 go get github.com/axw/gocov/gocov
-fold_end "get coverage tools"
+fold_end "get_cov"
 
-fold_start "get termbox"
+fold_start "get_termbox" "get termbox"
 go get github.com/limetext/lime/frontend/termbox
-fold_end "get termbox"
+fold_end "get_termbox"
 
 echo "mode: count" > coverage.cov
 
 ret=0
 
-fold_start "test backend"
+fold_start "test_backend" "test backend"
 test_all "backend"
 let ret=ret+$build_result
-fold_end "test backend"
+fold_end "test_backend"
 
-fold_start "test termbox"
+fold_start "test_termbox" "test termbox"
 test_all "frontend/termbox"
 let ret=ret+$build_result
-fold_end "test termbox"
+fold_end "test_termbox"
 
 if [ "$ret" == "0" ]; then
-	fold_start "post to coveralls"
+	fold_start "coveralls" "post to coveralls"
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
-	fold_end "post to coveralls"
+	fold_end "coveralls"
 fi
 
 exit $ret
