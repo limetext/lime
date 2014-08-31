@@ -11,6 +11,7 @@ import (
 	"github.com/limetext/lime/backend/loaders"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
+	"path"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -75,10 +76,11 @@ type (
 	}
 )
 
-const (
-	LIME_USER_PACKAGES_PATH = "../../3rdparty/bundles/"
-	LIME_USER_PACKETS_PATH  = "../../3rdparty/bundles/User/"
-	LIME_DEFAULTS_PATH      = "../../backend/packages/Default/"
+var (
+	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "3rdparty", "bundles")
+	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "3rdparty", "bundles", "User")
+	LIME_PACKAGES_PATH      = path.Join("..", "..", "backend", "packages")
+	LIME_DEFAULTS_PATH      = path.Join("..", "..", "backend", "packages", "Default")
 )
 
 func (h *DummyFrontend) SetDefaultAction(action bool) {
@@ -175,14 +177,13 @@ func (e *Editor) Init() {
 }
 
 func (e *Editor) loadKeyBinding(pkg *packet) {
-	var bindings KeyBindings
-	if err := loaders.LoadJSON(pkg.Get().([]byte), &bindings); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
-	e.keyBindings.merge(&bindings)
+	e.keyBindings.merge(pkg.marshalTo.(*KeyBindings))
 }
 
 func (e *Editor) loadKeyBindings() {
@@ -192,7 +193,7 @@ func (e *Editor) loadKeyBindings() {
 }
 
 func (e *Editor) loadSetting(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), e.Settings()); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
@@ -201,13 +202,25 @@ func (e *Editor) loadSetting(pkg *packet) {
 }
 
 func (e *Editor) loadSettings() {
-	for _, p := range packets.filter("setting") {
-		e.loadSetting(p)
-	}
+	defSettings, platSettings := &HasSettings{}, &HasSettings{}
+	platSettings.Settings().SetParent(defSettings)
+	ed.Settings().SetParent(platSettings)
+
+	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
+	defPckt := NewPacket(p, defSettings.Settings())
+	e.loadSetting(defPckt)
+
+	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
+	platPckt := NewPacket(p, platSettings.Settings())
+	e.loadSetting(platPckt)
+
+	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
+	userPckt := NewPacket(p, e.Settings())
+	e.loadSetting(userPckt)
 }
 
 func (e *Editor) PackagesPath() string {
-	return "../../3rdparty/bundles/"
+	return LIME_USER_PACKAGES_PATH
 }
 
 func (e *Editor) Console() *View {
@@ -267,6 +280,16 @@ func (e *Editor) Arch() string {
 
 func (e *Editor) Platform() string {
 	return runtime.GOOS
+}
+
+func (e *Editor) plat() string {
+	switch e.Platform() {
+	case "windows":
+		return "Windows"
+	case "darwin":
+		return "OSX"
+	}
+	return "Linux"
 }
 
 func (e *Editor) Version() string {

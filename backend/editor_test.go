@@ -7,6 +7,7 @@ package backend
 import (
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 )
@@ -34,7 +35,7 @@ func TestLoadKeyBinding(t *testing.T) {
 	var kb KeyBindings
 
 	editor := GetEditor()
-	editor.loadKeyBinding(NewPacket("testdata/Default.sublime-keymap"))
+	editor.loadKeyBinding(NewPacket("testdata/Default.sublime-keymap", new(KeyBindings)))
 
 	editor.keyBindings.filter(69, &kb)
 	if kb.Len() == 69 {
@@ -54,7 +55,7 @@ func TestLoadKeyBindings(t *testing.T) {
 
 func TestLoadSetting(t *testing.T) {
 	editor := GetEditor()
-	editor.loadSetting(NewPacket("testdata/Default.sublime-settings"))
+	editor.loadSetting(NewPacket("testdata/Default.sublime-settings", editor.Settings()))
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
@@ -67,11 +68,31 @@ func TestLoadSetting(t *testing.T) {
 }
 
 func TestLoadSettings(t *testing.T) {
+	LIME_USER_PACKAGES_PATH = path.Join("..", "3rdparty", "bundles")
+	LIME_USER_PACKETS_PATH = path.Join("..", "3rdparty", "bundles", "User")
+	LIME_DEFAULTS_PATH = path.Join("packages", "Default")
+
 	editor := GetEditor()
 	editor.loadSettings()
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
+	}
+
+	plat := editor.Settings().Parent()
+	switch editor.Platform() {
+	case "windows":
+		if plat.Settings().Get("font_face", "") != "Consolas" {
+			t.Errorf("Expected windows font_face be Consolas, but is %s", plat.Settings().Get("font_face", ""))
+		}
+	case "darwin":
+		if plat.Settings().Get("font_face", "") != "Menlo Regular" {
+			t.Errorf("Expected OSX font_face be Menlo Regular, but is %s", plat.Settings().Get("font_face", ""))
+		}
+	default:
+		if plat.Settings().Get("font_face", "") != "Monospace" {
+			t.Errorf("Expected Linux font_face be Monospace, but is %s", plat.Settings().Get("font_face", ""))
+		}
 	}
 }
 
@@ -133,7 +154,7 @@ func TestWatchingSettings(t *testing.T) {
 
 	var path string = "testdata/Default.sublime-settings"
 	editor := GetEditor()
-	editor.loadSetting(NewPacket(path))
+	editor.loadSetting(NewPacket(path, editor.Settings()))
 
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {

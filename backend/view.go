@@ -76,6 +76,7 @@ func newView(w *Window) *View {
 		if syn != ret.cursyntax {
 			ret.cursyntax = syn
 			ret.reparse(true)
+			ret.loadSettings()
 		}
 	})
 
@@ -258,6 +259,43 @@ func (v *View) reparse(forced bool) {
 	}
 	if len(v.reparseChan) < cap(v.reparseChan) || forced {
 		v.reparseChan <- parseReq{forced}
+	}
+}
+
+// Will load view settings respect to current syntax
+// e.g if current syntax is Python settings order will be:
+// Packages/Python/Python.sublime-settings
+// Packages/Python/Python (Windows).sublime-settings
+// Packages/User/Python.sublime-settings
+// <Buffer Specific Settings>
+func (v *View) loadSettings() {
+	syntax := v.Settings().Get("syntax", "").(string)
+
+	if syntax == "" {
+		v.Settings().SetParent(v.window)
+		return
+	}
+
+	defSettings, usrSettings, platSettings := &HasSettings{}, &HasSettings{}, &HasSettings{}
+
+	defSettings.Settings().SetParent(v.window)
+	platSettings.Settings().SetParent(defSettings)
+	usrSettings.Settings().SetParent(platSettings)
+	v.Settings().SetParent(usrSettings)
+
+	ed := GetEditor()
+	if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
+		log4go.Error(err)
+		return
+	} else if s := r.FindStringSubmatch(syntax); s != nil {
+		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
+		ed.loadSetting(NewPacket(p, defSettings.Settings()))
+
+		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
+		ed.loadSetting(NewPacket(p, platSettings.Settings()))
+
+		p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
+		ed.loadSetting(NewPacket(p, usrSettings.Settings()))
 	}
 }
 

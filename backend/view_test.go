@@ -547,6 +547,19 @@ func TestCloseView2(t *testing.T) {
 	}
 }
 
+func TestViewLoadSettings(t *testing.T) {
+	LIME_USER_PACKETS_PATH = "../3rdparty/bundles/User/"
+	LIME_PACKAGES_PATH = "packages/"
+
+	w := GetEditor().NewWindow()
+	v := w.NewFile()
+
+	v.Settings().Set("syntax", "../3rdparty/bundles/python.tmbundle/Syntaxes/Python.tmLanguage")
+	if v.Settings().Get("translate_tabs_to_spaces", "false").(bool) != true {
+		t.Error("Expected `translate_tabs_to_spaces` be true for python syntax but is false")
+	}
+}
+
 func BenchmarkScopeNameLinear(b *testing.B) {
 	var (
 		w Window

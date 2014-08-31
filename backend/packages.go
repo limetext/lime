@@ -6,6 +6,8 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"encoding/json"
+	"github.com/quarnster/util/text"
 	"io/ioutil"
 	"os"
 	pt "path"
@@ -36,6 +38,7 @@ type (
 		suffix  string
 		files   []os.FileInfo
 		packets pckts
+		text.HasSettings
 	}
 
 	// Packets are small packages containing 1 file.
@@ -43,6 +46,9 @@ type (
 	// are Packet
 	packet struct {
 		path string
+		// the packet content will be Unmarshal to this variable
+		// so on reload we know where we should unmarshal it again
+		marshalTo json.Unmarshaler
 	}
 
 	// Useful for managing packets for plugins
@@ -54,8 +60,7 @@ type (
 // scanning for user settings, snippets and etc we
 // will add files which their suffix contains one of
 // these keywords
-// TODO: commands, snippets etc should be here
-var types = []string{"settings", "keymap", "commands"}
+var types = []string{"settings", "keymap"}
 
 // Initializes a new plugin whith loading all of the
 // settings, keymaps and etc. Suffix variable show's
@@ -64,7 +69,7 @@ var types = []string{"settings", "keymap", "commands"}
 // be ".py". We will use this function at initialization
 // to add user plugins and on new_plugin command
 func NewPlugin(path string, suffix string) *Plugin {
-	var p *Plugin = &Plugin{path, suffix, nil, nil}
+	var p *Plugin = &Plugin{path: path, suffix: suffix}
 	p.Reload()
 	return p
 }
@@ -110,13 +115,21 @@ func (p *Plugin) Reload() {
 	for _, f := range fi {
 		if p.suffix != "" && strings.HasSuffix(f.Name(), p.suffix) {
 			files = append(files, f)
-		} else {
-			s := filepath.Ext(f.Name())
-			for _, t := range types {
-				if strings.Contains(s, t) {
-					pckts = append(pckts, NewPacket(pt.Join(p.path, f.Name())))
-				}
+			continue
+		}
+		s := filepath.Ext(f.Name())
+		for _, t := range types {
+			if !strings.Contains(s, t) {
+				continue
 			}
+			var pckt *packet
+			if t == "keymap" {
+				pckt = NewPacket(pt.Join(p.path, f.Name()), new(KeyBindings))
+			} else {
+				// We don't have any settings hierarchy for plugins at this moment
+				pckt = NewPacket(pt.Join(p.path, f.Name()), p.Settings())
+			}
+			pckts = append(pckts, pckt)
 		}
 	}
 	p.files = files
@@ -124,8 +137,8 @@ func (p *Plugin) Reload() {
 }
 
 // Initializes new packet with specific path
-func NewPacket(path string) *packet {
-	return &packet{path}
+func NewPacket(path string, marshal json.Unmarshaler) *packet {
+	return &packet{path, marshal}
 }
 
 // Returns packet file data if any error occurred
@@ -134,7 +147,7 @@ func (p *packet) Get() interface{} {
 	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
 		log4go.Error("Couldn't read file: %s", err)
-		return nil
+		return []byte{}
 	}
 	return d
 }
@@ -147,9 +160,7 @@ func (p *packet) Name() string {
 func (p *packet) Reload() {
 	ed := GetEditor()
 	if p.group() == "settings" {
-		// This should be commented until we have complete
-		// settings hierarchy
-		// ed.loadSetting(p)
+		ed.loadSetting(p)
 	} else if p.group() == "keymap" {
 		ed.loadKeyBinding(p)
 	}
@@ -163,6 +174,10 @@ func (p *packet) group() string {
 		}
 	}
 	return ""
+}
+
+func (p *packet) UnmarshalJSON(data []byte) error {
+	return p.marshalTo.UnmarshalJSON(data)
 }
 
 // Returns packets with specific type
@@ -215,8 +230,9 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 }
 
 // Initialize scan for loading user and limetext defaults
-// i.e settings, commands, snippets etc
-func ScanPackets(path string) []*packet {
+// except settings because for settings we have a hierarchy
+// i.e commands, snippets etc
+func scanPackets(path string) []*packet {
 	var packets []*packet
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -225,8 +241,8 @@ func ScanPackets(path string) []*packet {
 		}
 		s := filepath.Ext(info.Name())
 		for _, t := range types {
-			if strings.Contains(s, t) {
-				packets = append(packets, NewPacket(path))
+			if t != "settings" && strings.Contains(s, t) {
+				packets = append(packets, NewPacket(path, new(KeyBindings)))
 			}
 		}
 		return nil
@@ -243,8 +259,8 @@ var packets pckts
 
 // Loading the default packets
 func init() {
-	pcts := ScanPackets(LIME_DEFAULTS_PATH)
-	pcts = append(pcts, ScanPackets(LIME_USER_PACKETS_PATH)...)
+	pcts := scanPackets(LIME_DEFAULTS_PATH)
+	pcts = append(pcts, scanPackets(LIME_USER_PACKETS_PATH)...)
 	for _, p := range pcts {
 		packets = append(packets, p)
 	}

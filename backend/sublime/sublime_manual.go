@@ -146,9 +146,9 @@ func init() {
 			panic(err)
 		}
 	}
-	py.AddToPath("../../backend/packages/")
-	py.AddToPath("../../3rdparty/bundles/")
-	py.AddToPath("../../backend/sublime/")
+	py.AddToPath(backend.LIME_PACKAGES_PATH)
+	py.AddToPath(backend.LIME_USER_PACKAGES_PATH)
+	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 
 func loadPlugin(p *backend.Plugin, m *py.Module) {
@@ -233,7 +233,7 @@ func Init() {
 	plugins := backend.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
 		// TODO: add all plugins after supporting all commands
-		if p.Name() == "../../3rdparty/bundles/Vintageous" {
+		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
 			loadPlugin(p, m)
 		}
 	}
