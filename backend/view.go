@@ -287,8 +287,7 @@ func (v *View) loadSettings() {
 	if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
 		log4go.Error(err)
 		return
-	}
-	if s := r.FindStringSubmatch(syntax); s != nil {
+	} else if s := r.FindStringSubmatch(syntax); s != nil {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
 		ed.loadSetting(NewPacket(p, defSettings.Settings()))
 

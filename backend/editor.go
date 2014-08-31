@@ -177,13 +177,13 @@ func (e *Editor) Init() {
 }
 
 func (e *Editor) loadKeyBinding(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.MarshalTo()); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.marshalTo); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
-	e.keyBindings.merge(pkg.MarshalTo().(*KeyBindings))
+	e.keyBindings.merge(pkg.marshalTo.(*KeyBindings))
 }
 
 func (e *Editor) loadKeyBindings() {
@@ -193,7 +193,7 @@ func (e *Editor) loadKeyBindings() {
 }
 
 func (e *Editor) loadSetting(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.MarshalTo()); err != nil {
+	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg.marshalTo); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())

@@ -6,6 +6,7 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	pt "path"
@@ -27,12 +28,6 @@ type (
 		Reload()
 	}
 
-	// This is a temporary type for being able to
-	// have packet owner in packet type for reloading
-	marshalTo interface {
-		UnmarshalJSON([]byte) error
-	}
-
 	// Plugin is a Package type containing some files
 	// with specific suffix that could be interpreted by
 	// lime text api(currently python) and some
@@ -51,7 +46,7 @@ type (
 		path string
 		// the packet content will be Unmarshal to this variable
 		// so on reload we know where we should unmarshal it again
-		marshal marshalTo
+		marshalTo json.Unmarshaler
 	}
 
 	// Useful for managing packets for plugins
@@ -140,7 +135,7 @@ func (p *Plugin) Reload() {
 }
 
 // Initializes new packet with specific path
-func NewPacket(path string, marshal marshalTo) *packet {
+func NewPacket(path string, marshal json.Unmarshaler) *packet {
 	return &packet{path, marshal}
 }
 
@@ -179,8 +174,8 @@ func (p *packet) group() string {
 	return ""
 }
 
-func (p *packet) MarshalTo() marshalTo {
-	return p.marshal
+func (p *packet) UnmarshalJSON(data []byte) error {
+	return p.marshalTo.UnmarshalJSON(data)
 }
 
 // Returns packets with specific type
