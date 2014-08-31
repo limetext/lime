@@ -56,7 +56,10 @@ func (vr *ViewRegions) Cull(viewport text.Region) {
 	nr := []text.Region{}
 	for _, r := range vr.Regions.Regions() {
 		if viewport.Intersects(r) {
-			nr = append(nr, viewport.Intersection(r))
+			in := viewport.Intersection(r)
+			if in.Size() != 0 {
+				nr = append(nr, in)
+			}
 		}
 	}
 	vr.Regions.Clear()
