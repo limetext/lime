@@ -66,18 +66,18 @@ ret=0
 
 fold_start "test.backend" "test backend"
 test_all "backend"
-let ret=ret+$build_result
+let ret=$ret+$build_result
 fold_end "test.backend"
 
 fold_start "test.termbox" "test termbox"
 test_all "frontend/termbox"
-let ret=ret+$build_result
+let ret=$ret+$build_result
 fold_end "test.termbox"
 
 if [ "$ret" == "0" ]; then
 	fold_start "coveralls" "post to coveralls"
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
-	let ret=ret+$?
+	let ret=$ret+$?
 	fold_end "coveralls"
 fi
 
