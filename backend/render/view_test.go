@@ -24,27 +24,27 @@ func TestViewRegionsCull(t *testing.T) {
 		{
 			[]text.Region{{100, 100}},
 			text.Region{100, 100},
-			[]text.Region{{100, 100}},
+			[]text.Region{},
 		},
 		{
 			[]text.Region{{100, 100}},
 			text.Region{95, 105},
-			[]text.Region{{100, 100}},
+			[]text.Region{},
 		},
 		{
 			[]text.Region{{100, 100}},
 			text.Region{95, 100},
-			[]text.Region{{100, 100}},
+			[]text.Region{},
 		},
 		{
 			[]text.Region{{100, 200}},
 			text.Region{150, 150},
-			[]text.Region{{150, 150}},
+			[]text.Region{},
 		},
 		{
 			[]text.Region{{100, 200}},
 			text.Region{90, 100},
-			[]text.Region{{100, 100}},
+			[]text.Region{},
 		},
 		{
 			[]text.Region{{100, 200}},
