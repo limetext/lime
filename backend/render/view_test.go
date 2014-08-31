@@ -13,8 +13,8 @@ import (
 func TestViewRegionsCull(t *testing.T) {
 	tests := []struct {
 		regions []text.Region
-		cull text.Region
-		exp []text.Region
+		cull    text.Region
+		exp     []text.Region
 	}{
 		{
 			[]text.Region{{100, 200}},
@@ -109,9 +109,9 @@ func TestViewRegionsCull(t *testing.T) {
 
 func TestViewRegionsClone(t *testing.T) {
 	vr := ViewRegions{
-		Scope:   "testScope",
-		Icon:    "testIcon",
-		Flags:   100,
+		Scope: "testScope",
+		Icon:  "testIcon",
+		Flags: 100,
 	}
 	vr.Regions.AddAll([]text.Region{{0, 0}, {120, 300}, {24, 34}, {45, 40}})
 
