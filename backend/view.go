@@ -858,3 +858,23 @@ func (v *View) Classify(point int) (res int) {
 	}
 	return
 }
+
+// Finds the next location after point that matches the given classes
+// Searches backward if forward is false
+func (v *View) FindByClass(point int, forward bool, classes int) Region {
+	i := -1
+	if forward {
+		i = 1
+	}
+	for p := point; ; p += i {
+		if p <= 0 {
+			return Region{0, 0}
+		}
+		if p >= v.buffer.Size() {
+			return Region{v.buffer.Size(), v.buffer.Size()}
+		}
+		if v.Classify(p)&classes == classes {
+			return Region{p, p}
+		}
+	}
+}

@@ -411,6 +411,63 @@ func TestClassify(t *testing.T) {
 	}
 }
 
+func TestFindByClass(t *testing.T) {
+	var w Window
+	tests := []struct {
+		text    string
+		point   int
+		forward bool
+		classes int
+		expect  Region
+	}{
+		{
+			"abc Hi -test lime",
+			1,
+			true,
+			CLASS_PUNCTUATION_START,
+			Region{7, 7},
+		},
+		{
+			"abc Hi -test lime",
+			8,
+			true,
+			CLASS_PUNCTUATION_START,
+			Region{17, 17},
+		},
+		{
+			"abc Hi -test lime",
+			5,
+			true,
+			CLASS_WORD_START,
+			Region{8, 8},
+		},
+		{
+			"abc Hi -test lime",
+			5,
+			false,
+			CLASS_EMPTY_LINE,
+			Region{0, 0},
+		},
+		{
+			"abc Hi -test lime",
+			9,
+			false,
+			CLASS_SUB_WORD_START,
+			Region{4, 4},
+		},
+	}
+
+	for i, test := range tests {
+		v := w.NewFile()
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+		if res := v.FindByClass(test.point, test.forward, test.classes); res != test.expect {
+			t.Errorf("Test %d: Expected %d from view.FindByClass but, got %d", i, test.expect, res)
+		}
+	}
+}
+
 func TestSetBuffer(t *testing.T) {
 	var v View
 

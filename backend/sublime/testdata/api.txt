@@ -254,6 +254,7 @@ View
 	erase_regions
 	extract_scope
 	file_name
+	find_by_class
 	full_line
 	get_regions
 	has_non_empty_selection_region
