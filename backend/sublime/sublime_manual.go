@@ -196,11 +196,12 @@ func observePlugins(m *py.Module) {
 	for {
 		select {
 		case ev := <-watcher.Event:
-			if ev.IsModify() {
-				if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
-					p.Reload()
-					loadPlugin(p.Package().(*backend.Plugin), m)
-				}
+			if !(ev.IsModify() || ev.IsCreate()) {
+				continue
+			}
+			if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
+				p.Reload()
+				loadPlugin(p.Package().(*backend.Plugin), m)
 			}
 		case err := <-watcher.Error:
 			log4go.Error("error:", err)
