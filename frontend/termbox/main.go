@@ -388,8 +388,6 @@ func (t *tbfe) loop() {
 		v = w.NewFile()
 	}
 
-	sel := v.Sel()
-
 	t.settings = getSettings(v)
 	c.Buffer().AddCallback(t.scroll)
 
@@ -397,8 +395,6 @@ func (t *tbfe) loop() {
 	loadTextMateScheme()
 	setColorMode()
 	setSchemeSettings()
-	sel.Clear()
-	sel.Add(Region{0, 0})
 
 	evchan := make(chan termbox.Event, 32)
 	defer func() {

@@ -73,6 +73,8 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 		v.Insert(e, 0, string(d))
 	}
 	v.EndEdit(e)
+	v.selection.Clear()
+	v.selection.Add(text.Region{0, 0})
 	v.SetScratch(false)
 	OnLoad.Call(v)
 

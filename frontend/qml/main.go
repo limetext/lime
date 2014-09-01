@@ -632,13 +632,9 @@ func (t *qmlfrontend) loop() (err error) {
 	v := w.OpenFile("main.go", 0)
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
-	v.Sel().Clear()
-	v.Sel().Add(Region{0, 0})
 	v = w.OpenFile("../../backend/editor.go", 0)
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
-	v.Sel().Clear()
-	v.Sel().Add(Region{0, 0})
 
 	ed.Init()
 	sublime.Init()
