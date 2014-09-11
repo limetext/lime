@@ -11,6 +11,28 @@ import (
 	"testing"
 )
 
+func TestLanguageProviderLanguageFromScope(t *testing.T) {
+	l, _ := Provider.LanguageFromFile("testdata/Go.tmLanguage")
+
+	if _, err := Provider.LanguageFromScope(l.ScopeName); err != nil {
+		t.Errorf("Tried to load %s, but got an error: %v", l.ScopeName, err)
+	}
+
+	if _, err := Provider.LanguageFromScope("MissingScope"); err == nil {
+		t.Error("Tried to load MissingScope, expecting to get an error, but didn't")
+	}
+}
+
+func TestLanguageProviderLanguageFromFile(t *testing.T) {
+	if _, err := Provider.LanguageFromFile("testdata/Go.tmLanguage"); err != nil {
+		t.Errorf("Tried to load testdata/Go.tmLanguage, but got an error: %v", err)
+	}
+
+	if _, err := Provider.LanguageFromFile("MissingFile"); err == nil {
+		t.Error("Tried to load MissingFile, expecting to get an error, but didn't")
+	}
+}
+
 func TestTmLanguage(t *testing.T) {
 	files := []string{
 		"testdata/Property List (XML).tmLanguage",

@@ -77,6 +77,7 @@ type (
 		hits           int
 		misses         int
 	}
+
 	RootPattern struct {
 		Pattern
 	}
