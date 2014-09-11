@@ -49,8 +49,8 @@ func TestUndoStackAdd(t *testing.T) {
 		t.Errorf("Expected the UndoStack to only contain 2 things, but it had %d", len(us.actions))
 	}
 
-	us.Undo(false);
-	us.Undo(false);
+	us.Undo(false)
+	us.Undo(false)
 
 	e = v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -79,7 +79,7 @@ func TestUndoStackUndo(t *testing.T) {
 	v.EndEdit(e)
 	us.Add(e)
 
-	us.Undo(false);
+	us.Undo(false)
 
 	if us.Position() != 1 {
 		t.Errorf("Expected the UndoStack positon to be 1, but it was %d", us.Position())
@@ -103,8 +103,8 @@ func TestUndoStackRedo(t *testing.T) {
 	v.EndEdit(e)
 	us.Add(e)
 
-	us.Undo(false);
-	us.Redo(false);
+	us.Undo(false)
+	us.Redo(false)
 
 	if us.Position() != 2 {
 		t.Errorf("Expected the UndoStack positon to be 1, but it was %d", us.Position())
