@@ -7,17 +7,22 @@ import sublime
 import sys
 import importlib
 
+
 class Command(object):
+
     def is_enabled(self, args=None):
         return True
 
     def is_visible(self, args=None):
         return True
 
+
 class ApplicationCommand(Command):
     pass
 
+
 class WindowCommand(Command):
+
     def __init__(self, wnd):
         self.window = wnd
 
@@ -30,7 +35,9 @@ class WindowCommand(Command):
         else:
             self.run()
 
+
 class TextCommand(Command):
+
     def __init__(self, view):
         self.view = view
 
@@ -42,6 +49,7 @@ class TextCommand(Command):
             self.run(edit_token, **kwargs)
         else:
             self.run(edit_token)
+
 
 class EventListener(object):
     pass
@@ -59,14 +67,17 @@ def fn(fullname):
             return f
     return None
 
+
 class __myfinder:
+
     class myloader(object):
+
         def load_module(self, fullname):
             if fullname in sys.modules:
                 return sys.modules[fullname]
             f = fn(fullname)
             if not f.endswith(".py"):
-                print("new module: %s" %f)
+                print("new module: %s" % f)
                 m = imp.new_module(fullname)
                 m.__path__ = f
                 sys.modules[fullname] = m
@@ -75,10 +86,11 @@ class __myfinder:
 
     def find_module(self, fullname, path=None):
         f = fn(fullname)
-        if f != None and "/lime/" in f: # TODO
+        if f and "/lime/" in f:  # TODO
             return self.myloader()
 
 sys.meta_path.append(__myfinder())
+
 
 def reload_plugin(module):
     def cmdname(name):
@@ -95,7 +107,7 @@ def reload_plugin(module):
     try:
         module = importlib.import_module(module)
         for item in inspect.getmembers(module):
-            if type(EventListener) != type(item[1]):
+            if not isinstance(item[1], type(EventListener)):
                 continue
 
             try:
@@ -105,7 +117,7 @@ def reload_plugin(module):
                     toadd = getattr(inst, "on_query_context", None)
                     if toadd:
                         sublime.OnQueryContextGlue(toadd)
-                    for name in ["on_load"]: #TODO
+                    for name in ["on_load"]:  # TODO
                         toadd = getattr(inst, name, None)
                         if toadd:
                             sublime.ViewEventGlue(toadd, name)
@@ -124,6 +136,7 @@ def reload_plugin(module):
 
 
 class MyLogger:
+
     def __init__(self):
         self.data = ""
 

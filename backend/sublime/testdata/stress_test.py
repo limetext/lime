@@ -1,6 +1,5 @@
 import sys
 import traceback
-import types
 try:
     import sublime
     v = sublime.test_window.new_file()
