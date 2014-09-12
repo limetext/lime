@@ -5,6 +5,7 @@ package main
 
 import (
 	"code.google.com/p/log4go"
+	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
@@ -18,7 +19,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"flag"
 )
 
 var (
