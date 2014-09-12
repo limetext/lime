@@ -6,6 +6,8 @@ package commands
 
 import (
 	. "github.com/limetext/lime/backend"
+	"github.com/quarnster/util/text"
+	"sort"
 	"strings"
 )
 
@@ -23,13 +25,24 @@ type (
 	}
 )
 
-func (c *CopyCommand) Run(v *View, e *Edit) error {
-	// TODO: Copy the entire line if there is no selection.
-
+func getSelSubstrs(v *View, e *Edit) []string {
 	s := make([]string, len(v.Sel().Regions()))
-	for i, r := range v.Sel().Regions() {
+	rs := &text.RegionSet{}
+	rs.AddAll(v.Sel().Regions())
+	sort.Sort(rs)
+	for i, r := range rs.Regions() {
 		s[i] = v.Buffer().Substr(r)
 	}
+
+	return s
+}
+
+func (c *CopyCommand) Run(v *View, e *Edit) error {
+	// TODO: Copy the entire line if there is no selection.
+	// TODO: Distinguish copying multiple regions from one
+	//		 region with multiple lines.
+
+	s := getSelSubstrs(v, e)
 
 	GetEditor().SetClipboard(strings.Join(s, "\n"))
 
@@ -38,10 +51,15 @@ func (c *CopyCommand) Run(v *View, e *Edit) error {
 
 func (c *CutCommand) Run(v *View, e *Edit) error {
 	// TODO: Cut the entire line if there is no selection.
+	// TODO: Distinguish copying multiple regions from one
+	//		 region with multiple lines.
 
-	s := make([]string, len(v.Sel().Regions()))
-	for i, r := range v.Sel().Regions() {
-		s[i] = v.Buffer().Substr(r)
+	s := getSelSubstrs(v, e)
+
+	rs := &text.RegionSet{}
+	rs.AddAll(v.Sel().Regions())
+	sort.Sort(sort.Reverse(rs))
+	for _, r := range rs.Regions() {
 		v.Erase(e, r)
 	}
 
@@ -58,7 +76,10 @@ func (c *PasteCommand) Run(v *View, e *Edit) error {
 
 	ed := GetEditor()
 
-	for _, r := range v.Sel().Regions() {
+	rs := &text.RegionSet{}
+	rs.AddAll(v.Sel().Regions())
+	sort.Sort(sort.Reverse(rs))
+	for _, r := range rs.Regions() {
 		v.Replace(e, r, ed.GetClipboard())
 	}
 
