@@ -26,9 +26,15 @@ import (
 	"time"
 )
 
+const (
+	qmlMainFile = "main.qml"
+	qmlViewFile = "LimeView.qml"
+)
+
 var (
-	scheme *textmate.Theme
-	blink  bool
+	limeViewComponent qml.Object
+	scheme            *textmate.Theme
+	blink             bool
 
 	// http://qt-project.org/doc/qt-5.1/qtcore/qt.html#Key-enum
 	lut = map[int]backend.Key{
@@ -251,7 +257,6 @@ type (
 	// the qml.Window
 	frontendWindow struct {
 		bw     *backend.Window
-		Len    int
 		views  []*frontendView
 		window *qml.Window
 	}
@@ -260,7 +265,7 @@ type (
 	// with the qml code that then ends up rendering it.
 	frontendView struct {
 		bv            *backend.View
-		Len           int
+		qv            qml.Object
 		FormattedLine []*lineStruct
 		Title         lineStruct
 	}
@@ -274,6 +279,9 @@ func htmlcol(c render.Colour) string {
 	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
 
+// Instantiates a new window, and launches a new goroutine waiting for it
+// to be closed. The WaitGroup is increased at function entry and decreased
+// once the window closes.
 func (fw *frontendWindow) launch(wg *sync.WaitGroup, component qml.Object) {
 	wg.Add(1)
 	fw.window = component.CreateWindow(nil)
@@ -289,6 +297,7 @@ func (fw *frontendWindow) launch(wg *sync.WaitGroup, component qml.Object) {
 func (fw *frontendWindow) View(idx int) *frontendView {
 	return fw.views[idx]
 }
+
 func (fw *frontendWindow) ActiveViewIndex() int {
 	for i, v := range fw.views {
 		if v.bv == fw.bw.ActiveView() {
@@ -438,13 +447,39 @@ func (t *qmlfrontend) qmlChanged(value, field interface{}) {
 	}
 }
 
+func (fv *frontendView) Fix(obj qml.Object) {
+	fv.qv = obj
+
+	for i := range fv.FormattedLine {
+		_ = i
+		obj.Call("addLine")
+	}
+}
+
 func (fv *frontendView) bufferChanged(buf Buffer, pos, delta int) {
 	prof := util.Prof.Enter("frontendView.bufferChanged")
 	defer prof.Exit()
+
 	row1, _ := buf.RowCol(pos)
 	row2, _ := buf.RowCol(pos + delta)
 	if row1 > row2 {
 		row1, row2 = row2, row1
+	}
+
+	if delta > 0 && fv.qv != nil {
+		r1 := row1
+		if add := strings.Count(buf.Substr(Region{pos, pos + delta}), "\n"); add > 0 {
+			nn := make([]*lineStruct, len(fv.FormattedLine)+add)
+			copy(nn, fv.FormattedLine[:r1])
+			copy(nn[r1+add:], fv.FormattedLine[r1:])
+			for i := 0; i < add; i++ {
+				nn[r1+i] = &lineStruct{Text: ""}
+			}
+			fv.FormattedLine = nn
+			for i := 0; i < add; i++ {
+				fv.qv.Call("insertLine", r1+i)
+			}
+		}
 	}
 
 	for i := row1; i <= row2; i++ {
@@ -459,8 +494,9 @@ func (fv *frontendView) formatLine(line int) {
 	vr := fv.bv.Buffer().Line(fv.bv.Buffer().TextPoint(line, 0))
 	for line >= len(fv.FormattedLine) {
 		fv.FormattedLine = append(fv.FormattedLine, &lineStruct{Text: ""})
-		fv.Len = len(fv.FormattedLine)
-		t.qmlChanged(fv, &fv.Len)
+		if fv.qv != nil {
+			fv.qv.Call("addLine")
+		}
 	}
 	if vr.Size() == 0 {
 		// TODO: draw cursor if here
@@ -512,57 +548,77 @@ func (t *qmlfrontend) DefaultFg() color.RGBA {
 	return color.RGBA(c.Foreground)
 }
 
+func (fv *frontendView) onChange(name string) {
+	if name != "lime.syntax.updated" {
+		return
+	}
+	// force redraw, as the syntax regions might have changed...
+	for i := range fv.FormattedLine {
+		fv.formatLine(i)
+	}
+}
+
+// Called when a new view is opened
+func (t *qmlfrontend) onNew(v *backend.View) {
+	fv := &frontendView{bv: v}
+	v.Buffer().AddCallback(fv.bufferChanged)
+	v.Settings().AddOnChange("blah", fv.onChange)
+
+	fv.Title.Text = v.Buffer().FileName()
+	if len(fv.Title.Text) == 0 {
+		fv.Title.Text = "untitled"
+	}
+
+	w2 := t.windows[v.Window()]
+	w2.views = append(w2.views, fv)
+
+	tabs := w2.window.ObjectByName("tabs")
+	tab := tabs.Call("addTab", "", limeViewComponent).(qml.Object)
+	try_now := func() {
+		item := tab.Property("item").(qml.Object)
+		if item.Addr() == 0 {
+			// Happens as the item isn't actually loaded until we switch to the tab.
+			// Hence connecting to the loaded signal
+			return
+		}
+		item.Set("myView", fv)
+	}
+	tab.On("loaded", try_now)
+	try_now()
+}
+
+// called when a view is closed
+func (t *qmlfrontend) onClose(v *backend.View) {
+	w2 := t.windows[v.Window()]
+	for i := range w2.views {
+		if w2.views[i].bv == v {
+			w2.window.ObjectByName("tabs").Call("removeTab", i)
+			copy(w2.views[i:], w2.views[i+1:])
+			w2.views = w2.views[:len(w2.views)-1]
+			return
+		}
+	}
+	log4go.Error("Couldn't find closed view...")
+}
+
+// called when a view has loaded
+func (t *qmlfrontend) onLoad(v *backend.View) {
+	w2 := t.windows[v.Window()]
+	i := 0
+	for i, _ = range w2.views {
+		if w2.views[i].bv == v {
+			break
+		}
+	}
+	v2 := w2.views[i]
+	v2.Title.Text = v.Buffer().FileName()
+	t.qmlChanged(v2, &v2.Title)
+}
+
 func (t *qmlfrontend) loop() (err error) {
-
-	backend.OnNew.Add(func(v *backend.View) {
-		fv := &frontendView{bv: v}
-		v.Buffer().AddCallback(fv.bufferChanged)
-		v.Settings().AddOnChange("blah", func(name string) {
-			if name == "lime.syntax.updated" {
-				// force redraw, as the syntax regions might have changed...
-				for i := range fv.FormattedLine {
-					fv.formatLine(i)
-				}
-			}
-		})
-
-		fv.Title.Text = v.Buffer().FileName()
-		if len(fv.Title.Text) == 0 {
-			fv.Title.Text = "untitled"
-		}
-
-		w2 := t.windows[v.Window()]
-		w2.views = append(w2.views, fv)
-		w2.Len = len(w2.views)
-		t.qmlChanged(w2, &w2.Len)
-	})
-
-	backend.OnClose.Add(func(v *backend.View) {
-		w2 := t.windows[v.Window()]
-		for i := range w2.views {
-			if w2.views[i].bv == v {
-				copy(w2.views[i:], w2.views[i+1:])
-				w2.views = w2.views[:len(w2.views)-1]
-				w2.Len = len(w2.views)
-				t.qmlChanged(w2, &w2.Len)
-				return
-			}
-		}
-		log4go.Error("Couldn't find closed view...")
-	})
-
-	backend.OnLoad.Add(func(v *backend.View) {
-		w2 := t.windows[v.Window()]
-		i := 0
-		for i, _ = range w2.views {
-			if w2.views[i].bv == v {
-				break
-			}
-		}
-		v2 := w2.views[i]
-		v2.Title.Text = v.Buffer().FileName()
-		t.qmlChanged(v2, &v2.Title)
-	})
+	backend.OnNew.Add(t.onNew)
+	backend.OnClose.Add(t.onClose)
+	backend.OnLoad.Add(t.onLoad)
 
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
@@ -573,7 +629,6 @@ func (t *qmlfrontend) loop() (err error) {
 	c.Buffer().AddCallback(t.Console.bufferChanged)
 	c.Buffer().AddCallback(t.scroll)
 
-	const qmlMainFile = "main.qml"
 	var (
 		engine    *qml.Engine
 		component qml.Object
@@ -603,6 +658,10 @@ func (t *qmlfrontend) loop() (err error) {
 
 		log4go.Debug("loadfile")
 		component, err = engine.LoadFile(qmlMainFile)
+		if err != nil {
+			return err
+		}
+		limeViewComponent, err = engine.LoadFile(qmlViewFile)
 		return
 	}
 	if err := newEngine(); err != nil {

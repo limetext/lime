@@ -17,11 +17,21 @@ Item {
         anchors.fill: parent
     }
     onMyViewChanged: {
-        view.myView = myView;
+        if (!isMinimap) {
+            view.model.clear();
+            view.myView = myView;
+            myView.fix(viewItem);
+        }
         if (myView != null) {
             viewItem.fontSize = isMinimap ? 4 : parseFloat(myView.setting("font_size"));
             viewItem.fontFace = String(myView.setting("font_face"));
         }
+    }
+    function addLine() {
+        view.model.append({});
+    }
+    function insertLine(idx) {
+        view.model.insert(idx, {});
     }
     ListView {
         id: view
@@ -30,12 +40,7 @@ Item {
         anchors.fill: parent
         interactive: false
         cacheBuffer: contentHeight
-        onMyViewChanged: {
-            if (myView != null) {
-                model = myView.len;
-            }
-            console.log(myView);
-        }
+        model: ListModel {}
 
         property bool showBars: false
         property var cursor: parent.cursor

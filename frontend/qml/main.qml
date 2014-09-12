@@ -139,6 +139,7 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
                     id: tabs
+                    objectName: "tabs"
                     style: TabViewStyle {
                         frameOverlap: 0
                         tab: Item {
@@ -173,46 +174,15 @@ ApplicationWindow {
                         frame: Rectangle { color: frontend.defaultBg() }
                         tabOverlap: 5
                     }
-                    Repeater {
-                        id: rpmod
-                        function tmp() {
-                            var ret = myWindow ? myWindow.len : 0;
-                            console.log(ret);
-                            return ret;
-                        }
-                        model: tmp()
-                        delegate: Tab {
-                            title: myWindow.view(index).title.text
-                            LimeView {
-                                id: view
-                                myView: myWindow.view(index)
-                                Timer {
-                                    // TODO(.): Why is view null sometimes?
-                                    //          Is it just a variant of https://github.com/go-qml/qml/issues/68?
-                                    interval: 100
-                                    running: view.myView == null
-                                    repeat: true
-                                    onTriggered: {
-                                        view.myView = myWindow.view(index);
-                                        if (index == tabs.currentIndex) {
-                                            tabs.resetminimap();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        onItemAdded: {
-                            if (myWindow.activeViewIndex() < tabs.count)
-                                tabs.currentIndex = myWindow.activeViewIndex()
-                        }
-                    }
                     function resetminimap() {
                         // TODO(.): This is conflicts on new file on new file the
                         //          active_view should be the new file but it changes to first tab
                         myWindow.back().setActiveView(myWindow.view(currentIndex).back());
-
+                        var rv = tabs.getTab(currentIndex).item.children[1];
+                        minimap.myView = null;
+                        minimap.children[1].model = rv.model.count;
                         minimap.myView = myWindow.view(currentIndex);
-                        minimap.realView = tabs.getTab(currentIndex).item.children[1];
+                        minimap.realView = rv;
                     }
                     Component.onCompleted: {
                         resetminimap();
@@ -242,6 +212,7 @@ ApplicationWindow {
                     onRealViewChanged: {
                         if (oldView) {
                             oldView.contentYChanged.disconnect(scroll);
+
                         }
                         realView.contentYChanged.connect(scroll);
                         oldView = realView;
@@ -279,17 +250,6 @@ ApplicationWindow {
             LimeView {
                 id: consoleView
                 myView: frontend.console
-                Timer {
-                    // TODO(.): Why is view null sometimes?
-                    //          Is it just a variant of https://github.com/go-qml/qml/issues/68?
-                    interval: 100
-                    running: consoleView.myView == null
-                    repeat: true
-                    onTriggered: {
-                        consoleView.myView = myWindow.view(index);
-                    }
-                }
-
                 height: 100
             }
         }
