@@ -67,8 +67,12 @@ func TestUndoStackAdd(t *testing.T) {
 
 func TestUndoStackUndo(t *testing.T) {
 	us := UndoStack{}
-	v := GetEditor().NewWindow().NewFile()
+	us.Undo(false)
 
+	if us.Position() != 0 {
+		t.Errorf("Expected the UndoStack positon to be 0, but it was %d", us.Position())
+	}
+	v := GetEditor().NewWindow().NewFile()
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
 	v.EndEdit(e)
@@ -91,6 +95,11 @@ func TestUndoStackUndo(t *testing.T) {
 
 func TestUndoStackRedo(t *testing.T) {
 	us := UndoStack{}
+	us.Redo(false)
+
+	if us.Position() != 0 {
+		t.Errorf("Expected the UndoStack positon to be 0, but it was %d", us.Position())
+	}
 	v := GetEditor().NewWindow().NewFile()
 
 	e := v.BeginEdit()
