@@ -400,7 +400,13 @@ func (t *tbfe) loop() {
 	c.Buffer().AddCallback(t.scroll)
 
 	t.setupCallbacks(v)
-	loadTextMateScheme()
+	path := "../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"
+	if sc, err := textmate.LoadTheme(path); err != nil {
+		log4go.Error(err)
+		return
+	} else {
+		scheme = sc
+	}
 	setColorMode()
 	setSchemeSettings()
 
@@ -555,15 +561,6 @@ func getCaretStyle(style string, inverse bool) termbox.Attribute {
 	}
 
 	return caret_style
-}
-
-func loadTextMateScheme() {
-	path := "../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"
-	if sc, err := textmate.LoadTheme(path); err != nil {
-		log4go.Error(err)
-	} else {
-		scheme = sc
-	}
 }
 
 func setColorMode() {
