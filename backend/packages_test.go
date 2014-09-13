@@ -138,9 +138,9 @@ func TestScanPackets(t *testing.T) {
 		expect []string
 	}{
 		{
-			"packages",
+			"../packages",
 			[]string{
-				"packages/Default/Default.sublime-keymap",
+				"../packages/Default/Default.sublime-keymap",
 			},
 		},
 		{
