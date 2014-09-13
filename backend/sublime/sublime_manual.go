@@ -10,7 +10,9 @@ import (
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/render"
+	"github.com/limetext/lime/backend/util"
 	"os"
 	"path"
 	"time"
@@ -96,12 +98,12 @@ func init() {
 		constant int
 	}
 	constants := []constant{
-		{"OP_EQUAL", int(backend.OpEqual)},
-		{"OP_NOT_EQUAL", int(backend.OpNotEqual)},
-		{"OP_REGEX_MATCH", int(backend.OpRegexMatch)},
-		{"OP_NOT_REGEX_MATCH", int(backend.OpNotRegexMatch)},
-		{"OP_REGEX_CONTAINS", int(backend.OpRegexContains)},
-		{"OP_NOT_REGEX_CONTAINS", int(backend.OpNotRegexContains)},
+		{"OP_EQUAL", int(util.OpEqual)},
+		{"OP_NOT_EQUAL", int(util.OpNotEqual)},
+		{"OP_REGEX_MATCH", int(util.OpRegexMatch)},
+		{"OP_NOT_REGEX_MATCH", int(util.OpNotRegexMatch)},
+		{"OP_REGEX_CONTAINS", int(util.OpRegexContains)},
+		{"OP_NOT_REGEX_CONTAINS", int(util.OpNotRegexContains)},
 		{"INHIBIT_WORD_COMPLETIONS", 0},
 		{"INHIBIT_EXPLICIT_COMPLETIONS", 0},
 		{"LITERAL", 0},
@@ -151,7 +153,7 @@ func init() {
 	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 
-func loadPlugin(p *backend.Plugin, m *py.Module) {
+func loadPlugin(p *packages.Plugin, m *py.Module) {
 	fi := p.Get().([]os.FileInfo)
 	for _, f := range fi {
 		fn := f.Name()
@@ -201,7 +203,7 @@ func observePlugins(m *py.Module) {
 			}
 			if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
 				p.Reload()
-				loadPlugin(p.Package().(*backend.Plugin), m)
+				loadPlugin(p.Package().(*packages.Plugin), m)
 			}
 		case err := <-watcher.Error:
 			log4go.Error("error:", err)
@@ -231,7 +233,7 @@ func Init() {
 	watchedPlugins = make(map[string]*backend.WatchedPackage)
 	go observePlugins(m)
 
-	plugins := backend.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
+	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
 		// TODO: add all plugins after supporting all commands
 		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {

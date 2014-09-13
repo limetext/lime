@@ -12,4 +12,5 @@
 //
 // See the wiki page for more details on implementing commands:
 // https://github.com/limetext/lime/wiki/Implementing-commands
+
 package commands

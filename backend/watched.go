@@ -7,6 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/packages"
 	. "github.com/quarnster/util/text"
 	"io/ioutil"
 )
@@ -22,7 +23,7 @@ type (
 	}
 
 	WatchedPackage struct {
-		pkg Package
+		pkg packages.Package
 	}
 )
 
@@ -62,7 +63,7 @@ func (o *WatchedUserFile) Reload() {
 	}
 }
 
-func NewWatchedPackage(pkg Package) *WatchedPackage {
+func NewWatchedPackage(pkg packages.Package) *WatchedPackage {
 	return &WatchedPackage{pkg}
 }
 
@@ -74,6 +75,6 @@ func (o *WatchedPackage) Reload() {
 	o.pkg.Reload()
 }
 
-func (o *WatchedPackage) Package() Package {
+func (o *WatchedPackage) Package() packages.Package {
 	return o.pkg
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/util"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
@@ -34,7 +35,7 @@ func TestSublime(t *testing.T) {
 	if m, err := py.Import("sublime_plugin"); err != nil {
 		t.Fatal(err)
 	} else {
-		plugins := backend.ScanPlugins("testdata/", ".py")
+		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
 			loadPlugin(p, m)
 		}

@@ -8,7 +8,8 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/gopy/lib"
-	"github.com/limetext/lime/backend" //"time"
+	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/util"
 	"github.com/quarnster/util/text"
 )
 
@@ -118,7 +119,7 @@ func (c *OnQueryContextGlue) PyInit(args *py.Tuple, kwds *py.Dict) error {
 	return nil
 }
 
-func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operator backend.Op, operand interface{}, match_all bool) backend.QueryContextReturn {
+func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operator util.Op, operand interface{}, match_all bool) backend.QueryContextReturn {
 	l := py.NewLock()
 	defer l.Unlock()
 

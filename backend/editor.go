@@ -8,7 +8,8 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/howeyc/fsnotify"
-	"github.com/limetext/lime/backend/loaders"
+	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
 	"path"
@@ -20,6 +21,17 @@ import (
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	GetEditor()
+
+	// Load the default Packets
+	paths := []string{
+		LIME_DEFAULTS_PATH,
+		LIME_USER_PACKETS_PATH,
+	}
+	for _, path := range paths {
+		for _, p := range packages.ScanPackets(path) {
+			packets = append(packets, p)
+		}
+	}
 }
 
 type (
@@ -29,11 +41,11 @@ type (
 		active_window *Window
 		loginput      bool
 		cmdhandler    commandHandler
-		keyBindings   KeyBindings
+		keyBindings   keys.KeyBindings
 		console       *View
 		frontend      Frontend
 		clipboard     string
-		keyInput      chan (KeyPress)
+		keyInput      chan (keys.KeyPress)
 		watcher       *fsnotify.Watcher
 		watchedFiles  map[string]Watched
 		watchLock     sync.Mutex
@@ -81,6 +93,10 @@ var (
 	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "3rdparty", "bundles", "User")
 	LIME_PACKAGES_PATH      = path.Join("..", "..", "packages")
 	LIME_DEFAULTS_PATH      = path.Join("..", "..", "packages", "Default")
+
+	// All user individual settings, snippets, etc.
+	// will be in here for later loading
+	packets packages.Packets
 )
 
 func (h *DummyFrontend) SetDefaultAction(action bool) {
@@ -149,7 +165,7 @@ func GetEditor() *Editor {
 				buffer:  NewBuffer(),
 				scratch: true,
 			},
-			keyInput:     make(chan KeyPress, 32),
+			keyInput:     make(chan keys.KeyPress, 32),
 			watcher:      newWatcher(),
 			watchedFiles: make(map[string]Watched),
 		}
@@ -172,28 +188,41 @@ func (e *Editor) SetFrontend(f Frontend) {
 }
 
 func (e *Editor) Init() {
+	ed.loadDefaultPackets()
 	ed.loadKeyBindings()
 	ed.loadSettings()
 }
 
-func (e *Editor) loadKeyBinding(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
+func (e *Editor) loadDefaultPackets() {
+	paths := []string{
+		LIME_DEFAULTS_PATH,
+		LIME_USER_PACKETS_PATH,
+	}
+	for _, path := range paths {
+		for _, p := range packages.ScanPackets(path) {
+			packets = append(packets, p)
+		}
+	}
+}
+
+func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
+	if err := pkg.Load(); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
-	e.keyBindings.merge(pkg.marshalTo.(*KeyBindings))
+	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
 }
 
 func (e *Editor) loadKeyBindings() {
-	for _, p := range packets.filter("keymap") {
+	for _, p := range packets.Filter("keymap") {
 		e.loadKeyBinding(p)
 	}
 }
 
-func (e *Editor) loadSetting(pkg *packet) {
-	if err := loaders.LoadJSON(pkg.Get().([]byte), pkg); err != nil {
+func (e *Editor) loadSetting(pkg *packages.Packet) {
+	if err := pkg.Load(); err != nil {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
@@ -207,15 +236,15 @@ func (e *Editor) loadSettings() {
 	ed.Settings().SetParent(platSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
-	defPckt := NewPacket(p, defSettings.Settings())
+	defPckt := packages.NewPacket(p, defSettings.Settings())
 	e.loadSetting(defPckt)
 
 	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
-	platPckt := NewPacket(p, platSettings.Settings())
+	platPckt := packages.NewPacket(p, platSettings.Settings())
 	e.loadSetting(platPckt)
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
-	userPckt := NewPacket(p, e.Settings())
+	userPckt := packages.NewPacket(p, e.Settings())
 	e.loadSetting(userPckt)
 }
 
@@ -300,14 +329,14 @@ func (e *Editor) CommandHandler() CommandHandler {
 	return &e.cmdhandler
 }
 
-func (e *Editor) HandleInput(kp KeyPress) {
+func (e *Editor) HandleInput(kp keys.KeyPress) {
 	e.keyInput <- kp
 }
 
 func (e *Editor) inputthread() {
 	pc := 0
-	var lastBindings KeyBindings
-	doinput := func(kp KeyPress) {
+	var lastBindings keys.KeyBindings
+	doinput := func(kp keys.KeyPress) {
 		defer func() {
 			if r := recover(); r != nil {
 				log4go.Error("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
@@ -325,7 +354,7 @@ func (e *Editor) inputthread() {
 			lvl++
 		}
 		log4go.Logf(lvl, "Key: %v", kp)
-		if lastBindings.keyOff == 0 {
+		if lastBindings.KeyOff() == 0 {
 			lastBindings = e.keyBindings
 		}
 	try_again:
@@ -341,11 +370,16 @@ func (e *Editor) inputthread() {
 			v = wnd.ActiveView()
 		}
 
-		if action := possible_actions.Action(v); action != nil {
+		var qc func(key string, operator Op, operand interface{}, match_all bool) bool
+		qc = func(key string, operator Op, operand interface{}, match_all bool) bool {
+			return OnQueryContext.Call(v, key, operator, operand, match_all) == True
+		}
+
+		if action := possible_actions.Action(qc); action != nil {
 			p2 := Prof.Enter("hi.perform")
 			e.RunCommand(action.Command, action.Args)
 			p2.Exit()
-		} else if possible_actions.keyOff > 1 {
+		} else if possible_actions.KeyOff() > 1 {
 			lastBindings = e.keyBindings
 			goto try_again
 		} else if kp.IsCharacter() {
