@@ -71,7 +71,7 @@ func TestUpdateVisibleRegion(t *testing.T) {
 	)
 
 	fe.layout = make(map[*backend.View]layout)
-	fe.layout[v] = layout{0, 0, 100, 100 - console_height - 1, Region{}, 0}
+	fe.layout[v] = layout{0, 0, 100, 100 - *consoleHeight - 1, Region{}, 0}
 	fe.setupCallbacks(v)
 
 	edit := v.BeginEdit()

@@ -5,6 +5,7 @@ package main
 
 import (
 	"code.google.com/p/log4go"
+	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
@@ -14,7 +15,6 @@ import (
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
 	. "github.com/quarnster/util/text"
-	"os"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -94,8 +94,13 @@ var (
 	blink     bool
 )
 
+// Command line flags
+var (
+	showConsole   = flag.Bool("console", false, "Display console")
+	consoleHeight = flag.Int("consoleHeight", 20, "Height of console")
+)
+
 const (
-	console_height  = 20
 	render_chan_len = 2
 )
 
@@ -382,8 +387,11 @@ func (t *tbfe) loop() {
 		v  *backend.View
 	)
 
-	if len(os.Args) > 1 {
-		v = createNewView(os.Args[1], w)
+	// Assuming that all extra arguments are files
+	if files := flag.Args(); len(files) > 0 {
+		for _, file := range files {
+			v = createNewView(file, w)
+		}
 	} else {
 		v = w.NewFile()
 	}
@@ -411,8 +419,12 @@ func (t *tbfe) loop() {
 	{
 		w, h := termbox.Size()
 		t.lock.Lock()
-		t.layout[v] = layout{0, 0, w, h - console_height - 1, Region{}, 0}
-		t.layout[c] = layout{0, h - console_height + 1, w, console_height - 5, Region{}, 0}
+		if *showConsole {
+			t.layout[v] = layout{0, 0, w, h - *consoleHeight - 4, Region{}, 0}
+			t.layout[c] = layout{0, h - *consoleHeight - 2, w, *consoleHeight - 1, Region{}, 0}
+		} else {
+			t.layout[v] = layout{0, 0, w, h - 3, Region{}, 0}
+		}
 		t.lock.Unlock()
 		t.Show(v, Region{1, 1})
 	}
@@ -653,6 +665,8 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 }
 
 func main() {
+	flag.Parse()
+
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
 	defer func() {
 		py.NewLock()
