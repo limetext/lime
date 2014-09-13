@@ -14,7 +14,7 @@ func TestCopy(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 
-	tests := []struct{
+	tests := []struct {
 		buf     string
 		regions []text.Region
 		expClip string
@@ -87,7 +87,7 @@ func TestCut(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 
-	tests := []struct{
+	tests := []struct {
 		buf     string
 		regions []text.Region
 		expClip string
@@ -160,9 +160,9 @@ func TestPaste(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 
-	tests := []struct{
+	tests := []struct {
 		buf     string
-		clip 	string
+		clip    string
 		regions []text.Region
 		expBuf  string
 	}{
