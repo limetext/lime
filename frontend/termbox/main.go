@@ -461,6 +461,30 @@ func (t *tbfe) loop() {
 			case termbox.EventError:
 				log4go.Debug("error occured")
 				return
+			case termbox.EventResize:
+				// We have to resize our layouts...
+				// There is currently duplicate code for calculating the layout:
+				// during initialization (above), and here. Not nice
+				if *showConsole {
+					view_layout := t.layout[v]
+					view_layout.height = ev.Height - *consoleHeight - 4
+					view_layout.width = ev.Width
+
+					console_layout := t.layout[c]
+					console_layout.y = ev.Height - *consoleHeight - 2
+					console_layout.width = ev.Width
+
+					t.layout[v] = view_layout
+					t.layout[c] = console_layout
+				} else {
+					view_layout := t.layout[v]
+					view_layout.height = ev.Height - 3
+					view_layout.width = ev.Width
+					t.layout[v] = view_layout
+				}
+
+				// Ensure that the new visible region is recalculated
+				t.Show(v, t.VisibleRegion(v))
 			case termbox.EventKey:
 				var kp backend.KeyPress
 
