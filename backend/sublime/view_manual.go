@@ -267,3 +267,49 @@ func (o *View) Py_set_syntax_file(tu *py.Tuple) (py.Object, error) {
 	}
 	return toPython(nil)
 }
+
+func (o *View) Py_expand_by_class(tu *py.Tuple, kw *py.Dict) (py.Object, error) {
+	var (
+		arg1 text.Region
+		arg2 int
+	)
+
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v2, ok := v.(*Region); !ok {
+			if v2, ok := v.(*py.Long); !ok {
+				return nil, fmt.Errorf("Expected type *Region or *Int for backend.View.ExpandByClass() arg1, not %s", v.Type())
+			} else {
+				arg1.A = int(v2.Int64())
+				arg1.B = arg1.A + 1
+			}
+		} else {
+			arg1 = v2.data
+		}
+	}
+
+	if v, err := tu.GetItem(1); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(int); !ok {
+				return nil, fmt.Errorf("Expected type int for backend.View.ExpandByClass() arg2, not %s", v.Type())
+			} else {
+				arg2 = v2
+			}
+		}
+	}
+
+	ret := o.data.ExpandByClass(arg1, arg2)
+	var err error
+	var pyret py.Object
+
+	pyret, err = toPython(ret)
+	if err != nil {
+		return nil, err
+	}
+	return pyret, err
+}

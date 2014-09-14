@@ -30,6 +30,23 @@ hocus pocus
     assert v.sel()[0] == (45, 45)
     v.run_command("move", {"by": "characters", "forward": True})
     assert v.sel()[0] == (46, 46)
+
+    v2 = sublime.test_window.new_file()
+    e = v2.begin_edit()
+    v2.insert(e, 0, """one word { another word }
+line
+
+after empty line""")
+    v2.end_edit(e)
+    # Expected results validated in Sublime
+    assert v2.find_by_class(1, True, sublime.CLASS_WORD_START) == sublime.Region(4, 4)
+    assert v2.find_by_class(1, True, sublime.CLASS_PUNCTUATION_START) == sublime.Region(9, 9)
+    assert v2.expand_by_class(sublime.Region(5, 6),
+    	sublime.CLASS_WORD_START | sublime.CLASS_WORD_END) == sublime.Region(4, 8)
+    assert v2.expand_by_class(sublime.Region(11, 12),
+    	sublime.CLASS_PUNCTUATION_START | sublime.CLASS_PUNCTUATION_END) == sublime.Region(10, 24)
+    assert v2.expand_by_class(sublime.Region(5, 6), sublime.CLASS_EMPTY_LINE) == sublime.Region(0, 31)
+
 except:
     print(sys.exc_info()[1])
     traceback.print_exc()
