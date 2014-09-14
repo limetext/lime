@@ -6,7 +6,6 @@ package main
 import (
 	"code.google.com/p/log4go"
 	"flag"
-	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
@@ -192,10 +191,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			termbox.SetCell(x, y, r, fg, bg)
 		}
 		x++
-	}
-
-	if t.settings.lineNumbers {
-		renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 	}
 
 	// restore original caretStyle before blink modification
@@ -413,7 +408,7 @@ func (t *tbfe) loop() {
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
-		fmt.Println(util.Prof)
+		log4go.Debug(util.Prof)
 	}()
 
 	go func() {
@@ -644,7 +639,7 @@ func setSchemeSettings() {
 			if col, ok := s.Settings[setting]; ok {
 				i := palLut(col)
 				if setting == "selection" {
-					fmt.Println(col, i)
+					log4go.Debug("%+v, %d", col, i)
 				}
 			}
 		}
