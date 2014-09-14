@@ -175,8 +175,8 @@ ApplicationWindow {
                         tabOverlap: 5
                     }
                     function resetminimap() {
-                        // TODO(.): This is conflicts on new file on new file the
-                        //          active_view should be the new file but it changes to first tab
+                        // TODO(.): This conflicts on new file on new file the active_view
+                        //          should be the new file but its changing to first tab
                         myWindow.back().setActiveView(myWindow.view(currentIndex).back());
                         var rv = tabs.getTab(currentIndex).item.children[1];
                         minimap.myView = null;
@@ -212,7 +212,6 @@ ApplicationWindow {
                     onRealViewChanged: {
                         if (oldView) {
                             oldView.contentYChanged.disconnect(scroll);
-
                         }
                         realView.contentYChanged.connect(scroll);
                         oldView = realView;

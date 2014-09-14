@@ -612,7 +612,9 @@ func (t *qmlfrontend) onLoad(v *backend.View) {
 	}
 	v2 := w2.views[i]
 	v2.Title.Text = v.Buffer().FileName()
-	t.qmlChanged(v2, &v2.Title)
+	tabs := w2.window.ObjectByName("tabs")
+	tab := tabs.Call("getTab", i).(qml.Object)
+	tab.Set("title", v2.Title.Text)
 }
 
 func (t *qmlfrontend) loop() (err error) {

@@ -139,7 +139,10 @@ Item {
                         var col = measure(item, index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        if (!ctrl) sel().clear();
+                        // TODO: We don't have access to ctrl variable from
+                        //       main file after 7d79d4f so we can't have multi cursor
+                        // if (!ctrl) sel().clear();
+                        sel().clear();
                         sel().add(myView.region(point.p, point.p))
                     }
                 }
