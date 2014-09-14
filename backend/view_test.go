@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"reflect"
 	"testing"
 	"time"
@@ -605,14 +606,20 @@ func TestCloseView2(t *testing.T) {
 }
 
 func TestViewLoadSettings(t *testing.T) {
-	LIME_USER_PACKETS_PATH = "../3rdparty/bundles/User/"
-	LIME_PACKAGES_PATH = "packages/"
+	LIME_USER_PACKAGES_PATH = path.Join("..", "3rdparty", "bundles")
+	LIME_USER_PACKETS_PATH = path.Join("..", "3rdparty", "bundles", "User")
+	LIME_PACKAGES_PATH = path.Join("packages")
+	LIME_DEFAULTS_PATH = path.Join("packages", "Default")
 
+	GetEditor().loadSettings()
 	w := GetEditor().NewWindow()
 	v := w.NewFile()
+	if v.Settings().Get("translate_tabs_to_spaces", true).(bool) != false {
+		t.Error("Expected `translate_tabs_to_spaces` be false for a new view but is true")
+	}
 
 	v.Settings().Set("syntax", "../3rdparty/bundles/python.tmbundle/Syntaxes/Python.tmLanguage")
-	if v.Settings().Get("translate_tabs_to_spaces", "false").(bool) != true {
+	if v.Settings().Get("translate_tabs_to_spaces", false).(bool) != true {
 		t.Error("Expected `translate_tabs_to_spaces` be true for python syntax but is false")
 	}
 }
