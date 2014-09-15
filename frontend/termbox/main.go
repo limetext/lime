@@ -135,7 +135,15 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	if caretBlink && blink {
 		caretStyle = 0
 	}
-	tabSize, _ := v.Settings().Get("tab_size", 4).(int)
+	tabSize := 4
+	ts := v.Settings().Get("tab_size", tabSize)
+	// TODO(.): crikey...
+	if i, ok := ts.(int); ok {
+		tabSize = i
+	} else if f, ok := ts.(float64); ok {
+		tabSize = int(f)
+	}
+
 	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
 
 	recipie := v.Transform(scheme, vr).Transcribe()
