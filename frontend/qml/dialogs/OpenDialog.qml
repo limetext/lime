@@ -14,8 +14,6 @@ FileDialog {
                 _url = _url.slice(7)
             }
             console.log("Choosed: " + _url);
-            // var _args = new Array();
-            // _args["path"] = _url;
             frontend.runCommandWithArgs("open_file", {"path" : _url});
         }
         onRejected: {
