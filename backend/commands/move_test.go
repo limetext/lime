@@ -134,6 +134,39 @@ func TestMove(t *testing.T) {
 			[]Region{{24, 24}},
 			nil,
 		},
+		// Try moving outside the buffer
+		{
+			[]Region{{0, 0}},
+			"lines",
+			false,
+			false,
+			[]Region{{0, 0}},
+			nil,
+		},
+		{
+			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			"lines",
+			false,
+			true,
+			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			nil,
+		},
+		{
+			[]Region{{0, 0}},
+			"characters",
+			false,
+			false,
+			[]Region{{0, 0}},
+			nil,
+		},
+		{
+			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			"characters",
+			false,
+			true,
+			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			nil,
+		},
 	}
 	for i, test := range tests {
 		v.Sel().Clear()

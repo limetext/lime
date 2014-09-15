@@ -73,8 +73,18 @@ type (
 func move_action(v *View, extend bool, transform func(r text.Region) int) {
 	sel := v.Sel()
 	r := sel.Regions()
+	bs := v.Buffer().Size()
 	for i := range r {
 		r[i].B = transform(r[i])
+		if r[i].B < 0 {
+			r[i].B = 0
+		} else if r[i].B > bs {
+			// Yes > the size, and not size-1 because the cursor being at "size"
+			// is the position it will be at when we are appending
+			// to the buffer
+			r[i].B = bs
+		}
+
 		if !extend {
 			r[i].A = r[i].B
 		}
