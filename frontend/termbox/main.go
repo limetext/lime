@@ -103,14 +103,6 @@ const (
 	render_chan_len = 2
 )
 
-type FrontendSettings struct {
-	tabSize       int
-	caretBlink    bool
-	highlightLine bool
-	caretStyle    termbox.Attribute
-	lineNumbers   bool
-}
-
 type layout struct {
 	x, y          int
 	width, height int
@@ -123,7 +115,6 @@ type tbfe struct {
 	status_message string
 	dorender       chan bool
 	lock           sync.Mutex
-	settings       *FrontendSettings
 }
 
 func (t *tbfe) renderView(v *backend.View, lay layout) {
@@ -136,10 +127,16 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
-	caretStyle := t.settings.caretStyle
-	if t.settings.caretBlink && blink {
-		t.settings.caretStyle = 0
+	style, _ := v.Settings().Get("caret_style", "underline").(string)
+	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
+
+	caretStyle := getCaretStyle(style, inverse)
+	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
+	if caretBlink && blink {
+		caretStyle = 0
 	}
+	tabSize, _ := v.Settings().Get("tab_size", 4).(int)
+	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
 
 	recipie := v.Transform(scheme, vr).Transcribe()
 
@@ -155,7 +152,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		curr := 0
 		fg, bg = defaultFg, defaultBg
 
-		if t.settings.lineNumbers {
+		if lineNumbers {
 			renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 		}
 
@@ -168,11 +165,11 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		}
 		iscursor := sel.Contains(Region{o, o})
 		if iscursor {
-			fg = fg | t.settings.caretStyle
+			fg = fg | caretStyle
 			termbox.SetCell(x, y, ' ', fg, bg)
 		}
 		if r == '\t' {
-			add := (x + 1 + (t.settings.tabSize - 1)) &^ (t.settings.tabSize - 1)
+			add := (x + 1 + (tabSize - 1)) &^ (tabSize - 1)
 			for x < add {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
@@ -194,19 +191,20 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		}
 		x++
 	}
-	if t.settings.lineNumbers {
+	fg, bg = defaultFg, defaultBg
+	if lineNumbers {
 		renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 	}
 	// Need this if the cursor is at the end of the buffer
 	o := vr.Begin() + len(runes)
 	iscursor := sel.Contains(Region{o, o})
 	if iscursor {
-		fg = fg | t.settings.caretStyle
+		fg = fg | caretStyle
 		termbox.SetCell(x, y, ' ', fg, bg)
 	}
 
 	// restore original caretStyle before blink modification
-	t.settings.caretStyle = caretStyle
+	caretStyle = caretStyle
 }
 
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
@@ -403,7 +401,6 @@ func (t *tbfe) loop() {
 		v = w.NewFile()
 	}
 
-	t.settings = getSettings(v)
 	c.Buffer().AddCallback(t.scroll)
 
 	t.setupCallbacks(v)
@@ -561,19 +558,6 @@ func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.
 		*line++
 	}
 
-}
-
-func getSettings(v *backend.View) *FrontendSettings {
-	style, _ := v.Settings().Get("caret_style", "underline").(string)
-	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
-
-	return &FrontendSettings{
-		v.Settings().Get("tab_size", 4).(int),
-		v.Settings().Get("caret_blink", true).(bool),
-		v.Settings().Get("highlight_line", false).(bool),
-		getCaretStyle(style, inverse),
-		v.Settings().Get("line_numbers", true).(bool),
-	}
 }
 
 func getCaretStyle(style string, inverse bool) termbox.Attribute {
