@@ -419,7 +419,7 @@ func (t *tbfe) loop() {
 	setSchemeSettings()
 
 	// We start the renderThread here, after we have done our setup of termbox.
-	// That we, we do not clash with our output.
+	// That way, we do not clash with our output.
 	go t.renderthread()
 
 	evchan := make(chan termbox.Event, 32)
