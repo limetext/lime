@@ -166,8 +166,10 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			}
 			curr++
 		}
-		if sel.Contains(Region{o, o}) {
+		iscursor := sel.Contains(Region{o, o})
+		if iscursor {
 			fg = fg | t.settings.caretStyle
+			termbox.SetCell(x, y, ' ', fg, bg)
 		}
 		if r == '\t' {
 			add := (x + 1 + (t.settings.tabSize - 1)) &^ (t.settings.tabSize - 1)
@@ -191,6 +193,16 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			termbox.SetCell(x, y, r, fg, bg)
 		}
 		x++
+	}
+	if t.settings.lineNumbers {
+		renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
+	}
+	// Need this if the cursor is at the end of the buffer
+	o := vr.Begin() + len(runes)
+	iscursor := sel.Contains(Region{o, o})
+	if iscursor {
+		fg = fg | t.settings.caretStyle
+		termbox.SetCell(x, y, ' ', fg, bg)
 	}
 
 	// restore original caretStyle before blink modification
