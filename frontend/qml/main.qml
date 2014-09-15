@@ -5,6 +5,8 @@ import QtQuick.Dialogs 1.0
 import QtQuick.Layouts 1.0
 import QtGraphicalEffects 1.0
 
+import "dialogs"
+
 ApplicationWindow {
     id: window
     width: 800
@@ -25,7 +27,7 @@ ApplicationWindow {
             MenuItem {
                 text: qsTr("&Open File...")
                 shortcut: "Ctrl+O"
-                onTriggered: frontend.runCommand("open_file");
+                onTriggered: openDialog.open();
             }
             MenuItem {
                 text: qsTr("&Save")
@@ -253,24 +255,7 @@ ApplicationWindow {
             }
         }
     }
-
-    FileDialog {
+    OpenDialog {
         id: openDialog
-        title: qsTr("Open File")
-        // TODO(.) : folder should be set to current view directory
-        // folder: myWindow.view(tabs.currentIndex).title.text
-        // TODO(.) : Selecting multiple files should be enabled
-        // selectMultiple: true
-        onAccepted: {
-            var _url = openDialog.fileUrl.toString()
-            if(_url.length >= 7 && _url.slice(0, 7) == "file://") {
-                _url = _url.slice(7)
-            }
-            console.log("Choosed: " + _url);
-            myWindow.back().openFile(_url, 0);
-        }
-        onRejected: {
-            console.log("Canceled.")
-        }
     }
 }

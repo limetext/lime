@@ -778,8 +778,12 @@ func (t *qmlfrontend) loop() (err error) {
 // Launches the provided command in a new goroutine
 // (to avoid locking up the GUI)
 func (t *qmlfrontend) RunCommand(command string) {
+	t.RunCommandWithArgs(command, make(backend.Args))
+}
+
+func (t *qmlfrontend) RunCommandWithArgs(command string, args backend.Args) {
 	ed := backend.GetEditor()
-	go ed.RunCommand(command, make(backend.Args))
+	go ed.RunCommand(command, args)
 }
 
 func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
