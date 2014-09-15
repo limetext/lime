@@ -182,7 +182,8 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
-				fg = fg &^ termbox.AttrUnderline // Just looks weird with a long underline
+				// A long cursor looks weird
+				fg = fg & ^(termbox.AttrUnderline | termbox.AttrReverse)
 				x++
 			}
 			continue
