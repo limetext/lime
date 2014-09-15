@@ -5,35 +5,35 @@
 package commands
 
 import (
-    "fmt"
-    . "github.com/limetext/lime/backend"
+	"fmt"
+	. "github.com/limetext/lime/backend"
 )
 
 type (
-    OpenFileCommand struct {
-        DefaultCommand
-        Path string
-    }
+	OpenFileCommand struct {
+		DefaultCommand
+		Path string
+	}
 )
 
 func (o *OpenFileCommand) Set(v interface{}) error {
-    str, ok := v.(string);
-    if (ok) {
-        o.Path = str
-    } else {
-        return fmt.Errorf("%s is of unknown type", v)
-    }
-    return nil
+	str, ok := v.(string)
+	if ok {
+		o.Path = str
+	} else {
+		return fmt.Errorf("%s is of unknown type", v)
+	}
+	return nil
 }
 
 func (o *OpenFileCommand) Run(w *Window) error {
-    ed := GetEditor()
-    ed.ActiveWindow().OpenFile(o.Path, 0)
-    return nil
+	ed := GetEditor()
+	ed.ActiveWindow().OpenFile(o.Path, 0)
+	return nil
 }
 
 func init() {
-    register([]Command{
-        &OpenFileCommand{},
-    })
+	register([]Command{
+		&OpenFileCommand{},
+	})
 }
