@@ -26,9 +26,9 @@ hocus pocus
     v.settings().set("test", 10)
     assert v.settings().get("test") == 10
     assert v.sel()[0] == (46, 46)
-    v.run_command("move", {"by": "characters", "forward": True})
-    assert v.sel()[0] == (47, 47)
     v.run_command("move", {"by": "characters", "forward": False})
+    assert v.sel()[0] == (45, 45)
+    v.run_command("move", {"by": "characters", "forward": True})
     assert v.sel()[0] == (46, 46)
 except:
     print(sys.exc_info()[1])
