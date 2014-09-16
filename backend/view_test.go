@@ -456,6 +456,20 @@ func TestFindByClass(t *testing.T) {
 			CLASS_SUB_WORD_START,
 			Region{4, 4},
 		},
+		{
+			"abc Hi -test lime",
+			9,
+			false,
+			CLASS_WORD_END | CLASS_PUNCTUATION_END,
+			Region{8, 8},
+		},
+		{
+			"abc Hi -test lime",
+			0,
+			true,
+			CLASS_WORD_START | CLASS_WORD_END,
+			Region{3, 3},
+		},
 	}
 
 	for i, test := range tests {
@@ -465,6 +479,57 @@ func TestFindByClass(t *testing.T) {
 		v.EndEdit(e)
 		if res := v.FindByClass(test.point, test.forward, test.classes); res != test.expect {
 			t.Errorf("Test %d: Expected %d from view.FindByClass but, got %d", i, test.expect, res)
+		}
+	}
+}
+
+func TestExpandByClass(t *testing.T) {
+	var w Window
+	tests := []struct {
+		text    string
+		start   Region
+		classes int
+		expect  Region
+	}{
+		{
+			"abc Hi -test lime",
+			Region{1, 2},
+			CLASS_WORD_START,
+			Region{0, 4},
+		},
+		{
+			"abc Hi -test lime",
+			Region{8, 10},
+			CLASS_WORD_START | CLASS_WORD_END,
+			Region{6, 12},
+		},
+		{
+			"abc Hi -test lime",
+			Region{12, 14},
+			CLASS_PUNCTUATION_START,
+			Region{7, 17},
+		},
+		{
+			"abc Hi -test lime",
+			Region{12, 14},
+			CLASS_PUNCTUATION_END,
+			Region{8, 17},
+		},
+		{
+			"abc Hi -test lime",
+			Region{9, 11},
+			CLASS_WORD_START | CLASS_WORD_END,
+			Region{8, 12},
+		},
+	}
+
+	for i, test := range tests {
+		v := w.NewFile()
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+		if res := v.ExpandByClass(test.start, test.classes); res != test.expect {
+			t.Errorf("Test %d: Expected %v from view.ExpandByClass, but got %v", i, test.expect, res)
 		}
 	}
 }
