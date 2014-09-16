@@ -252,6 +252,7 @@ View
 	end_edit
 	erase
 	erase_regions
+	expand_by_class
 	extract_scope
 	file_name
 	find_by_class

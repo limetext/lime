@@ -866,15 +866,43 @@ func (v *View) FindByClass(point int, forward bool, classes int) Region {
 	if forward {
 		i = 1
 	}
-	for p := point; ; p += i {
+	size := v.buffer.Size()
+	// Sublime doesn't consider initial point even if it matches.
+	for p := point + i; ; p += i {
 		if p <= 0 {
 			return Region{0, 0}
 		}
-		if p >= v.buffer.Size() {
-			return Region{v.buffer.Size(), v.buffer.Size()}
+		if p >= size {
+			return Region{size, size}
 		}
-		if v.Classify(p)&classes == classes {
+		if v.Classify(p)&classes != 0 {
 			return Region{p, p}
 		}
 	}
+}
+
+// Expands the selection until the point on each side matches the given classes
+func (v *View) ExpandByClass(r Region, classes int) Region {
+	// Sublime doesn't consider the points the region starts on.
+	// If not already on edge of buffer, expand by 1 in both directions.
+	a := r.A
+	if a > 0 {
+		a -= 1
+	} else if a < 0 {
+		a = 0
+	}
+
+	b := r.B
+	size := v.buffer.Size()
+	if b < size {
+		b += 1
+	} else if b > size {
+		b = size
+	}
+
+	for ; a > 0 && (v.Classify(a)&classes == 0); a -= 1 {
+	}
+	for ; b < size && (v.Classify(b)&classes == 0); b += 1 {
+	}
+	return Region{a, b}
 }
