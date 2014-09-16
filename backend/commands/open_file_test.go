@@ -11,13 +11,14 @@ import (
 
 func TestOpenFile(t *testing.T) {
 	ed := GetEditor()
-	w := ed.ActiveWindow()
+
+	w := ed.NewWindow()
+	defer w.Close()
+
 	l := len(w.Views())
 
 	testPath := "open_file_test.go"
-	args := make(Args)
-	args["path"] = testPath
-	ed.CommandHandler().RunWindowCommand(w, "open_file", args)
+	ed.CommandHandler().RunWindowCommand(w, "open_file", Args{"path": testPath})
 
 	if len(w.Views()) != l+1 {
 		t.Errorf("Expected %d views, but got %d", l+1, len(w.Views()))

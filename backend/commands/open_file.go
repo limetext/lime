@@ -5,7 +5,6 @@
 package commands
 
 import (
-	"fmt"
 	. "github.com/limetext/lime/backend"
 )
 
@@ -16,19 +15,8 @@ type (
 	}
 )
 
-func (o *OpenFileCommand) Set(v interface{}) error {
-	str, ok := v.(string)
-	if ok {
-		o.Path = str
-	} else {
-		return fmt.Errorf("%s is of unknown type", v)
-	}
-	return nil
-}
-
 func (o *OpenFileCommand) Run(w *Window) error {
-	ed := GetEditor()
-	ed.ActiveWindow().OpenFile(o.Path, 0)
+	w.OpenFile(o.Path, 0)
 	return nil
 }
 
