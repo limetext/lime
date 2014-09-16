@@ -200,9 +200,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		x++
 	}
 	fg, bg = defaultFg, defaultBg
-	if lineNumbers {
-		renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
-	}
 	// Need this if the cursor is at the end of the buffer
 	o := vr.Begin() + len(runes)
 	iscursor := sel.Contains(Region{o, o})
@@ -359,12 +356,7 @@ func (t *tbfe) renderthread() {
 			}
 		}()
 		termbox.Clear(defaultFg, defaultBg)
-		w, h := termbox.Size()
-		for y := 0; y < h; y++ {
-			for x := 0; x < w; x++ {
-				termbox.SetCell(x, y, ' ', defaultFg, defaultBg)
-			}
-		}
+
 		t.lock.Lock()
 		vs := make([]*backend.View, 0, len(t.layout))
 		l := make([]layout, 0, len(t.layout))
@@ -373,12 +365,16 @@ func (t *tbfe) renderthread() {
 			l = append(l, v)
 		}
 		t.lock.Unlock()
+
 		for i, v := range vs {
 			t.renderView(v, l[i])
 		}
+
 		t.lock.Lock()
 		runes := []rune(t.status_message)
 		t.lock.Unlock()
+
+		w, h := termbox.Size()
 		for i := 0; i < w && i < len(runes); i++ {
 			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
 		}
@@ -421,6 +417,10 @@ func (t *tbfe) loop() {
 	}
 	setColorMode()
 	setSchemeSettings()
+
+	// We start the renderThread here, after we have done our setup of termbox.
+	// That way, we do not clash with our output.
+	go t.renderthread()
 
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
@@ -663,14 +663,6 @@ func setSchemeSettings() {
 				defaultBg = bi
 			}
 		}
-		for _, setting := range []string{"caret", "highlight", "invisibles", "selection"} {
-			if col, ok := s.Settings[setting]; ok {
-				i := palLut(col)
-				if setting == "selection" {
-					log4go.Debug("%+v, %d", col, i)
-				}
-			}
-		}
 	}
 }
 
@@ -706,6 +698,5 @@ func main() {
 	var t tbfe
 	t.dorender = make(chan bool, render_chan_len)
 	t.layout = make(map[*backend.View]layout)
-	go t.renderthread()
 	t.loop()
 }
