@@ -97,6 +97,7 @@ var (
 var (
 	showConsole   = flag.Bool("console", false, "Display console")
 	consoleHeight = flag.Int("consoleHeight", 20, "Height of console")
+	rotateLog     = flag.Bool("rotateLog", false, "Rotate debug log")
 )
 
 const (
@@ -680,7 +681,7 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 func main() {
 	flag.Parse()
 
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
+	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", *rotateLog))
 	defer func() {
 		py.NewLock()
 		py.Finalize()
