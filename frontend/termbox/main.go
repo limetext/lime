@@ -380,8 +380,9 @@ func (t *tbfe) renderthread() {
 
 		termbox.Flush()
 	}
-	for a := range t.dorender {
-		_ = a
+
+	for {
+		<-t.dorender
 		log4go.Finest("Rendering")
 		dorender()
 	}
