@@ -366,13 +366,6 @@ func (t *tbfe) renderthread() {
 			vs = append(vs, k)
 			l = append(l, v)
 		}
-		t.lock.Unlock()
-
-		for i, v := range vs {
-			t.renderView(v, l[i])
-		}
-
-		t.lock.Lock()
 		runes := []rune(t.status_message)
 		t.lock.Unlock()
 
@@ -380,6 +373,11 @@ func (t *tbfe) renderthread() {
 		for i := 0; i < w && i < len(runes); i++ {
 			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
 		}
+
+		for i, v := range vs {
+			t.renderView(v, l[i])
+		}
+
 		termbox.Flush()
 	}
 	for a := range t.dorender {
