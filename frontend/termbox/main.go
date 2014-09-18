@@ -426,7 +426,6 @@ func (t *tbfe) loop() {
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
-		log4go.Debug(util.Prof)
 	}()
 
 	go func() {
@@ -691,6 +690,7 @@ func main() {
 	}
 	defer func() {
 		termbox.Close()
+		log4go.Debug(util.Prof)
 		if err := recover(); err != nil {
 			log4go.Crash(err)
 		}
