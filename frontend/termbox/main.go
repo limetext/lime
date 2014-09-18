@@ -409,7 +409,7 @@ func (t *tbfe) loop() {
 	c.Buffer().AddCallback(t.scroll)
 
 	t.setupCallbacks(v)
-	path := "../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"
+	path := "../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"
 	if sc, err := textmate.LoadTheme(path); err != nil {
 		log4go.Error(err)
 		return
