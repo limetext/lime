@@ -97,6 +97,7 @@ var (
 var (
 	showConsole   = flag.Bool("console", false, "Display console")
 	consoleHeight = flag.Int("consoleHeight", 20, "Height of console")
+	rotateLog     = flag.Bool("rotateLog", false, "Rotate debug log")
 )
 
 const (
@@ -365,13 +366,6 @@ func (t *tbfe) renderthread() {
 			vs = append(vs, k)
 			l = append(l, v)
 		}
-		t.lock.Unlock()
-
-		for i, v := range vs {
-			t.renderView(v, l[i])
-		}
-
-		t.lock.Lock()
 		runes := []rune(t.status_message)
 		t.lock.Unlock()
 
@@ -379,10 +373,16 @@ func (t *tbfe) renderthread() {
 		for i := 0; i < w && i < len(runes); i++ {
 			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
 		}
+
+		for i, v := range vs {
+			t.renderView(v, l[i])
+		}
+
 		termbox.Flush()
 	}
-	for a := range t.dorender {
-		_ = a
+
+	for {
+		<-t.dorender
 		log4go.Finest("Rendering")
 		dorender()
 	}
@@ -409,7 +409,7 @@ func (t *tbfe) loop() {
 	c.Buffer().AddCallback(t.scroll)
 
 	t.setupCallbacks(v)
-	path := "../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"
+	path := "../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"
 	if sc, err := textmate.LoadTheme(path); err != nil {
 		log4go.Error(err)
 		return
@@ -426,7 +426,6 @@ func (t *tbfe) loop() {
 	evchan := make(chan termbox.Event, 32)
 	defer func() {
 		close(evchan)
-		log4go.Debug(util.Prof)
 	}()
 
 	go func() {
@@ -680,7 +679,7 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 func main() {
 	flag.Parse()
 
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", true))
+	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", *rotateLog))
 	defer func() {
 		py.NewLock()
 		py.Finalize()
@@ -691,6 +690,7 @@ func main() {
 	}
 	defer func() {
 		termbox.Close()
+		log4go.Debug(util.Prof)
 		if err := recover(); err != nil {
 			log4go.Crash(err)
 		}
