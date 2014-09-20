@@ -10,18 +10,21 @@ import (
 	"testing"
 )
 
-type CaseTest struct {
+type caseTest struct {
 	in_region []Region
 	in        string
 	exp       string
 }
 
-func RunCaseTest(command string, testsuite *[]CaseTest, t *testing.T) {
+func runCaseTest(command string, testsuite *[]caseTest, t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range *testsuite {
 		v := w.NewFile()
+		defer v.Close()
+
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.in)
 		v.EndEdit(e)
@@ -41,7 +44,7 @@ func RunCaseTest(command string, testsuite *[]CaseTest, t *testing.T) {
 }
 
 func TestTitleCase(t *testing.T) {
-	tests := []CaseTest{
+	tests := []caseTest{
 		/*single selection*/
 		{
 			// Please note the bizarre  capitalization of the first L in he'Ll...  This is due to a bug in go's strings
@@ -59,7 +62,6 @@ func TestTitleCase(t *testing.T) {
 			"Give a man a match, and he'll be warm for a minute, but set him on fire, and he'll be warm for the rest of his life.",
 			"Give A Man A Match, and he'll be warm for a minute, But Set Him On Fire, and he'll be warm for the rest of his life.",
 		},
-
 		/*no selection*/
 		{
 			nil,
@@ -75,7 +77,6 @@ func TestTitleCase(t *testing.T) {
 			"Ничего Себе!",
 		},
 		/*asian characters*/
-
 		{
 			[]Region{{0, 9}},
 
@@ -83,11 +84,12 @@ func TestTitleCase(t *testing.T) {
 			"千里之行﹐始于足下",
 		},
 	}
-	RunCaseTest("title_case", &tests, t)
+
+	runCaseTest("title_case", &tests, t)
 }
 
 func TestSwapCase(t *testing.T) {
-	tests := []CaseTest{
+	tests := []caseTest{
 		{
 			[]Region{{0, 13}},
 
@@ -101,11 +103,12 @@ func TestSwapCase(t *testing.T) {
 			"пРиВеТ, мИр",
 		},
 	}
-	RunCaseTest("swap_case", &tests, t)
+
+	runCaseTest("swap_case", &tests, t)
 }
 
 func TestUpperCase(t *testing.T) {
-	tests := []CaseTest{
+	tests := []caseTest{
 		/*single selection*/
 		{
 			[]Region{{0, 76}},
@@ -135,7 +138,6 @@ func TestUpperCase(t *testing.T) {
 			"ЧЕМ БОЛЬШЕ ЗАКОНОВ И ПОСТАНОВЛЕНИЙ, ТЕМ БОЛЬШЕ РАЗБОЙНИКОВ И ПРЕСТУПЛЕНИЙ!",
 		},
 		/*asian characters*/
-
 		{
 			[]Region{{0, 9}},
 
@@ -143,11 +145,12 @@ func TestUpperCase(t *testing.T) {
 			"千里之行﹐始于足下",
 		},
 	}
-	RunCaseTest("upper_case", &tests, t)
+
+	runCaseTest("upper_case", &tests, t)
 }
 
 func TestLowerCase(t *testing.T) {
-	tests := []CaseTest{
+	tests := []caseTest{
 		/*single selection*/
 		{
 			[]Region{{0, 76}},
@@ -177,7 +180,6 @@ func TestLowerCase(t *testing.T) {
 			"чем больше законов и постановлений, тем больше разбойников и преступлений!",
 		},
 		/*asian characters*/
-
 		{
 			[]Region{{0, 9}},
 
@@ -185,5 +187,6 @@ func TestLowerCase(t *testing.T) {
 			"千里之行﹐始于足下",
 		},
 	}
-	RunCaseTest("lower_case", &tests, t)
+
+	runCaseTest("lower_case", &tests, t)
 }
