@@ -19,10 +19,12 @@ import (
 )
 
 func TestView(t *testing.T) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "abcd")
 	v.EndEdit(edit)
@@ -109,11 +111,14 @@ func TestView(t *testing.T) {
 }
 
 func TestErase(t *testing.T) {
-	var (
-		w Window
-		v = w.NewFile()
-		s = v.Sel()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
+	s := v.Sel()
+
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "1234abcd5678abcd")
 	v.EndEdit(edit)
@@ -136,10 +141,12 @@ func TestErase(t *testing.T) {
 
 // This is not 100% what ST3 does
 func TestExtractScope(t *testing.T) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	const (
 		in      = "textmate/testdata/main.go"
 		expfile = "testdata/scoperange.res"
@@ -177,10 +184,12 @@ func TestExtractScope(t *testing.T) {
 
 // This is not 100% what ST3 does, but IMO ST3 is wrong
 func TestScopeName(t *testing.T) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	const (
 		in      = "textmate/testdata/main.go"
 		expfile = "testdata/scopename.res"
@@ -227,11 +236,13 @@ func TestStress(t *testing.T) {
 	if testing.Short() {
 		t.SkipNow()
 	}
-	var (
-		ed = GetEditor()
-		w  = ed.NewWindow()
-		v  = w.OpenFile("../frontend/termbox/main.go", 0)
-	)
+	ed := GetEditor()
+	w := ed.NewWindow()
+	defer w.Close()
+
+	v := w.OpenFile("../frontend/termbox/main.go", 0)
+	defer v.Close()
+
 	syntax := "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v.Settings().Set("syntax", syntax)
 	for i := 0; i < 1000; i++ {
@@ -247,14 +258,17 @@ func TestStress(t *testing.T) {
 }
 
 func TestTransform(t *testing.T) {
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var (
-		w Window
-		v = w.NewFile()
-	)
+
 	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
 
 	d, err := ioutil.ReadFile("view.go")
@@ -291,13 +305,18 @@ func TestSaveAsNewFile(t *testing.T) {
 			"testdata/test",
 		},
 	}
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
-		var (
-			w Window
-			v = w.NewFile()
-			e = v.BeginEdit()
-		)
+		v := w.NewFile()
+		defer v.Close()
+
 		v.Settings().Set("atomic_save", test.atomic)
+
+		e := v.BeginEdit()
+
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 		if err := v.SaveAs(test.file); err != nil {
@@ -351,11 +370,14 @@ func TestSaveAsOpenFile(t *testing.T) {
 			"testdata/User.sublime-settings",
 		},
 	}
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
-		var (
-			w Window
-			v = w.OpenFile(testfile, 0)
-		)
+		v := w.OpenFile(testfile, 0)
+		defer v.Close()
+
 		v.Settings().Set("atomic_save", test.atomic)
 		if err := v.SaveAs(test.as); err != nil {
 			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
@@ -377,7 +399,6 @@ func TestSaveAsOpenFile(t *testing.T) {
 }
 
 func TestClassify(t *testing.T) {
-	var w Window
 	tests := []struct {
 		text   string
 		points []int
@@ -399,8 +420,14 @@ func TestClassify(t *testing.T) {
 			[]int{5188, 8198, 8198, 12288, 4105, 130, 448, 65, 4102, 12288, 0, 12288, 8201, 6, 9, 64, 128, 1092, 0, 2056, 49, 134},
 		},
 	}
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
 		v := w.NewFile()
+		defer v.Close()
+
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
@@ -413,7 +440,6 @@ func TestClassify(t *testing.T) {
 }
 
 func TestFindByClass(t *testing.T) {
-	var w Window
 	tests := []struct {
 		text    string
 		point   int
@@ -472,8 +498,13 @@ func TestFindByClass(t *testing.T) {
 		},
 	}
 
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
 		v := w.NewFile()
+		defer v.Close()
+
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
@@ -484,7 +515,6 @@ func TestFindByClass(t *testing.T) {
 }
 
 func TestExpandByClass(t *testing.T) {
-	var w Window
 	tests := []struct {
 		text    string
 		start   Region
@@ -523,8 +553,13 @@ func TestExpandByClass(t *testing.T) {
 		},
 	}
 
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
 		v := w.NewFile()
+		defer v.Close()
+
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
@@ -536,6 +571,7 @@ func TestExpandByClass(t *testing.T) {
 
 func TestSetBuffer(t *testing.T) {
 	var v View
+	defer v.Close()
 
 	b := NewBuffer()
 	b.SetName("test")
@@ -549,6 +585,7 @@ func TestSetBuffer(t *testing.T) {
 
 func TestSetBufferTwice(t *testing.T) {
 	var v View
+	defer v.Close()
 
 	b1 := NewBuffer()
 	b1.SetName("test1")
@@ -571,7 +608,10 @@ func TestSetBufferTwice(t *testing.T) {
 
 func TestWindow(t *testing.T) {
 	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
 
 	if v.Window() != w {
 		t.Errorf("Expected the set window to be the one that spawned the view, but it isn't.")
@@ -579,7 +619,11 @@ func TestWindow(t *testing.T) {
 }
 
 func TestSetScratch(t *testing.T) {
-	var v View
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	def := v.IsScratch()
 
@@ -591,7 +635,11 @@ func TestSetScratch(t *testing.T) {
 }
 
 func TestSetOverwriteStatus(t *testing.T) {
-	var v View
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	def := v.OverwriteStatus()
 
@@ -603,8 +651,11 @@ func TestSetOverwriteStatus(t *testing.T) {
 }
 
 func TestIsDirtyWhenScratch(t *testing.T) {
-	var w Window
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
 
 	v.SetScratch(true)
 
@@ -614,9 +665,12 @@ func TestIsDirtyWhenScratch(t *testing.T) {
 }
 
 func TestIsDirtyWhenClean(t *testing.T) {
-	var w Window
+	w := GetEditor().NewWindow()
+	defer w.Close()
 
 	v := w.OpenFile("testdata/Default.sublime-keymap", 0)
+	defer v.Close()
+
 	v.Save()
 
 	if v.IsDirty() {
@@ -625,8 +679,11 @@ func TestIsDirtyWhenClean(t *testing.T) {
 }
 
 func TestIsDirtyWhenDirty(t *testing.T) {
-	var w Window
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
 
 	v.SetScratch(false)
 	v.buffer.Insert(0, "test")
@@ -638,9 +695,12 @@ func TestIsDirtyWhenDirty(t *testing.T) {
 
 func TestCloseView(t *testing.T) {
 	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	l := len(w.Views())
 
 	v := w.OpenFile("testdata/Default.sublime-keymap", 0)
+
 	v.Save()
 	v.Close()
 
@@ -659,6 +719,8 @@ func TestCloseView2(t *testing.T) {
 
 	// Make sure a closed view isn't reloaded after it has been closed
 	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	v := w.OpenFile(testfile, 0)
 	v.Close()
 	if data, err := ioutil.ReadFile(testfile); err != nil {
@@ -677,8 +739,13 @@ func TestViewLoadSettings(t *testing.T) {
 	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
 
 	GetEditor().loadSettings()
+
 	w := GetEditor().NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
+
 	if v.Settings().Get("translate_tabs_to_spaces", true).(bool) != false {
 		t.Error("Expected `translate_tabs_to_spaces` be false for a new view but is true")
 	}
@@ -690,10 +757,12 @@ func TestViewLoadSettings(t *testing.T) {
 }
 
 func BenchmarkScopeNameLinear(b *testing.B) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	const (
 		in     = "textmate/language_test.go"
 		syntax = "textmate/testdata/Go.tmLanguage"
@@ -716,10 +785,12 @@ func BenchmarkScopeNameLinear(b *testing.B) {
 }
 
 func BenchmarkScopeNameRandom(b *testing.B) {
-	var (
-		w Window
-		v = w.NewFile()
-	)
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	const (
 		in     = "textmate/language_test.go"
 		syntax = "textmate/testdata/Go.tmLanguage"

@@ -19,12 +19,13 @@ func TestOnFileChange(t *testing.T) {
 	}
 
 	var (
-		window   Window
-		view     *View
 		filename = "testdata/test.txt"
 		modified = make(chan bool)
 		timer    = time.NewTimer(time.Second * 2)
 	)
+
+	window := GetEditor().NewWindow()
+	defer window.Close()
 
 	file, err := os.Create(filename)
 	if err != nil {
@@ -39,7 +40,9 @@ func TestOnFileChange(t *testing.T) {
 		t.Fatalf("Could not write to fixutre file due to %v", err)
 	}
 
-	view = window.OpenFile(filename, 0)
+	view := window.OpenFile(filename, 0)
+	defer view.Close()
+
 	contents := view.Buffer().Substr(Region{0, 11})
 	if contents != "foo bar baz" {
 		t.Fatalf("Expected substring 'foo bar baz', got: %v", contents)

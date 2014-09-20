@@ -81,6 +81,8 @@ func TestRegisterAndRunWindowCommand(t *testing.T) {
 	}
 
 	w := ed.NewWindow()
+	defer w.Close()
+
 	err = ch.RunWindowCommand(w, name, Args{})
 
 	if err == nil {
@@ -103,7 +105,12 @@ func TestRegisterAndRunTextCommand(t *testing.T) {
 		t.Errorf("Got error while registering: %s", err)
 	}
 
-	v := ed.NewWindow().NewFile()
+	w := ed.NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	err = ch.RunTextCommand(v, name, Args{})
 
 	if err == nil {
@@ -170,6 +177,8 @@ func TestUnregisterAndRunWindowCommand(t *testing.T) {
 	}
 
 	w := ed.NewWindow()
+	defer w.Close()
+
 	err = ch.RunWindowCommand(w, name, Args{})
 
 	if err != nil {
@@ -194,7 +203,12 @@ func TestUnregisterAndRunTextCommand(t *testing.T) {
 		t.Errorf("Got error while unregistering: %s", err)
 	}
 
-	v := ed.NewWindow().NewFile()
+	w := ed.NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	err = ch.RunTextCommand(v, name, Args{})
 
 	if err != nil {

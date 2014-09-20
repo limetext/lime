@@ -11,7 +11,12 @@ import (
 
 func TestUndoStackIndex(t *testing.T) {
 	us := UndoStack{}
-	v := GetEditor().NewWindow().NewFile()
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -30,7 +35,12 @@ func TestUndoStackIndex(t *testing.T) {
 
 func TestUndoStackAdd(t *testing.T) {
 	us := UndoStack{}
-	v := GetEditor().NewWindow().NewFile()
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -72,7 +82,13 @@ func TestUndoStackUndo(t *testing.T) {
 	if us.Position() != 0 {
 		t.Errorf("Expected the UndoStack positon to be 0, but it was %d", us.Position())
 	}
-	v := GetEditor().NewWindow().NewFile()
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
 	v.EndEdit(e)
@@ -100,7 +116,12 @@ func TestUndoStackRedo(t *testing.T) {
 	if us.Position() != 0 {
 		t.Errorf("Expected the UndoStack positon to be 0, but it was %d", us.Position())
 	}
-	v := GetEditor().NewWindow().NewFile()
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -125,7 +146,12 @@ func TestUndoStackRedo(t *testing.T) {
 
 func TestUndoStackGlueFrom(t *testing.T) {
 	us := UndoStack{}
-	v := GetEditor().NewWindow().NewFile()
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})

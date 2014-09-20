@@ -12,12 +12,16 @@ import (
 )
 
 func TestOnSelectionModified(t *testing.T) {
-	var (
-		w         Window
-		v         = w.NewFile()
-		res       *RegionSet
-		callCount = 0
-	)
+	var res *RegionSet
+
+	callCount := 0
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	OnSelectionModified.Add(func(v *View) {
 		res = v.Sel()
 		callCount++
@@ -55,12 +59,15 @@ func TestOnSelectionModified(t *testing.T) {
 }
 
 func TestOnPreSave(t *testing.T) {
-	var testfile string = "testdata/test_event.txt"
-	var (
-		w         Window
-		v         = w.NewFile()
-		callCount = 0
-	)
+	testfile := "testdata/test_event.txt"
+	callCount := 0
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	OnPreSave.Add(func(v *View) {
 		callCount++
 	})
@@ -86,12 +93,15 @@ func TestOnPreSave(t *testing.T) {
 }
 
 func TestOnPostSave(t *testing.T) {
-	var testfile string = "testdata/test_event.txt"
-	var (
-		w         Window
-		v         = w.NewFile()
-		callCount = 0
-	)
+	testfile := "testdata/test_event.txt"
+	callCount := 0
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
+
 	OnPostSave.Add(func(v *View) {
 		callCount++
 	})

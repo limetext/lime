@@ -9,9 +9,11 @@ import (
 )
 
 func TestNewFile(t *testing.T) {
-	ed := GetEditor()
-	w := ed.NewWindow()
-	w.NewFile()
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer v.Close()
 
 	if len(w.Views()) != 1 {
 		t.Errorf("Expected 1 view, but got %d", len(w.Views()))
