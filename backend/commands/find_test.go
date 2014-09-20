@@ -11,26 +11,37 @@ import (
 	"testing"
 )
 
-func TestSingleSelection(t *testing.T) {
-	/*
-		Correct behavior of SingleSelect:
-			- Remove all selection regions but the first.
-	*/
+type findTest struct {
+	in  []Region
+	exp []Region
+}
 
+func runFindTest(command string, tests *[]findTest, t *testing.T) {
 	ed := GetEditor()
-
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
+
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
 
-	type Test struct {
-		in  []Region
-		exp []Region
+	for i, test := range *tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		ed.CommandHandler().RunTextCommand(v, command, nil)
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("Test %d failed: %v, %+v", i, sr, test)
+		}
 	}
+}
 
-	tests := []Test{
+func TestSingleSelection(t *testing.T) {
+	tests := []findTest{
 		{
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{1, 1}},
@@ -45,33 +56,11 @@ func TestSingleSelection(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		ed.CommandHandler().RunTextCommand(v, "single_selection", nil)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed: %v, %+v", i, sr, test)
-		}
-	}
+	runFindTest("single_selection", &tests, t)
 }
 
 func TestFindUnderExpand(t *testing.T) {
-	ed := GetEditor()
-
-	w := ed.NewWindow()
-	v := w.NewFile()
-	e := v.BeginEdit()
-	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
-	v.EndEdit(e)
-
-	type Test struct {
-		in  []Region
-		exp []Region
-	}
-
-	tests := []Test{
+	tests := []findTest{
 		{
 			[]Region{{0, 0}},
 			[]Region{{0, 5}},
@@ -82,38 +71,11 @@ func TestFindUnderExpand(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		ed.CommandHandler().RunTextCommand(v, "find_under_expand", nil)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed: %v, %+v", i, sr, test)
-		}
-	}
+	runFindTest("find_under_expand", &tests, t)
 }
 
 func TestSelectAll(t *testing.T) {
-	/*
-		Correct behavior of SelectAll:
-			- Select a single region of (0, view.buffersize())
-	*/
-
-	ed := GetEditor()
-
-	w := ed.NewWindow()
-	v := w.NewFile()
-	e := v.BeginEdit()
-	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
-	v.EndEdit(e)
-
-	type Test struct {
-		in  []Region
-		exp []Region
-	}
-
-	tests := []Test{
+	tests := []findTest{
 		{
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{0, 36}},
@@ -128,14 +90,5 @@ func TestSelectAll(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		ed.CommandHandler().RunTextCommand(v, "select_all", nil)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed: %v, %+v", i, sr, test)
-		}
-	}
+	runFindTest("select_all", &tests, t)
 }

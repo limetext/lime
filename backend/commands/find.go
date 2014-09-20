@@ -30,6 +30,11 @@ type (
 )
 
 func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
+	/*
+		Correct behavior of SingleSelect:
+			- Remove all selection regions but the first.
+	*/
+
 	r := v.Sel().Get(0)
 	v.Sel().Clear()
 	v.Sel().Add(r)
@@ -80,6 +85,11 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 }
 
 func (c *SelectAllCommand) Run(v *View, e *Edit) error {
+	/*
+		Correct behavior of SelectAll:
+			- Select a single region of (0, view.buffersize())
+	*/
+
 	r := Region{0, v.Buffer().Size()}
 	v.Sel().Clear()
 	v.Sel().Add(r)
