@@ -14,7 +14,11 @@ func TestGlueCmds(t *testing.T) {
 	ed := GetEditor()
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
+
 	v.SetScratch(true)
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")

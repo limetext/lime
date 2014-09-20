@@ -19,7 +19,11 @@ Goodbye world
 `
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
+
 	e := v.BeginEdit()
 	v.Insert(e, 0, data)
 	v.EndEdit(e)
@@ -101,27 +105,20 @@ Goodbye worl
 	}
 }
 
-func TestLeftDelete(t *testing.T) {
+type deleteTest struct {
+	in, out []Region
+	text    string
+	ins     string
+}
+
+func runDeleteTest(command string, tests *[]deleteTest, t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
-	v := w.NewFile()
 
-	type Test struct {
-		in, out []Region
-		text    string
-		ins     string
-	}
+	for i, test := range *tests {
+		v := w.NewFile()
+		defer v.Close()
 
-	tests := []Test{
-		{[]Region{{1, 1}, {2, 2}, {3, 3}, {4, 4}}, []Region{{0, 0}}, "5678", "12345678"},
-		{[]Region{{1, 1}, {3, 3}, {5, 5}, {7, 7}}, []Region{{0, 0}, {1, 1}, {2, 2}, {3, 3}}, "2468", "12345678"},
-		{[]Region{{1, 3}}, []Region{{1, 1}}, "145678", "12345678"},
-		{[]Region{{3, 1}}, []Region{{1, 1}}, "145678", "12345678"},
-		{[]Region{{100, 5}}, []Region{{93, 5}}, "abc\nd", "abc\ndef\nghi\n"}, // Yes, this is indeed what ST3 does too.
-	}
-
-	for i, test := range tests {
-		v.Sel().Clear()
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.ins)
 		v.EndEdit(e)
@@ -135,66 +132,93 @@ func TestLeftDelete(t *testing.T) {
 			s2.Add(r)
 		}
 
-		ed.CommandHandler().RunTextCommand(v, "left_delete", nil)
+		ed.CommandHandler().RunTextCommand(v, command, nil)
 		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.text {
 			t.Errorf("Test %02d: Expected %s, but got %s", i, test.text, d)
 		} else if !reflect.DeepEqual(*v.Sel(), s2) {
 			t.Errorf("Test %02d: Expected %v, but have %v", i, s2, v.Sel())
 		}
-		ed.CommandHandler().RunTextCommand(v, "undo", nil)
-		ed.CommandHandler().RunTextCommand(v, "undo", nil)
 	}
+
+}
+
+func TestLeftDelete(t *testing.T) {
+	tests := []deleteTest{
+		{
+			[]Region{{1, 1}, {2, 2}, {3, 3}, {4, 4}},
+			[]Region{{0, 0}},
+			"5678",
+			"12345678",
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {5, 5}, {7, 7}},
+			[]Region{{0, 0}, {1, 1}, {2, 2}, {3, 3}},
+			"2468",
+			"12345678",
+		},
+		{
+			[]Region{{1, 3}},
+			[]Region{{1, 1}},
+			"145678",
+			"12345678",
+		},
+		{
+			[]Region{{3, 1}},
+			[]Region{{1, 1}},
+			"145678",
+			"12345678",
+		},
+		{
+			[]Region{{100, 5}},
+			[]Region{{93, 5}},
+			"abc\nd",
+			"abc\ndef\nghi\n",
+		}, // Yes, this is indeed what ST3 does too.
+	}
+
+	runDeleteTest("left_delete", &tests, t)
 }
 
 func TestRightDelete(t *testing.T) {
-	ed := GetEditor()
-	w := ed.NewWindow()
-	v := w.NewFile()
-
-	type Test struct {
-		in, out []Region
-		text    string
-		ins     string
+	tests := []deleteTest{
+		{
+			[]Region{{0, 0}, {1, 1}, {2, 2}, {3, 3}},
+			[]Region{{0, 0}},
+			"5678",
+			"12345678",
+		},
+		{
+			[]Region{{1, 1}, {3, 3}, {5, 5}, {7, 7}},
+			[]Region{{1, 1}, {2, 2}, {3, 3}, {4, 4}},
+			"1357",
+			"12345678",
+		},
+		{
+			[]Region{{1, 3}},
+			[]Region{{1, 1}},
+			"145678",
+			"12345678",
+		},
+		{
+			[]Region{{3, 1}},
+			[]Region{{1, 1}},
+			"145678",
+			"12345678",
+		},
 	}
 
-	tests := []Test{
-		{[]Region{{0, 0}, {1, 1}, {2, 2}, {3, 3}}, []Region{{0, 0}}, "5678", "12345678"},
-		{[]Region{{1, 1}, {3, 3}, {5, 5}, {7, 7}}, []Region{{1, 1}, {2, 2}, {3, 3}, {4, 4}}, "1357", "12345678"},
-		{[]Region{{1, 3}}, []Region{{1, 1}}, "145678", "12345678"},
-		{[]Region{{3, 1}}, []Region{{1, 1}}, "145678", "12345678"},
-	}
-
-	for i, test := range tests {
-		v.Sel().Clear()
-		e := v.BeginEdit()
-		v.Insert(e, 0, test.ins)
-		v.EndEdit(e)
-
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		var s2 RegionSet
-		for _, r := range test.out {
-			s2.Add(r)
-		}
-
-		ed.CommandHandler().RunTextCommand(v, "right_delete", nil)
-		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.text {
-			t.Errorf("Test %02d: Expected %s, but got %s", i, test.text, d)
-		} else if !reflect.DeepEqual(*v.Sel(), s2) {
-			t.Errorf("Test %02d: Expected %v, but have %v", i, s2, v.Sel())
-		}
-		ed.CommandHandler().RunTextCommand(v, "undo", nil)
-		ed.CommandHandler().RunTextCommand(v, "undo", nil)
-	}
+	runDeleteTest("right_delete", &tests, t)
 }
 
 func TestInsert(t *testing.T) {
 	ed := GetEditor()
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer v.Close()
+
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
@@ -226,6 +250,7 @@ func TestInsert(t *testing.T) {
 			[]Region{{17, 17}, {35, 35}, {54, 54}},
 		},
 	}
+
 	for i, test := range tests {
 		v.Sel().Clear()
 		for _, r := range test.in {
@@ -277,10 +302,13 @@ func TestDeleteWord(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	for i, test := range tests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer v.Close()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 

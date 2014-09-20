@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-type Test struct {
+type indentTest struct {
 	text                     string
 	translate_tabs_to_spaces interface{}
 	tab_size                 interface{}
@@ -18,8 +18,35 @@ type Test struct {
 	expect                   string
 }
 
+func runIndentTest(t *testing.T, tests []indentTest, command string) {
+	ed := GetEditor()
+	w := ed.NewWindow()
+	defer w.Close()
+
+	for i, test := range tests {
+		v := w.NewFile()
+		defer w.Close()
+
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+
+		v.Sel().Clear()
+		for _, r := range test.sel {
+			v.Sel().Add(r)
+		}
+		v.Settings().Set("translate_tabs_to_spaces", test.translate_tabs_to_spaces)
+		v.Settings().Set("tab_size", test.tab_size)
+
+		ed.CommandHandler().RunTextCommand(v, command, nil)
+		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
+			t.Errorf("Test %d: Expected \n%s, but got \n%s", i, test.expect, d)
+		}
+	}
+}
+
 func TestIndent(t *testing.T) {
-	tests := []Test{
+	tests := []indentTest{
 		{ // translate_tabs_to_spaces = false
 			// indent should be "\t"
 			"a\n b\n  c\n   d\n",
@@ -70,11 +97,11 @@ func TestIndent(t *testing.T) {
 		},
 	}
 
-	runTest(t, tests, "indent")
+	runIndentTest(t, tests, "indent")
 }
 
 func TestUnindent(t *testing.T) {
-	tests := []Test{
+	tests := []indentTest{
 		{ // translate_tabs_to_spaces = false
 			// indent should be "\t"
 			"\ta\n  b\n      c\n\t  d\n",
@@ -125,29 +152,5 @@ func TestUnindent(t *testing.T) {
 		},
 	}
 
-	runTest(t, tests, "unindent")
-}
-
-func runTest(t *testing.T, tests []Test, command string) {
-	ed := GetEditor()
-	w := ed.NewWindow()
-
-	for i, test := range tests {
-		v := w.NewFile()
-		e := v.BeginEdit()
-		v.Insert(e, 0, test.text)
-		v.EndEdit(e)
-
-		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
-		v.Settings().Set("translate_tabs_to_spaces", test.translate_tabs_to_spaces)
-		v.Settings().Set("tab_size", test.tab_size)
-
-		ed.CommandHandler().RunTextCommand(v, command, nil)
-		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
-			t.Errorf("Test %d: Expected \n%s, but got \n%s", i, test.expect, d)
-		}
-	}
+	runIndentTest(t, tests, "unindent")
 }
