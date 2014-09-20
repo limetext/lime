@@ -197,6 +197,14 @@ func TestRemoveWindow(t *testing.T) {
 	if len(ed.Windows()) != l {
 		t.Errorf("Expected the window to be removed, but %d still remain", len(ed.Windows()))
 	}
+
+	w = ed.NewWindow()
+	ed.NewWindow()
+	ed.remove(w)
+
+	if len(ed.Windows()) != l+1 {
+		t.Errorf("Expected the window to be removed, but %d still remain", len(ed.Windows()))
+	}
 }
 
 func TestSetActiveWindow(t *testing.T) {
