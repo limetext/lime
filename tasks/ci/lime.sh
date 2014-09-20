@@ -69,10 +69,10 @@ test_all "backend"
 let ret=$ret+$build_result
 fold_end "test.backend"
 
-fold_start "test.termbox" "test termbox"
-test_all "frontend/termbox"
+fold_start "test.frontend" "test frontend"
+test_all "frontend"
 let ret=$ret+$build_result
-fold_end "test.termbox"
+fold_end "test.frontend"
 
 if [ "$ret" == "0" ]; then
 	fold_start "coveralls" "post to coveralls"
