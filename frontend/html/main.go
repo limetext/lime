@@ -10,6 +10,7 @@ import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
@@ -197,7 +198,7 @@ func (t *tbfe) render(w io.Writer) {
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	log4go.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
-	var kp backend.KeyPress
+	var kp keys.KeyPress
 	v, _ := strconv.ParseInt(kc, 10, 32)
 
 	if req.FormValue("altKey") == "true" {
@@ -215,7 +216,7 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	if !kp.Shift {
 		v = int64(unicode.ToLower(rune(v)))
 	}
-	kp.Key = backend.Key(v)
+	kp.Key = keys.Key(v)
 	backend.GetEditor().HandleInput(kp)
 }
 

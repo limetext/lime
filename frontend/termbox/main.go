@@ -9,6 +9,7 @@ import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
@@ -21,70 +22,70 @@ import (
 )
 
 var (
-	lut = map[termbox.Key]backend.KeyPress{
+	lut = map[termbox.Key]keys.KeyPress{
 		// Omission of these are intentional due to map collisions
-		//		termbox.KeyCtrlTilde:      backend.KeyPress{Ctrl: true, Key: '~'},
-		//		termbox.KeyCtrlBackslash:  backend.KeyPress{Ctrl: true, Key: '\\'},
-		//		termbox.KeyCtrlSlash:      backend.KeyPress{Ctrl: true, Key: '/'},
-		//		termbox.KeyCtrlUnderscore: backend.KeyPress{Ctrl: true, Key: '_'},
-		//		termbox.KeyCtrlLsqBracket: backend.KeyPress{Ctrl: true, Key: '{'},
-		//		termbox.KeyCtrlRsqBracket: backend.KeyPress{Ctrl: true, Key: '}'},
+		//		termbox.KeyCtrlTilde:      keys.KeyPress{Ctrl: true, Key: '~'},
+		//		termbox.KeyCtrlBackslash:  keys.KeyPress{Ctrl: true, Key: '\\'},
+		//		termbox.KeyCtrlSlash:      keys.KeyPress{Ctrl: true, Key: '/'},
+		//		termbox.KeyCtrlUnderscore: keys.KeyPress{Ctrl: true, Key: '_'},
+		//		termbox.KeyCtrlLsqBracket: keys.KeyPress{Ctrl: true, Key: '{'},
+		//		termbox.KeyCtrlRsqBracket: keys.KeyPress{Ctrl: true, Key: '}'},
 		// termbox.KeyCtrl3:
 		// termbox.KeyCtrl8
-		//		termbox.KeyCtrl2:      backend.KeyPress{Ctrl: true, Key: '2'},
-		termbox.KeyCtrlSpace:  backend.KeyPress{Ctrl: true, Key: ' '},
-		termbox.KeyCtrlA:      backend.KeyPress{Ctrl: true, Key: 'a'},
-		termbox.KeyCtrlB:      backend.KeyPress{Ctrl: true, Key: 'b'},
-		termbox.KeyCtrlC:      backend.KeyPress{Ctrl: true, Key: 'c'},
-		termbox.KeyCtrlD:      backend.KeyPress{Ctrl: true, Key: 'd'},
-		termbox.KeyCtrlE:      backend.KeyPress{Ctrl: true, Key: 'e'},
-		termbox.KeyCtrlF:      backend.KeyPress{Ctrl: true, Key: 'f'},
-		termbox.KeyCtrlG:      backend.KeyPress{Ctrl: true, Key: 'g'},
-		termbox.KeyCtrlH:      backend.KeyPress{Ctrl: true, Key: 'h'},
-		termbox.KeyCtrlJ:      backend.KeyPress{Ctrl: true, Key: 'j'},
-		termbox.KeyCtrlK:      backend.KeyPress{Ctrl: true, Key: 'k'},
-		termbox.KeyCtrlL:      backend.KeyPress{Ctrl: true, Key: 'l'},
-		termbox.KeyCtrlN:      backend.KeyPress{Ctrl: true, Key: 'n'},
-		termbox.KeyCtrlO:      backend.KeyPress{Ctrl: true, Key: 'o'},
-		termbox.KeyCtrlP:      backend.KeyPress{Ctrl: true, Key: 'p'},
-		termbox.KeyCtrlQ:      backend.KeyPress{Ctrl: true, Key: 'q'},
-		termbox.KeyCtrlR:      backend.KeyPress{Ctrl: true, Key: 'r'},
-		termbox.KeyCtrlS:      backend.KeyPress{Ctrl: true, Key: 's'},
-		termbox.KeyCtrlT:      backend.KeyPress{Ctrl: true, Key: 't'},
-		termbox.KeyCtrlU:      backend.KeyPress{Ctrl: true, Key: 'u'},
-		termbox.KeyCtrlV:      backend.KeyPress{Ctrl: true, Key: 'v'},
-		termbox.KeyCtrlW:      backend.KeyPress{Ctrl: true, Key: 'w'},
-		termbox.KeyCtrlX:      backend.KeyPress{Ctrl: true, Key: 'x'},
-		termbox.KeyCtrlY:      backend.KeyPress{Ctrl: true, Key: 'y'},
-		termbox.KeyCtrlZ:      backend.KeyPress{Ctrl: true, Key: 'z'},
-		termbox.KeyCtrl4:      backend.KeyPress{Ctrl: true, Key: '4'},
-		termbox.KeyCtrl5:      backend.KeyPress{Ctrl: true, Key: '5'},
-		termbox.KeyCtrl6:      backend.KeyPress{Ctrl: true, Key: '6'},
-		termbox.KeyCtrl7:      backend.KeyPress{Ctrl: true, Key: '7'},
-		termbox.KeyEnter:      backend.KeyPress{Key: backend.Enter},
-		termbox.KeySpace:      backend.KeyPress{Key: ' '},
-		termbox.KeyBackspace2: backend.KeyPress{Key: backend.Backspace},
-		termbox.KeyArrowUp:    backend.KeyPress{Key: backend.Up},
-		termbox.KeyArrowDown:  backend.KeyPress{Key: backend.Down},
-		termbox.KeyArrowLeft:  backend.KeyPress{Key: backend.Left},
-		termbox.KeyArrowRight: backend.KeyPress{Key: backend.Right},
-		termbox.KeyDelete:     backend.KeyPress{Key: backend.Delete},
-		termbox.KeyEsc:        backend.KeyPress{Key: backend.Escape},
-		termbox.KeyPgup:       backend.KeyPress{Key: backend.PageUp},
-		termbox.KeyPgdn:       backend.KeyPress{Key: backend.PageDown},
-		termbox.KeyF1:         backend.KeyPress{Key: backend.F1},
-		termbox.KeyF2:         backend.KeyPress{Key: backend.F2},
-		termbox.KeyF3:         backend.KeyPress{Key: backend.F3},
-		termbox.KeyF4:         backend.KeyPress{Key: backend.F4},
-		termbox.KeyF5:         backend.KeyPress{Key: backend.F5},
-		termbox.KeyF6:         backend.KeyPress{Key: backend.F6},
-		termbox.KeyF7:         backend.KeyPress{Key: backend.F7},
-		termbox.KeyF8:         backend.KeyPress{Key: backend.F8},
-		termbox.KeyF9:         backend.KeyPress{Key: backend.F9},
-		termbox.KeyF10:        backend.KeyPress{Key: backend.F10},
-		termbox.KeyF11:        backend.KeyPress{Key: backend.F11},
-		termbox.KeyF12:        backend.KeyPress{Key: backend.F12},
-		termbox.KeyTab:        backend.KeyPress{Key: '\t'},
+		//		termbox.KeyCtrl2:      keys.KeyPress{Ctrl: true, Key: '2'},
+		termbox.KeyCtrlSpace:  keys.KeyPress{Ctrl: true, Key: ' '},
+		termbox.KeyCtrlA:      keys.KeyPress{Ctrl: true, Key: 'a'},
+		termbox.KeyCtrlB:      keys.KeyPress{Ctrl: true, Key: 'b'},
+		termbox.KeyCtrlC:      keys.KeyPress{Ctrl: true, Key: 'c'},
+		termbox.KeyCtrlD:      keys.KeyPress{Ctrl: true, Key: 'd'},
+		termbox.KeyCtrlE:      keys.KeyPress{Ctrl: true, Key: 'e'},
+		termbox.KeyCtrlF:      keys.KeyPress{Ctrl: true, Key: 'f'},
+		termbox.KeyCtrlG:      keys.KeyPress{Ctrl: true, Key: 'g'},
+		termbox.KeyCtrlH:      keys.KeyPress{Ctrl: true, Key: 'h'},
+		termbox.KeyCtrlJ:      keys.KeyPress{Ctrl: true, Key: 'j'},
+		termbox.KeyCtrlK:      keys.KeyPress{Ctrl: true, Key: 'k'},
+		termbox.KeyCtrlL:      keys.KeyPress{Ctrl: true, Key: 'l'},
+		termbox.KeyCtrlN:      keys.KeyPress{Ctrl: true, Key: 'n'},
+		termbox.KeyCtrlO:      keys.KeyPress{Ctrl: true, Key: 'o'},
+		termbox.KeyCtrlP:      keys.KeyPress{Ctrl: true, Key: 'p'},
+		termbox.KeyCtrlQ:      keys.KeyPress{Ctrl: true, Key: 'q'},
+		termbox.KeyCtrlR:      keys.KeyPress{Ctrl: true, Key: 'r'},
+		termbox.KeyCtrlS:      keys.KeyPress{Ctrl: true, Key: 's'},
+		termbox.KeyCtrlT:      keys.KeyPress{Ctrl: true, Key: 't'},
+		termbox.KeyCtrlU:      keys.KeyPress{Ctrl: true, Key: 'u'},
+		termbox.KeyCtrlV:      keys.KeyPress{Ctrl: true, Key: 'v'},
+		termbox.KeyCtrlW:      keys.KeyPress{Ctrl: true, Key: 'w'},
+		termbox.KeyCtrlX:      keys.KeyPress{Ctrl: true, Key: 'x'},
+		termbox.KeyCtrlY:      keys.KeyPress{Ctrl: true, Key: 'y'},
+		termbox.KeyCtrlZ:      keys.KeyPress{Ctrl: true, Key: 'z'},
+		termbox.KeyCtrl4:      keys.KeyPress{Ctrl: true, Key: '4'},
+		termbox.KeyCtrl5:      keys.KeyPress{Ctrl: true, Key: '5'},
+		termbox.KeyCtrl6:      keys.KeyPress{Ctrl: true, Key: '6'},
+		termbox.KeyCtrl7:      keys.KeyPress{Ctrl: true, Key: '7'},
+		termbox.KeyEnter:      keys.KeyPress{Key: keys.Enter},
+		termbox.KeySpace:      keys.KeyPress{Key: ' '},
+		termbox.KeyBackspace2: keys.KeyPress{Key: keys.Backspace},
+		termbox.KeyArrowUp:    keys.KeyPress{Key: keys.Up},
+		termbox.KeyArrowDown:  keys.KeyPress{Key: keys.Down},
+		termbox.KeyArrowLeft:  keys.KeyPress{Key: keys.Left},
+		termbox.KeyArrowRight: keys.KeyPress{Key: keys.Right},
+		termbox.KeyDelete:     keys.KeyPress{Key: keys.Delete},
+		termbox.KeyEsc:        keys.KeyPress{Key: keys.Escape},
+		termbox.KeyPgup:       keys.KeyPress{Key: keys.PageUp},
+		termbox.KeyPgdn:       keys.KeyPress{Key: keys.PageDown},
+		termbox.KeyF1:         keys.KeyPress{Key: keys.F1},
+		termbox.KeyF2:         keys.KeyPress{Key: keys.F2},
+		termbox.KeyF3:         keys.KeyPress{Key: keys.F3},
+		termbox.KeyF4:         keys.KeyPress{Key: keys.F4},
+		termbox.KeyF5:         keys.KeyPress{Key: keys.F5},
+		termbox.KeyF6:         keys.KeyPress{Key: keys.F6},
+		termbox.KeyF7:         keys.KeyPress{Key: keys.F7},
+		termbox.KeyF8:         keys.KeyPress{Key: keys.F8},
+		termbox.KeyF9:         keys.KeyPress{Key: keys.F9},
+		termbox.KeyF10:        keys.KeyPress{Key: keys.F10},
+		termbox.KeyF11:        keys.KeyPress{Key: keys.F11},
+		termbox.KeyF12:        keys.KeyPress{Key: keys.F12},
+		termbox.KeyTab:        keys.KeyPress{Key: '\t'},
 	}
 	palLut    func(col textmate.Color) termbox.Attribute
 	scheme    *textmate.Theme
@@ -497,10 +498,10 @@ func (t *tbfe) loop() {
 				// Ensure that the new visible region is recalculated
 				t.Show(v, t.VisibleRegion(v))
 			case termbox.EventKey:
-				var kp backend.KeyPress
+				var kp keys.KeyPress
 
 				if ev.Ch != 0 {
-					kp.Key = backend.Key(ev.Ch)
+					kp.Key = keys.Key(ev.Ch)
 				} else if v2, ok := lut[ev.Key]; ok {
 					kp = v2
 				} else {

@@ -5,6 +5,8 @@
 package backend
 
 import (
+	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/packages"
 	"io/ioutil"
 	"os"
 	"path"
@@ -32,12 +34,10 @@ func TestGetEditor(t *testing.T) {
 }
 
 func TestLoadKeyBinding(t *testing.T) {
-	var kb KeyBindings
-
 	editor := GetEditor()
-	editor.loadKeyBinding(NewPacket("testdata/Default.sublime-keymap", new(KeyBindings)))
+	editor.loadKeyBinding(packages.NewPacket("testdata/Default.sublime-keymap", new(keys.KeyBindings)))
 
-	editor.keyBindings.filter(69, &kb)
+	kb := editor.keyBindings.Filter(keys.KeyPress{Key: 'i'})
 	if kb.Len() == 69 {
 		t.Errorf("Expected editor to have key %d bound, but it didn't", 69)
 	}
@@ -55,7 +55,7 @@ func TestLoadKeyBindings(t *testing.T) {
 
 func TestLoadSetting(t *testing.T) {
 	editor := GetEditor()
-	editor.loadSetting(NewPacket("testdata/Default.sublime-settings", editor.Settings()))
+	editor.loadSetting(packages.NewPacket("testdata/Default.sublime-settings", editor.Settings()))
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
@@ -70,7 +70,7 @@ func TestLoadSetting(t *testing.T) {
 func TestLoadSettings(t *testing.T) {
 	LIME_USER_PACKAGES_PATH = path.Join("..", "3rdparty", "bundles")
 	LIME_USER_PACKETS_PATH = path.Join("..", "3rdparty", "bundles", "User")
-	LIME_DEFAULTS_PATH = path.Join("packages", "Default")
+	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
 
 	editor := GetEditor()
 	editor.loadSettings()
@@ -163,7 +163,7 @@ func TestWatchingSettings(t *testing.T) {
 	var path string = "testdata/Default.sublime-settings"
 
 	editor := GetEditor()
-	editor.loadSetting(NewPacket(path, editor.Settings()))
+	editor.loadSetting(packages.NewPacket(path, editor.Settings()))
 
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -270,7 +270,7 @@ func TestClipboard(t *testing.T) {
 
 func TestHandleInput(t *testing.T) {
 	editor := GetEditor()
-	kp := KeyPress{Key: 'i'}
+	kp := keys.KeyPress{Key: 'i'}
 
 	editor.HandleInput(kp)
 

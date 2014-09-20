@@ -1,0 +1,5 @@
+[
+    { "keys": ["ctrl+i", "j"], "command": "test1", "context": [{ "key": "test1" }] },
+    { "keys": ["ctrl+i", "k"], "command": "test2", "context": [{ "key": "test2" }] },
+    { "keys": ["i"], "command": "test3", "context": [{ "key": "test3" }] },
+]

@@ -7,6 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/parser"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/textmate"
@@ -289,13 +290,13 @@ func (v *View) loadSettings() {
 		return
 	} else if s := r.FindStringSubmatch(syntax); s != nil {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
-		ed.loadSetting(NewPacket(p, defSettings.Settings()))
+		ed.loadSetting(packages.NewPacket(p, defSettings.Settings()))
 
 		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
-		ed.loadSetting(NewPacket(p, platSettings.Settings()))
+		ed.loadSetting(packages.NewPacket(p, platSettings.Settings()))
 
 		p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
-		ed.loadSetting(NewPacket(p, usrSettings.Settings()))
+		ed.loadSetting(packages.NewPacket(p, usrSettings.Settings()))
 	}
 }
 

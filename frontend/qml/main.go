@@ -12,6 +12,7 @@ import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
@@ -37,27 +38,27 @@ var (
 	blink             bool
 
 	// http://qt-project.org/doc/qt-5.1/qtcore/qt.html#Key-enum
-	lut = map[int]backend.Key{
-		0x01000000: backend.Escape,
+	lut = map[int]keys.Key{
+		0x01000000: keys.Escape,
 		0x01000001: '\t',
 		// 0x01000002 // Qt::Key_Backtab
-		0x01000003: backend.Backspace,
-		0x01000004: backend.Enter,
-		0x01000005: backend.KeypadEnter,
-		0x01000006: backend.Insert,
-		0x01000007: backend.Delete,
-		0x01000008: backend.Break,
+		0x01000003: keys.Backspace,
+		0x01000004: keys.Enter,
+		0x01000005: keys.KeypadEnter,
+		0x01000006: keys.Insert,
+		0x01000007: keys.Delete,
+		0x01000008: keys.Break,
 		// 0x01000009 // Qt::Key_Print
 		// 0x0100000a // Qt::Key_SysReq
 		// 0x0100000b // Qt::Key_Clear
-		0x01000010: backend.Home,
-		0x01000011: backend.End,
-		0x01000012: backend.Left,
-		0x01000013: backend.Up,
-		0x01000014: backend.Right,
-		0x01000015: backend.Down,
-		0x01000016: backend.PageUp,
-		0x01000017: backend.PageDown,
+		0x01000010: keys.Home,
+		0x01000011: keys.End,
+		0x01000012: keys.Left,
+		0x01000013: keys.Up,
+		0x01000014: keys.Right,
+		0x01000015: keys.Down,
+		0x01000016: keys.PageUp,
+		0x01000017: keys.PageDown,
 		// 0x01000020 // Qt::Key_Shift
 		// 0x01000021 // Qt::Key_Control On Mac OS X, this corresponds to the Command keys.
 		// 0x01000022 // Qt::Key_Meta On Mac OS X, this corresponds to the Control keys. On Windows keyboards, this key is mapped to the Windows key.
@@ -66,18 +67,18 @@ var (
 		// 0x01000024 // Qt::Key_CapsLock
 		// 0x01000025 // Qt::Key_NumLock
 		// 0x01000026 // Qt::Key_ScrollLock
-		0x01000030: backend.F1,
-		0x01000031: backend.F2,
-		0x01000032: backend.F3,
-		0x01000033: backend.F4,
-		0x01000034: backend.F5,
-		0x01000035: backend.F6,
-		0x01000036: backend.F7,
-		0x01000037: backend.F8,
-		0x01000038: backend.F9,
-		0x01000039: backend.F10,
-		0x0100003a: backend.F11,
-		0x0100003b: backend.F12,
+		0x01000030: keys.F1,
+		0x01000031: keys.F2,
+		0x01000032: keys.F3,
+		0x01000033: keys.F4,
+		0x01000034: keys.F5,
+		0x01000035: keys.F6,
+		0x01000036: keys.F7,
+		0x01000037: keys.F8,
+		0x01000038: keys.F9,
+		0x01000039: keys.F10,
+		0x0100003a: keys.F11,
+		0x0100003b: keys.F12,
 		// 0x01000053 // Qt::Key_Super_L
 		// 0x01000054 // Qt::Key_Super_R
 		// 0x01000055 // Qt::Key_Menu
@@ -817,7 +818,7 @@ func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
 			}
 		}
 
-		ed.HandleInput(backend.KeyPress{Key: key, Shift: shift, Alt: alt, Ctrl: ctrl, Super: super})
+		ed.HandleInput(keys.KeyPress{Key: key, Shift: shift, Alt: alt, Ctrl: ctrl, Super: super})
 		return true
 	}
 	return false

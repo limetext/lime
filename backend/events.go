@@ -6,6 +6,7 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
+	"github.com/limetext/lime/backend/util"
 	"strings"
 )
 
@@ -31,7 +32,7 @@ type (
 	// For instance pressing the key 'j' will have a different meaning when in a VI command mode emulation
 	// and when in a VI insert mode emulation. A plugin would then define two key binding entries for 'j',
 	// describe the key binding context to be able to discern which action is appropriate when 'j' is then pressed.
-	QueryContextCallback func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn
+	QueryContextCallback func(v *View, key string, operator util.Op, operand interface{}, match_all bool) QueryContextReturn
 
 	// A QueryContextEvent is simply a bunch of QueryContextCallbacks.
 	QueryContextEvent []QueryContextCallback
@@ -70,7 +71,7 @@ func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
 
 // Searches for a QueryContextCallback and returns the result of the first callback being able to deal with this
 // context, or Unknown if no such callback was found.
-func (qe QueryContextEvent) Call(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
+func (qe QueryContextEvent) Call(v *View, key string, operator util.Op, operand interface{}, match_all bool) QueryContextReturn {
 	log4go.Fine("Query context: %s, %v, %v, %v", key, operator, operand, match_all)
 	for i := range qe {
 		r := qe[i](v, key, operator, operand, match_all)
@@ -132,8 +133,8 @@ var (
 
 func init() {
 	// Register functionality dealing with a couple of built in contexts
-	OnQueryContext.Add(func(v *View, key string, operator Op, operand interface{}, match_all bool) QueryContextReturn {
-		if strings.HasPrefix(key, "setting.") && operator == OpEqual {
+	OnQueryContext.Add(func(v *View, key string, operator util.Op, operand interface{}, match_all bool) QueryContextReturn {
+		if strings.HasPrefix(key, "setting.") && operator == util.OpEqual {
 			c, ok := v.Settings().Get(key[8:]).(bool)
 			if c && ok {
 				return True
@@ -144,12 +145,12 @@ func init() {
 			op := int(opf)
 
 			switch operator {
-			case OpEqual:
+			case util.OpEqual:
 				if op == v.Sel().Len() {
 					return True
 				}
 				return False
-			case OpNotEqual:
+			case util.OpNotEqual:
 				if op != v.Sel().Len() {
 					return True
 				}
