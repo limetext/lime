@@ -55,7 +55,7 @@ ApplicationWindow {
             MenuItem {
                 text: qsTr("&Close File")
                 shortcut: "Ctrl+W"
-                onTriggered: frontend.runCommand("close");
+                onTriggered: frontend.runCommand("close_view");
             }
             MenuItem {
                 text: qsTr("&Close All Files")
