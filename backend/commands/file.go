@@ -12,6 +12,11 @@ type (
 	NewFileCommand struct {
 		DefaultCommand
 	}
+
+	OpenFileCommand struct {
+		DefaultCommand
+		Path string
+	}
 )
 
 func (c *NewFileCommand) Run(w *Window) error {
@@ -20,8 +25,14 @@ func (c *NewFileCommand) Run(w *Window) error {
 	return nil
 }
 
+func (o *OpenFileCommand) Run(w *Window) error {
+	w.OpenFile(o.Path, 0)
+	return nil
+}
+
 func init() {
 	register([]Command{
 		&NewFileCommand{},
+		&OpenFileCommand{},
 	})
 }
