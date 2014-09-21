@@ -23,6 +23,11 @@ func TestCloseView(t *testing.T) {
 	if len(w.Views()) != l {
 		t.Errorf("Expected %d view, but got %d", l, len(w.Views()))
 	}
+
+	for _, v := range w.Views() {
+		v.SetScratch(true)
+		v.Close()
+	}
 }
 
 func TestNextView(t *testing.T) {
