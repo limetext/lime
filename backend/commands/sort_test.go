@@ -40,7 +40,7 @@ func runSortTest(command string, tests []sortTest, t *testing.T) {
 			v.Sel().Add(r)
 		}
 
-		args := map[string]interface{}{
+		args := Args{
 			"case_sensitive":    test.caseSensitive,
 			"reverse":           test.reverse,
 			"remove_duplicates": test.removeDuplicates,

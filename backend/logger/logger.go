@@ -13,9 +13,9 @@ import (
 
 type (
 	Logger struct {
-		log    chan string
+		log     chan string
 		handler func(s string)
-		lock   sync.Mutex
+		lock    sync.Mutex
 	}
 )
 
