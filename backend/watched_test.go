@@ -64,7 +64,7 @@ func TestOnFileChange(t *testing.T) {
 	})
 
 	if _, err := file.WriteString(" scuzz"); err != nil {
-		t.Fatal("Could not write to fixture file due to %v", err)
+		t.Fatalf("Could not write to fixture file due to %v", err)
 	}
 
 	select {

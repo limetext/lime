@@ -506,6 +506,8 @@ func (v *View) EndEdit(edit *Edit) {
 // Sets the scratch property of the view.
 // TODO(.): Couldn't this just be a value in the View's Settings?
 func (v *View) SetScratch(s bool) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	v.scratch = s
 }
 
@@ -524,6 +526,8 @@ func (v *View) OverwriteStatus() bool {
 // Checks the overwrite status property of the view.
 // TODO(.): Couldn't this just be a value in the View's Settings?
 func (v *View) SetOverwriteStatus(s bool) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	v.overwrite = s
 }
 
