@@ -63,6 +63,7 @@ type (
 	// with functionality specific for TextCommands.
 	TextCommand interface {
 		Command
+
 		// Execute this command with the specified View and Edit object
 		// as the arguments
 		Run(*View, *Edit) error
@@ -72,8 +73,10 @@ type (
 	// with functionality specific for ApplicationCommands.
 	ApplicationCommand interface {
 		Command
+
 		// Execute this command
 		Run() error
+
 		// Returns whether this command is checked or not.
 		// Used to display a checkbox in the user interface
 		// for boolean commands.
