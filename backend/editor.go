@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/logger"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/quarnster/util/text"
@@ -78,10 +79,7 @@ type (
 		// cancel was pressed.
 		OkCancelDialog(msg string, okname string) bool
 	}
-	myLogWriter struct {
-		log  chan string
-		lock sync.Mutex
-	}
+
 	DummyFrontend struct {
 		m sync.Mutex
 		// Default return value for OkCancelDialog
@@ -117,38 +115,6 @@ func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
 func (h *DummyFrontend) Show(v *View, r Region)       {}
 func (h *DummyFrontend) VisibleRegion(v *View) Region { return Region{} }
 
-func newMyLogWriter() *myLogWriter {
-	ret := &myLogWriter{log: make(chan string, 100)}
-	go ret.handle()
-	return ret
-}
-
-func (m *myLogWriter) handle() {
-	for fl := range m.log {
-		c := GetEditor().Console()
-		f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(fl), fl)
-		e := c.BeginEdit()
-		c.Insert(e, c.Buffer().Size(), f)
-		c.EndEdit(e)
-	}
-}
-
-func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
-	p := Prof.Enter("log")
-	defer p.Exit()
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	fl := log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec)
-	m.log <- fl
-}
-
-func (m *myLogWriter) Close() {
-	m.lock.Lock()
-	defer m.lock.Unlock()
-	fmt.Println("Closing...")
-	close(m.log)
-}
-
 var (
 	ed  *Editor
 	edl sync.Mutex
@@ -177,7 +143,7 @@ func GetEditor() *Editor {
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
-		log4go.Global.AddFilter("console", log4go.DEBUG, newMyLogWriter())
+		log4go.Global.AddFilter("console", log4go.DEBUG, logger.NewLogger(ed.handleLog))
 		go ed.inputthread()
 		go ed.observeFiles()
 	}
@@ -491,4 +457,12 @@ func newWatcher() (w *fsnotify.Watcher) {
 		log4go.Error("Could not create watcher due to: %v", err)
 	}
 	return
+}
+
+func (ed *Editor) handleLog(s string) {
+	c := ed.Console()
+	f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(s), s)
+	e := c.BeginEdit()
+	c.Insert(e, c.Buffer().Size(), f)
+	c.EndEdit(e)
 }
