@@ -87,7 +87,7 @@ func TestUpdateVisibleRegion(t *testing.T) {
 func TestCreateFrontend(t *testing.T) {
 	var frontend *tbfe
 	frontendWasCreated := make(chan bool, 0)
-	go func(){
+	go func() {
 		frontend = createFrontend()
 		frontendWasCreated <- true
 	}()
