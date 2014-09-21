@@ -267,7 +267,9 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	p := util.Prof.Enter("clip")
 	defer p.Exit()
+	t.lock.Lock()
 	h := t.layout[v].height
+	t.lock.Unlock()
 	if e-s > h {
 		e = s + h
 	} else if e-s < h {
