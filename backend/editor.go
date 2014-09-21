@@ -79,7 +79,7 @@ type (
 		OkCancelDialog(msg string, okname string) bool
 	}
 	myLogWriter struct {
-		log chan string
+		log  chan string
 		lock sync.Mutex
 	}
 	DummyFrontend struct {
