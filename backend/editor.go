@@ -80,6 +80,7 @@ type (
 	}
 	myLogWriter struct {
 		log chan string
+		lock sync.Mutex
 	}
 	DummyFrontend struct {
 		m sync.Mutex
@@ -117,7 +118,7 @@ func (h *DummyFrontend) Show(v *View, r Region)       {}
 func (h *DummyFrontend) VisibleRegion(v *View) Region { return Region{} }
 
 func newMyLogWriter() *myLogWriter {
-	ret := &myLogWriter{make(chan string, 100)}
+	ret := &myLogWriter{log: make(chan string, 100)}
 	go ret.handle()
 	return ret
 }
@@ -135,11 +136,15 @@ func (m *myLogWriter) handle() {
 func (m *myLogWriter) LogWrite(rec *log4go.LogRecord) {
 	p := Prof.Enter("log")
 	defer p.Exit()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	fl := log4go.FormatLogRecord(log4go.FORMAT_DEFAULT, rec)
 	m.log <- fl
 }
 
 func (m *myLogWriter) Close() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	fmt.Println("Closing...")
 	close(m.log)
 }
