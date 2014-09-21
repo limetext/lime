@@ -9,6 +9,22 @@ import (
 	"testing"
 )
 
+func TestCloseView(t *testing.T) {
+	ed := GetEditor()
+
+	w := ed.NewWindow()
+	defer w.Close()
+
+	l := len(w.Views())
+	testPath := "open_file_test.go"
+	ed.CommandHandler().RunWindowCommand(w, "open_file", Args{"path": testPath})
+	ed.CommandHandler().RunWindowCommand(w, "close_view", nil)
+
+	if len(w.Views()) != l {
+		t.Errorf("Expected %d view, but got %d", l, len(w.Views()))
+	}
+}
+
 func TestNextView(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()

@@ -9,6 +9,10 @@ import (
 )
 
 type (
+	CloseViewCommand struct {
+		DefaultCommand
+	}
+
 	NextViewCommand struct {
 		DefaultCommand
 	}
@@ -17,6 +21,11 @@ type (
 		DefaultCommand
 	}
 )
+
+func (c *CloseViewCommand) Run(w *Window) error {
+	w.ActiveView().Close()
+	return nil
+}
 
 func (c *NextViewCommand) Run(w *Window) error {
 	for i, v := range w.Views() {
@@ -50,6 +59,7 @@ func (c *PrevViewCommand) Run(w *Window) error {
 
 func init() {
 	register([]Command{
+		&CloseViewCommand{},
 		&NextViewCommand{},
 		&PrevViewCommand{},
 	})
