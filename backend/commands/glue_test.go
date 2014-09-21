@@ -17,7 +17,10 @@ func TestGlueCmds(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	v.SetScratch(true)
 	e := v.BeginEdit()

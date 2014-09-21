@@ -39,7 +39,7 @@ func TestLoadKeyBinding(t *testing.T) {
 
 	kb := editor.keyBindings.Filter(keys.KeyPress{Key: 'i'})
 	if kb.Len() == 69 {
-		t.Errorf("Expected editor to have key %d bound, but it didn't", 69)
+		t.Errorf("Expected to have %d keys in the filter, but it had %d", 69, kb.Len())
 	}
 }
 
@@ -134,21 +134,25 @@ func TestWatchOnSaveAs(t *testing.T) {
 	}
 
 	editor := GetEditor()
-
 	w := editor.NewWindow()
-	// defer w.Close()
+	defer w.Close()
 
 	for i, test := range tests {
 		v := w.OpenFile(testfile, 0)
-		// defer v.Close()
 
 		if err := v.SaveAs(test.as); err != nil {
 			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
 		}
 
+		if v.IsDirty() {
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't", i)
+		}
+
 		if _, exist := editor.watchedFiles[test.as]; !exist {
 			t.Errorf("Test %d: Should watch %s file", i, test.as)
 		}
+
+		v.Close()
 
 		if err := os.Remove(test.as); err != nil {
 			t.Errorf("Test %d: Couldn't remove test file %s", i, test.as)

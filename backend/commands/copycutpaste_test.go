@@ -25,7 +25,10 @@ func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 
 	for i, test := range *tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		v.Buffer().Insert(0, test.buf)
 		v.Sel().Clear()

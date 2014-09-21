@@ -13,7 +13,10 @@ func TestNewFile(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	if len(w.Views()) != 1 {
 		t.Errorf("Expected 1 view, but got %d", len(w.Views()))
@@ -24,6 +27,11 @@ func TestClose(t *testing.T) {
 	ed := GetEditor()
 	l := len(ed.Windows())
 	w := ed.NewWindow()
+
+	for _, v := range w.Views() {
+		v.SetScratch(true)
+		v.Close()
+	}
 
 	w.Close()
 

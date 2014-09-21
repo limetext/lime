@@ -16,7 +16,10 @@ func TestUndoStackIndex(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -40,7 +43,10 @@ func TestUndoStackAdd(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -87,7 +93,10 @@ func TestUndoStackUndo(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -121,7 +130,10 @@ func TestUndoStackRedo(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})
@@ -151,7 +163,10 @@ func TestUndoStackGlueFrom(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Erase(e, text.Region{})

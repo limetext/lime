@@ -25,7 +25,10 @@ func runIndentTest(t *testing.T, tests []indentTest, command string) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer w.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)

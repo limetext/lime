@@ -42,11 +42,16 @@ func TestJoin(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range tests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 
@@ -103,11 +108,16 @@ func TestSelectLines(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range tests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 
@@ -173,11 +183,16 @@ func TestSwapLine(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range uptests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 
@@ -192,8 +207,12 @@ func TestSwapLine(t *testing.T) {
 
 	for i, test := range dwtests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 
@@ -234,11 +253,16 @@ func TestSplitToLines(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range tests {
 		v := w.NewFile()
-		e := v.BeginEdit()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
+		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
 		v.EndEdit(e)
 

@@ -12,19 +12,18 @@ import (
 )
 
 func TestOnFileChange(t *testing.T) {
-	fe := GetEditor().Frontend()
+	ed := GetEditor()
+	fe := ed.Frontend()
 	if dfe, ok := fe.(*DummyFrontend); ok {
 		// Make it trigger a reload
 		dfe.SetDefaultAction(true)
 	}
 
-	var (
-		filename = "testdata/test.txt"
-		modified = make(chan bool)
-		timer    = time.NewTimer(time.Second * 2)
-	)
+	filename := "testdata/test.txt"
+	modified := make(chan bool)
+	timer := time.NewTimer(time.Second * 2)
 
-	window := GetEditor().NewWindow()
+	window := ed.NewWindow()
 	defer window.Close()
 
 	file, err := os.Create(filename)
@@ -41,7 +40,10 @@ func TestOnFileChange(t *testing.T) {
 	}
 
 	view := window.OpenFile(filename, 0)
-	defer view.Close()
+	defer func() {
+		view.SetScratch(true)
+		view.Close()
+	}()
 
 	contents := view.Buffer().Substr(Region{0, 11})
 	if contents != "foo bar baz" {

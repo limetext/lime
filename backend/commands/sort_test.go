@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-type test struct {
+type sortTest struct {
 	text             string
 	caseSensitive    bool
 	reverse          bool
@@ -19,8 +19,42 @@ type test struct {
 	expect           string
 }
 
+func runSortTest(command string, tests []sortTest, t *testing.T) {
+	ed := GetEditor()
+	w := ed.NewWindow()
+	defer w.Close()
+
+	for i, test := range tests {
+		v := w.NewFile()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
+
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
+
+		v.Sel().Clear()
+		for _, r := range test.sel {
+			v.Sel().Add(r)
+		}
+
+		args := map[string]interface{}{
+			"case_sensitive":    test.caseSensitive,
+			"reverse":           test.reverse,
+			"remove_duplicates": test.removeDuplicates,
+		}
+		ed.CommandHandler().RunTextCommand(v, command, args)
+
+		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
+			t.Errorf("Test %d: Excepted %#v,\n but got %#v", i, test.expect, d)
+		}
+	}
+}
+
 func TestSortLines(t *testing.T) {
-	tests := []test{
+	tests := []sortTest{
 		{ // Case sensitive
 			"B\nc\na",
 			true,
@@ -87,11 +121,11 @@ func TestSortLines(t *testing.T) {
 		},
 	}
 
-	runSortTest(t, tests, "sort_lines")
+	runSortTest("sort_lines", tests, t)
 }
 
 func TestSortSelection(t *testing.T) {
-	tests := []test{
+	tests := []sortTest{
 		{ // Case sensitive
 			"Bca",
 			true,
@@ -158,33 +192,5 @@ func TestSortSelection(t *testing.T) {
 		},
 	}
 
-	runSortTest(t, tests, "sort_selection")
-}
-
-func runSortTest(t *testing.T, tests []test, command string) {
-	ed := GetEditor()
-	w := ed.NewWindow()
-
-	for i, test := range tests {
-		v := w.NewFile()
-		e := v.BeginEdit()
-		v.Insert(e, 0, test.text)
-		v.EndEdit(e)
-
-		v.Sel().Clear()
-		for _, r := range test.sel {
-			v.Sel().Add(r)
-		}
-
-		args := map[string]interface{}{
-			"case_sensitive":    test.caseSensitive,
-			"reverse":           test.reverse,
-			"remove_duplicates": test.removeDuplicates,
-		}
-		ed.CommandHandler().RunTextCommand(v, command, args)
-
-		if d := v.Buffer().Substr(Region{0, v.Buffer().Size()}); d != test.expect {
-			t.Errorf("Test %d: Excepted %#v,\n but got %#v", i, test.expect, d)
-		}
-	}
+	runSortTest("sort_selection", tests, t)
 }

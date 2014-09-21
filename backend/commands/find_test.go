@@ -22,7 +22,10 @@ func runFindTest(command string, tests *[]findTest, t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")

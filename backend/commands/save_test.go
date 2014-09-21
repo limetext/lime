@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-var testfile string = "../testdata/Default.sublime-settings"
+var testfile string = "testdata/save_test.txt"
 
 func TestSave(t *testing.T) {
 	hold, err := ioutil.ReadFile(testfile)
@@ -21,6 +21,7 @@ func TestSave(t *testing.T) {
 	if err := ioutil.WriteFile(testfile, []byte("Before text"), 0644); err != nil {
 		t.Fatalf("Couldn't write test file %s", testfile)
 	}
+
 	tests := []struct {
 		text   string
 		expect string
@@ -34,8 +35,10 @@ func TestSave(t *testing.T) {
 			"Before text\n",
 		},
 	}
+
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
 
 	for i, test := range tests {
 		err := ioutil.WriteFile(testfile, []byte("Before text"), 0644)
@@ -49,12 +52,19 @@ func TestSave(t *testing.T) {
 		v.EndEdit(e)
 
 		ed.CommandHandler().RunTextCommand(v, "save", nil)
+		if v.IsDirty() {
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't", i)
+		}
+
 		if data, _ := ioutil.ReadFile(testfile); test.expect != string(data) {
 			t.Errorf("Test %d: Expected %s, but got %s", i, test.expect, string(data))
 		}
-	}
-	if err := ioutil.WriteFile(testfile, hold, 0644); err != nil {
-		t.Fatalf("Couldn't write back test file %s", testfile)
+
+		v.Close()
+
+		if err := ioutil.WriteFile(testfile, hold, 0644); err != nil {
+			t.Fatalf("Couldn't write back test file %s", testfile)
+		}
 	}
 }
 
@@ -66,22 +76,33 @@ func TestSaveAs(t *testing.T) {
 	if err := ioutil.WriteFile(testfile, []byte(""), 0644); err != nil {
 		t.Fatalf("Couldn't write test file %s", testfile)
 	}
+
 	ed := GetEditor()
 	w := ed.NewWindow()
+	// defer w.Close()
+
 	v := w.OpenFile(testfile, 0)
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Testing save_as command")
 	v.BeginEdit()
 
-	name := "../testdata/save_as_test.txt"
+	name := "testdata/save_as_test.txt"
 
 	ed.CommandHandler().RunTextCommand(v, "save_as", Args{"name": name})
+
+	if v.IsDirty() {
+		t.Error("Expected the view to be clean, but it wasn't")
+	}
+
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		t.Errorf("The new test file %s wasn't created", name)
 	}
 	if data, _ := ioutil.ReadFile(name); "Testing save_as command" != string(data) {
 		t.Errorf("Expected %s, but got %s", "Testing save_as command", string(data))
 	}
+
+	// v.Close()
+
 	if err := os.Remove(name); err != nil {
 		t.Errorf("Couldn't remove test file %s", name)
 	}
@@ -93,50 +114,64 @@ func TestSaveAs(t *testing.T) {
 func TestSaveAll(t *testing.T) {
 	var err error
 	holds := make(map[int][]byte)
-	tests := []struct {
+	views := make(map[int]View)
+	files := []struct {
 		file   string
 		expect string
 	}{
 		{
-			"../testdata/Default.sublime-settings",
+			"testdata/save_all_test.txt",
 			"Testing save all 1",
 		},
 		{
-			"../testdata/Default.sublime-keymap",
+			"testdata/save_another_all_test.txt",
 			"Testing save all 2",
 		},
 	}
+
 	ed := GetEditor()
 	fe := ed.Frontend()
 	if dfe, ok := fe.(*DummyFrontend); ok {
 		// Make it *not* reload the file
 		dfe.SetDefaultAction(false)
 	}
+
 	w := ed.NewWindow()
-	for i, test := range tests {
-		holds[i], err = ioutil.ReadFile(test.file)
+	// defer w.Close()
+
+	for i, f := range files {
+		holds[i], err = ioutil.ReadFile(f.file)
 		if err != nil {
-			t.Fatalf("Test %d: Couldn't read file %s", i, test.file)
+			t.Fatalf("Test %d: Couldn't read file %s", i, f.file)
 		}
-		if err := ioutil.WriteFile(test.file, []byte(""), 0644); err != nil {
-			t.Fatalf("Test %d: Couldn't write test file %s", i, test.file)
+		if err := ioutil.WriteFile(f.file, []byte(""), 0644); err != nil {
+			t.Fatalf("Test %d: Couldn't write test file %s", i, f.file)
 		}
-		v := w.OpenFile(test.file, 0)
+
+		v := w.OpenFile(f.file, 0)
+		views[i] = *v
+
 		e := v.BeginEdit()
-		v.Insert(e, 0, test.expect)
+		v.Insert(e, 0, f.expect)
 		v.EndEdit(e)
 	}
+
 	if err := ed.CommandHandler().RunWindowCommand(w, "save_all", nil); err != nil {
 		t.Errorf("failed to run save_all: %s", err)
 	}
-	for i, test := range tests {
-		if data, err := ioutil.ReadFile(test.file); err != nil {
+
+	for i, f := range files {
+		if data, err := ioutil.ReadFile(f.file); err != nil {
 			t.Errorf("failed to read in file: %s", err)
-		} else if s := string(data); s != test.expect {
-			t.Errorf("Test %d: Expected to get `%s`, but got `%s`", i, test.expect, s)
+		} else if s := string(data); s != f.expect {
+			t.Errorf("Test %d: Expected to get `%s`, but got `%s`", i, f.expect, s)
 		}
 	}
-	for i, test := range tests {
-		ioutil.WriteFile(test.file, holds[i], 0644)
+
+	for i, f := range files {
+		// v := views[i]
+		// v.SetScratch(true)
+		// v.Close()
+		ioutil.WriteFile(f.file, holds[i], 0644)
 	}
 }

@@ -23,7 +23,10 @@ func TestView(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "abcd")
@@ -115,7 +118,10 @@ func TestErase(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	s := v.Sel()
 
@@ -145,7 +151,10 @@ func TestExtractScope(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	const (
 		in      = "textmate/testdata/main.go"
@@ -188,7 +197,10 @@ func TestScopeName(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	const (
 		in      = "textmate/testdata/main.go"
@@ -228,7 +240,6 @@ func TestScopeName(t *testing.T) {
 		} else if diff := util.Diff(string(d), str); diff != "" {
 			t.Error(diff)
 		}
-
 	}
 }
 
@@ -241,7 +252,10 @@ func TestStress(t *testing.T) {
 	defer w.Close()
 
 	v := w.OpenFile("../frontend/termbox/main.go", 0)
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	syntax := "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v.Settings().Set("syntax", syntax)
@@ -262,7 +276,10 @@ func TestTransform(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
 	if err != nil {
@@ -311,7 +328,6 @@ func TestSaveAsNewFile(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer v.Close()
 
 		v.Settings().Set("atomic_save", test.atomic)
 
@@ -322,6 +338,11 @@ func TestSaveAsNewFile(t *testing.T) {
 		if err := v.SaveAs(test.file); err != nil {
 			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.file, err)
 		}
+
+		if v.IsDirty() {
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't")
+		}
+
 		data, err := ioutil.ReadFile(test.file)
 		if err != nil {
 			t.Fatalf("Test %d: Can't read `%s`: %s", i, test.file, err)
@@ -329,6 +350,9 @@ func TestSaveAsNewFile(t *testing.T) {
 		if string(data) != test.text {
 			t.Errorf("Test %d: Expected `%s` contain %s, but got %s", i, test.file, test.text, data)
 		}
+
+		v.Close()
+
 		if err = os.Remove(test.file); err != nil {
 			t.Errorf("Test %d: Couldn't remove test file %s", i, test.file)
 		}
@@ -337,10 +361,12 @@ func TestSaveAsNewFile(t *testing.T) {
 
 func TestSaveAsOpenFile(t *testing.T) {
 	var testfile string = "testdata/Default.sublime-settings"
+
 	buf, err := ioutil.ReadFile(testfile)
 	if err != nil {
 		t.Fatalf("Can't read test file `%s`: %s", testfile, err)
 	}
+
 	tests := []struct {
 		atomic bool
 		as     string
@@ -376,15 +402,20 @@ func TestSaveAsOpenFile(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.OpenFile(testfile, 0)
-		defer v.Close()
 
 		v.Settings().Set("atomic_save", test.atomic)
 		if err := v.SaveAs(test.as); err != nil {
 			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
 		}
+
+		if v.IsDirty() {
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't")
+		}
+
 		if _, err := os.Stat(test.as); os.IsNotExist(err) {
 			t.Fatalf("Test %d: The file `%s` wasn't created", i, test.as)
 		}
+
 		data, err := ioutil.ReadFile(test.as)
 		if err != nil {
 			t.Fatalf("Test %d: Can't read `%s`: %s", i, test.as, err)
@@ -392,6 +423,9 @@ func TestSaveAsOpenFile(t *testing.T) {
 		if string(data) != string(buf) {
 			t.Errorf("Test %d: Expected `%s` contain %s, but got %s", i, test.as, string(buf), data)
 		}
+
+		v.Close()
+
 		if err := os.Remove(test.as); err != nil {
 			t.Errorf("Test %d: Couldn't remove test file %s", i, test.as)
 		}
@@ -426,7 +460,10 @@ func TestClassify(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
@@ -503,7 +540,10 @@ func TestFindByClass(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
@@ -558,7 +598,10 @@ func TestExpandByClass(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)
@@ -570,8 +613,13 @@ func TestExpandByClass(t *testing.T) {
 }
 
 func TestSetBuffer(t *testing.T) {
-	var v View
-	defer v.Close()
+	var w Window
+
+	v := newView(&w)
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	b := NewBuffer()
 	b.SetName("test")
@@ -584,8 +632,13 @@ func TestSetBuffer(t *testing.T) {
 }
 
 func TestSetBufferTwice(t *testing.T) {
-	var v View
-	defer v.Close()
+	var w Window
+
+	v := newView(&w)
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	b1 := NewBuffer()
 	b1.SetName("test1")
@@ -611,7 +664,10 @@ func TestWindow(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	if v.Window() != w {
 		t.Errorf("Expected the set window to be the one that spawned the view, but it isn't.")
@@ -623,7 +679,10 @@ func TestSetScratch(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	def := v.IsScratch()
 
@@ -639,7 +698,10 @@ func TestSetOverwriteStatus(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	def := v.OverwriteStatus()
 
@@ -683,7 +745,10 @@ func TestIsDirtyWhenDirty(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	v.SetScratch(false)
 	v.buffer.Insert(0, "test")
@@ -722,7 +787,10 @@ func TestCloseView2(t *testing.T) {
 	defer w.Close()
 
 	v := w.OpenFile(testfile, 0)
+
+	v.SetScratch(true)
 	v.Close()
+
 	if data, err := ioutil.ReadFile(testfile); err != nil {
 		t.Errorf("Couldn't load file: %s", err)
 		return
@@ -744,7 +812,10 @@ func TestViewLoadSettings(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	if v.Settings().Get("translate_tabs_to_spaces", true).(bool) != false {
 		t.Error("Expected `translate_tabs_to_spaces` be false for a new view but is true")
@@ -761,7 +832,10 @@ func BenchmarkScopeNameLinear(b *testing.B) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	const (
 		in     = "textmate/language_test.go"
@@ -789,7 +863,10 @@ func BenchmarkScopeNameRandom(b *testing.B) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	const (
 		in     = "textmate/language_test.go"

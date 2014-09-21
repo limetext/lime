@@ -370,8 +370,7 @@ func (e *Editor) inputthread() {
 			v = wnd.ActiveView()
 		}
 
-		var qc func(key string, operator Op, operand interface{}, match_all bool) bool
-		qc = func(key string, operator Op, operand interface{}, match_all bool) bool {
+		qc := func(key string, operator Op, operand interface{}, match_all bool) bool {
 			return OnQueryContext.Call(v, key, operator, operand, match_all) == True
 		}
 

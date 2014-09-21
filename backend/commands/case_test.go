@@ -23,7 +23,10 @@ func runCaseTest(command string, testsuite *[]caseTest, t *testing.T) {
 
 	for i, test := range *testsuite {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.in)

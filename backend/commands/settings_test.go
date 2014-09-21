@@ -12,7 +12,13 @@ import (
 func TestToggleSetting(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	v.Settings().Set("duck", true)
 	v.Settings().Set("witch", false)
@@ -46,7 +52,13 @@ func TestToggleSetting(t *testing.T) {
 func TestSetSetting(t *testing.T) {
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	v.Settings().Set("favorite_color", "blue")
 

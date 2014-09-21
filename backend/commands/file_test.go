@@ -22,6 +22,11 @@ func TestNewFile(t *testing.T) {
 	if len(w.Views()) != l+1 {
 		t.Errorf("Expected %d views, but got %d", l+1, len(w.Views()))
 	}
+
+	for _, v := range w.Views() {
+		v.SetScratch(true)
+		v.Close()
+	}
 }
 
 func TestOpenFile(t *testing.T) {
@@ -40,5 +45,10 @@ func TestOpenFile(t *testing.T) {
 	}
 	if w.Views()[l].Buffer().FileName() != testPath {
 		t.Errorf("Expected %s as FileName, but got %s", testPath, w.Views()[l].Buffer().FileName())
+	}
+
+	for _, v := range w.Views() {
+		v.SetScratch(true)
+		v.Close()
 	}
 }

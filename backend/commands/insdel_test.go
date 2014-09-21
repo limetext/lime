@@ -22,7 +22,10 @@ Goodbye world
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Insert(e, 0, data)
@@ -117,7 +120,10 @@ func runDeleteTest(command string, tests *[]deleteTest, t *testing.T) {
 
 	for i, test := range *tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.ins)
@@ -217,7 +223,10 @@ func TestInsert(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
@@ -306,7 +315,10 @@ func TestDeleteWord(t *testing.T) {
 
 	for i, test := range tests {
 		v := w.NewFile()
-		defer v.Close()
+		defer func() {
+			v.SetScratch(true)
+			v.Close()
+		}()
 
 		e := v.BeginEdit()
 		v.Insert(e, 0, test.text)

@@ -71,10 +71,8 @@ func TestKeyBindingsAction(t *testing.T) {
 		var bindings KeyBindings
 		loaders.LoadJSON(d, &bindings)
 
-		var qc func(key string, operator util.Op, operand interface{}, match_all bool) bool
-
 		for i, test := range tests {
-			qc = func(key string, operator util.Op, operand interface{}, match_all bool) bool {
+			qc := func(key string, operator util.Op, operand interface{}, match_all bool) bool {
 				return key == test.ck
 			}
 			b := bindings.Filter(test.kp)

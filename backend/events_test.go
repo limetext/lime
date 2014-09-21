@@ -20,12 +20,16 @@ func TestOnSelectionModified(t *testing.T) {
 	defer w.Close()
 
 	v := w.NewFile()
-	defer v.Close()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
 
 	OnSelectionModified.Add(func(v *View) {
 		res = v.Sel()
 		callCount++
 	})
+
 	edit := v.BeginEdit()
 	v.Insert(edit, 0, "abcd")
 	v.EndEdit(edit)

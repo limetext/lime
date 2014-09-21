@@ -15,7 +15,14 @@ func TestMove(t *testing.T) {
 	ed := GetEditor()
 
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	e := v.BeginEdit()
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
@@ -227,7 +234,14 @@ func TestMoveTo(t *testing.T) {
 
 	ed := GetEditor()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	e := v.BeginEdit()
 
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
@@ -1427,7 +1441,14 @@ func TestScrollLines(t *testing.T) {
 	ed.SetFrontend(&fe)
 	ch := ed.CommandHandler()
 	w := ed.NewWindow()
+	defer w.Close()
+
 	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	e := v.BeginEdit()
 	for i := 0; i < 10; i++ {
 		v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
