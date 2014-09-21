@@ -475,7 +475,7 @@ func (v *View) EndEdit(edit *Edit) {
 		if !eq && !sel_same {
 			selection_modified = true
 		}
-		if v.scratch || current_edit.bypassUndo || eq {
+		if v.IsScratch() || current_edit.bypassUndo || eq {
 			continue
 		}
 		switch {
@@ -514,12 +514,16 @@ func (v *View) SetScratch(s bool) {
 // Checks the scratch property of the view.
 // TODO(.): Couldn't this just be a value in the View's Settings?
 func (v *View) IsScratch() bool {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	return v.scratch
 }
 
 // Sets the overwrite status property of the view.
 // TODO(.): Couldn't this just be a value in the View's Settings?
 func (v *View) OverwriteStatus() bool {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	return v.overwrite
 }
 
