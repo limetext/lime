@@ -231,7 +231,6 @@ func Init() {
 		log4go.Error("Could not create watcher due to: %v", err)
 	}
 	watchedPlugins = make(map[string]*backend.WatchedPackage)
-	go observePlugins(m)
 
 	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
@@ -240,4 +239,6 @@ func Init() {
 			loadPlugin(p, m)
 		}
 	}
+
+	go observePlugins(m)
 }
