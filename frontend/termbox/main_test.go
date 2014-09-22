@@ -9,6 +9,7 @@ import (
 	"github.com/limetext/termbox-go"
 	. "github.com/quarnster/util/text"
 	"testing"
+	"time"
 )
 
 func TestPadLineRunes(t *testing.T) {
@@ -80,5 +81,72 @@ func TestUpdateVisibleRegion(t *testing.T) {
 
 	if end := fe.layout[v].visible.End(); end != 3 {
 		t.Fatalf("Expected 3, got %d", end)
+	}
+}
+
+func TestCreateFrontend(t *testing.T) {
+	var frontend *tbfe
+	frontendWasCreated := make(chan bool, 0)
+	go func() {
+		frontend = createFrontend()
+		frontendWasCreated <- true
+	}()
+
+	select {
+	case <-frontendWasCreated:
+		break
+	case <-time.After(2 * time.Second):
+		t.Error("Frontend was not created within timeout")
+	}
+
+	frontend.lock.Lock()
+	*showConsole = true
+	if frontend.editor == nil {
+		t.Error("Editor is nil")
+	}
+
+	if frontend.console == nil {
+		t.Error("Current console is nil")
+	}
+
+	if frontend.currentWindow == nil {
+		t.Error("Current window is nil")
+	}
+
+	if frontend.currentView == nil {
+		t.Error("Current view is nil")
+	}
+
+	if _, ok := frontend.layout[frontend.currentView]; !ok {
+		t.Error("Current view not in layout")
+	}
+
+	if _, ok := frontend.layout[frontend.console]; !ok {
+		t.Error("Console view not in layout")
+	}
+
+	if len(frontend.layout) != 2 {
+		t.Error("Layout too big")
+	}
+	frontend.lock.Unlock()
+
+}
+
+func TestLoopShutdown(t *testing.T) {
+	frontend := createFrontend()
+
+	loopHasExited := make(chan bool, 0)
+	go func() {
+		frontend.loop()
+		loopHasExited <- true
+	}()
+
+	frontend.shutdown <- true
+
+	select {
+	case <-loopHasExited:
+		break
+	case <-time.After(2 * time.Second):
+		t.Error("Loop did not terminate within timeout")
 	}
 }

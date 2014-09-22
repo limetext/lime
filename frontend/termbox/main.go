@@ -15,6 +15,7 @@ import (
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
 	. "github.com/quarnster/util/text"
+	"path"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -116,7 +117,55 @@ type tbfe struct {
 	layout         map[*backend.View]layout
 	status_message string
 	dorender       chan bool
+	shutdown       chan bool
 	lock           sync.Mutex
+	editor         *backend.Editor
+	console        *backend.View
+	currentView    *backend.View
+	currentWindow  *backend.Window
+}
+
+// Creates and initializes the frontend.
+func createFrontend() *tbfe {
+	var t tbfe
+	t.dorender = make(chan bool, render_chan_len)
+	t.shutdown = make(chan bool, 2)
+	t.layout = make(map[*backend.View]layout)
+
+	t.editor = t.setupEditor()
+	t.console = t.editor.Console()
+	t.currentWindow = t.editor.NewWindow()
+
+	// Assuming that all extra arguments are files
+	if files := flag.Args(); len(files) > 0 {
+		for _, file := range files {
+			t.currentView = createNewView(file, t.currentWindow)
+		}
+	} else {
+		t.currentView = t.currentWindow.NewFile()
+	}
+
+	t.console.Buffer().AddCallback(t.scroll)
+	t.setupCallbacks(t.currentView)
+
+	path := path.Join("..", "..", "3rdparty", "bundles", "TextMate-Themes", "Monokai.tmTheme")
+	if sc, err := textmate.LoadTheme(path); err != nil {
+		log4go.Error(err)
+	} else {
+		scheme = sc
+	}
+
+	setColorMode()
+	setSchemeSettings()
+
+	w, h := termbox.Size()
+	t.handleResize(h, w, true)
+
+	// These might take a while
+	t.editor.Init()
+	go sublime.Init()
+
+	return &t
 }
 
 func (t *tbfe) renderView(v *backend.View, lay layout) {
@@ -218,7 +267,9 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	p := util.Prof.Enter("clip")
 	defer p.Exit()
+	t.lock.Lock()
 	h := t.layout[v].height
+	t.lock.Unlock()
 	if e-s > h {
 		e = s + h
 	} else if e-s < h {
@@ -372,7 +423,7 @@ func (t *tbfe) renderthread() {
 
 		w, h := termbox.Size()
 		for i := 0; i < w && i < len(runes); i++ {
-			termbox.SetCell(i, h-1, runes[i], defaultFg, defaultBg)
+			termbox.SetCell(i, h-2, runes[i], defaultFg, defaultBg)
 		}
 
 		for i, v := range vs {
@@ -388,146 +439,113 @@ func (t *tbfe) renderthread() {
 	}
 }
 
-func (t *tbfe) loop() {
-
-	var (
-		ed = t.setupEditor()
-		c  = ed.Console()
-		w  = ed.NewWindow()
-		v  *backend.View
-	)
-
-	// Assuming that all extra arguments are files
-	if files := flag.Args(); len(files) > 0 {
-		for _, file := range files {
-			v = createNewView(file, w)
+func (t *tbfe) handleResize(height, width int, init bool) {
+	// This should handle multiple views in a less hardcoded fashion.
+	// After all, it is possible to *not* have a view in a window.
+	if init {
+		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
+		if *showConsole {
+			t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
 		}
-	} else {
-		v = w.NewFile()
 	}
 
-	c.Buffer().AddCallback(t.scroll)
+	if *showConsole {
+		view_layout := t.layout[t.currentView]
+		view_layout.height = height - *consoleHeight - 4
+		view_layout.width = width
 
-	t.setupCallbacks(v)
-	path := "../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"
-	if sc, err := textmate.LoadTheme(path); err != nil {
-		log4go.Error(err)
+		console_layout := t.layout[t.console]
+		console_layout.y = height - *consoleHeight - 2
+		console_layout.width = width
+		console_layout.height = *consoleHeight - 1
+
+		t.layout[t.console] = console_layout
+		t.layout[t.currentView] = view_layout
+	} else {
+		view_layout := t.layout[t.currentView]
+		view_layout.height = height - 3
+		view_layout.width = width
+		t.layout[t.currentView] = view_layout
+	}
+
+	// Ensure that the new visible region is recalculated
+	t.Show(t.currentView, t.VisibleRegion(t.currentView))
+}
+
+func (t *tbfe) handleInput(ev termbox.Event) {
+	if ev.Key == termbox.KeyCtrlQ {
+		t.shutdown <- true
+	}
+
+	var kp keys.KeyPress
+	if ev.Ch != 0 {
+		kp.Key = keys.Key(ev.Ch)
+	} else if v2, ok := lut[ev.Key]; ok {
+		kp = v2
+	} else {
 		return
-	} else {
-		scheme = sc
 	}
-	setColorMode()
-	setSchemeSettings()
 
-	// We start the renderThread here, after we have done our setup of termbox.
-	// That way, we do not clash with our output.
-	go t.renderthread()
+	t.editor.HandleInput(kp)
+}
 
+func (t *tbfe) loop() {
+	timechan := make(chan bool, 0)
+
+	// Only set up the timers if we should actually blink the cursor
+	// This should somehow be changable on an OnSettingsChanged callback
+	if p := t.editor.Settings().Get("caret_blink", true).(bool); p {
+		duration := time.Second / 2
+		if p, ok := t.editor.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
+			duration = time.Duration(float64(time.Second)*p) / 2
+		}
+		timer := time.NewTimer(duration)
+
+		defer func() {
+			timer.Stop()
+			close(timechan)
+		}()
+
+		go func() {
+			for _ = range timer.C {
+				timechan <- true
+				timer.Reset(duration)
+			}
+		}()
+	}
+
+	// Due to termbox still running, we can't close evchan
 	evchan := make(chan termbox.Event, 32)
-	defer func() {
-		close(evchan)
-	}()
-
 	go func() {
 		for {
 			evchan <- termbox.PollEvent()
 		}
 	}()
 
-	{
-		w, h := termbox.Size()
-		t.lock.Lock()
-		if *showConsole {
-			t.layout[v] = layout{0, 0, w, h - *consoleHeight - 4, Region{}, 0}
-			t.layout[c] = layout{0, h - *consoleHeight - 2, w, *consoleHeight - 1, Region{}, 0}
-		} else {
-			t.layout[v] = layout{0, 0, w, h - 3, Region{}, 0}
-		}
-		t.lock.Unlock()
-		t.Show(v, Region{1, 1})
-	}
-	t.Show(v, Region{100, 100})
-	t.Show(v, Region{1, 1})
-
-	go func() {
-		ed.Init()
-		sublime.Init()
-	}()
-
 	for {
 		p := util.Prof.Enter("mainloop")
-
-		blink_phase := time.Second
-		if p, ok := ed.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
-			blink_phase = time.Duration(float64(time.Second) * p)
-		}
-
-		// Divided by two since we're only doing a simple toggle blink
-		timer := time.NewTimer(blink_phase / 2)
 		select {
 		case ev := <-evchan:
 			mp := util.Prof.Enter("evchan")
-			limit := 3
-		loop:
 			switch ev.Type {
 			case termbox.EventError:
 				log4go.Debug("error occured")
 				return
 			case termbox.EventResize:
-				// We have to resize our layouts...
-				// There is currently duplicate code for calculating the layout:
-				// during initialization (above), and here. Not nice
-				if *showConsole {
-					view_layout := t.layout[v]
-					view_layout.height = ev.Height - *consoleHeight - 4
-					view_layout.width = ev.Width
-
-					console_layout := t.layout[c]
-					console_layout.y = ev.Height - *consoleHeight - 2
-					console_layout.width = ev.Width
-
-					t.layout[v] = view_layout
-					t.layout[c] = console_layout
-				} else {
-					view_layout := t.layout[v]
-					view_layout.height = ev.Height - 3
-					view_layout.width = ev.Width
-					t.layout[v] = view_layout
-				}
-
-				// Ensure that the new visible region is recalculated
-				t.Show(v, t.VisibleRegion(v))
+				t.handleResize(ev.Height, ev.Width, false)
 			case termbox.EventKey:
-				var kp keys.KeyPress
-
-				if ev.Ch != 0 {
-					kp.Key = keys.Key(ev.Ch)
-				} else if v2, ok := lut[ev.Key]; ok {
-					kp = v2
-				} else {
-					break
-				}
-
-				if ev.Key == termbox.KeyCtrlQ {
-					return
-				}
-				ed.HandleInput(kp)
-
+				t.handleInput(ev)
 				blink = false
 			}
-			if len(evchan) > 0 {
-				limit--
-				ev = <-evchan
-				goto loop
-			}
 			mp.Exit()
-		case <-timer.C:
-			// TODO(q): Shouldn't redraw if blink is disabled...
 
+		case <-timechan:
 			blink = !blink
 			t.render()
+
+		case <-t.shutdown:
+			return
 		}
-		timer.Stop()
 		p.Exit()
 	}
 }
@@ -688,6 +706,7 @@ func main() {
 	if err := termbox.Init(); err != nil {
 		log4go.Exit(err)
 	}
+
 	defer func() {
 		termbox.Close()
 		log4go.Debug(util.Prof)
@@ -696,8 +715,7 @@ func main() {
 		}
 	}()
 
-	var t tbfe
-	t.dorender = make(chan bool, render_chan_len)
-	t.layout = make(map[*backend.View]layout)
+	t := createFrontend()
+	go t.renderthread()
 	t.loop()
 }
