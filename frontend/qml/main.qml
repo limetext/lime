@@ -59,7 +59,7 @@ ApplicationWindow {
             }
             MenuItem {
                 text: qsTr("&Close All Files")
-                onTriggered: frontend.runCommand("close_all");
+                onTriggered: frontend.runCommand("close_all_views");
             }
             MenuSeparator{}
             MenuItem {

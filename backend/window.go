@@ -110,8 +110,8 @@ func (w *Window) Close() {
 }
 
 func (w *Window) CloseAllViews() {
-	for _, v := range w.views {
-		v.Close()
+	for len(w.views) > 0 {
+		w.views[0].Close()
 	}
 }
 
