@@ -99,6 +99,7 @@ func TestCreateFrontend(t *testing.T) {
 		t.Error("Frontend was not created within timeout")
 	}
 
+	frontend.lock.Lock()
 	*showConsole = true
 	if frontend.editor == nil {
 		t.Error("Editor is nil")
@@ -127,6 +128,7 @@ func TestCreateFrontend(t *testing.T) {
 	if len(frontend.layout) != 2 {
 		t.Error("Layout too big")
 	}
+	frontend.lock.Unlock()
 
 }
 
