@@ -6,6 +6,7 @@ package main
 
 import (
 	"code.google.com/p/log4go"
+	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
@@ -28,6 +29,7 @@ import (
 var (
 	scheme *textmate.Theme
 	blink  bool
+	port   = flag.Int("port", 8080, "Configures which port to host lime on")
 )
 
 const (
@@ -332,13 +334,14 @@ func (t *tbfe) loop() {
 	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
-	if err := http.ListenAndServe("localhost:8080", nil); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
 		log4go.Error("Error serving: %s", err)
 	}
 	log4go.Debug("Done")
 }
 
 func main() {
+	flag.Parse()
 	log4go.AddFilter("file", log4go.FINEST, log4go.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()
