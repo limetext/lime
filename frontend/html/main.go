@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	scheme   *textmate.Theme
-	blink    bool
+	scheme *textmate.Theme
+	blink  bool
 	port   = flag.Int("port", 8080, "Configures which port to host lime on")
 )
 
