@@ -8,6 +8,7 @@ import (
 	"code.google.com/p/log4go"
 	"github.com/quarnster/util/text"
 	"io/ioutil"
+	"path/filepath"
 	"runtime/debug"
 	"sync"
 )
@@ -68,7 +69,11 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 
 	v.SetScratch(true)
 	e := v.BeginEdit()
-	v.Buffer().SetFileName(filename)
+	if fn, err := filepath.Abs(filename); err != nil {
+		v.Buffer().SetFileName(filename)
+	} else {
+		v.Buffer().SetFileName(fn)
+	}
 	if d, err := ioutil.ReadFile(filename); err != nil {
 		log4go.Error("Couldn't load file %s: %s", filename, err)
 	} else {

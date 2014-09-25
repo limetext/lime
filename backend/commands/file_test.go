@@ -6,6 +6,7 @@ package commands
 
 import (
 	. "github.com/limetext/lime/backend"
+	"path/filepath"
 	"testing"
 )
 
@@ -43,7 +44,11 @@ func TestOpenFile(t *testing.T) {
 	if len(w.Views()) != l+1 {
 		t.Errorf("Expected %d views, but got %d", l+1, len(w.Views()))
 	}
-	if w.Views()[l].Buffer().FileName() != testPath {
+	exp, err := filepath.Abs(testPath)
+	if err != nil {
+		exp = testPath
+	}
+	if w.Views()[l].Buffer().FileName() != exp {
 		t.Errorf("Expected %s as FileName, but got %s", testPath, w.Views()[l].Buffer().FileName())
 	}
 
