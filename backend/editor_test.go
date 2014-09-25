@@ -7,11 +7,10 @@ package backend
 import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/packages"
-	"io/ioutil"
+	"github.com/quarnster/util/text"
 	"os"
 	"path"
 	"testing"
-	"time"
 )
 
 type DummyWatched struct {
@@ -161,34 +160,13 @@ func TestWatchOnSaveAs(t *testing.T) {
 }
 
 func TestWatchingSettings(t *testing.T) {
-	// TODO: This won't pass until the settings hierarchy is set up properly.
-	return
+	testFile := "testdata/Default.sublime-settings"
+	ed := GetEditor()
+	set := &text.HasSettings{}
 
-	var path string = "testdata/Default.sublime-settings"
-
-	editor := GetEditor()
-	editor.loadSetting(packages.NewPacket(path, editor.Settings()))
-
-	buf, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatal("Error in reading the default settings")
-	}
-
-	data := []byte("{\n\t\"tab_size\": 8\n}")
-	err = ioutil.WriteFile(path, data, 0644)
-	if err != nil {
-		t.Fatal("Error in writing to setting")
-	}
-
-	time.Sleep(time.Millisecond * 10)
-
-	if tab_size := editor.Settings().Get("tab_size").(float64); tab_size != 8 {
-		t.Errorf("Expected tab_size equal to 8, but got %v", tab_size)
-	}
-
-	err = ioutil.WriteFile(path, buf, 0644)
-	if err != nil {
-		t.Fatal("Error in writing the default back to setting")
+	ed.loadSetting(packages.NewPacket(testFile, set.Settings()))
+	if _, exist := ed.watchedFiles[testFile]; !exist {
+		t.Errorf("Should watch %s file", testFile)
 	}
 }
 
