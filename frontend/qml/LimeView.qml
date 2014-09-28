@@ -8,6 +8,7 @@ Item {
     property double fontSize: isMinimap ? 4 : 12
     property string fontFace: "Helvetica"
     property var cursor: Qt.IBeamCursor
+    property bool ctrl: false
     function sel() {
         if (!myView || !myView.back()) return null;
         return myView.back().sel();
@@ -139,10 +140,7 @@ Item {
                         var col = measure(item, index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        // TODO: We don't have access to ctrl variable from
-                        //       main file after 7d79d4f so we can't have multi cursor
-                        // if (!ctrl) sel().clear();
-                        sel().clear();
+                        if (!ctrl) sel().clear();
                         sel().add(myView.region(point.p, point.p))
                     }
                 }

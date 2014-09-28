@@ -13,7 +13,10 @@ ApplicationWindow {
     height: 600
 
     property var myWindow
-    property bool ctrl
+
+    function view() {
+       return tabs.getTab(tabs.currentIndex).item;
+    }
 
     menuBar: MenuBar {
         id: menu
@@ -125,11 +128,11 @@ ApplicationWindow {
     Item {
         anchors.fill: parent
         Keys.onPressed: {
-            ctrl = (event.modifiers && Qt.ControlModifier) ? true : false;
+            view().ctrl = (event.modifiers && Qt.ControlModifier) ? true : false;
             event.accepted = frontend.handleInput(event.key, event.modifiers)
         }
         Keys.onReleased: {
-            ctrl = false;
+            view().ctrl = false;
         }
         focus: true // Focus required for Keys.onPressed
         SplitView {
@@ -180,7 +183,7 @@ ApplicationWindow {
                         // TODO(.): This conflicts on new file on new file the active_view
                         //          should be the new file but its changing to first tab
                         myWindow.back().setActiveView(myWindow.view(currentIndex).back());
-                        var rv = tabs.getTab(currentIndex).item.children[1];
+                        var rv = view().children[1];
                         minimap.myView = null;
                         minimap.children[1].model = rv.model.count;
                         minimap.myView = myWindow.view(currentIndex);
