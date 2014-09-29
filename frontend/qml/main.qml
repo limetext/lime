@@ -132,7 +132,7 @@ ApplicationWindow {
             event.accepted = frontend.handleInput(event.key, event.modifiers)
         }
         Keys.onReleased: {
-            view().ctrl = false;
+            view().ctrl = (event.modifiers && Qt.ControlModifier) ? false : view().ctrl;
         }
         focus: true // Focus required for Keys.onPressed
         SplitView {
