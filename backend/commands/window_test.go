@@ -32,7 +32,7 @@ func TestCloseAllViews(t *testing.T) {
 	ed.CommandHandler().RunWindowCommand(w, "close_all_views", nil)
 
 	if len(w.Views()) != 0 {
-		t.Errorf("Expected %d views, but got %d", l, len(w.Views()))
+		t.Errorf("Expected %d views, but got %d", 0, len(w.Views()))
 	}
 }
 
