@@ -25,15 +25,13 @@ func TestCloseAllViews(t *testing.T) {
 	w := ed.NewWindow()
 	defer w.Close()
 
-	l := len(w.Views())
-
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 
 	ed.CommandHandler().RunWindowCommand(w, "close_all_views", nil)
 
-	if len(w.Views()) != l {
+	if len(w.Views()) != 0 {
 		t.Errorf("Expected %d views, but got %d", l, len(w.Views()))
 	}
 }
