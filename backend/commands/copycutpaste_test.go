@@ -69,6 +69,13 @@ func TestCopy(t *testing.T) {
 			"t\ns",
 			"test\nstring",
 		},
+		{
+			"test string",
+			"",
+			[]text.Region{{3, 3}},
+			"test string\n",
+			"test string",
+		},
 		// TODO: Multiregion functionality will probably need to work differently.
 		{
 			"test string",
@@ -87,6 +94,13 @@ func TestCopy(t *testing.T) {
 		{
 			"test\nstring",
 			"",
+			[]text.Region{{1, 1}, {7, 7}},
+			"test\n\nstring\n",
+			"test\nstring",
+		},
+		{
+			"test\nstring",
+			"",
 			[]text.Region{{3, 6}, {9, 10}},
 			"t\ns\nn",
 			"test\nstring",
@@ -96,6 +110,13 @@ func TestCopy(t *testing.T) {
 			"",
 			[]text.Region{{5, 6}, {1, 3}},
 			"es\ns",
+			"test string",
+		},
+		{
+			"test string",
+			"",
+			[]text.Region{{1, 1}, {6, 7}},
+			"t",
 			"test string",
 		},
 	}

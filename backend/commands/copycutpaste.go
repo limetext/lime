@@ -26,19 +26,33 @@ type (
 )
 
 func getSelSubstrs(v *View, e *Edit) []string {
-	s := make([]string, len(v.Sel().Regions()))
+	s := make([]string, 0, len(v.Sel().Regions()))
 	rs := &text.RegionSet{}
 	rs.AddAll(v.Sel().Regions())
 	sort.Sort(rs)
-	for i, r := range rs.Regions() {
-		s[i] = v.Buffer().Substr(r)
+
+	allRegionsEmpty := true
+	for _, r := range rs.Regions() {
+		if !r.Empty() {
+			allRegionsEmpty = false
+			break
+		}
+	}
+	for _, r := range rs.Regions() {
+		s1 := v.Buffer().Substr(r)
+		if allRegionsEmpty {
+			r = v.Buffer().LineR(r)
+			s1 = v.Buffer().Substr(r) + "\n"
+		}
+		if !r.Empty() {
+			s = append(s, s1)
+		}
 	}
 
 	return s
 }
 
 func (c *CopyCommand) Run(v *View, e *Edit) error {
-	// TODO: Copy the entire line if there is no selection.
 	// TODO: Distinguish copying multiple regions from one
 	//		 region with multiple lines.
 
