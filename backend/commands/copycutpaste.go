@@ -25,38 +25,40 @@ type (
 	}
 )
 
-func getSelSubstrs(v *View, e *Edit) []string {
-	s := make([]string, 0, len(v.Sel().Regions()))
+func getRegions(v *View, cut bool) *text.RegionSet {
 	rs := &text.RegionSet{}
 	rs.AddAll(v.Sel().Regions())
 	sort.Sort(rs)
 
-	allRegionsEmpty := true
+	he, ae := rs.HasEmpty(), !rs.HasNonEmpty() || cut
 	for _, r := range rs.Regions() {
-		if !r.Empty() {
-			allRegionsEmpty = false
-			break
-		}
-	}
-	for _, r := range rs.Regions() {
-		s1 := v.Buffer().Substr(r)
-		if allRegionsEmpty {
-			r = v.Buffer().LineR(r)
-			s1 = v.Buffer().Substr(r) + "\n"
-		}
-		if !r.Empty() {
-			s = append(s, s1)
+		if ae && r.Empty() {
+			rs.Add(v.Buffer().FullLineR(r))
+		} else if he && r.Empty() {
+			rs.Substract(r)
 		}
 	}
 
+	return rs
+}
+
+func getSelSubstrs(v *View, rs *text.RegionSet) []string {
+	var add, s1 string
+	s := make([]string, len(rs.Regions()))
+	for i, r := range rs.Regions() {
+		add = ""
+		s1 = v.Buffer().Substr(r)
+		if !v.Sel().HasNonEmpty() && !strings.HasSuffix(s1, "\n") {
+			add = "\n"
+		}
+		s[i] = s1 + add
+	}
 	return s
 }
 
 func (c *CopyCommand) Run(v *View, e *Edit) error {
-	// TODO: Distinguish copying multiple regions from one
-	//		 region with multiple lines.
-
-	s := getSelSubstrs(v, e)
+	rs := getRegions(v, false)
+	s := getSelSubstrs(v, rs)
 
 	GetEditor().SetClipboard(strings.Join(s, "\n"))
 
@@ -64,14 +66,9 @@ func (c *CopyCommand) Run(v *View, e *Edit) error {
 }
 
 func (c *CutCommand) Run(v *View, e *Edit) error {
-	// TODO: Cut the entire line if there is no selection.
-	// TODO: Distinguish copying multiple regions from one
-	//		 region with multiple lines.
+	s := getSelSubstrs(v, getRegions(v, false))
 
-	s := getSelSubstrs(v, e)
-
-	rs := &text.RegionSet{}
-	rs.AddAll(v.Sel().Regions())
+	rs := getRegions(v, true)
 	sort.Sort(sort.Reverse(rs))
 	for _, r := range rs.Regions() {
 		v.Erase(e, r)
@@ -85,8 +82,6 @@ func (c *CutCommand) Run(v *View, e *Edit) error {
 func (c *PasteCommand) Run(v *View, e *Edit) error {
 	// TODO: Paste the entire line on the line before the cursor if a
 	//		 line was autocopied.
-	// TODO: If the number of regions copied matches the number of regions
-	//		 selected, paste the regions one at a time.
 
 	ed := GetEditor()
 

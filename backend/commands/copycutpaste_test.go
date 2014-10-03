@@ -42,13 +42,13 @@ func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 		ed.CommandHandler().RunTextCommand(v, command, nil)
 
 		if ed.GetClipboard() != test.expClip {
-			t.Errorf("Test %d: Expected clipboard to be %v, but got %v", i, test.expClip, ed.GetClipboard())
+			t.Errorf("Test %d: Expected clipboard to be %q, but got %q", i, test.expClip, ed.GetClipboard())
 		}
 
 		b := v.Buffer().Substr(text.Region{0, v.Buffer().Size()})
 
 		if b != test.expBuf {
-			t.Errorf("Test %d: Expected buffer to be %v, but got %v", i, test.expBuf, b)
+			t.Errorf("Test %d: Expected buffer to be %q, but got %q", i, test.expBuf, b)
 		}
 	}
 }
@@ -76,7 +76,6 @@ func TestCopy(t *testing.T) {
 			"test string\n",
 			"test string",
 		},
-		// TODO: Multiregion functionality will probably need to work differently.
 		{
 			"test string",
 			"",
@@ -140,11 +139,17 @@ func TestCut(t *testing.T) {
 			"t\ns",
 			"testring",
 		},
-		// TODO: Multiregion functionality will probably need to work differently.
 		{
 			"test string",
 			"",
-			[]text.Region{{1, 3}, {5, 6}},
+			[]text.Region{{3, 3}},
+			"test string\n",
+			"",
+		},
+		{
+			"test string",
+			"",
+			[]text.Region{{5, 6}, {1, 3}},
 			"es\ns",
 			"tt tring",
 		},
@@ -154,6 +159,13 @@ func TestCut(t *testing.T) {
 			[]text.Region{{1, 3}, {5, 6}},
 			"es\ns",
 			"tt\ntring",
+		},
+		{
+			"test\nstring",
+			"",
+			[]text.Region{{1, 1}, {7, 7}},
+			"test\n\nstring\n",
+			"",
 		},
 		{
 			"test\nstring",
@@ -168,6 +180,20 @@ func TestCut(t *testing.T) {
 			[]text.Region{{5, 6}, {1, 3}},
 			"es\ns",
 			"tt tring",
+		},
+		{
+			"test string",
+			"",
+			[]text.Region{{6, 7}, {1, 1}},
+			"t",
+			"",
+		},
+		{
+			"test\nstring",
+			"",
+			[]text.Region{{1, 1}, {6, 7}},
+			"t",
+			"sring",
 		},
 	}
 
@@ -197,7 +223,6 @@ func TestPaste(t *testing.T) {
 			"test",
 			"testesttring",
 		},
-		// TODO: Multiregion functionality will probably need to work differently.
 		{
 			"test string",
 			"test",
