@@ -482,56 +482,56 @@ func TestFindByClass(t *testing.T) {
 		point   int
 		forward bool
 		classes int
-		expect  Region
+		expect  int
 	}{
 		{
 			"abc Hi -test lime",
 			1,
 			true,
 			CLASS_PUNCTUATION_START,
-			Region{7, 7},
+			7,
 		},
 		{
 			"abc Hi -test lime",
 			8,
 			true,
 			CLASS_PUNCTUATION_START,
-			Region{17, 17},
+			17,
 		},
 		{
 			"abc Hi -test lime",
 			5,
 			true,
 			CLASS_WORD_START,
-			Region{8, 8},
+			8,
 		},
 		{
 			"abc Hi -test lime",
 			5,
 			false,
 			CLASS_EMPTY_LINE,
-			Region{0, 0},
+			0,
 		},
 		{
 			"abc Hi -test lime",
 			9,
 			false,
 			CLASS_SUB_WORD_START,
-			Region{4, 4},
+			4,
 		},
 		{
 			"abc Hi -test lime",
 			9,
 			false,
 			CLASS_WORD_END | CLASS_PUNCTUATION_END,
-			Region{8, 8},
+			8,
 		},
 		{
 			"abc Hi -test lime",
 			0,
 			true,
 			CLASS_WORD_START | CLASS_WORD_END,
-			Region{3, 3},
+			3,
 		},
 	}
 

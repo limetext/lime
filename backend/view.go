@@ -824,7 +824,7 @@ func (v *View) Classify(point int) (res int) {
 
 // Finds the next location after point that matches the given classes
 // Searches backward if forward is false
-func (v *View) FindByClass(point int, forward bool, classes int) Region {
+func (v *View) FindByClass(point int, forward bool, classes int) int {
 	i := -1
 	if forward {
 		i = 1
@@ -833,13 +833,13 @@ func (v *View) FindByClass(point int, forward bool, classes int) Region {
 	// Sublime doesn't consider initial point even if it matches.
 	for p := point + i; ; p += i {
 		if p <= 0 {
-			return Region{0, 0}
+			return 0
 		}
 		if p >= size {
-			return Region{size, size}
+			return size
 		}
 		if v.Classify(p)&classes != 0 {
-			return Region{p, p}
+			return p
 		}
 	}
 }

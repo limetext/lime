@@ -39,8 +39,8 @@ line
 after empty line""")
     v2.end_edit(e)
     # Expected results validated in Sublime
-    assert v2.find_by_class(1, True, sublime.CLASS_WORD_START) == sublime.Region(4, 4)
-    assert v2.find_by_class(1, True, sublime.CLASS_PUNCTUATION_START) == sublime.Region(9, 9)
+    assert v2.find_by_class(1, True, sublime.CLASS_WORD_START) == 4
+    assert v2.find_by_class(1, True, sublime.CLASS_PUNCTUATION_START) == 9
     assert v2.expand_by_class(sublime.Region(5, 6),
     	sublime.CLASS_WORD_START | sublime.CLASS_WORD_END) == sublime.Region(4, 8)
     assert v2.expand_by_class(sublime.Region(11, 12),
