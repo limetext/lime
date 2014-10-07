@@ -11,6 +11,7 @@ ApplicationWindow {
     id: window
     width: 800
     height: 600
+    title: "Lime"
 
     property var myWindow
 
