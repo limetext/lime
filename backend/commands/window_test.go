@@ -25,8 +25,6 @@ func TestCloseAll(t *testing.T) {
 	w := ed.NewWindow()
 	defer w.Close()
 
-	l := len(w.Views())
-
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
