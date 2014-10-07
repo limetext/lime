@@ -44,6 +44,10 @@ ApplicationWindow {
                 // TODO(.) : qml doesn't have a ready dialog like FileDialog
                 // onTriggered: saveAsDialog.open()
             }
+            MenuItem {
+                text: qsTr("&Save All")
+                onTriggered: frontend.runCommand("save_all")
+            }
             MenuSeparator{}
             MenuItem {
                 text: qsTr("&New Window")
@@ -63,7 +67,7 @@ ApplicationWindow {
             }
             MenuItem {
                 text: qsTr("&Close All Files")
-                onTriggered: frontend.runCommand("close_all_views");
+                onTriggered: frontend.runCommand("close_all");
             }
             MenuSeparator{}
             MenuItem {

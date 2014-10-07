@@ -13,7 +13,7 @@ type (
 		DefaultCommand
 	}
 
-	CloseAllViewsCommand struct {
+	CloseAllCommand struct {
 		DefaultCommand
 	}
 
@@ -36,7 +36,7 @@ func (c *NewWindowCommand) Run(w *Window) error {
 	return nil
 }
 
-func (c *CloseAllViewsCommand) Run(w *Window) error {
+func (c *CloseAllCommand) Run(w *Window) error {
 	w.CloseAllViews()
 	return nil
 }
@@ -70,7 +70,7 @@ func (c *CloseWindowAppCommand) IsChecked() bool {
 func init() {
 	register([]Command{
 		&NewWindowCommand{},
-		&CloseAllViewsCommand{},
+		&CloseAllCommand{},
 		&CloseWindowCommand{},
 	})
 

@@ -19,7 +19,7 @@ func TestNewWindow(t *testing.T) {
 	}
 }
 
-func TestCloseAllViews(t *testing.T) {
+func TestCloseAll(t *testing.T) {
 	ed := GetEditor()
 
 	w := ed.NewWindow()
@@ -31,7 +31,7 @@ func TestCloseAllViews(t *testing.T) {
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 	ed.CommandHandler().RunWindowCommand(w, "new_file", nil)
 
-	ed.CommandHandler().RunWindowCommand(w, "close_all_views", nil)
+	ed.CommandHandler().RunWindowCommand(w, "close_all", nil)
 
 	if len(w.Views()) != l {
 		t.Errorf("Expected %d views, but got %d", l, len(w.Views()))
