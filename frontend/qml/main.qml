@@ -11,6 +11,7 @@ ApplicationWindow {
     id: window
     width: 800
     height: 600
+    title: "Lime"
 
     property var myWindow
 
@@ -42,6 +43,10 @@ ApplicationWindow {
                 shortcut: "Shift+Ctrl+S"
                 // TODO(.) : qml doesn't have a ready dialog like FileDialog
                 // onTriggered: saveAsDialog.open()
+            }
+            MenuItem {
+                text: qsTr("&Save All")
+                onTriggered: frontend.runCommand("save_all")
             }
             MenuSeparator{}
             MenuItem {
