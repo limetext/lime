@@ -145,6 +145,19 @@ Item {
                     }
                 }
             }
+            onDoubleClicked: {
+                if (!isMinimap) {
+                    var item  = view.itemAt(0, mouse.y+view.contentY)
+                    var index = view.indexAt(0, mouse.y+view.contentY)
+                    if (item != null) {
+                        var col = measure(item, index, mouse.x);
+                        point.p = myView.back().buffer().textPoint(index, col)
+
+                        if (!ctrl) sel().clear();
+                        sel().add(myView.back().expandByClass(myView.region(point.p, point.p), 1|2|4|8))
+                    }
+                }
+            }
             onWheel: {
                 view.flick(0, wheel.angleDelta.y*100);
                 wheel.accepted = true;

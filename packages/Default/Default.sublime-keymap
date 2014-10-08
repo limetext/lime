@@ -10,4 +10,7 @@
 	{ "keys": ["enter"], "command": "insert", "args": {"characters": "\n"}},
 	{ "keys": ["escape"], "command": "single_selection", "context": [ { "key": "num_selections", "operator": "not_equal", "operand": 1 } ] },
 	{ "keys": ["ctrl+d"], "command": "find_under_expand"},
+	{ "keys": ["ctrl+c"], "command": "copy"},
+	{ "keys": ["ctrl+x"], "command": "cut"},
+	{ "keys": ["ctrl+v"], "command": "paste"},
 ]
