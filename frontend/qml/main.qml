@@ -76,6 +76,48 @@ ApplicationWindow {
                 onTriggered: Qt.quit(); // frontend.runCommand("quit");
             }
         }
+        Menu {
+            title: qsTr("&Edit")
+            MenuItem {
+                text: qsTr("&Undo")
+                shortcut: "Ctrl+Z"
+                onTriggered: frontend.runCommand("undo");
+            }
+            MenuItem {
+                text: qsTr("&Redo")
+                shortcut: "Ctrl+Y"
+                onTriggered: frontend.runCommand("redo");
+            }
+            Menu {
+                title: qsTr("&Undo Selection")
+                MenuItem {
+                    text: qsTr("&Soft Undo")
+                    shortcut: "Ctrl+U"
+                    onTriggered: frontend.runCommand("soft_undo");
+                }
+                MenuItem {
+                    text: qsTr("&Soft Redo")
+                    shortcut: "Shift+Ctrl+U"
+                    onTriggered: frontend.runCommand("soft_redo");
+                }
+            }
+            MenuSeparator{}
+            MenuItem {
+                text: qsTr("&Copy")
+                shortcut: "Ctrl+C"
+                onTriggered: frontend.runCommand("copy");
+            }
+            MenuItem {
+                text: qsTr("&Cut")
+                shortcut: "Ctrl+X"
+                onTriggered: frontend.runCommand("cut");
+            }
+            MenuItem {
+                text: qsTr("&Paste")
+                shortcut: "Ctrl+V"
+                onTriggered: frontend.runCommand("paste");
+            }
+        }
     }
 
     statusBar: StatusBar {
