@@ -583,6 +583,8 @@ func (t *qmlfrontend) onNew(v *backend.View) {
 			return
 		}
 		item.Set("myView", fv)
+		item.Set("fontSize", v.Settings().Get("font_size", 12).(float64))
+		item.Set("fontFace", v.Settings().Get("font_face", "Helvetica").(string))
 	}
 	tab.On("loaded", try_now)
 	try_now()
@@ -624,6 +626,8 @@ func (t *qmlfrontend) loop() (err error) {
 	backend.OnLoad.Add(t.onLoad)
 
 	ed := backend.GetEditor()
+	ed.Init()
+	sublime.Init()
 	ed.SetFrontend(t)
 	ed.LogInput(false)
 	ed.LogCommands(false)
@@ -697,9 +701,6 @@ func (t *qmlfrontend) loop() (err error) {
 	v = w.OpenFile("../../backend/editor.go", 0)
 	// TODO: should be done backend side
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
-
-	ed.Init()
-	sublime.Init()
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {

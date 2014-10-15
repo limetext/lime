@@ -23,10 +23,6 @@ Item {
             view.myView = myView;
             myView.fix(viewItem);
         }
-        if (myView != null) {
-            viewItem.fontSize = isMinimap ? 4 : parseFloat(myView.setting("font_size"));
-            viewItem.fontFace = String(myView.setting("font_face"));
-        }
     }
     function addLine() {
         view.model.append({});
