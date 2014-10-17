@@ -7,7 +7,7 @@ package packages
 import (
 	"code.google.com/p/log4go"
 	"github.com/limetext/lime/backend/keys"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"os"
 	pt "path"
 	"path/filepath"

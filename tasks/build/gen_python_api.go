@@ -11,7 +11,7 @@ package main
 import (
 	"fmt"
 	"github.com/limetext/lime/backend"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -462,7 +462,7 @@ func main() {
 				"fmt"
 				"github.com/limetext/gopy/lib"
 				"github.com/limetext/lime/backend"
-				"github.com/quarnster/util/text"
+				"github.com/limetext/text"
 			)
 			var (
 				_ = backend.View{}

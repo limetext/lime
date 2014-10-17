@@ -17,7 +17,7 @@ import (
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"gopkg.in/qml.v1"
 	"image/color"
 	"io"

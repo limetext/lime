@@ -7,7 +7,7 @@ package main
 import (
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/termbox-go"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"testing"
 	"time"
 )

@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/limetext/lime/backend/loaders/json"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 )
 
 func LoadJSON(data []byte, intf interface{}) error {

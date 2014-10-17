@@ -5,7 +5,7 @@
 package render
 
 import (
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"reflect"
 	"testing"
 )

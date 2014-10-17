@@ -14,7 +14,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"path"
 	"runtime/debug"
 	"strconv"

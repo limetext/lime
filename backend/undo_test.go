@@ -5,7 +5,7 @@
 package backend
 
 import (
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"testing"
 )
 

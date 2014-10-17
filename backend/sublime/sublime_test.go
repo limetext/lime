@@ -13,7 +13,7 @@ import (
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/util"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"io/ioutil"
 	"os"
 	"path/filepath"

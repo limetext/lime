@@ -12,7 +12,7 @@ import (
 	"github.com/limetext/lime/backend/logger"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"path"
 	"runtime"
 	"runtime/debug"

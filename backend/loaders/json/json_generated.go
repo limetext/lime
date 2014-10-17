@@ -7,8 +7,8 @@
 package json
 
 import (
+	"github.com/limetext/text"
 	. "github.com/quarnster/parser"
-	"github.com/quarnster/util/text"
 )
 
 type JSON struct {

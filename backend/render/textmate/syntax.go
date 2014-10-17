@@ -9,8 +9,8 @@ package textmate
 import (
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/textmate"
+	"github.com/limetext/text"
 	"github.com/quarnster/parser"
-	"github.com/quarnster/util/text"
 	"sync"
 )
 

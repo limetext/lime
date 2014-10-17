@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 )
 
 var _ = log4go.Error

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	. "github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/util"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 )
 
 const (

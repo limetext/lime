@@ -8,7 +8,7 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/lime/backend/packages"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"io/ioutil"
 )
 

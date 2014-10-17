@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"io/ioutil"
 	"math/rand"
 	"os"

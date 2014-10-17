@@ -6,7 +6,7 @@ package backend
 
 import (
 	"code.google.com/p/log4go"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"io/ioutil"
 	"path/filepath"
 	"runtime/debug"

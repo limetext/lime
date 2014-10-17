@@ -13,7 +13,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	. "github.com/limetext/lime/backend/util"
 	"github.com/limetext/rubex"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"io/ioutil"
 	"os"
 	"path"

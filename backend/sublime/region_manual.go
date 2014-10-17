@@ -7,7 +7,7 @@ package sublime
 import (
 	"fmt"
 	"github.com/limetext/gopy/lib"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 )
 
 func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {

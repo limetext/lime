@@ -6,7 +6,7 @@ package backend
 
 import (
 	"fmt"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 )
 
 type (

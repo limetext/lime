@@ -7,7 +7,7 @@ package backend
 import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/packages"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 	"os"
 	"path"
 	"testing"

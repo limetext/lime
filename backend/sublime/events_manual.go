@@ -10,7 +10,7 @@ import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/util"
-	"github.com/quarnster/util/text"
+	"github.com/limetext/text"
 )
 
 var (
