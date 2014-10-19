@@ -5,7 +5,7 @@
 
 # Status
 
-The [frontend(s)](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself I believe isn't too far away.
+The [frontends](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself isn't too far away.
 
 [Your help is needed](https://github.com/limetext/lime#contributing) to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
 
