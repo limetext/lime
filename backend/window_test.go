@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestNewFile(t *testing.T) {
+func TestWindowNewFile(t *testing.T) {
 	w := GetEditor().NewWindow()
 	defer w.Close()
 
@@ -23,7 +23,29 @@ func TestNewFile(t *testing.T) {
 	}
 }
 
-func TestClose(t *testing.T) {
+func TestWindowRemove(t *testing.T) {
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v0 := w.NewFile()
+	defer v0.Close()
+
+	v1 := w.NewFile()
+	defer v1.Close()
+
+	v2 := w.NewFile()
+	defer v2.Close()
+
+	l := len(w.Views())
+
+	w.remove(v1)
+
+	if len(w.Views()) != l-1 {
+		t.Errorf("Expected %d open views, but got %d", l-1, len(w.Views()))
+	}
+}
+
+func TestWindowClose(t *testing.T) {
 	ed := GetEditor()
 	l := len(ed.Windows())
 	w := ed.NewWindow()
