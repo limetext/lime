@@ -363,7 +363,9 @@ func (t tbfe) setupCallbacks(view *backend.View) {
 	// Ensure that the visible region currently presented is
 	// inclusive of the insert/erase delta.
 	view.Buffer().AddCallback(func(b Buffer, pos, delta int) {
+		t.lock.Lock()
 		visible := t.layout[view].visible
+		t.lock.Unlock()
 		t.Show(view, Region{visible.Begin(), visible.End() + delta})
 	})
 
@@ -442,6 +444,7 @@ func (t *tbfe) renderthread() {
 func (t *tbfe) handleResize(height, width int, init bool) {
 	// This should handle multiple views in a less hardcoded fashion.
 	// After all, it is possible to *not* have a view in a window.
+	t.lock.Lock()
 	if init {
 		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
 		if *showConsole {
@@ -467,6 +470,7 @@ func (t *tbfe) handleResize(height, width int, init bool) {
 		view_layout.width = width
 		t.layout[t.currentView] = view_layout
 	}
+	t.lock.Unlock()
 
 	// Ensure that the new visible region is recalculated
 	t.Show(t.currentView, t.VisibleRegion(t.currentView))
