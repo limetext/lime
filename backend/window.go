@@ -108,16 +108,27 @@ func (w *Window) ActiveView() *View {
 	return w.active_view
 }
 
-func (w *Window) Close() {
-	w.CloseAllViews()
-	ed := GetEditor()
-	ed.remove(w)
+// Closes the Window and all its Views.
+// Returns "true" if the Window closed successfully. Otherwise returns "false".
+func (w *Window) Close() bool {
+	if !w.CloseAllViews() {
+		return false
+	}
+	GetEditor().remove(w)
+
+	return true
 }
 
-func (w *Window) CloseAllViews() {
+// Closes all of the Window's Views.
+// Returns "true" if all the Views closed successfully. Otherwise returns "false".
+func (w *Window) CloseAllViews() bool {
 	for len(w.views) > 0 {
-		w.views[0].Close()
+		if !w.views[0].Close() {
+			return false
+		}
 	}
+
+	return true
 }
 
 func (w *Window) runCommand(c WindowCommand, name string) error {

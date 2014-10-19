@@ -663,12 +663,13 @@ func (v *View) isClosed() bool {
 }
 
 // Initiate the "close" operation of this view.
-func (v *View) Close() {
+// Returns "true" if the view was closed. Otherwise returns "false".
+func (v *View) Close() bool {
 	OnPreClose.Call(v)
 	if v.IsDirty() {
 		close_anyway := GetEditor().Frontend().OkCancelDialog("File has been modified since last save, close anyway?", "Close")
 		if !close_anyway {
-			return
+			return false
 		}
 	}
 	if n := v.buffer.FileName(); n != "" {
@@ -687,6 +688,8 @@ func (v *View) Close() {
 	defer v.lock.Unlock()
 	close(v.reparseChan)
 	v.reparseChan = nil
+
+	return true
 }
 
 const (
