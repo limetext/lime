@@ -27,8 +27,9 @@ type (
 
 func getRegions(v *View, cut bool) *text.RegionSet {
 	rs := &text.RegionSet{}
-	rs.AddAll(v.Sel().Regions())
-	sort.Sort(rs)
+	regions := v.Sel().Regions()
+	sort.Sort(regionSorter(regions))
+	rs.AddAll(regions)
 
 	he, ae := rs.HasEmpty(), !rs.HasNonEmpty() || cut
 	for _, r := range rs.Regions() {
@@ -69,8 +70,9 @@ func (c *CutCommand) Run(v *View, e *Edit) error {
 	s := getSelSubstrs(v, getRegions(v, false))
 
 	rs := getRegions(v, true)
-	sort.Sort(sort.Reverse(rs))
-	for _, r := range rs.Regions() {
+	regions := rs.Regions()
+	sort.Sort(sort.Reverse(regionSorter(regions)))
+	for _, r := range regions {
 		v.Erase(e, r)
 	}
 
@@ -86,8 +88,9 @@ func (c *PasteCommand) Run(v *View, e *Edit) error {
 	ed := GetEditor()
 
 	rs := &text.RegionSet{}
-	rs.AddAll(v.Sel().Regions())
-	sort.Sort(sort.Reverse(rs))
+	regions := v.Sel().Regions()
+	sort.Sort(sort.Reverse(regionSorter(regions)))
+	rs.AddAll(regions)
 	for _, r := range rs.Regions() {
 		v.Replace(e, r, ed.GetClipboard())
 	}
