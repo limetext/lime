@@ -51,9 +51,11 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+
 	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
 		ret.lock.Lock()
 		defer ret.lock.Unlock()
+
 		if name != "syntax" {
 			return
 		}
@@ -141,46 +143,56 @@ func (v *View) parsethread() {
 				pc++
 			}
 		}()
+
 		b := v.Buffer()
 		b.Lock()
 		sub := b.Substr(Region{0, b.Size()})
 		b.Unlock()
+
 		source, _ := v.Settings().Get("syntax", "").(string)
 		if len(source) == 0 {
 			return
 		}
+
 		// TODO: Allow other parsers instead of this hardcoded textmate version
 		pr, err := textmate.NewLanguageParser(source, sub)
 		if err != nil {
 			log4go.Error("Couldn't parse: %v", err)
 			return
 		}
+
 		syn, err := parser.NewSyntaxHighlighter(pr)
 		if err != nil {
 			log4go.Error("Couldn't create syntaxhighlighter: %v", err)
 			return
 		}
+
 		// Only set if it isn't invalid already, otherwise the
 		// current syntax highlighting will be more accurate
 		// as it will have had incremental adjustments done to it
 		if v.buffer.ChangeCount() != lastParse {
 			return
 		}
+
 		v.lock.Lock()
 		defer v.lock.Unlock()
+
 		v.syntax = syn
 		for k := range v.regions {
 			if strings.HasPrefix(k, "lime.syntax") {
 				delete(v.regions, k)
 			}
 		}
+
 		for k, v2 := range syn.Flatten() {
 			if v2.Regions.HasNonEmpty() {
 				v.regions[k] = v2
 			}
 		}
+
 		return true
 	}
+
 	v.lock.Lock()
 	ch := v.reparseChan
 	v.lock.Unlock()
@@ -188,6 +200,7 @@ func (v *View) parsethread() {
 	if ch == nil {
 		return
 	}
+
 	for pr := range ch {
 		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
 			lastParse = cc
