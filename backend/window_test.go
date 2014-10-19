@@ -45,6 +45,21 @@ func TestWindowRemove(t *testing.T) {
 	}
 }
 
+func TestWindowActiveView(t *testing.T) {
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v0 := w.NewFile()
+	defer v0.Close()
+
+	v1 := w.NewFile()
+	defer v1.Close()
+
+	if w.ActiveView() != v1 {
+		t.Error("Expected v1 to be the active view, but it wasn't")
+	}
+}
+
 func TestWindowClose(t *testing.T) {
 	ed := GetEditor()
 	l := len(ed.Windows())
@@ -59,5 +74,19 @@ func TestWindowClose(t *testing.T) {
 
 	if len(ed.Windows()) != l {
 		t.Errorf("Expected window to close, but we have %d still open", len(ed.Windows()))
+	}
+}
+
+func TestWindowCloseAllViews(t *testing.T) {
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	w.NewFile()
+	w.NewFile()
+
+	w.CloseAllViews()
+
+	if len(w.Views()) != 0 {
+		t.Errorf("Expected 0 open views, but got %d", len(w.Views()))
 	}
 }
