@@ -15,6 +15,7 @@ import (
 	"github.com/limetext/lime/backend/util"
 	"os"
 	"path"
+	"sync"
 	"time"
 )
 
@@ -173,8 +174,9 @@ func loadPlugin(p *packages.Plugin, m *py.Module) {
 }
 
 var (
-	watcher        *fsnotify.Watcher
-	watchedPlugins map[string]*backend.WatchedPackage
+	watcher            *fsnotify.Watcher
+	watchedPlugins     map[string]*backend.WatchedPackage
+	watchedPluginsLock sync.Mutex
 )
 
 func watch(plugin *backend.WatchedPackage) {
@@ -182,7 +184,9 @@ func watch(plugin *backend.WatchedPackage) {
 	if err := watcher.Watch(plugin.Name()); err != nil {
 		log4go.Error("Could not watch plugin: %v", err)
 	} else {
+		watchedPluginsLock.Lock()
 		watchedPlugins[plugin.Name()] = plugin
+		watchedPluginsLock.Unlock()
 	}
 }
 
@@ -191,7 +195,9 @@ func unWatch(name string) {
 		log4go.Error("Couldn't unwatch file: %v", err)
 	}
 	log4go.Finest("UnWatch(%s)", name)
+	watchedPluginsLock.Lock()
 	delete(watchedPlugins, name)
+	watchedPluginsLock.Unlock()
 }
 
 func observePlugins(m *py.Module) {
@@ -201,10 +207,12 @@ func observePlugins(m *py.Module) {
 			if !(ev.IsModify() || ev.IsCreate()) {
 				continue
 			}
+			watchedPluginsLock.Lock()
 			if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
 				p.Reload()
 				loadPlugin(p.Package().(*packages.Plugin), m)
 			}
+			watchedPluginsLock.Unlock()
 		case err := <-watcher.Error:
 			log4go.Error("error:", err)
 		}
@@ -230,7 +238,9 @@ func Init() {
 	if err != nil {
 		log4go.Error("Could not create watcher due to: %v", err)
 	}
+	watchedPluginsLock.Lock()
 	watchedPlugins = make(map[string]*backend.WatchedPackage)
+	watchedPluginsLock.Unlock()
 
 	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
