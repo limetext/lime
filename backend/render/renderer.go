@@ -122,7 +122,7 @@ func (r *TranscribedRecipe) Len() int {
 func (r *TranscribedRecipe) Less(i, j int) bool {
 	a, b := (*r)[i].Region, (*r)[j].Region
 	if a.Begin() == b.Begin() {
-		return a.End() > b.End()
+		return a.End() < b.End()
 	}
 	return a.Begin() < b.Begin()
 }
