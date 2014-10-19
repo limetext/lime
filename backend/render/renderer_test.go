@@ -140,11 +140,6 @@ func TestRecipeTranscribe(t *testing.T) {
 			map[Flavour][]text.Region{flavourA: {{0, 1}}, flavourB: {{10, 11}}},
 			TranscribedRecipe{{flavourA, text.Region{0, 1}}, {flavourB, text.Region{10, 11}}},
 		},
-		{
-			Recipe{flavourA: text.RegionSet{}, flavourB: text.RegionSet{}},
-			map[Flavour][]text.Region{flavourA: {{0, 1}}, flavourB: {{0, 1}}},
-			TranscribedRecipe{{flavourA, text.Region{0, 1}}, {flavourB, text.Region{0, 1}}},
-		},
 	}
 
 	for i, test := range tests {
