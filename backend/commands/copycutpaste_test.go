@@ -20,6 +20,11 @@ type copyTest struct {
 
 func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 	ed := GetEditor()
+
+	// Put back whatever was already there.
+	clip := ed.GetClipboard()
+	defer ed.SetClipboard(clip)
+
 	w := ed.NewWindow()
 	defer w.Close()
 

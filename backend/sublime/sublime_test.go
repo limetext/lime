@@ -24,6 +24,11 @@ import (
 
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
+
+	// Put back whatever was already there.
+	clip := ed.GetClipboard()
+	defer ed.SetClipboard(clip)
+
 	ed.Console().Buffer().AddCallback(func(b text.Buffer, pos, delta int) {
 		t.Logf("%s", b.Substr(text.Region{pos, pos + delta}))
 	})

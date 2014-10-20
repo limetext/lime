@@ -241,6 +241,11 @@ func TestSetFrontend(t *testing.T) {
 
 func TestClipboard(t *testing.T) {
 	editor := GetEditor()
+
+	// Put back whatever was already there.
+	clip := editor.GetClipboard()
+	defer editor.SetClipboard(clip)
+
 	s := "test"
 
 	editor.SetClipboard(s)

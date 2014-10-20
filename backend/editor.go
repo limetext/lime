@@ -7,6 +7,7 @@ package backend
 import (
 	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/atotto/clipboard"
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/logger"
@@ -45,7 +46,6 @@ type (
 		keyBindings   keys.KeyBindings
 		console       *View
 		frontend      Frontend
-		clipboard     string
 		keyInput      chan (keys.KeyPress)
 		watcher       *fsnotify.Watcher
 		watchedFiles  map[string]Watched
@@ -403,11 +403,17 @@ func (e *Editor) RunCommand(name string, args Args) {
 }
 
 func (e *Editor) SetClipboard(n string) {
-	e.clipboard = n
+	clipboard.WriteAll(n)
 }
 
 func (e *Editor) GetClipboard() string {
-	return e.clipboard
+	if s, err := clipboard.ReadAll(); err == nil {
+		return s
+	} else {
+		log4go.Error("Could not get clipboard: %v", err)
+	}
+
+	return ""
 }
 
 func (e *Editor) Watch(file Watched) {
