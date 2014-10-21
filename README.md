@@ -23,7 +23,7 @@ The [frontends](https://github.com/limetext/lime/issues?direction=desc&labels=fr
 > -- @quarnster
 
 
-### Why create a clone?
+### Why API compatability?
 
 Sublime Text has a good plugin architecture and a [large collection of existing plugins](https://sublime.wbond.net/) created for it. We want users to be able to take advantage of these extensions without requiring developers to support multiple APIs.
 
