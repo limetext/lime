@@ -5,6 +5,9 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"code.google.com/p/go.net/websocket"
 	"code.google.com/p/log4go"
 	"flag"
 	"fmt"
@@ -239,51 +242,142 @@ func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	c := scheme.Spice(&render.ViewRegions{})
 
-	fmt.Fprintf(w, `<html><body style="white-space:pre; color:#%s; background-color:#%s">
-                <script type="text/javascript">
-
-window.setInterval(function(){checkReload()}, 200);
-function checkReload() {
-    xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-	        document.getElementById('contents').innerHTML = xmlhttp.responseText;
-	    }
-    };
-    xmlhttp.open("GET", "/view", true);
-    xmlhttp.send();
+	fmt.Fprintf(w, `<html><head><title>Lime</title></head>
+<body style="white-space:pre; color:#%s; background-color:#%s">
+<script type="text/javascript">
+function redrawEditor(contents) {
+	document.getElementById('contents').innerHTML = contents;
+}
+function supportsWebsockets() {
+	return (window.WebSocket) ? true : false;
 }
 
+if (supportsWebsockets()) {
+	var ws = new WebSocket('ws://'+window.location.hostname+':'+window.location.port+'/ws');
+	ws.onopen = function () {
+		console.log('Connected to Websocket server');
+	};
+	ws.onerror = function (err) {
+		console.log('Websocket error', err);
+	};
+	ws.onmessage = function (e) {
+		var data = e.data;
+		if (typeof data == 'string') {
+			redrawEditor(data);
+		} else {
+			var reader = new FileReader();
+			reader.onload = function (e) {
+				redrawEditor(e.target.result);
+			};
+			reader.readAsText(data);
+		}
+	};
+} else {
+	window.setInterval(function(){checkReload()}, 200);
+	function checkReload() {
+		var xmlhttp = new XMLHttpRequest();
+		xmlhttp.onreadystatechange = function() {
+			if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+				document.getElementById('contents').innerHTML = xmlhttp.responseText;
+			}
+		};
+		xmlhttp.open("GET", "/view", true);
+		xmlhttp.send();
+	}
+}
 
-window.onkeydown = function(e)
-{
-	console.log(e);
-    xmlhttp = new XMLHttpRequest();
-	var data = new FormData();
-	for (var key in e) {
-		data.append(key, e[key]);
+window.onkeydown = function(e) {
+	var props = ['keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+
+	if (!supportsWebsockets()) {
+		var xmlhttp = new XMLHttpRequest();
+
+		var data = new FormData();
+		var key;
+		for (var i = 0; i < props.length; i++) {
+			key = props[i];
+			data.append(key, e[key]);
+		}
+
+		xmlhttp.open("POST", "/key", true);
+		xmlhttp.send(data);
+	} else {
+		
+		var data = {};
+		var key;
+		for (var i = 0; i < props.length; i++) {
+			key = props[i];
+			data[key] = e[key];
+		}
+
+		ws.send(JSON.stringify(data));
 	}
 
-    xmlhttp.open("POST", "/key", true);
-    xmlhttp.send(data);
-    e.preventDefault();
-}
-                </script>
-    <div id="contents" />
+	e.preventDefault();
+};
+</script>
+    <div id="contents"></div>
 `, htmlcol(c.Foreground), htmlcol(c.Background))
 	io.WriteString(w, "</body></html>")
 	log4go.Debug("Done serving client: %s", time.Since(s))
 }
 
+var clients []*websocket.Conn
+
+func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
+	clients = append(clients, ws)
+
+	var buf bytes.Buffer
+	t.render(bufio.NewWriter(&buf))
+	websocket.Message.Send(ws, buf.Bytes())
+	buf.Reset()
+
+	var data map[string]interface{}
+	var kp keys.KeyPress
+	for {
+		err := websocket.JSON.Receive(ws, &data)
+		if err != nil {
+			log4go.Error(err)
+			continue
+		}
+		//log4go.Debug("Received: %s", data)
+
+		kp.Alt = data["altKey"].(bool)
+		kp.Ctrl = data["ctrlKey"].(bool)
+		kp.Super = data["metaKey"].(bool)
+		kp.Shift = data["shiftKey"].(bool)
+
+		v := int64(data["keyCode"].(float64))
+		if !kp.Shift {
+			v = int64(unicode.ToLower(rune(v)))
+		}
+		kp.Key = keys.Key(v)
+
+		backend.GetEditor().HandleInput(kp)
+	}
+}
+
+func (t *tbfe) SetDirty() {
+	t.dirty = true
+
+	var buf bytes.Buffer
+	t.render(bufio.NewWriter(&buf))
+	for _, ws := range clients {
+		websocket.Message.Send(ws, buf.Bytes())
+	}
+}
+
 func (t *tbfe) loop() {
 	backend.OnNew.Add(func(v *backend.View) {
-		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) { t.dirty = true })
+		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) {
+			t.SetDirty()
+		})
 	})
 	backend.OnModified.Add(func(v *backend.View) {
-		t.dirty = true
+		t.SetDirty()
 	})
 	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.dirty = true
+		t.SetDirty()
 	})
 
 	ed := backend.GetEditor()
@@ -334,6 +428,7 @@ func (t *tbfe) loop() {
 	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
+	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
 		log4go.Error("Error serving: %s", err)
 	}
