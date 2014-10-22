@@ -251,7 +251,7 @@ func TestClipboard(t *testing.T) {
 	editor.SetClipboard(s)
 
 	if editor.GetClipboard() != s {
-		t.Errorf("Expected %s to be on the clipboard, but got %s", s, editor.GetClipboard())
+		t.Errorf("Expected %q to be on the clipboard, but got %q", s, editor.GetClipboard())
 	}
 }
 
