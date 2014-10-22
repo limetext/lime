@@ -227,9 +227,6 @@ ApplicationWindow {
                         tabOverlap: 5
                     }
                     function resetminimap() {
-                        // TODO(.): This conflicts on new file on new file the active_view
-                        //          should be the new file but its changing to first tab
-                        myWindow.back().setActiveView(myWindow.view(currentIndex).back());
                         var rv = view().children[1];
                         minimap.myView = null;
                         minimap.children[1].model = rv.model.count;
@@ -240,6 +237,7 @@ ApplicationWindow {
                         resetminimap();
                     }
                     onCurrentIndexChanged: {
+                        myWindow.back().setActiveView(myWindow.view(currentIndex).back());
                         resetminimap();
                     }
                 }

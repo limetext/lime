@@ -212,7 +212,7 @@ Item {
             Text {
                 color: "#F8F8F0"
                 font.family: viewItem.fontFace
-                font.pointSize: fontSize
+                font.pointSize: viewItem.fontSize
             }
             y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
             z: 3

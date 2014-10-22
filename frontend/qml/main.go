@@ -305,7 +305,7 @@ func (fw *frontendWindow) ActiveViewIndex() int {
 			return i
 		}
 	}
-	return len(fw.views)
+	return 0
 }
 func (t *qmlfrontend) Window(w *backend.Window) *frontendWindow {
 	return t.windows[w]
@@ -588,6 +588,7 @@ func (t *qmlfrontend) onNew(v *backend.View) {
 	}
 	tab.On("loaded", try_now)
 	try_now()
+	tabs.Set("currentIndex", tabs.Property("count").(int)-1)
 }
 
 // called when a view is closed
@@ -616,6 +617,7 @@ func (t *qmlfrontend) onLoad(v *backend.View) {
 	v2 := w2.views[i]
 	v2.Title.Text = v.Buffer().FileName()
 	tabs := w2.window.ObjectByName("tabs")
+	tabs.Set("currentIndex", w2.ActiveViewIndex())
 	tab := tabs.Call("getTab", i).(qml.Object)
 	tab.Set("title", v2.Title.Text)
 }
