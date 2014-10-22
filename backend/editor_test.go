@@ -246,7 +246,15 @@ func TestClipboard(t *testing.T) {
 	clip := editor.GetClipboard()
 	defer editor.SetClipboard(clip)
 
-	s := "test"
+	s := "test0"
+
+	editor.SetClipboard(s)
+
+	if editor.GetClipboard() != s {
+		t.Errorf("Expected %q to be on the clipboard, but got %q", s, editor.GetClipboard())
+	}
+
+	s = "test1"
 
 	editor.SetClipboard(s)
 
