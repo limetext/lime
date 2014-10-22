@@ -289,7 +289,7 @@ if (supportsWebsockets()) {
 window.onkeydown = function(e) {
 	var props = ['keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
 
-	if (supportsWebsockets()) {
+	if (!supportsWebsockets()) {
 		var xmlhttp = new XMLHttpRequest();
 
 		var data = new FormData();
