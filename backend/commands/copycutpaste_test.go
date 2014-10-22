@@ -18,12 +18,12 @@ type copyTest struct {
 	expBuf  string
 }
 
+var dummyClipboard string
+
 func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 	ed := GetEditor()
-
-	// Put back whatever was already there.
-	clip := ed.GetClipboard()
-	defer ed.SetClipboard(clip)
+	ed.SetClipboardFuncs(func(n string) { dummyClipboard = n }, func() string { return dummyClipboard })
+	defer ed.Init()
 
 	w := ed.NewWindow()
 	defer w.Close()

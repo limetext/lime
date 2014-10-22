@@ -39,17 +39,19 @@ func init() {
 type (
 	Editor struct {
 		HasSettings
-		windows       []*Window
-		active_window *Window
-		loginput      bool
-		cmdhandler    commandHandler
-		keyBindings   keys.KeyBindings
-		console       *View
-		frontend      Frontend
-		keyInput      chan (keys.KeyPress)
-		watcher       *fsnotify.Watcher
-		watchedFiles  map[string]Watched
-		watchLock     sync.Mutex
+		windows         []*Window
+		active_window   *Window
+		loginput        bool
+		cmdhandler      commandHandler
+		keyBindings     keys.KeyBindings
+		console         *View
+		frontend        Frontend
+		keyInput        chan (keys.KeyPress)
+		watcher         *fsnotify.Watcher
+		watchedFiles    map[string]Watched
+		watchLock       sync.Mutex
+		clipboardSetter func(string)
+		clipboardGetter func() string
 	}
 
 	// The Frontend interface defines the API
@@ -158,10 +160,30 @@ func (e *Editor) SetFrontend(f Frontend) {
 	e.frontend = f
 }
 
+func setClipboard(n string) {
+	clipboard.WriteAll(n)
+}
+
+func getClipboard() string {
+	if s, err := clipboard.ReadAll(); err == nil {
+		return s
+	} else {
+		log4go.Error("Could not get clipboard: %v", err)
+	}
+
+	return ""
+}
+
 func (e *Editor) Init() {
+	ed.SetClipboardFuncs(setClipboard, getClipboard)
 	ed.loadDefaultPackets()
 	ed.loadKeyBindings()
 	ed.loadSettings()
+}
+
+func (e *Editor) SetClipboardFuncs(setter func(string), getter func() string) {
+	e.clipboardSetter = setter
+	e.clipboardGetter = getter
 }
 
 func (e *Editor) loadDefaultPackets() {
@@ -403,17 +425,11 @@ func (e *Editor) RunCommand(name string, args Args) {
 }
 
 func (e *Editor) SetClipboard(n string) {
-	clipboard.WriteAll(n)
+	e.clipboardSetter(n)
 }
 
 func (e *Editor) GetClipboard() string {
-	if s, err := clipboard.ReadAll(); err == nil {
-		return s
-	} else {
-		log4go.Error("Could not get clipboard: %v", err)
-	}
-
-	return ""
+	return e.clipboardGetter()
 }
 
 func (e *Editor) Watch(file Watched) {
