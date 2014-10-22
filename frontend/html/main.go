@@ -5,8 +5,10 @@
 package main
 
 import (
-	"code.google.com/p/log4go"
+	"bufio"
+	"bytes"
 	"code.google.com/p/go.net/websocket"
+	"code.google.com/p/log4go"
 	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
@@ -19,8 +21,6 @@ import (
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
 	"io"
-	"bytes"
-	"bufio"
 	"net/http"
 	"runtime/debug"
 	"strconv"
