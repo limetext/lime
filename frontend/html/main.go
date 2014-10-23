@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 var (
@@ -283,7 +284,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 		err := websocket.JSON.Receive(ws, &data)
 		if err != nil {
 			log4go.Error(err)
-			continue
+			return
 		}
 		//log4go.Debug("Received: %s", data)
 
@@ -295,13 +296,56 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			kp.Super = data["metaKey"].(bool)
 			kp.Shift = data["shiftKey"].(bool)
 
-			v := int64(data["keyCode"].(float64))
-			if !kp.Shift {
-				v = int64(unicode.ToLower(rune(v)))
+			keyName := data["key"].(string)
+			if utf8.RuneCountInString(keyName) == 1 { // One char
+				r, _ := utf8.DecodeRuneInString(keyName)
+				kp.Key = keys.Key(int64(r))
+			} else {
+				keymap := map[string]keys.Key{
+					"Left":        keys.Left,
+					"Up":          keys.Up,
+					"Right":       keys.Right,
+					"Down":        keys.Down,
+					"Enter":       keys.Enter,
+					"Escape":      keys.Escape,
+					"Backspace":   keys.Backspace,
+					"Delete":      keys.Delete,
+					"KeypadEnter": keys.KeypadEnter,
+					"F1":          keys.F1,
+					"F2":          keys.F2,
+					"F3":          keys.F3,
+					"F4":          keys.F4,
+					"F5":          keys.F5,
+					"F6":          keys.F6,
+					"F7":          keys.F7,
+					"F8":          keys.F8,
+					"F9":          keys.F9,
+					"F10":         keys.F10,
+					"F11":         keys.F11,
+					"F12":         keys.F12,
+					"Insert":      keys.Insert,
+					"PageUp":      keys.PageUp,
+					"PageDown":    keys.PageDown,
+					"Home":        keys.Home,
+					"End":         keys.End,
+					"Break":       keys.Break,
+				}
+
+				if key, ok := keymap[keyName]; ok {
+					kp.Key = key
+				} else {
+					log4go.Debug("Unknown key: %s", keyName)
+					continue
+				}
 			}
-			kp.Key = keys.Key(v)
 
 			backend.GetEditor().HandleInput(kp)
+		} else if msgType == "command" {
+			command := data["name"].(string)
+			//args := data["args"].([]string) //TODO: add arguments support
+
+			ed := backend.GetEditor()
+			go ed.RunCommand(command, make(backend.Args))
 		} else {
 			log4go.Info("Unhandled message type: %s", msgType)
 		}
@@ -346,7 +390,7 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
 		scheme = sc
@@ -358,7 +402,7 @@ func (t *tbfe) loop() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
-	v.Settings().Set("trace", true)
+	//v.Settings().Set("trace", true)
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
 	c.Buffer().AddCallback(t.scroll)
 

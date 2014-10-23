@@ -52,6 +52,7 @@ var frontend = (function () {
 		if (supportsWebsockets()) {
 			ws.send(JSON.stringify({
 				type: 'command',
+				name: command,
 				args: args || []
 			}));
 		} else {
@@ -116,7 +117,7 @@ var frontend = (function () {
 		}
 
 		window.onkeydown = function(e) {
-			var props = ['keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+			var props = ['key', 'keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
 
 			if (!supportsWebsockets()) {
 				var xmlhttp = new XMLHttpRequest();
