@@ -22,15 +22,15 @@ import (
 	. "github.com/limetext/text"
 	"io"
 	"io/ioutil"
-	"os"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -251,7 +251,7 @@ func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
 
 func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 	log4go.Debug("theme: %s", req)
-	
+
 	reqpath, _ := url.QueryUnescape(req.RequestURI)
 
 	// Make sure the URL starts with "/themes/"
