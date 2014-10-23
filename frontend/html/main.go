@@ -22,11 +22,15 @@ import (
 	. "github.com/limetext/text"
 	"io"
 	"io/ioutil"
+	"os"
 	"net/http"
+	"net/url"
+	"path"
 	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -245,6 +249,43 @@ func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
+	log4go.Debug("theme: %s", req)
+	
+	reqpath, _ := url.QueryUnescape(req.RequestURI)
+
+	// Make sure the URL starts with "/themes/"
+	// Don't allow ".." in URLs
+	if !strings.HasPrefix(reqpath, "/themes/") || strings.Index(reqpath, "..") != -1 {
+		w.WriteHeader(404)
+		return
+	}
+
+	filepath := path.Join("../../3rdparty/bundles", reqpath)
+
+	exists := false
+	if s, err := os.Stat(filepath); err == nil {
+		if !s.IsDir() {
+			exists = true
+		}
+	}
+
+	if exists {
+		fi, err := os.Open(filepath)
+		if err != nil {
+			w.WriteHeader(500)
+			log4go.Error(err)
+			return
+		}
+
+		defer fi.Close()
+
+		io.Copy(w, fi)
+	} else {
+		w.WriteHeader(404)
+	}
+}
+
 func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s := time.Now()
 	w.Header().Set("Content-Type", "text/html")
@@ -296,47 +337,57 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			kp.Super = data["metaKey"].(bool)
 			kp.Shift = data["shiftKey"].(bool)
 
-			keyName := data["key"].(string)
-			if utf8.RuneCountInString(keyName) == 1 { // One char
-				r, _ := utf8.DecodeRuneInString(keyName)
-				kp.Key = keys.Key(int64(r))
-			} else {
-				keymap := map[string]keys.Key{
-					"Left":        keys.Left,
-					"Up":          keys.Up,
-					"Right":       keys.Right,
-					"Down":        keys.Down,
-					"Enter":       keys.Enter,
-					"Escape":      keys.Escape,
-					"Backspace":   keys.Backspace,
-					"Delete":      keys.Delete,
-					"KeypadEnter": keys.KeypadEnter,
-					"F1":          keys.F1,
-					"F2":          keys.F2,
-					"F3":          keys.F3,
-					"F4":          keys.F4,
-					"F5":          keys.F5,
-					"F6":          keys.F6,
-					"F7":          keys.F7,
-					"F8":          keys.F8,
-					"F9":          keys.F9,
-					"F10":         keys.F10,
-					"F11":         keys.F11,
-					"F12":         keys.F12,
-					"Insert":      keys.Insert,
-					"PageUp":      keys.PageUp,
-					"PageDown":    keys.PageDown,
-					"Home":        keys.Home,
-					"End":         keys.End,
-					"Break":       keys.Break,
-				}
-
-				if key, ok := keymap[keyName]; ok {
-					kp.Key = key
+			if keyName, ok := data["key"].(string); ok {
+				if utf8.RuneCountInString(keyName) == 1 { // One char
+					r, _ := utf8.DecodeRuneInString(keyName)
+					kp.Key = keys.Key(int64(r))
 				} else {
-					log4go.Debug("Unknown key: %s", keyName)
-					continue
+					// TODO: automatic lookup instead of this manual lookup
+					// See https://github.com/limetext/lime/pull/421/files#r19269236
+					keymap := map[string]keys.Key{
+						"Left":        keys.Left,
+						"Up":          keys.Up,
+						"Right":       keys.Right,
+						"Down":        keys.Down,
+						"Enter":       keys.Enter,
+						"Escape":      keys.Escape,
+						"Backspace":   keys.Backspace,
+						"Delete":      keys.Delete,
+						"Del":         keys.Delete, // Deprecated: some old browsers still use "Del" instead of "Delete"
+						"KeypadEnter": keys.KeypadEnter,
+						"F1":          keys.F1,
+						"F2":          keys.F2,
+						"F3":          keys.F3,
+						"F4":          keys.F4,
+						"F5":          keys.F5,
+						"F6":          keys.F6,
+						"F7":          keys.F7,
+						"F8":          keys.F8,
+						"F9":          keys.F9,
+						"F10":         keys.F10,
+						"F11":         keys.F11,
+						"F12":         keys.F12,
+						"Insert":      keys.Insert,
+						"PageUp":      keys.PageUp,
+						"PageDown":    keys.PageDown,
+						"Home":        keys.Home,
+						"End":         keys.End,
+						"Break":       keys.Break,
+					}
+
+					if key, ok := keymap[keyName]; ok {
+						kp.Key = key
+					} else {
+						log4go.Debug("Unknown key: %s", keyName)
+						continue
+					}
 				}
+			} else {
+				v := int64(data["keyCode"].(float64))
+				if !kp.Shift {
+					v = int64(unicode.ToLower(rune(v)))
+				}
+				kp.Key = keys.Key(v)
 			}
 
 			backend.GetEditor().HandleInput(kp)
@@ -430,9 +481,10 @@ func (t *tbfe) loop() {
 		sublime.Init()
 	}()
 	log4go.Debug("Serving on port %d", *port)
-	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
+	http.HandleFunc("/key", t.key)
+	http.HandleFunc("/themes/", t.theme)
 	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
 		log4go.Error("Error serving: %s", err)
