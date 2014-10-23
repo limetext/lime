@@ -302,6 +302,12 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			kp.Key = keys.Key(v)
 
 			backend.GetEditor().HandleInput(kp)
+		} else if msgType == "command" {
+			command := data["name"].(string)
+			//args := data["args"].([]string) //TODO: add arguments support
+
+			ed := backend.GetEditor()
+			go ed.RunCommand(command, make(backend.Args))
 		} else {
 			log4go.Info("Unhandled message type: %s", msgType)
 		}
@@ -346,7 +352,7 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log4go.Error(err)
 	} else {
 		scheme = sc
@@ -358,7 +364,7 @@ func (t *tbfe) loop() {
 
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
-	v.Settings().Set("trace", true)
+	//v.Settings().Set("trace", true)
 	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
 	c.Buffer().AddCallback(t.scroll)
 

@@ -52,6 +52,7 @@ var frontend = (function () {
 		if (supportsWebsockets()) {
 			ws.send(JSON.stringify({
 				type: 'command',
+				name: command,
 				args: args || []
 			}));
 		} else {
