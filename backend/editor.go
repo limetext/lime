@@ -50,8 +50,9 @@ type (
 		watcher         *fsnotify.Watcher
 		watchedFiles    map[string]Watched
 		watchLock       sync.Mutex
-		clipboardSetter func(string)
-		clipboardGetter func() string
+		clipboardSetter func(string) error
+		clipboardGetter func() (string, error)
+		clipboard       string
 	}
 
 	// The Frontend interface defines the API
@@ -160,18 +161,20 @@ func (e *Editor) SetFrontend(f Frontend) {
 	e.frontend = f
 }
 
-func setClipboard(n string) {
-	clipboard.WriteAll(n)
+func setClipboard(n string) (err error) {
+	if err = clipboard.WriteAll(n); err != nil {
+		log4go.Error("Could not set clipboard: %v", err)
+	}
+
+	return
 }
 
-func getClipboard() string {
-	if s, err := clipboard.ReadAll(); err == nil {
-		return s
-	} else {
+func getClipboard() (s string, err error) {
+	if s, err = clipboard.ReadAll(); err != nil {
 		log4go.Error("Could not get clipboard: %v", err)
 	}
 
-	return ""
+	return
 }
 
 func (e *Editor) Init() {
@@ -181,7 +184,7 @@ func (e *Editor) Init() {
 	ed.loadSettings()
 }
 
-func (e *Editor) SetClipboardFuncs(setter func(string), getter func() string) {
+func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (string, error)) {
 	e.clipboardSetter = setter
 	e.clipboardGetter = getter
 }
@@ -426,10 +429,17 @@ func (e *Editor) RunCommand(name string, args Args) {
 
 func (e *Editor) SetClipboard(n string) {
 	e.clipboardSetter(n)
+
+	// Keep a local copy in case the system clipboard isn't working
+	e.clipboard = n
 }
 
 func (e *Editor) GetClipboard() string {
-	return e.clipboardGetter()
+	if n, err := e.clipboardGetter(); err == nil {
+		return n
+	}
+
+	return e.clipboard
 }
 
 func (e *Editor) Watch(file Watched) {
