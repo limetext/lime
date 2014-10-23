@@ -117,7 +117,7 @@ var frontend = (function () {
 		}
 
 		window.onkeydown = function(e) {
-			var props = ['keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+			var props = ['key', 'keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
 
 			if (!supportsWebsockets()) {
 				var xmlhttp = new XMLHttpRequest();
@@ -141,7 +141,7 @@ var frontend = (function () {
 
 				ws.send(JSON.stringify(data));
 			}
-
+console.log(e.key);
 			e.preventDefault();
 		};
 	};
