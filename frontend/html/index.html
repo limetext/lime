@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lime</title>
+<style type="text/css">
+body {
+	white-space:pre;
+	color: #%s;
+	background-color: #%s;
+}
+</style>
+</head>
+<body>
+<div id="contents"></div>
+<script type="text/javascript">
+var frontend = (function () {
+	var frontend = {};
+
+	function redrawEditor(contents) {
+		document.getElementById('contents').innerHTML = contents;
+		console.log('Rendered');
+	}
+	function supportsWebsockets() {
+		return (window.WebSocket) ? true : false;
+	}
+
+	var ws;
+
+	frontend.commandHandlers = {
+		errorMessage: function (data) {
+			alert(data.msg);
+		},
+		messageDialog: function (data) {
+			alert(data.msg);
+		},
+		okCancelDialog: function (data) {
+			return confirm(data.msg);
+		}
+	};
+	frontend.handleCommand = function (command) {
+		console.log(command);
+
+		var handler = frontend.commandHandlers[command.type];
+		if (!handler) {
+			return false;
+		}
+		return handler(command);
+	};
+
+	frontend.runCommand = function (command, args) {
+		if (supportsWebsockets()) {
+			ws.send(JSON.stringify({
+				type: 'command',
+				args: args || []
+			}));
+		} else {
+			console.warn('Unimplemented: cannot run command', command);
+		}
+	};
+
+	frontend.init = function () {
+		if (supportsWebsockets()) {
+			var url = '';
+			url += (window.location.protocol == 'https:') ? 'wss:' : 'ws:';
+			url += '//'+window.location.hostname+':'+window.location.port+'/ws';
+
+			ws = new WebSocket(url);
+			ws.onopen = function () {
+				console.log('Connected to Websocket server');
+			};
+			ws.onerror = function (err) {
+				console.log('Websocket error', err);
+			};
+			ws.onmessage = function (e) {
+				var msg = e.data;
+				if (typeof msg == 'string') { // Non-binary data, decode JSON
+					var data;
+					try {
+						data = JSON.parse(msg);
+					} catch (e) {
+						console.warn('Received invalid JSON', msg);
+						return;
+					}
+
+					var ret = frontend.handleCommand(data);
+					if (typeof ret != 'undefined') {
+						ws.send(JSON.stringify({
+							type: data.type,
+							ret: ret
+						}));
+					}
+				} else { // Binary data, render
+					var reader = new FileReader();
+					reader.onload = function (e) {
+						redrawEditor(e.target.result);
+					};
+					reader.readAsText(msg);
+				}
+			};
+		} else {
+			function checkReload() {
+				var xmlhttp = new XMLHttpRequest();
+				xmlhttp.onreadystatechange = function() {
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						redrawEditor(xmlhttp.responseText);
+					}
+				};
+				xmlhttp.open('GET', '/view', true);
+				xmlhttp.send();
+			}
+
+			window.setInterval(function(){
+				checkReload();
+			}, 200);
+		}
+
+		window.onkeydown = function(e) {
+			var props = ['keyCode', 'altKey', 'ctrlKey', 'metaKey', 'shiftKey'];
+
+			if (!supportsWebsockets()) {
+				var xmlhttp = new XMLHttpRequest();
+
+				var data = new FormData();
+				var key;
+				for (var i = 0; i < props.length; i++) {
+					key = props[i];
+					data.append(key, e[key]);
+				}
+
+				xmlhttp.open('POST', '/key', true);
+				xmlhttp.send(data);
+			} else {
+				var data = { type: 'key' };
+				var key;
+				for (var i = 0; i < props.length; i++) {
+					key = props[i];
+					data[key] = e[key];
+				}
+
+				ws.send(JSON.stringify(data));
+			}
+
+			e.preventDefault();
+		};
+	};
+
+	return frontend;
+})();
+
+frontend.init();
+</script>
+</body>
+</html>
