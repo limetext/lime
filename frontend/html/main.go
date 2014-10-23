@@ -158,26 +158,26 @@ func (t *tbfe) StatusMessage(msg string) {
 	defer t.lock.Unlock()
 	t.status_message = msg
 
-	t.BroadcastData(map[string]string{"type": "statusMessage","msg": msg})
+	t.BroadcastData(map[string]string{"type": "statusMessage", "msg": msg})
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
 	log4go.Error(msg)
 
-	t.BroadcastData(map[string]string{"type": "errorMessage","msg": msg})
+	t.BroadcastData(map[string]string{"type": "errorMessage", "msg": msg})
 }
 
 func (t *tbfe) MessageDialog(msg string) {
 	log4go.Info(msg)
 
-	t.BroadcastData(map[string]string{"type": "messageDialog","msg": msg})
+	t.BroadcastData(map[string]string{"type": "messageDialog", "msg": msg})
 }
 
 // TODO: wait for client response, return true/false
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
 	log4go.Info(msg, ok)
 
-	t.BroadcastData(map[string]string{"type": "okCancelDialog","msg": msg,"ok": ok})
+	t.BroadcastData(map[string]string{"type": "okCancelDialog", "msg": msg, "ok": ok})
 
 	return false
 }
@@ -268,7 +268,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 
 	// Send status message
 	if t.status_message != "" {
-		websocket.JSON.Send(ws, map[string]string{"type": "statusMessage","msg": t.status_message})
+		websocket.JSON.Send(ws, map[string]string{"type": "statusMessage", "msg": t.status_message})
 	}
 
 	// Send editor content
