@@ -11,15 +11,15 @@
 body {
 	padding: 0;
 	margin: 0;
-	width: 100%%;
-	height: 100%%;
-	color: #%s;
-	background-color: #%s;
+	width: 100%;
+	height: 100%;
+	color: #{{foregroundColor}};
+	background-color: #{{backgroundColor}};
 }
 #contents {
 	position: absolute;
-	width: 100%%;
-	height: calc(100%% - 22px);
+	width: 100%;
+	height: calc(100% - 22px);
 	overflow: auto;
 	white-space: pre;
 }
@@ -40,7 +40,7 @@ body {
 #statusBar {
 	position: fixed;
 	bottom: 0;
-	width: 100%%;
+	width: 100%;
 	background-image: url("/themes/soda/Soda Dark/status-bar-background.png");
 	color: #969696;
 	line-height: 22px;
@@ -130,6 +130,9 @@ var frontend = (function () {
 			};
 			ws.onerror = function (err) {
 				console.log('Websocket error', err);
+			};
+			ws.onclose = function () {
+				console.log('Websocket closed');
 			};
 			ws.onmessage = function (e) {
 				var msg = e.data;

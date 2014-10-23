@@ -299,7 +299,9 @@ func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		panic(err)
 	}
 
-	fmt.Fprintf(w, string(html), htmlcol(c.Foreground), htmlcol(c.Background))
+	r := strings.NewReplacer("{{foregroundColor}}", htmlcol(c.Foreground), "{{backgroundColor}}", htmlcol(c.Background))
+	r.WriteString(w, string(html))
+
 	log4go.Debug("Done serving client: %s", time.Since(s))
 }
 
