@@ -163,26 +163,26 @@ func (t *tbfe) StatusMessage(msg string) {
 	defer t.lock.Unlock()
 	t.status_message = msg
 
-	t.BroadcastData(map[string]string{"type": "statusMessage", "msg": msg})
+	t.BroadcastData(map[string]interface{}{"type": "statusMessage", "msg": msg})
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
 	log4go.Error(msg)
 
-	t.BroadcastData(map[string]string{"type": "errorMessage", "msg": msg})
+	t.BroadcastData(map[string]interface{}{"type": "errorMessage", "msg": msg})
 }
 
 func (t *tbfe) MessageDialog(msg string) {
 	log4go.Info(msg)
 
-	t.BroadcastData(map[string]string{"type": "messageDialog", "msg": msg})
+	t.BroadcastData(map[string]interface{}{"type": "messageDialog", "msg": msg})
 }
 
 // TODO: wait for client response, return true/false
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
 	log4go.Info(msg, ok)
 
-	t.BroadcastData(map[string]string{"type": "okCancelDialog", "msg": msg, "ok": ok})
+	t.BroadcastData(map[string]interface{}{"type": "okCancelDialog", "msg": msg, "ok": ok})
 
 	return false
 }
@@ -315,6 +315,10 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 		websocket.JSON.Send(ws, map[string]string{"type": "statusMessage", "msg": t.status_message})
 	}
 
+	// Send cursor position
+	sel := backend.GetEditor().ActiveWindow().ActiveView().Sel()
+	websocket.JSON.Send(ws, t.GetSelectionMessage(sel))
+
 	// Send editor content
 	var buf bytes.Buffer
 	t.render(bufio.NewWriter(&buf))
@@ -347,6 +351,10 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					// TODO: automatic lookup instead of this manual lookup
 					// See https://github.com/limetext/lime/pull/421/files#r19269236
 					keymap := map[string]keys.Key{
+						"ArrowLeft":   keys.Left,
+						"ArrowUp":     keys.Up,
+						"ArrowRight":  keys.Right,
+						"ArrowDown":   keys.Down,
 						"Left":        keys.Left,
 						"Up":          keys.Up,
 						"Right":       keys.Right,
@@ -405,7 +413,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	}
 }
 
-func (t *tbfe) BroadcastData(data map[string]string) {
+func (t *tbfe) BroadcastData(data map[string]interface{}) {
 	for _, ws := range clients {
 		websocket.JSON.Send(ws, data)
 	}
@@ -421,6 +429,17 @@ func (t *tbfe) SetDirty() {
 	}
 }
 
+func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
+	return map[string]interface{}{
+		"type": "selection",
+		"sel":  sel.Regions(),
+	}
+}
+
+func (t *tbfe) SelectionModified(sel *RegionSet) {
+	t.BroadcastData(t.GetSelectionMessage(sel))
+}
+
 func (t *tbfe) loop() {
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) {
@@ -433,10 +452,10 @@ func (t *tbfe) loop() {
 	// TODO: maybe not useful?
 	/*backend.OnModified.Add(func(v *backend.View) {
 		t.SetDirty()
-	})
-	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.SetDirty()
 	})*/
+	backend.OnSelectionModified.Add(func(v *backend.View) {
+		t.SelectionModified(v.Sel())
+	})
 
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
