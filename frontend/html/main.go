@@ -315,6 +315,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 		websocket.JSON.Send(ws, map[string]string{"type": "statusMessage", "msg": t.status_message})
 	}
 
+	// Send cursor position
 	sel := backend.GetEditor().ActiveWindow().ActiveView().Sel()
 	websocket.JSON.Send(ws, t.GetSelectionMessage(sel))
 
