@@ -436,7 +436,7 @@ func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
 
 	return map[string]interface{}{
 		"type": "selection",
-		"sel": selList,
+		"sel":  selList,
 	}
 }
 
