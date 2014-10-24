@@ -22,6 +22,8 @@ body {
 	height: calc(100% - 22px);
 	overflow: auto;
 	white-space: pre;
+	padding: 3px;
+	box-sizing: border-box;
 }
 #contents::-webkit-scrollbar {
 	width: 10px;
@@ -37,6 +39,27 @@ body {
 #contents::-webkit-scrollbar-corner {
 	background: none;
 }
+#contents .cursor {
+	position: relative;
+}
+#contents .cursor:after {
+	position: absolute;
+	content: "|";
+	left: -3px;
+	color: white;
+	animation: blink 1s infinite;
+}
+@keyframes blink {
+	0% { opacity: 0; }
+	50% { opacity: 1; }
+	100% { opacity: 0; }
+}
+@-webkit-keyframes blink {
+	0% { opacity: 0; }
+	50% { opacity: 1; }
+	100% { opacity: 0; }
+}
+
 #statusBar {
 	position: fixed;
 	bottom: 0;
@@ -70,19 +93,69 @@ body {
 
 <script type="text/javascript">
 var frontend = (function () {
+	var ws;
 	var frontend = {};
+	frontend.contents = document.getElementById('contents');
+	frontend.sel = [{ A: 0, B: 0 }];
 
 	function redrawEditor(contents) {
-		document.getElementById('contents').innerHTML = contents;
+		frontend.contents.innerHTML = contents;
 		console.log('Rendered');
+
+		updateSelection();
 	}
 	function supportsWebsockets() {
 		return (window.WebSocket) ? true : false;
 	}
 
-	var ws;
+	function updateSelection() {
+		var sel = frontend.sel[0]; // TODO: support multiple ranges
+
+		// TODO: support selection ranges
+		var ctn = frontend.contents.innerHTML,
+			ch = '',
+			inTag = false,
+			counter = 0;
+		for (var i = 0; i < ctn.length; i++) {
+			ch = ctn[i];
+			if (ch == '<') {
+				inTag = true;
+			} else if (ch == '>') {
+				inTag = false;
+			} else if (inTag) {
+				continue;
+			} else {
+				if (counter == sel.A) {
+					frontend.contents.innerHTML = ctn.substr(0, i) + '<span class="cursor"></span>' + ctn.substr(i);
+					break;
+				}
+
+				counter++;
+			}
+		}
+
+		var cur = frontend.contents.querySelector('.cursor');
+		if (!cur) {
+			return;
+		}
+		if (cur.offsetTop < frontend.contents.scrollTop) {
+			frontend.contents.scrollTop = cur.offsetTop;
+		} else if (cur.offsetTop + cur.offsetHeight >= frontend.contents.scrollTop + frontend.contents.clientHeight) {
+			frontend.contents.scrollTop = cur.offsetTop - frontend.contents.clientHeight + cur.offsetHeight;
+		}
+	}
 
 	frontend.commandHandlers = {
+		selection: function (data) {
+			var cur = frontend.contents.querySelector('.cursor');
+			if (cur) {
+				cur.remove(); //TODO: IE issue (https://developer.mozilla.org/en-US/docs/Web/API/ChildNode.remove)
+			}
+
+			frontend.sel = data.sel;
+
+			updateSelection();
+		},
 		statusMessage: function (data) {
 			document.getElementById('statusBar').querySelector('.msg').innerHTML = data.msg;
 		},
@@ -101,7 +174,8 @@ var frontend = (function () {
 
 		var handler = frontend.commandHandlers[command.type];
 		if (!handler) {
-			return false;
+			console.warn('Unrecognized command type: ', command.type);
+			return;
 		}
 		return handler(command);
 	};
