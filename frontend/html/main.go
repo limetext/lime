@@ -430,14 +430,9 @@ func (t *tbfe) SetDirty() {
 }
 
 func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
-	var selList []Region
-	for i := 0; i < sel.Len(); i++ {
-		selList = append(selList, sel.Get(i))
-	}
-
 	return map[string]interface{}{
 		"type": "selection",
-		"sel":  selList,
+		"sel":  sel.Regions(),
 	}
 }
 
