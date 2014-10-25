@@ -5,11 +5,11 @@
 package sublime
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/util"
@@ -26,7 +26,7 @@ func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 	if i, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		log4go.Info("Python sez: %s", i)
+		log.Global.LogInfo("Python sez: %s", i)
 	}
 	return toPython(nil)
 }
@@ -57,7 +57,7 @@ func sublime_set_timeout(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 			defer l.Unlock()
 			defer pyarg.Decref()
 			if ret, err := pyarg.Base().CallFunctionObjArgs(); err != nil {
-				log4go.Debug("Error in callback: %v", err)
+				log.Global.LogDebug("Error in callback: %v", err)
 			} else {
 				ret.Decref()
 			}
@@ -160,11 +160,11 @@ func loadPlugin(p *packages.Plugin, m *py.Module) {
 		fn := f.Name()
 		s, err := py.NewUnicode(path.Base(p.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
-			log4go.Error(err)
+			log.Global.LogError(err)
 			return
 		}
 		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-			log4go.Error(err)
+			log.Global.LogError(err)
 		} else if r != nil {
 			r.Decref()
 		}
@@ -180,9 +180,9 @@ var (
 )
 
 func watch(plugin *backend.WatchedPackage) {
-	log4go.Finest("Watch(%v)", plugin)
+	log.Global.LogFinest("Watch(%v)", plugin)
 	if err := watcher.Watch(plugin.Name()); err != nil {
-		log4go.Error("Could not watch plugin: %v", err)
+		log.Global.LogError("Could not watch plugin: %v", err)
 	} else {
 		watchedPluginsLock.Lock()
 		watchedPlugins[plugin.Name()] = plugin
@@ -192,9 +192,9 @@ func watch(plugin *backend.WatchedPackage) {
 
 func unWatch(name string) {
 	if err := watcher.RemoveWatch(name); err != nil {
-		log4go.Error("Couldn't unwatch file: %v", err)
+		log.Global.LogError("Couldn't unwatch file: %v", err)
 	}
-	log4go.Finest("UnWatch(%s)", name)
+	log.Global.LogFinest("UnWatch(%s)", name)
 	watchedPluginsLock.Lock()
 	delete(watchedPlugins, name)
 	watchedPluginsLock.Unlock()
@@ -214,7 +214,7 @@ func observePlugins(m *py.Module) {
 			}
 			watchedPluginsLock.Unlock()
 		case err := <-watcher.Error:
-			log4go.Error("error:", err)
+			log.Global.LogError("error:", err)
 		}
 	}
 }
@@ -229,14 +229,14 @@ func Init() {
 	}
 	sys, err := py.Import("sys")
 	if err != nil {
-		log4go.Debug(err)
+		log.Global.LogDebug(err)
 	} else {
 		defer sys.Decref()
 	}
 
 	watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		log4go.Error("Could not create watcher due to: %v", err)
+		log.Global.LogError("Could not create watcher due to: %v", err)
 	}
 	watchedPluginsLock.Lock()
 	watchedPlugins = make(map[string]*backend.WatchedPackage)

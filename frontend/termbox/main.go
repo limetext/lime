@@ -4,12 +4,12 @@
 package main
 
 import (
-	"code.google.com/p/log4go"
 	"flag"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
@@ -150,7 +150,7 @@ func createFrontend() *tbfe {
 
 	path := path.Join("..", "..", "3rdparty", "bundles", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		scheme = sc
 	}
@@ -341,17 +341,17 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log4go.Error(msg)
+	log.Global.LogError(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) MessageDialog(msg string) {
-	log4go.Info(msg)
+	log.Global.LogInfo(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log4go.Info(msg, ok)
+	log.Global.LogInfo(msg, ok)
 	return false
 }
 
@@ -404,7 +404,7 @@ func (t *tbfe) renderthread() {
 	dorender := func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log4go.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+				log.Global.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 1 {
 					panic(r)
 				}
@@ -436,7 +436,7 @@ func (t *tbfe) renderthread() {
 	}
 
 	for _ = range t.dorender {
-		log4go.Finest("Rendering")
+		log.Global.LogFinest("Rendering")
 		dorender()
 	}
 }
@@ -533,7 +533,7 @@ func (t *tbfe) loop() {
 			mp := util.Prof.Enter("evchan")
 			switch ev.Type {
 			case termbox.EventError:
-				log4go.Debug("error occured")
+				log.Global.LogDebug("error occured")
 				return
 			case termbox.EventResize:
 				t.handleResize(ev.Height, ev.Width, false)
@@ -615,9 +615,9 @@ func setColorMode() {
 	)
 
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
-		log4go.Error("Unable to use 256 color mode: %s", err)
+		log.Global.LogError("Unable to use 256 color mode: %s", err)
 	} else {
-		log4go.Debug("Using 256 color mode")
+		log.Global.LogDebug("Using 256 color mode")
 		mode256 = true
 	}
 
@@ -659,7 +659,7 @@ func setColorMode() {
 				}
 			}
 			l := len(pal)
-			log4go.Debug("Adding colour: %d %+v %+v", l, col, tc)
+			log.Global.LogDebug("Adding colour: %d %+v %+v", l, col, tc)
 			pal = append(pal, tc)
 			termbox.SetColorPalette(pal)
 			return termbox.Attribute(l)
@@ -701,21 +701,23 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 func main() {
 	flag.Parse()
 
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", *rotateLog))
+	log.Global.AddFilter("file", log.FINEST, log.NewFileLogWriter("debug.log", *rotateLog))
 	defer func() {
 		py.NewLock()
 		py.Finalize()
 	}()
 
 	if err := termbox.Init(); err != nil {
-		log4go.Exit(err)
+		log.Global.Close(err)
+		return
 	}
 
 	defer func() {
 		termbox.Close()
-		log4go.Debug(util.Prof)
+		log.Global.LogDebug(util.Prof)
 		if err := recover(); err != nil {
-			log4go.Crash(err)
+			log.Global.LogCritical(err)
+			panic(err)
 		}
 	}()
 

@@ -5,8 +5,8 @@
 package backend
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/parser"
 	"github.com/limetext/lime/backend/render"
@@ -136,7 +136,7 @@ func (v *View) parsethread() {
 		defer p.Exit()
 		defer func() {
 			if r := recover(); r != nil {
-				log4go.Error("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
+				log.Global.LogError("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
 				if pc > 0 {
 					panic(r)
 				}
@@ -155,13 +155,13 @@ func (v *View) parsethread() {
 		// TODO: Allow other parsers instead of this hardcoded textmate version
 		pr, err := textmate.NewLanguageParser(source, sub)
 		if err != nil {
-			log4go.Error("Couldn't parse: %v", err)
+			log.Global.LogError("Couldn't parse: %v", err)
 			return
 		}
 
 		syn, err := parser.NewSyntaxHighlighter(pr)
 		if err != nil {
-			log4go.Error("Couldn't create syntaxhighlighter: %v", err)
+			log.Global.LogError("Couldn't create syntaxhighlighter: %v", err)
 			return
 		}
 
@@ -251,7 +251,7 @@ func (v *View) loadSettings() {
 
 	ed := GetEditor()
 	if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 		return
 	} else if s := r.FindStringSubmatch(syntax); s != nil {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
@@ -404,7 +404,7 @@ func (v *View) BeginEdit() *Edit {
 func (v *View) EndEdit(edit *Edit) {
 	if edit.invalid {
 		// This happens when nesting Edits and the child Edit ends after the parent edit.
-		log4go.Fine("This edit has already been invalidated: %v, %v", edit, v.editstack)
+		log.Global.LogFine("This edit has already been invalidated: %v, %v", edit, v.editstack)
 		return
 	}
 
@@ -419,7 +419,7 @@ func (v *View) EndEdit(edit *Edit) {
 	}
 	if i == -1 {
 		// TODO(.): Under what instances does this happen again?
-		log4go.Error("This edit isn't even in the stack... where did it come from? %v, %v", edit, v.editstack)
+		log.Global.LogError("This edit isn't even in the stack... where did it come from? %v, %v", edit, v.editstack)
 		return
 	}
 
@@ -427,7 +427,7 @@ func (v *View) EndEdit(edit *Edit) {
 
 	if l := len(v.editstack) - 1; i != l {
 		// TODO(.): See TODO in BeginEdit
-		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
+		log.Global.LogError("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
 	}
 
 	// Invalidate all Edits "below" and including this Edit.
@@ -517,7 +517,7 @@ func (v *View) Save() error {
 
 // Saves the file to the specified filename
 func (v *View) SaveAs(name string) (err error) {
-	log4go.Fine("SaveAs(%s)", name)
+	log.Global.LogFine("SaveAs(%s)", name)
 	v.Settings().Set("lime.saving", true)
 	defer v.Settings().Erase("lime.saving")
 	var atomic bool
@@ -592,7 +592,7 @@ func (v *View) runCommand(cmd TextCommand, name string) error {
 	defer func() {
 		v.EndEdit(e)
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, cmd, r, string(debug.Stack()))
+			log.Global.LogError("Paniced while running text command %s %v: %v\n%s", name, cmd, r, string(debug.Stack()))
 		}
 	}()
 	p := Prof.Enter("view.cmd." + name)
@@ -737,7 +737,7 @@ func (v *View) Classify(point int) (res int) {
 		return
 	}
 	if re, err := rubex.Compile("[A-Z]"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if re.MatchString(b) && !re.MatchString(a) {
 			res |= CLASS_SUB_WORD_START
@@ -756,7 +756,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Punc start & end
 	if re, err := rubex.Compile(ws); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
 			res |= CLASS_PUNCTUATION_START
@@ -766,9 +766,9 @@ func (v *View) Classify(point int) (res int) {
 		}
 		// Word start & end
 		if re1, err := rubex.Compile("\\w"); err != nil {
-			log4go.Error(err)
+			log.Global.LogError(err)
 		} else if re2, err := rubex.Compile("\\s"); err != nil {
-			log4go.Error(err)
+			log.Global.LogError(err)
 		} else {
 			if re1.MatchString(b) && (re.MatchString(a) || re2.MatchString(a) || a == "") {
 				res |= CLASS_WORD_START
@@ -793,7 +793,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Middle word
 	if re, err := rubex.Compile("\\w"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if re.MatchString(a) && re.MatchString(b) {
 			res |= CLASS_MIDDLE_WORD
@@ -801,7 +801,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Word start & end with punc
 	if re, err := rubex.Compile("\\s"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if (res&CLASS_PUNCTUATION_START == CLASS_PUNCTUATION_START) && (re.MatchString(a) || a == "") {
 			res |= CLASS_WORD_START_WITH_PUNCTUATION
@@ -812,7 +812,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Openning & closing parentheses
 	if re, err := rubex.Compile("[(\\[{]"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_OPENING_PARENTHESIS
@@ -823,7 +823,7 @@ func (v *View) Classify(point int) (res int) {
 		}
 	}
 	if re, err := rubex.Compile("[)\\]}]"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_CLOSING_PARENTHESIS

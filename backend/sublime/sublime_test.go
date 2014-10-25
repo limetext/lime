@@ -6,11 +6,11 @@ package sublime
 
 import (
 	"bytes"
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/text"
@@ -70,12 +70,12 @@ func TestSublime(t *testing.T) {
 	} else {
 		for _, fn := range files {
 			if filepath.Ext(fn) == ".py" {
-				log4go.Debug("Running %s", fn)
+				log.Global.LogDebug("Running %s", fn)
 				if _, err := py.Import(fn[:len(fn)-3]); err != nil {
-					log4go.Error(err)
+					log.Global.LogError(err)
 					t.Error(err)
 				} else {
-					log4go.Debug("Ran %s", fn)
+					log.Global.LogDebug("Ran %s", fn)
 				}
 			}
 		}
@@ -109,12 +109,12 @@ except:
 	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
 		t.Fatalf("Couldn't write file: %s", err)
 	}
-	log4go.Debug("Running %s", "reload_test.py")
+	log.Global.LogDebug("Running %s", "reload_test.py")
 	if _, err := py.Import("reload_test"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 		t.Error(err)
 	} else {
-		log4go.Debug("Ran %s", "reload_test.py")
+		log.Global.LogDebug("Ran %s", "reload_test.py")
 	}
 	os.Remove("testdata/plugins/reload.py")
 	os.Remove("testdata/reload_test.py")

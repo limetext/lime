@@ -6,13 +6,13 @@ package main
 
 import (
 	"bytes"
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
@@ -348,7 +348,7 @@ Item {MessageDialog {
 	engine.Context().SetVar("q", q)
 	component, err := engine.LoadString("dialog.qml", src)
 	if err != nil {
-		log4go.Error("Unable to instanciate dialog: %s", err)
+		log.Global.LogError("Unable to instanciate dialog: %s", err)
 		return 0
 	}
 	var wg sync.WaitGroup
@@ -366,12 +366,12 @@ Item {MessageDialog {
 
 	wg.Wait()
 	engine.Destroy()
-	log4go.Debug("returning %d", ret)
+	log.Global.LogDebug("returning %d", ret)
 	return
 }
 
 func (t *qmlfrontend) ErrorMessage(msg string) {
-	log4go.Error(msg)
+	log.Global.LogError(msg)
 	var q qmlDialog
 	q.Show(msg, "StandardIcon.Critical")
 }
@@ -602,7 +602,7 @@ func (t *qmlfrontend) onClose(v *backend.View) {
 			return
 		}
 	}
-	log4go.Error("Couldn't find closed view...")
+	log.Global.LogError("Couldn't find closed view...")
 }
 
 // called when a view has loaded
@@ -653,19 +653,19 @@ func (t *qmlfrontend) loop() (err error) {
 	// the old file would still be what is referenced.
 	newEngine := func() (err error) {
 		if engine != nil {
-			log4go.Debug("calling destroy")
+			log.Global.LogDebug("calling destroy")
 			// TODO(.): calling this appears to make the editor *very* crash-prone, just let it leak for now
 			// engine.Destroy()
 			engine = nil
 		}
-		log4go.Debug("calling newEngine")
+		log.Global.LogDebug("calling newEngine")
 		engine = qml.NewEngine()
-		log4go.Debug("setvar frontend")
+		log.Global.LogDebug("setvar frontend")
 		engine.Context().SetVar("frontend", t)
-		log4go.Debug("setvar editor")
+		log.Global.LogDebug("setvar editor")
 		engine.Context().SetVar("editor", backend.GetEditor())
 
-		log4go.Debug("loadfile")
+		log.Global.LogDebug("loadfile")
 		component, err = engine.LoadFile(qmlMainFile)
 		if err != nil {
 			return err
@@ -674,7 +674,7 @@ func (t *qmlfrontend) loop() (err error) {
 		return
 	}
 	if err := newEngine(); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	}
 
 	backend.OnNewWindow.Add(func(w *backend.Window) {
@@ -687,7 +687,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	// TODO: should be done backend side
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
-		log4go.Error(err)
+		log.Global.LogError(err)
 	} else {
 		scheme = sc
 	}
@@ -706,7 +706,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {
-		log4go.Error("Unable to create file watcher: %s", err)
+		log.Global.LogError("Unable to create file watcher: %s", err)
 		return
 	}
 	defer watch.Close()
@@ -739,11 +739,11 @@ func (t *qmlfrontend) loop() (err error) {
 		// Reset reload status
 		reloadRequested = false
 
-		log4go.Debug("Waiting for all windows to close")
+		log.Global.LogDebug("Waiting for all windows to close")
 		// wg would be the WaitGroup all windows belong to, so first we wait for
 		// all windows to close.
 		wg.Wait()
-		log4go.Debug("All windows closed. reloadRequest: %v", reloadRequested)
+		log.Global.LogDebug("All windows closed. reloadRequest: %v", reloadRequested)
 		// then we check if there's a reload request in the pipe
 		if !reloadRequested || len(t.windows) == 0 {
 			// This would be a genuine exit; all windows closed by the user
@@ -753,11 +753,11 @@ func (t *qmlfrontend) loop() (err error) {
 		// *We* closed all windows because we want to reload freshly changed qml
 		// files.
 		for {
-			log4go.Debug("Calling newEngine")
+			log.Global.LogDebug("Calling newEngine")
 			if err := newEngine(); err != nil {
 				// Reset reload status
 				reloadRequested = false
-				log4go.Error(err)
+				log.Global.LogError(err)
 				for !reloadRequested {
 					// This loop allows us to re-try reloading
 					// if there was an error in the file this time,
@@ -767,10 +767,10 @@ func (t *qmlfrontend) loop() (err error) {
 				}
 				continue
 			}
-			log4go.Debug("break")
+			log.Global.LogDebug("break")
 			break
 		}
-		log4go.Debug("re-launching all windows")
+		log.Global.LogDebug("re-launching all windows")
 		// Succeeded loading the file, re-launch all windows
 		for _, v := range t.windows {
 			v.launch(&wg, component)
@@ -791,7 +791,7 @@ func (t *qmlfrontend) RunCommandWithArgs(command string, args backend.Args) {
 }
 
 func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
-	log4go.Debug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
+	log.Global.LogDebug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
 	shift := false
 	alt := false
 	ctrl := false
@@ -831,7 +831,7 @@ func main() {
 	// Need to lock the OS thread as OSX GUI requires GUI stuff to run in the main thread
 	runtime.LockOSThread()
 
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewConsoleLogWriter())
+	log.Global.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()
 		py.Finalize()

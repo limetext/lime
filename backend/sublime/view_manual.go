@@ -5,14 +5,14 @@
 package sublime
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/text"
 )
 
-var _ = log4go.Error
+var _ = log.Global.LogError
 
 type Refcounted py.Object
 

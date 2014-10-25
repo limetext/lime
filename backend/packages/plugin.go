@@ -5,8 +5,8 @@
 package packages
 
 import (
-	"code.google.com/p/log4go"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/text"
 	"os"
 	pt "path"
@@ -57,16 +57,16 @@ func (p *Plugin) Reload() {
 		files []os.FileInfo
 		pckts Packets
 	)
-	log4go.Info("Reloading plugin %s", p.Name())
+	log.Global.LogInfo("Reloading plugin %s", p.Name())
 	f, err := os.Open(p.path)
 	if err != nil {
-		log4go.Error("Couldn't open dir: %s", err)
+		log.Global.LogError("Couldn't open dir: %s", err)
 		return
 	}
 	defer f.Close()
 	fi, err := f.Readdir(-1)
 	if err != nil {
-		log4go.Error("Couldn't read dir: %s", err)
+		log.Global.LogError("Couldn't read dir: %s", err)
 		return
 	}
 	for _, f := range fi {
@@ -108,20 +108,20 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 	var plugins []*Plugin
 	f, err := os.Open(path)
 	if err != nil {
-		log4go.Warn(err)
+		log.Global.LogWarning(err)
 		return nil
 	}
 	defer f.Close()
 	dirs, err := f.Readdirnames(-1)
 	if err != nil {
-		log4go.Warn(err)
+		log.Global.LogWarning(err)
 		return nil
 	}
 	for _, dir := range dirs {
 		dir2 := pt.Join(path, dir)
 		f2, err := os.Open(dir2)
 		if err != nil {
-			log4go.Warn(err)
+			log.Global.LogWarning(err)
 			continue
 		}
 		defer f2.Close()

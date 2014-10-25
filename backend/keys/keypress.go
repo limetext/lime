@@ -5,8 +5,8 @@
 package keys
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/log"
 	"strings"
 	"unicode"
 )
@@ -75,7 +75,7 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 			} else {
 				r := []Key(c)
 				if len(r) != 1 {
-					log4go.Warn("Unknown key value with %d bytes: %s", len(c), c)
+					log.Global.LogWarning("Unknown key value with %d bytes: %s", len(c), c)
 					return nil
 				}
 				k.Key = Key(c[0])
