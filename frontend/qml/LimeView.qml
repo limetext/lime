@@ -240,7 +240,7 @@ Item {
         // Works like buffer.Lines()
         function lines(sel, buf) {
             if (!sel) return;
-            var lines  = new Array();
+            var lines = new Array();
             var sel = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a};
             var rc = {a: buf.rowCol(sel.a), b: buf.rowCol(sel.b)};
 
@@ -285,7 +285,7 @@ Item {
                 }
                 of--;
 
-                rect.cursor.x = (mysel.b <= mysel.a) ? -3 : rect.width-2;
+                rect.cursor.x = (mysel.b <= mysel.a) ? 0 : rect.width;
                 rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);;
 
                 var style = myView.setting("caret_style");
@@ -295,6 +295,8 @@ Item {
                         rect.cursor.text = "_";
                     } else {
                         rect.cursor.text = "|";
+                        // Shift the cursor to the edge of the character
+                        rect.cursor.x -= 4;
                     }
                 }
             }
