@@ -145,9 +145,7 @@ func (v *View) parsethread() {
 		}()
 
 		b := v.Buffer()
-		b.Lock()
 		sub := b.Substr(Region{0, b.Size()})
-		b.Unlock()
 
 		source, _ := v.Settings().Get("syntax", "").(string)
 		if len(source) == 0 {
