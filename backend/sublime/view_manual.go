@@ -8,11 +8,8 @@ import (
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
-	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/text"
 )
-
-var _ = log.Global.LogError
 
 type Refcounted py.Object
 
