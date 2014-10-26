@@ -436,10 +436,6 @@ func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
 	}
 }
 
-func (t *tbfe) SelectionModified(sel *RegionSet) {
-	t.BroadcastData(t.GetSelectionMessage(sel))
-}
-
 func (t *tbfe) loop() {
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) {
@@ -454,7 +450,7 @@ func (t *tbfe) loop() {
 		t.SetDirty()
 	})*/
 	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.SelectionModified(v.Sel())
+		t.BroadcastData(t.GetSelectionMessage(v.Sel()))
 	})
 
 	ed := backend.GetEditor()
