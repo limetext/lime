@@ -316,8 +316,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	}
 
 	// Send cursor position
-	sel := backend.GetEditor().ActiveWindow().ActiveView().Sel()
-	websocket.JSON.Send(ws, t.GetSelectionMessage(sel))
+	websocket.JSON.Send(ws, t.GetSelectionMessage(backend.GetEditor().ActiveWindow().ActiveView()))
 
 	// Send editor content
 	var buf bytes.Buffer
@@ -429,10 +428,10 @@ func (t *tbfe) SetDirty() {
 	}
 }
 
-func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
+func (t *tbfe) GetSelectionMessage(v *backend.View) map[string]interface{} {
 	return map[string]interface{}{
 		"type": "selection",
-		"sel":  sel.Regions(),
+		"sel":  v.Sel().Regions(),
 	}
 }
 
@@ -450,7 +449,7 @@ func (t *tbfe) loop() {
 		t.SetDirty()
 	})*/
 	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.BroadcastData(t.GetSelectionMessage(v.Sel()))
+		t.BroadcastData(t.GetSelectionMessage(v))
 	})
 
 	ed := backend.GetEditor()
