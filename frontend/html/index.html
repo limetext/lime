@@ -110,7 +110,7 @@ var frontend = (function () {
 	}
 
 	var cursor = null, lastSel = { A: 0, B: 0 };
-	function updateSelection() {
+	function updateSelection() { // TODO: support selection ranges
 		var sel = frontend.sel[0]; // TODO: support multiple ranges
 
 		var chars = 0;
