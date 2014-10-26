@@ -9,25 +9,25 @@ import (
 )
 
 type (
-	FileLogWriter struct {
+	fileLogWriter struct {
 		logWriter
 		writer *log4go.FileLogWriter
 	}
 )
 
-func NewFileLogWriter(fname string, rotate bool) *FileLogWriter {
-	ret := &FileLogWriter{
+func NewFileLogWriter(fname string, rotate bool) *fileLogWriter {
+	ret := &fileLogWriter{
 		writer: log4go.NewFileLogWriter(fname, rotate),
 	}
 	return ret
 }
 
-// Implement logWriter
+// Implement LogWriter
 
-func (l *FileLogWriter) LogWrite(rec *log4go.LogRecord) {
+func (l *fileLogWriter) LogWrite(rec *log4go.LogRecord) {
 	l.writer.LogWrite(rec)
 }
 
-func (l *FileLogWriter) Close() {
+func (l *fileLogWriter) Close() {
 	l.writer.Close()
 }

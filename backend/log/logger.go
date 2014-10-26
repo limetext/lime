@@ -25,7 +25,7 @@ func NewLogger() *Logger {
 	return l
 }
 
-func (l *Logger) AddFilter(name string, level Level, writer logWriter) {
+func (l *Logger) AddFilter(name string, level Level, writer LogWriter) {
 	lvl := log4go.INFO
 	switch level {
 	case FINEST:

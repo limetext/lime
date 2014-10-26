@@ -9,25 +9,25 @@ import (
 )
 
 type (
-	ConsoleLogWriter struct {
+	consoleLogWriter struct {
 		logWriter
 		writer log4go.ConsoleLogWriter
 	}
 )
 
-func NewConsoleLogWriter() *ConsoleLogWriter {
-	ret := &ConsoleLogWriter{
+func NewConsoleLogWriter() *consoleLogWriter {
+	ret := &consoleLogWriter{
 		writer: log4go.NewConsoleLogWriter(),
 	}
 	return ret
 }
 
-// Implement logWriter
+// Implement LogWriter
 
-func (l *ConsoleLogWriter) LogWrite(rec *log4go.LogRecord) {
+func (l *consoleLogWriter) LogWrite(rec *log4go.LogRecord) {
 	l.writer.LogWrite(rec)
 }
 
-func (l *ConsoleLogWriter) Close() {
+func (l *consoleLogWriter) Close() {
 	l.writer.Close()
 }

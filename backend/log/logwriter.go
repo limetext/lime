@@ -11,20 +11,20 @@ import (
 )
 
 type (
-	logWriter interface {
+	LogWriter interface {
 		log4go.LogWriter
 	}
 
-	LogWriter struct {
-		logWriter
+	logWriter struct {
+		LogWriter
 		log     chan string
 		handler func(string)
 		lock    sync.Mutex
 	}
 )
 
-func NewLogWriter(h func(string)) *LogWriter {
-	ret := &LogWriter{
+func NewLogWriter(h func(string)) *logWriter {
+	ret := &logWriter{
 		log:     make(chan string, 100),
 		handler: h,
 	}
@@ -32,15 +32,15 @@ func NewLogWriter(h func(string)) *LogWriter {
 	return ret
 }
 
-func (l *LogWriter) handle() {
+func (l *logWriter) handle() {
 	for fl := range l.log {
 		l.handler(fl)
 	}
 }
 
-// Implement logWriter
+// Implement LogWriter
 
-func (l *LogWriter) LogWrite(rec *log4go.LogRecord) {
+func (l *logWriter) LogWrite(rec *log4go.LogRecord) {
 	p := Prof.Enter("log")
 	defer p.Exit()
 	l.lock.Lock()
@@ -49,7 +49,7 @@ func (l *LogWriter) LogWrite(rec *log4go.LogRecord) {
 	l.log <- fl
 }
 
-func (l *LogWriter) Close() {
+func (l *logWriter) Close() {
 	l.lock.Lock()
 	defer l.lock.Unlock()
 	close(l.log)
