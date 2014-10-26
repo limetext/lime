@@ -155,7 +155,7 @@ Item {
                 }
             }
             onWheel: {
-                view.flick(0, wheel.angleDelta.y*100);
+                view.flick(wheel.pixelDelta.x*25, wheel.pixelDelta.y*25);
                 wheel.accepted = true;
             }
         }
