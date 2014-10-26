@@ -155,7 +155,13 @@ Item {
                 }
             }
             onWheel: {
-                view.flick(wheel.pixelDelta.x*25, wheel.pixelDelta.y*25);
+                var delta = wheel.pixelDelta
+                var scaleFactor = 30
+                if (delta.x == 0 && delta.y == 0) {
+                    delta = wheel.angleDelta
+                    scaleFactor = 15
+                }
+                view.flick(delta.x*scaleFactor, delta.y*scaleFactor);
                 wheel.accepted = true;
             }
         }
