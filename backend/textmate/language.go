@@ -5,11 +5,11 @@
 package textmate
 
 import (
-	"code.google.com/p/log4go"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/limetext/lime/backend/loaders"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/rubex"
 	"github.com/limetext/text"
 	"github.com/quarnster/parser"
@@ -201,7 +201,7 @@ func (r *Regex) UnmarshalJSON(data []byte) error {
 	str = strings.Replace(str, "\\n", "\n", -1)
 	str = strings.Replace(str, "\\t", "\t", -1)
 	if re, err := rubex.Compile(str); err != nil {
-		log4go.Warn("Couldn't compile language pattern %s: %s", str, err)
+		log.Warn("Couldn't compile language pattern %s: %s", str, err)
 	} else {
 		r.re = re
 	}
@@ -318,14 +318,14 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 			if p2, ok := p.owner.Repository[key]; ok {
 				pat, ret = p2.Cache(data, pos)
 			} else {
-				log4go.Fine("Not found in repository: %s", p.Include)
+				log.Fine("Not found in repository: %s", p.Include)
 			}
 		} else if z == '$' {
 			// TODO(q): Implement tmLanguage $ include directives
-			log4go.Warn("Unhandled include directive: %s", p.Include)
+			log.Warn("Unhandled include directive: %s", p.Include)
 		} else if l, err := Provider.GetLanguage(p.Include); err != nil {
 			if !failed[p.Include] {
-				log4go.Warn("Include directive %s failed: %s", p.Include, err)
+				log.Warn("Include directive %s failed: %s", p.Include, err)
 			}
 			failed[p.Include] = true
 		} else {
@@ -472,8 +472,8 @@ func (lp *LanguageParser) Parse() (*parser.Node, error) {
 	rn := parser.Node{P: lp, Name: lp.l.ScopeName}
 	defer func() {
 		if r := recover(); r != nil {
-			log4go.Error("Panic during parse: %v\n", r)
-			log4go.Debug("%v", rn)
+			log.Error("Panic during parse: %v\n", r)
+			log.Debug("%v", rn)
 		}
 	}()
 	iter := maxiter

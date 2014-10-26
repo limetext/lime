@@ -5,8 +5,8 @@
 package backend
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/text"
 	"io/ioutil"
@@ -40,7 +40,7 @@ func (o *WatchedUserFile) Name() string {
 }
 
 func (o *WatchedUserFile) Reload() {
-	log4go.Finest("\"%v\".Reload()", o)
+	log.Finest("\"%v\".Reload()", o)
 
 	view := o.view
 	filename := o.Name()
@@ -54,7 +54,7 @@ func (o *WatchedUserFile) Reload() {
 	}
 
 	if d, err := ioutil.ReadFile(filename); err != nil {
-		log4go.Error("Could not read file: %s\n. Error was: %v", filename, err)
+		log.Error("Could not read file: %s\n. Error was: %v", filename, err)
 	} else {
 		edit := view.BeginEdit()
 		end := view.Buffer().Size()

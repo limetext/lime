@@ -2,25 +2,29 @@
 // Use of this source code is governed by a 2-clause
 // BSD-style license that can be found in the LICENSE file.
 
-package logger
+package log
 
 import (
 	"code.google.com/p/log4go"
-	"fmt"
 	. "github.com/limetext/lime/backend/util"
 	"sync"
 )
 
 type (
-	Logger struct {
+	LogWriter interface {
+		log4go.LogWriter
+	}
+
+	logWriter struct {
+		LogWriter
 		log     chan string
-		handler func(s string)
+		handler func(string)
 		lock    sync.Mutex
 	}
 )
 
-func NewLogger(h func(s string)) *Logger {
-	ret := &Logger{
+func NewLogWriter(h func(string)) *logWriter {
+	ret := &logWriter{
 		log:     make(chan string, 100),
 		handler: h,
 	}
@@ -28,13 +32,15 @@ func NewLogger(h func(s string)) *Logger {
 	return ret
 }
 
-func (l *Logger) handle() {
+func (l *logWriter) handle() {
 	for fl := range l.log {
 		l.handler(fl)
 	}
 }
 
-func (l *Logger) LogWrite(rec *log4go.LogRecord) {
+// Implement LogWriter
+
+func (l *logWriter) LogWrite(rec *log4go.LogRecord) {
 	p := Prof.Enter("log")
 	defer p.Exit()
 	l.lock.Lock()
@@ -43,9 +49,8 @@ func (l *Logger) LogWrite(rec *log4go.LogRecord) {
 	l.log <- fl
 }
 
-func (l *Logger) Close() {
+func (l *logWriter) Close() {
 	l.lock.Lock()
 	defer l.lock.Unlock()
-	fmt.Println("Closing...")
 	close(l.log)
 }

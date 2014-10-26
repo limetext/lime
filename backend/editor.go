@@ -5,12 +5,11 @@
 package backend
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/atotto/clipboard"
 	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/keys"
-	"github.com/limetext/lime/backend/logger"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
@@ -40,13 +39,13 @@ type (
 	Editor struct {
 		HasSettings
 		windows         []*Window
-		active_window   *Window
-		loginput        bool
-		cmdhandler      commandHandler
+		activeWindow    *Window
+		logInput        bool
+		cmdHandler      commandHandler
 		keyBindings     keys.KeyBindings
 		console         *View
 		frontend        Frontend
-		keyInput        chan (keys.KeyPress)
+		keyInput        chan keys.KeyPress
 		watcher         *fsnotify.Watcher
 		watchedFiles    map[string]Watched
 		watchLock       sync.Mutex
@@ -106,11 +105,11 @@ func (h *DummyFrontend) SetDefaultAction(action bool) {
 	defer h.m.Unlock()
 	h.defaultAction = action
 }
-func (h *DummyFrontend) StatusMessage(msg string) { log4go.Info(msg) }
-func (h *DummyFrontend) ErrorMessage(msg string)  { log4go.Error(msg) }
-func (h *DummyFrontend) MessageDialog(msg string) { log4go.Info(msg) }
+func (h *DummyFrontend) StatusMessage(msg string) { log.Info(msg) }
+func (h *DummyFrontend) ErrorMessage(msg string)  { log.Error(msg) }
+func (h *DummyFrontend) MessageDialog(msg string) { log.Info(msg) }
 func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
-	log4go.Info(msg)
+	log.Info(msg)
 	h.m.Lock()
 	defer h.m.Unlock()
 	return h.defaultAction
@@ -128,7 +127,7 @@ func GetEditor() *Editor {
 	defer edl.Unlock()
 	if ed == nil {
 		ed = &Editor{
-			cmdhandler: commandHandler{
+			cmdHandler: commandHandler{
 				ApplicationCommands: make(appcmd),
 				TextCommands:        make(textcmd),
 				WindowCommands:      make(wndcmd),
@@ -145,8 +144,7 @@ func GetEditor() *Editor {
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
-		log4go.Global.Close()
-		log4go.Global.AddFilter("console", log4go.DEBUG, logger.NewLogger(ed.handleLog))
+		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
 		go ed.inputthread()
 		go ed.observeFiles()
 	}
@@ -161,20 +159,12 @@ func (e *Editor) SetFrontend(f Frontend) {
 	e.frontend = f
 }
 
-func setClipboard(n string) (err error) {
-	if err = clipboard.WriteAll(n); err != nil {
-		log4go.Error("Could not set clipboard: %v", err)
-	}
-
-	return
+func setClipboard(n string) error {
+	return clipboard.WriteAll(n)
 }
 
-func getClipboard() (s string, err error) {
-	if s, err = clipboard.ReadAll(); err != nil {
-		log4go.Error("Could not get clipboard: %v", err)
-	}
-
-	return
+func getClipboard() (string, error) {
+	return clipboard.ReadAll()
 }
 
 func (e *Editor) Init() {
@@ -203,9 +193,9 @@ func (e *Editor) loadDefaultPackets() {
 
 func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
-		log4go.Info("Loaded %s", pkg.Name())
+		log.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
 	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
@@ -219,9 +209,9 @@ func (e *Editor) loadKeyBindings() {
 
 func (e *Editor) loadSetting(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
-		log4go.Info("Loaded %s", pkg.Name())
+		log.Info("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
 }
@@ -261,11 +251,11 @@ func (e *Editor) Windows() []*Window {
 }
 
 func (e *Editor) SetActiveWindow(w *Window) {
-	e.active_window = w
+	e.activeWindow = w
 }
 
 func (e *Editor) ActiveWindow() *Window {
-	return e.active_window
+	return e.activeWindow
 }
 
 func (e *Editor) Watcher() *fsnotify.Watcher {
@@ -296,7 +286,7 @@ func (e *Editor) remove(w *Window) {
 			return
 		}
 	}
-	log4go.Error("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
+	log.Error("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
 }
 
 func (e *Editor) Arch() string {
@@ -322,7 +312,7 @@ func (e *Editor) Version() string {
 }
 
 func (e *Editor) CommandHandler() CommandHandler {
-	return &e.cmdhandler
+	return &e.cmdHandler
 }
 
 func (e *Editor) HandleInput(kp keys.KeyPress) {
@@ -335,7 +325,7 @@ func (e *Editor) inputthread() {
 	doinput := func(kp keys.KeyPress) {
 		defer func() {
 			if r := recover(); r != nil {
-				log4go.Error("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
+				log.Error("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 0 {
 					panic(r)
 				}
@@ -345,11 +335,11 @@ func (e *Editor) inputthread() {
 		p := Prof.Enter("hi")
 		defer p.Exit()
 
-		lvl := log4go.FINE
-		if e.loginput {
+		lvl := log.FINE
+		if e.logInput {
 			lvl++
 		}
-		log4go.Logf(lvl, "Key: %v", kp)
+		log.Logf(lvl, "Key: %v", kp)
 		if lastBindings.KeyOff() == 0 {
 			lastBindings = e.keyBindings
 		}
@@ -379,9 +369,9 @@ func (e *Editor) inputthread() {
 			goto try_again
 		} else if kp.IsCharacter() {
 			p2 := Prof.Enter("hi.character")
-			log4go.Finest("kp: %v, pos: %v", kp, possible_actions)
+			log.Finest("kp: %v, pos: %v", kp, possible_actions)
 			if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
-				log4go.Debug("Couldn't run textcommand: %s", err)
+				log.Debug("Couldn't run textcommand: %s", err)
 			}
 			p2.Exit()
 		}
@@ -392,11 +382,11 @@ func (e *Editor) inputthread() {
 }
 
 func (e *Editor) LogInput(l bool) {
-	e.loginput = l
+	e.logInput = l
 }
 
 func (e *Editor) LogCommands(l bool) {
-	e.cmdhandler.log = l
+	e.cmdHandler.log = l
 }
 
 func (e *Editor) RunCommand(name string, args Args) {
@@ -410,25 +400,27 @@ func (e *Editor) RunCommand(name string, args Args) {
 	}
 
 	// TODO: what's the command precedence?
-	if c := e.cmdhandler.TextCommands[name]; c != nil {
+	if c := e.cmdHandler.TextCommands[name]; c != nil {
 		if err := e.CommandHandler().RunTextCommand(v, name, args); err != nil {
-			log4go.Debug("Couldn't run textcommand: %s", err)
+			log.Debug("Couldn't run textcommand: %s", err)
 		}
-	} else if c := e.cmdhandler.WindowCommands[name]; c != nil {
+	} else if c := e.cmdHandler.WindowCommands[name]; c != nil {
 		if err := e.CommandHandler().RunWindowCommand(wnd, name, args); err != nil {
-			log4go.Debug("Couldn't run windowcommand: %s", err)
+			log.Debug("Couldn't run windowcommand: %s", err)
 		}
-	} else if c := e.cmdhandler.ApplicationCommands[name]; c != nil {
+	} else if c := e.cmdHandler.ApplicationCommands[name]; c != nil {
 		if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
-			log4go.Debug("Couldn't run applicationcommand: %s", err)
+			log.Debug("Couldn't run applicationcommand: %s", err)
 		}
 	} else {
-		log4go.Debug("Couldn't find command to run")
+		log.Debug("Couldn't find command to run")
 	}
 }
 
 func (e *Editor) SetClipboard(n string) {
-	e.clipboardSetter(n)
+	if err := e.clipboardSetter(n); err != nil {
+		log.Error("Could not set clipboard: %v", err)
+	}
 
 	// Keep a local copy in case the system clipboard isn't working
 	e.clipboard = n
@@ -437,15 +429,17 @@ func (e *Editor) SetClipboard(n string) {
 func (e *Editor) GetClipboard() string {
 	if n, err := e.clipboardGetter(); err == nil {
 		return n
+	} else {
+		log.Error("Could not get clipboard: %v", err)
 	}
 
 	return e.clipboard
 }
 
 func (e *Editor) Watch(file Watched) {
-	log4go.Finest("Watch(%v)", file)
+	log.Finest("Watch(%v)", file)
 	if err := e.watcher.Watch(file.Name()); err != nil {
-		log4go.Error("Could not watch file: %v", err)
+		log.Error("Could not watch file: %v", err)
 	} else {
 		e.watchLock.Lock()
 		defer e.watchLock.Unlock()
@@ -457,9 +451,9 @@ func (e *Editor) UnWatch(name string) {
 	e.watchLock.Lock()
 	defer e.watchLock.Unlock()
 	if err := e.watcher.RemoveWatch(name); err != nil {
-		log4go.Error("Couldn't unwatch file: %v", err)
+		log.Error("Couldn't unwatch file: %v", err)
 	}
-	log4go.Finest("UnWatch(%s)", name)
+	log.Finest("UnWatch(%s)", name)
 	delete(e.watchedFiles, name)
 }
 
@@ -478,7 +472,7 @@ func (e *Editor) observeFiles() {
 				}()
 			}
 		case err := <-e.watcher.Error:
-			log4go.Error("error:", err)
+			log.Error("error:", err)
 		}
 	}
 }
@@ -486,7 +480,7 @@ func (e *Editor) observeFiles() {
 func newWatcher() (w *fsnotify.Watcher) {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
-		log4go.Error("Could not create watcher due to: %v", err)
+		log.Error("Could not create watcher due to: %v", err)
 	}
 	return
 }
