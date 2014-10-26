@@ -92,13 +92,13 @@ func (c *CommandGlue) callBool(name string, args backend.Args) bool {
 		err       error
 	)
 	if pyargs, err = c.CreatePyArgs(args); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return false
 	}
 	defer pyargs.Decref()
 
 	if r, err = c.CallMethodObjArgs(name, pyargs); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return true
 	}
 	defer r.Decref()
@@ -125,13 +125,13 @@ func (c *CommandGlue) Description() string {
 		err       error
 	)
 	if pyargs, err = c.CreatePyArgs(c.args); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return ""
 	}
 	defer pyargs.Decref()
 
 	if r, err = c.CallMethodObjArgs("description", pyargs); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return ""
 	}
 	defer r.Decref()
@@ -146,7 +146,7 @@ func pyError(err error) error {
 	// 	defer m.Decref()
 	// 	if i, err := m.Dict().GetItemString("last_traceback"); err == nil {
 	// 		defer i.Decref()
-	// 		log.Global.LogDebug("%v", i)
+	// 		log.LogDebug("%v", i)
 	// 	}
 	// }
 	return fmt.Errorf("%v", err)
@@ -196,7 +196,7 @@ func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit) error {
 		// The plugin is probably trying to bypass the undostack...
 		old := v.IsScratch()
 		v.SetScratch(true)
-		log.Global.LogFinest("Discarded: %s", e)
+		log.LogFinest("Discarded: %s", e)
 		v.EndEdit(e)
 		v.SetScratch(old)
 		ret, err := obj.Base().CallMethodObjArgs("run_", pye, pyargs)
@@ -226,7 +226,7 @@ func (c *WindowCommandGlue) Run(w *backend.Window) error {
 		pyw, pyargs, obj py.Object
 		err              error
 	)
-	log.Global.LogDebug("WindowCommand: %v", c.args)
+	log.LogDebug("WindowCommand: %v", c.args)
 	if pyw, err = toPython(w); err != nil {
 		return pyError(err)
 	}

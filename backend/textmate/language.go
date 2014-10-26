@@ -201,7 +201,7 @@ func (r *Regex) UnmarshalJSON(data []byte) error {
 	str = strings.Replace(str, "\\n", "\n", -1)
 	str = strings.Replace(str, "\\t", "\t", -1)
 	if re, err := rubex.Compile(str); err != nil {
-		log.Global.LogWarning("Couldn't compile language pattern %s: %s", str, err)
+		log.LogWarning("Couldn't compile language pattern %s: %s", str, err)
 	} else {
 		r.re = re
 	}
@@ -318,14 +318,14 @@ func (p *Pattern) Cache(data string, pos int) (pat *Pattern, ret MatchObject) {
 			if p2, ok := p.owner.Repository[key]; ok {
 				pat, ret = p2.Cache(data, pos)
 			} else {
-				log.Global.LogFine("Not found in repository: %s", p.Include)
+				log.LogFine("Not found in repository: %s", p.Include)
 			}
 		} else if z == '$' {
 			// TODO(q): Implement tmLanguage $ include directives
-			log.Global.LogWarning("Unhandled include directive: %s", p.Include)
+			log.LogWarning("Unhandled include directive: %s", p.Include)
 		} else if l, err := Provider.GetLanguage(p.Include); err != nil {
 			if !failed[p.Include] {
-				log.Global.LogWarning("Include directive %s failed: %s", p.Include, err)
+				log.LogWarning("Include directive %s failed: %s", p.Include, err)
 			}
 			failed[p.Include] = true
 		} else {
@@ -472,8 +472,8 @@ func (lp *LanguageParser) Parse() (*parser.Node, error) {
 	rn := parser.Node{P: lp, Name: lp.l.ScopeName}
 	defer func() {
 		if r := recover(); r != nil {
-			log.Global.LogError("Panic during parse: %v\n", r)
-			log.Global.LogDebug("%v", rn)
+			log.LogError("Panic during parse: %v\n", r)
+			log.LogDebug("%v", rn)
 		}
 	}()
 	iter := maxiter

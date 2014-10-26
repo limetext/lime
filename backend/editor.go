@@ -105,11 +105,11 @@ func (h *DummyFrontend) SetDefaultAction(action bool) {
 	defer h.m.Unlock()
 	h.defaultAction = action
 }
-func (h *DummyFrontend) StatusMessage(msg string) { log.Global.LogInfo(msg) }
-func (h *DummyFrontend) ErrorMessage(msg string)  { log.Global.LogError(msg) }
-func (h *DummyFrontend) MessageDialog(msg string) { log.Global.LogInfo(msg) }
+func (h *DummyFrontend) StatusMessage(msg string) { log.LogInfo(msg) }
+func (h *DummyFrontend) ErrorMessage(msg string)  { log.LogError(msg) }
+func (h *DummyFrontend) MessageDialog(msg string) { log.LogInfo(msg) }
 func (h *DummyFrontend) OkCancelDialog(msg string, button string) bool {
-	log.Global.LogInfo(msg)
+	log.LogInfo(msg)
 	h.m.Lock()
 	defer h.m.Unlock()
 	return h.defaultAction
@@ -144,7 +144,7 @@ func GetEditor() *Editor {
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
-		log.Global.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
+		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
 		go ed.inputthread()
 		go ed.observeFiles()
 	}
@@ -193,9 +193,9 @@ func (e *Editor) loadDefaultPackets() {
 
 func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else {
-		log.Global.LogInfo("Loaded %s", pkg.Name())
+		log.LogInfo("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
 	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
@@ -209,9 +209,9 @@ func (e *Editor) loadKeyBindings() {
 
 func (e *Editor) loadSetting(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else {
-		log.Global.LogInfo("Loaded %s", pkg.Name())
+		log.LogInfo("Loaded %s", pkg.Name())
 		e.Watch(NewWatchedPackage(pkg))
 	}
 }
@@ -286,7 +286,7 @@ func (e *Editor) remove(w *Window) {
 			return
 		}
 	}
-	log.Global.LogError("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
+	log.LogError("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
 }
 
 func (e *Editor) Arch() string {
@@ -325,7 +325,7 @@ func (e *Editor) inputthread() {
 	doinput := func(kp keys.KeyPress) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Global.LogError("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
+				log.LogError("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 0 {
 					panic(r)
 				}
@@ -339,7 +339,7 @@ func (e *Editor) inputthread() {
 		if e.logInput {
 			lvl++
 		}
-		log.Global.Logf(lvl, "Key: %v", kp)
+		log.Logf(lvl, "Key: %v", kp)
 		if lastBindings.KeyOff() == 0 {
 			lastBindings = e.keyBindings
 		}
@@ -369,9 +369,9 @@ func (e *Editor) inputthread() {
 			goto try_again
 		} else if kp.IsCharacter() {
 			p2 := Prof.Enter("hi.character")
-			log.Global.LogFinest("kp: %v, pos: %v", kp, possible_actions)
+			log.LogFinest("kp: %v, pos: %v", kp, possible_actions)
 			if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
-				log.Global.LogDebug("Couldn't run textcommand: %s", err)
+				log.LogDebug("Couldn't run textcommand: %s", err)
 			}
 			p2.Exit()
 		}
@@ -402,24 +402,24 @@ func (e *Editor) RunCommand(name string, args Args) {
 	// TODO: what's the command precedence?
 	if c := e.cmdHandler.TextCommands[name]; c != nil {
 		if err := e.CommandHandler().RunTextCommand(v, name, args); err != nil {
-			log.Global.LogDebug("Couldn't run textcommand: %s", err)
+			log.LogDebug("Couldn't run textcommand: %s", err)
 		}
 	} else if c := e.cmdHandler.WindowCommands[name]; c != nil {
 		if err := e.CommandHandler().RunWindowCommand(wnd, name, args); err != nil {
-			log.Global.LogDebug("Couldn't run windowcommand: %s", err)
+			log.LogDebug("Couldn't run windowcommand: %s", err)
 		}
 	} else if c := e.cmdHandler.ApplicationCommands[name]; c != nil {
 		if err := e.CommandHandler().RunApplicationCommand(name, args); err != nil {
-			log.Global.LogDebug("Couldn't run applicationcommand: %s", err)
+			log.LogDebug("Couldn't run applicationcommand: %s", err)
 		}
 	} else {
-		log.Global.LogDebug("Couldn't find command to run")
+		log.LogDebug("Couldn't find command to run")
 	}
 }
 
 func (e *Editor) SetClipboard(n string) {
 	if err := e.clipboardSetter(n); err != nil {
-		log.Global.LogError("Could not set clipboard: %v", err)
+		log.LogError("Could not set clipboard: %v", err)
 	}
 
 	// Keep a local copy in case the system clipboard isn't working
@@ -430,16 +430,16 @@ func (e *Editor) GetClipboard() string {
 	if n, err := e.clipboardGetter(); err == nil {
 		return n
 	} else {
-		log.Global.LogError("Could not get clipboard: %v", err)
+		log.LogError("Could not get clipboard: %v", err)
 	}
 
 	return e.clipboard
 }
 
 func (e *Editor) Watch(file Watched) {
-	log.Global.LogFinest("Watch(%v)", file)
+	log.LogFinest("Watch(%v)", file)
 	if err := e.watcher.Watch(file.Name()); err != nil {
-		log.Global.LogError("Could not watch file: %v", err)
+		log.LogError("Could not watch file: %v", err)
 	} else {
 		e.watchLock.Lock()
 		defer e.watchLock.Unlock()
@@ -451,9 +451,9 @@ func (e *Editor) UnWatch(name string) {
 	e.watchLock.Lock()
 	defer e.watchLock.Unlock()
 	if err := e.watcher.RemoveWatch(name); err != nil {
-		log.Global.LogError("Couldn't unwatch file: %v", err)
+		log.LogError("Couldn't unwatch file: %v", err)
 	}
-	log.Global.LogFinest("UnWatch(%s)", name)
+	log.LogFinest("UnWatch(%s)", name)
 	delete(e.watchedFiles, name)
 }
 
@@ -472,7 +472,7 @@ func (e *Editor) observeFiles() {
 				}()
 			}
 		case err := <-e.watcher.Error:
-			log.Global.LogError("error:", err)
+			log.LogError("error:", err)
 		}
 	}
 }
@@ -480,7 +480,7 @@ func (e *Editor) observeFiles() {
 func newWatcher() (w *fsnotify.Watcher) {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Global.LogError("Could not create watcher due to: %v", err)
+		log.LogError("Could not create watcher due to: %v", err)
 	}
 	return
 }

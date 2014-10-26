@@ -82,20 +82,20 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 	if ch.log {
 		lvl = log.DEBUG
 	}
-	log.Global.Logf(lvl, "Running window command: %s %v", name, args)
+	log.Logf(lvl, "Running window command: %s %v", name, args)
 	t := time.Now()
 	if c, ok := ch.WindowCommands[name].(WindowCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.Global.LogDebug("Command initialization failed: %s", err)
+			log.LogDebug("Command initialization failed: %s", err)
 			return err
 		} else if err := wnd.runCommand(c, name); err != nil {
-			log.Global.Logf(lvl+1, "Command execution failed: %s", err)
+			log.Logf(lvl+1, "Command execution failed: %s", err)
 			return err
 		} else {
-			log.Global.Logf(lvl, "Ran Window command: %s %s", name, time.Since(t))
+			log.Logf(lvl, "Ran Window command: %s %s", name, time.Since(t))
 		}
 	} else {
-		log.Global.Logf(lvl, "No such window command: %s", name)
+		log.Logf(lvl, "No such window command: %s", name)
 	}
 	return nil
 }
@@ -108,24 +108,24 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 	if ch.log {
 		lvl = log.DEBUG
 	}
-	log.Global.Logf(lvl, "Running text command: %s %v", name, args)
+	log.Logf(lvl, "Running text command: %s %v", name, args)
 	if c, ok := ch.TextCommands[name].(TextCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.Global.LogDebug("Command initialization failed: %s", err)
+			log.LogDebug("Command initialization failed: %s", err)
 			return err
 		} else if err := view.runCommand(c, name); err != nil {
-			log.Global.Logf(lvl, "Command execution failed: %s", err)
+			log.Logf(lvl, "Command execution failed: %s", err)
 			return err
 		}
 	} else if w := view.Window(); w != nil {
 		if c, ok := ch.WindowCommands[name].(WindowCommand); c != nil && ok {
 			if err := w.runCommand(c, name); err != nil {
-				log.Global.Logf(lvl, "Command execution failed: %s", err)
+				log.Logf(lvl, "Command execution failed: %s", err)
 				return err
 			}
 		}
 	}
-	log.Global.Logf(lvl, "Ran text command: %s %s", name, time.Since(t))
+	log.Logf(lvl, "Ran text command: %s %s", name, time.Since(t))
 	return nil
 }
 
@@ -133,16 +133,16 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	p := Prof.Enter("ac")
 	defer p.Exit()
 	if ch.log {
-		log.Global.LogInfo("Running application command: %s %v", name, args)
+		log.LogInfo("Running application command: %s %v", name, args)
 	} else {
-		log.Global.LogFine("Running application command: %s %v", name, args)
+		log.LogFine("Running application command: %s %v", name, args)
 	}
 	if c, ok := ch.ApplicationCommands[name].(ApplicationCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.Global.LogDebug("Command initialization failed: %s", err)
+			log.LogDebug("Command initialization failed: %s", err)
 			return err
 		} else if err := c.Run(); err != nil && ch.verbose {
-			log.Global.LogDebug("Command execution failed: %s", err)
+			log.LogDebug("Command execution failed: %s", err)
 			return err
 		}
 	}
@@ -168,7 +168,7 @@ func (ch *commandHandler) RegisterWithDefault(cmd interface{}) error {
 
 func (ch *commandHandler) Register(name string, cmd interface{}) error {
 	var r = false
-	log.Global.LogFinest("Want to register %s", name)
+	log.LogFinest("Want to register %s", name)
 	if ac, ok := cmd.(ApplicationCommand); ok {
 		if _, ok := ch.ApplicationCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)
@@ -193,7 +193,7 @@ func (ch *commandHandler) Register(name string, cmd interface{}) error {
 	if !r {
 		return fmt.Errorf("Command wasn't registered in any list: %s", name)
 	} else if ch.verbose {
-		log.Global.LogFinest("Successfully registered command %s", name)
+		log.LogFinest("Successfully registered command %s", name)
 	}
 	return nil
 }

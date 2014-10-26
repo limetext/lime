@@ -61,7 +61,7 @@ func (w *Window) remove(v *View) {
 			return
 		}
 	}
-	log.Global.LogError("Wanted to remove view %+v, but it doesn't appear to be a child of this window", v)
+	log.LogError("Wanted to remove view %+v, but it doesn't appear to be a child of this window", v)
 }
 
 func (w *Window) OpenFile(filename string, flags int) *View {
@@ -75,7 +75,7 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 		v.Buffer().SetFileName(fn)
 	}
 	if d, err := ioutil.ReadFile(filename); err != nil {
-		log.Global.LogError("Couldn't load file %s: %s", filename, err)
+		log.LogError("Couldn't load file %s: %s", filename, err)
 	} else {
 		v.Insert(e, 0, string(d))
 	}
@@ -134,7 +134,7 @@ func (w *Window) CloseAllViews() bool {
 func (w *Window) runCommand(c WindowCommand, name string) error {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Global.LogError("Paniced while running window command %s %v: %v\n%s", name, c, r, string(debug.Stack()))
+			log.LogError("Paniced while running window command %s %v: %v\n%s", name, c, r, string(debug.Stack()))
 		}
 	}()
 	return c.Run(w)

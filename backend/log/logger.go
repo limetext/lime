@@ -14,10 +14,6 @@ type (
 	}
 )
 
-var (
-	Global *Logger
-)
-
 func NewLogger() *Logger {
 	l := &Logger{
 		logger: make(log4go.Logger),
@@ -110,11 +106,4 @@ func (l *Logger) Close(args ...interface{}) {
 		l.LogError(args)
 	}
 	l.logger.Close()
-}
-
-func init() {
-	log4go.Global.Close()
-	Global = &Logger{
-		logger: log4go.Global,
-	}
 }

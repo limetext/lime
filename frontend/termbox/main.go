@@ -150,7 +150,7 @@ func createFrontend() *tbfe {
 
 	path := path.Join("..", "..", "3rdparty", "bundles", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else {
 		scheme = sc
 	}
@@ -341,17 +341,17 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log.Global.LogError(msg)
+	log.LogError(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) MessageDialog(msg string) {
-	log.Global.LogInfo(msg)
+	log.LogInfo(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log.Global.LogInfo(msg, ok)
+	log.LogInfo(msg, ok)
 	return false
 }
 
@@ -404,7 +404,7 @@ func (t *tbfe) renderthread() {
 	dorender := func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Global.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+				log.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 1 {
 					panic(r)
 				}
@@ -436,7 +436,7 @@ func (t *tbfe) renderthread() {
 	}
 
 	for _ = range t.dorender {
-		log.Global.LogFinest("Rendering")
+		log.LogFinest("Rendering")
 		dorender()
 	}
 }
@@ -533,7 +533,7 @@ func (t *tbfe) loop() {
 			mp := util.Prof.Enter("evchan")
 			switch ev.Type {
 			case termbox.EventError:
-				log.Global.LogDebug("error occured")
+				log.LogDebug("error occured")
 				return
 			case termbox.EventResize:
 				t.handleResize(ev.Height, ev.Width, false)
@@ -615,9 +615,9 @@ func setColorMode() {
 	)
 
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
-		log.Global.LogError("Unable to use 256 color mode: %s", err)
+		log.LogError("Unable to use 256 color mode: %s", err)
 	} else {
-		log.Global.LogDebug("Using 256 color mode")
+		log.LogDebug("Using 256 color mode")
 		mode256 = true
 	}
 
@@ -659,7 +659,7 @@ func setColorMode() {
 				}
 			}
 			l := len(pal)
-			log.Global.LogDebug("Adding colour: %d %+v %+v", l, col, tc)
+			log.LogDebug("Adding colour: %d %+v %+v", l, col, tc)
 			pal = append(pal, tc)
 			termbox.SetColorPalette(pal)
 			return termbox.Attribute(l)
@@ -701,22 +701,22 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 func main() {
 	flag.Parse()
 
-	log.Global.AddFilter("file", log.FINEST, log.NewFileLogWriter("debug.log", *rotateLog))
+	log.AddFilter("file", log.FINEST, log.NewFileLogWriter("debug.log", *rotateLog))
 	defer func() {
 		py.NewLock()
 		py.Finalize()
 	}()
 
 	if err := termbox.Init(); err != nil {
-		log.Global.Close(err)
+		log.Close(err)
 		return
 	}
 
 	defer func() {
 		termbox.Close()
-		log.Global.LogDebug(util.Prof)
+		log.LogDebug(util.Prof)
 		if err := recover(); err != nil {
-			log.Global.LogCritical(err)
+			log.LogCritical(err)
 			panic(err)
 		}
 	}()

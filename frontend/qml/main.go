@@ -348,7 +348,7 @@ Item {MessageDialog {
 	engine.Context().SetVar("q", q)
 	component, err := engine.LoadString("dialog.qml", src)
 	if err != nil {
-		log.Global.LogError("Unable to instanciate dialog: %s", err)
+		log.LogError("Unable to instanciate dialog: %s", err)
 		return 0
 	}
 	var wg sync.WaitGroup
@@ -366,12 +366,12 @@ Item {MessageDialog {
 
 	wg.Wait()
 	engine.Destroy()
-	log.Global.LogDebug("returning %d", ret)
+	log.LogDebug("returning %d", ret)
 	return
 }
 
 func (t *qmlfrontend) ErrorMessage(msg string) {
-	log.Global.LogError(msg)
+	log.LogError(msg)
 	var q qmlDialog
 	q.Show(msg, "StandardIcon.Critical")
 }
@@ -602,7 +602,7 @@ func (t *qmlfrontend) onClose(v *backend.View) {
 			return
 		}
 	}
-	log.Global.LogError("Couldn't find closed view...")
+	log.LogError("Couldn't find closed view...")
 }
 
 // called when a view has loaded
@@ -653,19 +653,19 @@ func (t *qmlfrontend) loop() (err error) {
 	// the old file would still be what is referenced.
 	newEngine := func() (err error) {
 		if engine != nil {
-			log.Global.LogDebug("calling destroy")
+			log.LogDebug("calling destroy")
 			// TODO(.): calling this appears to make the editor *very* crash-prone, just let it leak for now
 			// engine.Destroy()
 			engine = nil
 		}
-		log.Global.LogDebug("calling newEngine")
+		log.LogDebug("calling newEngine")
 		engine = qml.NewEngine()
-		log.Global.LogDebug("setvar frontend")
+		log.LogDebug("setvar frontend")
 		engine.Context().SetVar("frontend", t)
-		log.Global.LogDebug("setvar editor")
+		log.LogDebug("setvar editor")
 		engine.Context().SetVar("editor", backend.GetEditor())
 
-		log.Global.LogDebug("loadfile")
+		log.LogDebug("loadfile")
 		component, err = engine.LoadFile(qmlMainFile)
 		if err != nil {
 			return err
@@ -674,7 +674,7 @@ func (t *qmlfrontend) loop() (err error) {
 		return
 	}
 	if err := newEngine(); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	}
 
 	backend.OnNewWindow.Add(func(w *backend.Window) {
@@ -687,7 +687,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	// TODO: should be done backend side
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else {
 		scheme = sc
 	}
@@ -706,7 +706,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Global.LogError("Unable to create file watcher: %s", err)
+		log.LogError("Unable to create file watcher: %s", err)
 		return
 	}
 	defer watch.Close()
@@ -739,11 +739,11 @@ func (t *qmlfrontend) loop() (err error) {
 		// Reset reload status
 		reloadRequested = false
 
-		log.Global.LogDebug("Waiting for all windows to close")
+		log.LogDebug("Waiting for all windows to close")
 		// wg would be the WaitGroup all windows belong to, so first we wait for
 		// all windows to close.
 		wg.Wait()
-		log.Global.LogDebug("All windows closed. reloadRequest: %v", reloadRequested)
+		log.LogDebug("All windows closed. reloadRequest: %v", reloadRequested)
 		// then we check if there's a reload request in the pipe
 		if !reloadRequested || len(t.windows) == 0 {
 			// This would be a genuine exit; all windows closed by the user
@@ -753,11 +753,11 @@ func (t *qmlfrontend) loop() (err error) {
 		// *We* closed all windows because we want to reload freshly changed qml
 		// files.
 		for {
-			log.Global.LogDebug("Calling newEngine")
+			log.LogDebug("Calling newEngine")
 			if err := newEngine(); err != nil {
 				// Reset reload status
 				reloadRequested = false
-				log.Global.LogError(err)
+				log.LogError(err)
 				for !reloadRequested {
 					// This loop allows us to re-try reloading
 					// if there was an error in the file this time,
@@ -767,10 +767,10 @@ func (t *qmlfrontend) loop() (err error) {
 				}
 				continue
 			}
-			log.Global.LogDebug("break")
+			log.LogDebug("break")
 			break
 		}
-		log.Global.LogDebug("re-launching all windows")
+		log.LogDebug("re-launching all windows")
 		// Succeeded loading the file, re-launch all windows
 		for _, v := range t.windows {
 			v.launch(&wg, component)
@@ -791,7 +791,7 @@ func (t *qmlfrontend) RunCommandWithArgs(command string, args backend.Args) {
 }
 
 func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
-	log.Global.LogDebug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
+	log.LogDebug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
 	shift := false
 	alt := false
 	ctrl := false
@@ -831,7 +831,7 @@ func main() {
 	// Need to lock the OS thread as OSX GUI requires GUI stuff to run in the main thread
 	runtime.LockOSThread()
 
-	log.Global.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
+	log.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()
 		py.Finalize()

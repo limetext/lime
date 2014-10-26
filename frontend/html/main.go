@@ -167,20 +167,20 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log.Global.LogError(msg)
+	log.LogError(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "errorMessage", "msg": msg})
 }
 
 func (t *tbfe) MessageDialog(msg string) {
-	log.Global.LogInfo(msg)
+	log.LogInfo(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "messageDialog", "msg": msg})
 }
 
 // TODO: wait for client response, return true/false
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log.Global.LogInfo(msg, ok)
+	log.LogInfo(msg, ok)
 
 	t.BroadcastData(map[string]interface{}{"type": "okCancelDialog", "msg": msg, "ok": ok})
 
@@ -196,7 +196,7 @@ var pc = 0
 func (t *tbfe) render(w io.Writer) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Global.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+			log.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 			if pc > 1 {
 				panic(r)
 			}
@@ -215,7 +215,7 @@ func (t *tbfe) render(w io.Writer) {
 	//	runes := []rune(t.status_message)
 }
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
-	log.Global.LogDebug("key: %s", req)
+	log.LogDebug("key: %s", req)
 	kc := req.FormValue("keyCode")
 	var kp keys.KeyPress
 	v, _ := strconv.ParseInt(kc, 10, 32)
@@ -240,7 +240,7 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
-	log.Global.LogDebug("view: %s", req)
+	log.LogDebug("view: %s", req)
 	if t.dirty {
 		t.dirty = false
 		t.render(w)
@@ -250,7 +250,7 @@ func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
-	log.Global.LogDebug("theme: %s", req)
+	log.LogDebug("theme: %s", req)
 
 	reqpath, _ := url.QueryUnescape(req.RequestURI)
 
@@ -274,7 +274,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 		fi, err := os.Open(filepath)
 		if err != nil {
 			w.WriteHeader(500)
-			log.Global.LogError(err)
+			log.LogError(err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s := time.Now()
 	w.Header().Set("Content-Type", "text/html")
-	log.Global.LogDebug("Serving client: %s", req)
+	log.LogDebug("Serving client: %s", req)
 
 	c := scheme.Spice(&render.ViewRegions{})
 
@@ -302,7 +302,7 @@ func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r := strings.NewReplacer("{{foregroundColor}}", htmlcol(c.Foreground), "{{backgroundColor}}", htmlcol(c.Background))
 	r.WriteString(w, string(html))
 
-	log.Global.LogDebug("Done serving client: %s", time.Since(s))
+	log.LogDebug("Done serving client: %s", time.Since(s))
 }
 
 var clients []*websocket.Conn
@@ -330,10 +330,10 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	for {
 		err := websocket.JSON.Receive(ws, &data)
 		if err != nil {
-			log.Global.LogError(err)
+			log.LogError(err)
 			return
 		}
-		//log.Global.LogDebug("Received: %s", data)
+		//log.LogDebug("Received: %s", data)
 
 		msgType := data["type"].(string)
 
@@ -388,7 +388,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					if key, ok := keymap[keyName]; ok {
 						kp.Key = key
 					} else {
-						log.Global.LogDebug("Unknown key: %s", keyName)
+						log.LogDebug("Unknown key: %s", keyName)
 						continue
 					}
 				}
@@ -408,7 +408,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			ed := backend.GetEditor()
 			go ed.RunCommand(command, make(backend.Args))
 		} else {
-			log.Global.LogInfo("Unhandled message type: %s", msgType)
+			log.LogInfo("Unhandled message type: %s", msgType)
 		}
 	}
 }
@@ -463,7 +463,7 @@ func (t *tbfe) loop() {
 	ed.LogCommands(false)
 	c := ed.Console()
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else {
 		scheme = sc
 	}
@@ -501,21 +501,21 @@ func (t *tbfe) loop() {
 		ed.Init()
 		sublime.Init()
 	}()
-	log.Global.LogDebug("Serving on port %d", *port)
+	log.LogDebug("Serving on port %d", *port)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
 	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/themes/", t.theme)
 	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
-		log.Global.LogError("Error serving: %s", err)
+		log.LogError("Error serving: %s", err)
 	}
-	log.Global.LogDebug("Done")
+	log.LogDebug("Done")
 }
 
 func main() {
 	flag.Parse()
-	log.Global.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
+	log.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()
 		py.Finalize()

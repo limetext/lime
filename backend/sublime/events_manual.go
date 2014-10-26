@@ -83,10 +83,10 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	defer l.Unlock()
 	pv, err := toPython(v)
 	if err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	}
 	defer pv.Decref()
-	log.Global.LogFine("onEvent: %v, %v, %v", c, c.inner, pv)
+	log.LogFine("onEvent: %v, %v, %v", c, c.inner, pv)
 	// interrupt := true
 	// defer func() { interrupt = false }()
 	// go func() {
@@ -97,7 +97,7 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	// }()
 
 	if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 	} else if ret != nil {
 		ret.Decref()
 	}
@@ -128,31 +128,31 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 		err                      error
 	)
 	if pv, err = toPython(v); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer pv.Decref()
 
 	if pk, err = toPython(key); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer pk.Decref()
 
 	if po, err = toPython(operator); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer po.Decref()
 
 	if poa, err = toPython(operand); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer poa.Decref()
 
 	if pm, err = toPython(match_all); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer pm.Decref()
@@ -166,13 +166,13 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 	// }()
 
 	if ret, err = c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
-		log.Global.LogError(err)
+		log.LogError(err)
 		return backend.Unknown
 	}
 	defer ret.Decref()
 
 	//	if ret != nil {
-	log.Global.LogFine("onQueryContext: %v, %v", pv, ret.Base())
+	log.LogFine("onQueryContext: %v, %v", pv, ret.Base())
 	if r2, ok := ret.(*py.Bool); ok {
 		if r2.Bool() {
 			return backend.True
@@ -180,7 +180,7 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 			return backend.False
 		}
 	} else {
-		log.Global.LogFine("other: %v", ret)
+		log.LogFine("other: %v", ret)
 	}
 	return backend.Unknown
 }
