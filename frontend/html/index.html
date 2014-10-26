@@ -113,11 +113,6 @@ var frontend = (function () {
 	function updateSelection() {
 		var sel = frontend.sel[0]; // TODO: support multiple ranges
 
-		if (cursor) { // Remove current cursor
-			//cursor.parentNode.removeChild(cursor);
-			//cursor = null;
-		}
-
 		var chars = 0;
 
 		var enterChild = function (child, backward) {
@@ -127,8 +122,12 @@ var frontend = (function () {
 				var l = child.textContent.length;
 				var reached = (!backward) ? (chars + l > sel.A) : (chars - l <= sel.A);
 				if (reached) { // Target is in this node
-					var curPos = sel.A - chars,
-						textBefore = document.createTextNode(child.textContent.substr(0, curPos)),
+					var curPos = sel.A - chars;
+					if (backward) {
+						curPos += l;
+					}
+
+					var textBefore = document.createTextNode(child.textContent.substr(0, curPos)),
 						textAfter = document.createTextNode(child.textContent.substr(curPos));
 
 					if (!cursor) {
@@ -176,10 +175,10 @@ var frontend = (function () {
 		var exitTree = function (child, backward) {
 			var sibling = (!backward) ? child.nextSibling : child.previousSibling;
 			if (sibling) {
-				if (enterChild(sibling)) {
+				if (enterChild(sibling, backward)) {
 					return true;
 				} else {
-					return exitTree(sibling);
+					return exitTree(sibling, backward);
 				}
 			} else {
 				return exitTree(child.parentNode, backward);
@@ -196,7 +195,7 @@ var frontend = (function () {
 			enterTree(frontend.contents, false);
 		} else if (cursor && sel.A < beforeLast) { // [----####|--------------]
 			chars = lastSel.A;
-			exitTree(cursor, true); //TODO: not working (cursor not moving)
+			exitTree(cursor, true);
 		} else if (cursor && sel.A < beforeLast + afterLast / 2) { // [--------|#######-------]
 			chars = lastSel.A;
 			exitTree(cursor, false);
@@ -206,6 +205,7 @@ var frontend = (function () {
 			//enterTree(frontend.contents, true);
 			enterTree(frontend.contents, false);
 		}
+
 		lastSel = sel;
 
 		if (cursor) {
