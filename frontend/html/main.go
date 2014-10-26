@@ -88,27 +88,6 @@ func (t *tbfe) renderView(wr io.Writer, v *backend.View, lay layout) {
 	}
 }
 
-func (t *tbfe) renderRegion(wr io.Writer, v *backend.View, vr Region) {
-	runes := v.Buffer().Substr(vr)
-	//log4go.Debug("Runes: %s", runes)
-	recipie := v.Transform(scheme, vr).Transcribe()
-	highlight_line := false
-	if b, ok := v.Settings().Get("highlight_line", highlight_line).(bool); ok {
-		highlight_line = b
-	}
-	lastEnd := 0
-	for _, reg := range recipie {
-		if lastEnd != reg.Region.Begin() {
-			io.WriteString(wr, runes[lastEnd:reg.Region.Begin()])
-		}
-		fmt.Fprintf(wr, "<span style=\"color:#%s; background-color:#%s\">%s</span>", htmlcol(reg.Flavour.Foreground), htmlcol(reg.Flavour.Background), runes[reg.Region.Begin():reg.Region.End()])
-		lastEnd = reg.Region.End()
-	}
-	if lastEnd != vr.End() {
-		io.WriteString(wr, v.Buffer().Substr(Region{lastEnd, vr.End()}))
-	}
-}
-
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
 	p := util.Prof.Enter("clip")
 	defer p.Exit()
@@ -235,25 +214,6 @@ func (t *tbfe) render(w io.Writer) {
 	}
 	//	runes := []rune(t.status_message)
 }
-
-type WebsocketBufferObserver struct {
-	t *tbfe
-	view *backend.View
-}
-func (obs WebsocketBufferObserver) Erased(b Buffer, r Region, data []rune) {
-	log4go.Debug("Erased: %s", r)
-}
-func (obs WebsocketBufferObserver) Inserted(b Buffer, r Region, data []rune) {
-	log4go.Debug("Inserted: %s", r)
-
-	var buf bytes.Buffer
-	wr := bufio.NewWriter(&buf)
-	obs.t.renderRegion(wr, obs.view, r)
-	wr.Flush()
-	log4go.Debug("Result: %v", buf.Len())
-	obs.t.BroadcastData(map[string]interface{}{"type": "insert", "region": r, "value": buf.String()})
-}
-
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	log4go.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
@@ -361,10 +321,9 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 
 	// Send editor content
 	var buf bytes.Buffer
-	wr := bufio.NewWriter(&buf)
-	t.render(wr)
-	wr.Flush()
+	t.render(bufio.NewWriter(&buf))
 	websocket.Message.Send(ws, buf.Bytes())
+	buf.Reset()
 
 	var data map[string]interface{}
 	var kp keys.KeyPress
@@ -464,13 +423,9 @@ func (t *tbfe) SetDirty() {
 	t.dirty = true
 
 	var buf bytes.Buffer
-	wr := bufio.NewWriter(&buf)
-	t.render(wr)
-	wr.Flush()
-	out := buf.Bytes()
-
+	t.render(bufio.NewWriter(&buf))
 	for _, ws := range clients {
-		websocket.Message.Send(ws, out)
+		websocket.Message.Send(ws, buf.Bytes())
 	}
 }
 
@@ -480,19 +435,19 @@ func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
 		"sel":  sel.Regions(),
 	}
 }
+
 func (t *tbfe) SelectionModified(sel *RegionSet) {
 	t.BroadcastData(t.GetSelectionMessage(sel))
 }
 
 func (t *tbfe) loop() {
 	backend.OnNew.Add(func(v *backend.View) {
-		/*v.Settings().AddOnChange("lime.frontend.html.render", func(name string) {
+		v.Settings().AddOnChange("lime.frontend.html.render", func(name string) {
 			if name != "lime.syntax.updated" {
 				return
 			}
 			t.SetDirty()
-		})*/
-		v.Buffer().AddObserver(WebsocketBufferObserver{t:t,view:v})
+		})
 	})
 	// TODO: maybe not useful?
 	/*backend.OnModified.Add(func(v *backend.View) {
