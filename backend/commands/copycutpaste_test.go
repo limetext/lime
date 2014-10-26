@@ -18,8 +18,18 @@ type copyTest struct {
 	expBuf  string
 }
 
+var dummyClipboard string
+
 func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 	ed := GetEditor()
+	ed.SetClipboardFuncs(func(n string) (err error) {
+		dummyClipboard = n
+		return nil
+	}, func() (string, error) {
+		return dummyClipboard, nil
+	})
+	defer ed.Init()
+
 	w := ed.NewWindow()
 	defer w.Close()
 

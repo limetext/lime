@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/limetext/lime.svg?branch=master)](https://travis-ci.org/limetext/lime)
 [![Coverage Status](https://img.shields.io/coveralls/limetext/lime.svg?branch=master)](https://coveralls.io/r/limetext/lime?branch=master)
 [![GoDoc](https://godoc.org/github.com/limetext/lime?status.svg)](https://godoc.org/github.com/limetext/lime)
+[![Bug Reports](https://badge.waffle.io/limetext/lime.svg?label=bug&title=bug%20reports)](http://waffle.io/limetext/lime)
 
 
 # Status

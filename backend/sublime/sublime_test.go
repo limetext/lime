@@ -22,8 +22,18 @@ import (
 	"time"
 )
 
+var dummyClipboard string
+
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
+	ed.SetClipboardFuncs(func(n string) (err error) {
+		dummyClipboard = n
+		return nil
+	}, func() (string, error) {
+		return dummyClipboard, nil
+	})
+	defer ed.Init()
+
 	ed.Console().Buffer().AddCallback(func(b text.Buffer, pos, delta int) {
 		t.Logf("%s", b.Substr(text.Region{pos, pos + delta}))
 	})
