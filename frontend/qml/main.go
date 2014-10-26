@@ -609,7 +609,7 @@ func (t *qmlfrontend) onClose(v *backend.View) {
 func (t *qmlfrontend) onLoad(v *backend.View) {
 	w2 := t.windows[v.Window()]
 	i := 0
-	for i, _ = range w2.views {
+	for i = range w2.views {
 		if w2.views[i].bv == v {
 			break
 		}
