@@ -75,7 +75,7 @@ func (c Color) String() string {
 func (c *Color) UnmarshalJSON(data []byte) error {
 	i64, err := strconv.ParseInt(string(data[2:len(data)-1]), 16, 64)
 	if err != nil {
-		log.LogWarning("Couldn't properly load color from %s: %s", string(data), err)
+		log.Warn("Couldn't properly load color from %s: %s", string(data), err)
 	}
 	c.A = uint8((i64 >> 24) & 0xff)
 	c.R = uint8((i64 >> 16) & 0xff)

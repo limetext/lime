@@ -75,7 +75,7 @@ func (k *KeyPress) UnmarshalJSON(d []byte) error {
 			} else {
 				r := []Key(c)
 				if len(r) != 1 {
-					log.LogWarning("Unknown key value with %d bytes: %s", len(c), c)
+					log.Warn("Unknown key value with %d bytes: %s", len(c), c)
 					return nil
 				}
 				k.Key = Key(c[0])

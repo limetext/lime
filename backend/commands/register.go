@@ -18,7 +18,7 @@ func registerByName(cmds []namedCmd) {
 	ch := backend.GetEditor().CommandHandler()
 	for _, cmd := range cmds {
 		if err := ch.Register(cmd.name, cmd.cmd); err != nil {
-			log.LogError("Failed to register command %s: %s", cmd.name, err)
+			log.Error("Failed to register command %s: %s", cmd.name, err)
 		}
 	}
 }
@@ -27,7 +27,7 @@ func register(cmds []backend.Command) {
 	ch := backend.GetEditor().CommandHandler()
 	for _, cmd := range cmds {
 		if err := ch.RegisterWithDefault(cmd); err != nil {
-			log.LogError("Failed to register command: %s", err)
+			log.Error("Failed to register command: %s", err)
 		}
 	}
 }

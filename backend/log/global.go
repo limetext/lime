@@ -19,36 +19,36 @@ func AddFilter(name string, level Level, writer LogWriter) {
 	Global.AddFilter(name, level, writer)
 }
 
-func LogFinest(arg0 interface{}, args ...interface{}) {
-	Global.LogFinest(arg0, args)
+func Finest(arg0 interface{}, args ...interface{}) {
+	Global.Finest(arg0, args)
 }
 
-func LogFine(arg0 interface{}, args ...interface{}) {
-	Global.LogFine(arg0, args)
+func Fine(arg0 interface{}, args ...interface{}) {
+	Global.Fine(arg0, args)
 }
 
-func LogDebug(arg0 interface{}, args ...interface{}) {
-	Global.LogDebug(arg0, args)
+func Debug(arg0 interface{}, args ...interface{}) {
+	Global.Debug(arg0, args)
 }
 
-func LogTrace(arg0 interface{}, args ...interface{}) {
-	Global.LogTrace(arg0, args)
+func Trace(arg0 interface{}, args ...interface{}) {
+	Global.Trace(arg0, args)
 }
 
-func LogInfo(arg0 interface{}, args ...interface{}) {
-	Global.LogInfo(arg0, args)
+func Info(arg0 interface{}, args ...interface{}) {
+	Global.Info(arg0, args)
 }
 
-func LogWarning(arg0 interface{}, args ...interface{}) {
-	Global.LogWarning(arg0, args)
+func Warn(arg0 interface{}, args ...interface{}) {
+	Global.Warn(arg0, args)
 }
 
-func LogError(arg0 interface{}, args ...interface{}) {
-	Global.LogError(arg0, args)
+func Error(arg0 interface{}, args ...interface{}) {
+	Global.Error(arg0, args)
 }
 
-func LogCritical(arg0 interface{}, args ...interface{}) {
-	Global.LogCritical(arg0, args)
+func Critical(arg0 interface{}, args ...interface{}) {
+	Global.Critical(arg0, args)
 }
 
 func Logf(level Level, format string, args ...interface{}) {

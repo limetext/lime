@@ -167,20 +167,20 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log.LogError(msg)
+	log.Error(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "errorMessage", "msg": msg})
 }
 
 func (t *tbfe) MessageDialog(msg string) {
-	log.LogInfo(msg)
+	log.Info(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "messageDialog", "msg": msg})
 }
 
 // TODO: wait for client response, return true/false
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log.LogInfo(msg, ok)
+	log.Info(msg, ok)
 
 	t.BroadcastData(map[string]interface{}{"type": "okCancelDialog", "msg": msg, "ok": ok})
 
@@ -196,7 +196,7 @@ var pc = 0
 func (t *tbfe) render(w io.Writer) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.LogError("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+			log.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 			if pc > 1 {
 				panic(r)
 			}
@@ -215,7 +215,7 @@ func (t *tbfe) render(w io.Writer) {
 	//	runes := []rune(t.status_message)
 }
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
-	log.LogDebug("key: %s", req)
+	log.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
 	var kp keys.KeyPress
 	v, _ := strconv.ParseInt(kc, 10, 32)
@@ -240,7 +240,7 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
-	log.LogDebug("view: %s", req)
+	log.Debug("view: %s", req)
 	if t.dirty {
 		t.dirty = false
 		t.render(w)
@@ -250,7 +250,7 @@ func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
-	log.LogDebug("theme: %s", req)
+	log.Debug("theme: %s", req)
 
 	reqpath, _ := url.QueryUnescape(req.RequestURI)
 
@@ -274,7 +274,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 		fi, err := os.Open(filepath)
 		if err != nil {
 			w.WriteHeader(500)
-			log.LogError(err)
+			log.Error(err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s := time.Now()
 	w.Header().Set("Content-Type", "text/html")
-	log.LogDebug("Serving client: %s", req)
+	log.Debug("Serving client: %s", req)
 
 	c := scheme.Spice(&render.ViewRegions{})
 
@@ -302,7 +302,7 @@ func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r := strings.NewReplacer("{{foregroundColor}}", htmlcol(c.Foreground), "{{backgroundColor}}", htmlcol(c.Background))
 	r.WriteString(w, string(html))
 
-	log.LogDebug("Done serving client: %s", time.Since(s))
+	log.Debug("Done serving client: %s", time.Since(s))
 }
 
 var clients []*websocket.Conn
@@ -330,7 +330,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	for {
 		err := websocket.JSON.Receive(ws, &data)
 		if err != nil {
-			log.LogError(err)
+			log.Error(err)
 			return
 		}
 		//log.LogDebug("Received: %s", data)
@@ -388,7 +388,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					if key, ok := keymap[keyName]; ok {
 						kp.Key = key
 					} else {
-						log.LogDebug("Unknown key: %s", keyName)
+						log.Debug("Unknown key: %s", keyName)
 						continue
 					}
 				}
@@ -408,7 +408,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			ed := backend.GetEditor()
 			go ed.RunCommand(command, make(backend.Args))
 		} else {
-			log.LogInfo("Unhandled message type: %s", msgType)
+			log.Info("Unhandled message type: %s", msgType)
 		}
 	}
 }
@@ -463,7 +463,7 @@ func (t *tbfe) loop() {
 	ed.LogCommands(false)
 	c := ed.Console()
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
-		log.LogError(err)
+		log.Error(err)
 	} else {
 		scheme = sc
 	}
@@ -501,16 +501,16 @@ func (t *tbfe) loop() {
 		ed.Init()
 		sublime.Init()
 	}()
-	log.LogDebug("Serving on port %d", *port)
+	log.Debug("Serving on port %d", *port)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
 	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/themes/", t.theme)
 	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
-		log.LogError("Error serving: %s", err)
+		log.Error("Error serving: %s", err)
 	}
-	log.LogDebug("Done")
+	log.Debug("Done")
 }
 
 func main() {

@@ -40,7 +40,7 @@ func (o *WatchedUserFile) Name() string {
 }
 
 func (o *WatchedUserFile) Reload() {
-	log.LogFinest("\"%v\".Reload()", o)
+	log.Finest("\"%v\".Reload()", o)
 
 	view := o.view
 	filename := o.Name()
@@ -54,7 +54,7 @@ func (o *WatchedUserFile) Reload() {
 	}
 
 	if d, err := ioutil.ReadFile(filename); err != nil {
-		log.LogError("Could not read file: %s\n. Error was: %v", filename, err)
+		log.Error("Could not read file: %s\n. Error was: %v", filename, err)
 	} else {
 		edit := view.BeginEdit()
 		end := view.Buffer().Size()

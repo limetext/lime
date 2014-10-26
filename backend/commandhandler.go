@@ -86,7 +86,7 @@ func (ch *commandHandler) RunWindowCommand(wnd *Window, name string, args Args) 
 	t := time.Now()
 	if c, ok := ch.WindowCommands[name].(WindowCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.LogDebug("Command initialization failed: %s", err)
+			log.Debug("Command initialization failed: %s", err)
 			return err
 		} else if err := wnd.runCommand(c, name); err != nil {
 			log.Logf(lvl+1, "Command execution failed: %s", err)
@@ -111,7 +111,7 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 	log.Logf(lvl, "Running text command: %s %v", name, args)
 	if c, ok := ch.TextCommands[name].(TextCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.LogDebug("Command initialization failed: %s", err)
+			log.Debug("Command initialization failed: %s", err)
 			return err
 		} else if err := view.runCommand(c, name); err != nil {
 			log.Logf(lvl, "Command execution failed: %s", err)
@@ -133,16 +133,16 @@ func (ch *commandHandler) RunApplicationCommand(name string, args Args) error {
 	p := Prof.Enter("ac")
 	defer p.Exit()
 	if ch.log {
-		log.LogInfo("Running application command: %s %v", name, args)
+		log.Info("Running application command: %s %v", name, args)
 	} else {
-		log.LogFine("Running application command: %s %v", name, args)
+		log.Fine("Running application command: %s %v", name, args)
 	}
 	if c, ok := ch.ApplicationCommands[name].(ApplicationCommand); c != nil && ok {
 		if err := ch.init(c, args); err != nil && ch.verbose {
-			log.LogDebug("Command initialization failed: %s", err)
+			log.Debug("Command initialization failed: %s", err)
 			return err
 		} else if err := c.Run(); err != nil && ch.verbose {
-			log.LogDebug("Command execution failed: %s", err)
+			log.Debug("Command execution failed: %s", err)
 			return err
 		}
 	}
@@ -168,7 +168,7 @@ func (ch *commandHandler) RegisterWithDefault(cmd interface{}) error {
 
 func (ch *commandHandler) Register(name string, cmd interface{}) error {
 	var r = false
-	log.LogFinest("Want to register %s", name)
+	log.Finest("Want to register %s", name)
 	if ac, ok := cmd.(ApplicationCommand); ok {
 		if _, ok := ch.ApplicationCommands[name]; ok {
 			return fmt.Errorf("%s is already a registered command", name)
@@ -193,7 +193,7 @@ func (ch *commandHandler) Register(name string, cmd interface{}) error {
 	if !r {
 		return fmt.Errorf("Command wasn't registered in any list: %s", name)
 	} else if ch.verbose {
-		log.LogFinest("Successfully registered command %s", name)
+		log.Finest("Successfully registered command %s", name)
 	}
 	return nil
 }

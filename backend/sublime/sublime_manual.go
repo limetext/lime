@@ -26,7 +26,7 @@ func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 	if i, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		log.LogInfo("Python sez: %s", i)
+		log.Info("Python sez: %s", i)
 	}
 	return toPython(nil)
 }
@@ -57,7 +57,7 @@ func sublime_set_timeout(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 			defer l.Unlock()
 			defer pyarg.Decref()
 			if ret, err := pyarg.Base().CallFunctionObjArgs(); err != nil {
-				log.LogDebug("Error in callback: %v", err)
+				log.Debug("Error in callback: %v", err)
 			} else {
 				ret.Decref()
 			}
@@ -160,11 +160,11 @@ func loadPlugin(p *packages.Plugin, m *py.Module) {
 		fn := f.Name()
 		s, err := py.NewUnicode(path.Base(p.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
-			log.LogError(err)
+			log.Error(err)
 			return
 		}
 		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-			log.LogError(err)
+			log.Error(err)
 		} else if r != nil {
 			r.Decref()
 		}
@@ -180,9 +180,9 @@ var (
 )
 
 func watch(plugin *backend.WatchedPackage) {
-	log.LogFinest("Watch(%v)", plugin)
+	log.Finest("Watch(%v)", plugin)
 	if err := watcher.Watch(plugin.Name()); err != nil {
-		log.LogError("Could not watch plugin: %v", err)
+		log.Error("Could not watch plugin: %v", err)
 	} else {
 		watchedPluginsLock.Lock()
 		watchedPlugins[plugin.Name()] = plugin
@@ -192,9 +192,9 @@ func watch(plugin *backend.WatchedPackage) {
 
 func unWatch(name string) {
 	if err := watcher.RemoveWatch(name); err != nil {
-		log.LogError("Couldn't unwatch file: %v", err)
+		log.Error("Couldn't unwatch file: %v", err)
 	}
-	log.LogFinest("UnWatch(%s)", name)
+	log.Finest("UnWatch(%s)", name)
 	watchedPluginsLock.Lock()
 	delete(watchedPlugins, name)
 	watchedPluginsLock.Unlock()
@@ -214,7 +214,7 @@ func observePlugins(m *py.Module) {
 			}
 			watchedPluginsLock.Unlock()
 		case err := <-watcher.Error:
-			log.LogError("error:", err)
+			log.Error("error:", err)
 		}
 	}
 }
@@ -229,14 +229,14 @@ func Init() {
 	}
 	sys, err := py.Import("sys")
 	if err != nil {
-		log.LogDebug(err)
+		log.Debug(err)
 	} else {
 		defer sys.Decref()
 	}
 
 	watcher, err = fsnotify.NewWatcher()
 	if err != nil {
-		log.LogError("Could not create watcher due to: %v", err)
+		log.Error("Could not create watcher due to: %v", err)
 	}
 	watchedPluginsLock.Lock()
 	watchedPlugins = make(map[string]*backend.WatchedPackage)

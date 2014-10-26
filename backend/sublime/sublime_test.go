@@ -70,12 +70,12 @@ func TestSublime(t *testing.T) {
 	} else {
 		for _, fn := range files {
 			if filepath.Ext(fn) == ".py" {
-				log.LogDebug("Running %s", fn)
+				log.Debug("Running %s", fn)
 				if _, err := py.Import(fn[:len(fn)-3]); err != nil {
-					log.LogError(err)
+					log.Error(err)
 					t.Error(err)
 				} else {
-					log.LogDebug("Ran %s", fn)
+					log.Debug("Ran %s", fn)
 				}
 			}
 		}
@@ -109,12 +109,12 @@ except:
 	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
 		t.Fatalf("Couldn't write file: %s", err)
 	}
-	log.LogDebug("Running %s", "reload_test.py")
+	log.Debug("Running %s", "reload_test.py")
 	if _, err := py.Import("reload_test"); err != nil {
-		log.LogError(err)
+		log.Error(err)
 		t.Error(err)
 	} else {
-		log.LogDebug("Ran %s", "reload_test.py")
+		log.Debug("Ran %s", "reload_test.py")
 	}
 	os.Remove("testdata/plugins/reload.py")
 	os.Remove("testdata/reload_test.py")

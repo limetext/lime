@@ -44,7 +44,7 @@ func (p *Packet) Name() string {
 func (p *Packet) Get() interface{} {
 	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
-		log.LogError("Couldn't read file: %s", err)
+		log.Error("Couldn't read file: %s", err)
 		return []byte{}
 	}
 	return d
@@ -95,7 +95,7 @@ func ScanPackets(path string) Packets {
 	var packets Packets
 	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			log.LogError("Error on walking: %s", err)
+			log.Error("Error on walking: %s", err)
 			return err
 		}
 		s := filepath.Ext(info.Name())
@@ -107,7 +107,7 @@ func ScanPackets(path string) Packets {
 		return nil
 	}
 	if err := filepath.Walk(path, walkFn); err != nil {
-		log.LogError("Can't walk: %s", err)
+		log.Error("Can't walk: %s", err)
 	}
 	return packets
 }

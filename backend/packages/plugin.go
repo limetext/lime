@@ -57,16 +57,16 @@ func (p *Plugin) Reload() {
 		files []os.FileInfo
 		pckts Packets
 	)
-	log.LogInfo("Reloading plugin %s", p.Name())
+	log.Info("Reloading plugin %s", p.Name())
 	f, err := os.Open(p.path)
 	if err != nil {
-		log.LogError("Couldn't open dir: %s", err)
+		log.Error("Couldn't open dir: %s", err)
 		return
 	}
 	defer f.Close()
 	fi, err := f.Readdir(-1)
 	if err != nil {
-		log.LogError("Couldn't read dir: %s", err)
+		log.Error("Couldn't read dir: %s", err)
 		return
 	}
 	for _, f := range fi {
@@ -108,20 +108,20 @@ func ScanPlugins(path string, suffix string) []*Plugin {
 	var plugins []*Plugin
 	f, err := os.Open(path)
 	if err != nil {
-		log.LogWarning(err)
+		log.Warn(err)
 		return nil
 	}
 	defer f.Close()
 	dirs, err := f.Readdirnames(-1)
 	if err != nil {
-		log.LogWarning(err)
+		log.Warn(err)
 		return nil
 	}
 	for _, dir := range dirs {
 		dir2 := pt.Join(path, dir)
 		f2, err := os.Open(dir2)
 		if err != nil {
-			log.LogWarning(err)
+			log.Warn(err)
 			continue
 		}
 		defer f2.Close()

@@ -45,35 +45,35 @@ func (l *Logger) AddFilter(name string, level Level, writer LogWriter) {
 	l.logger.AddFilter(name, lvl, writer)
 }
 
-func (l *Logger) LogFinest(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Finest(arg0 interface{}, args ...interface{}) {
 	l.logger.Finest(arg0, args)
 }
 
-func (l *Logger) LogFine(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Fine(arg0 interface{}, args ...interface{}) {
 	l.logger.Fine(arg0, args)
 }
 
-func (l *Logger) LogDebug(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Debug(arg0 interface{}, args ...interface{}) {
 	l.logger.Debug(arg0, args)
 }
 
-func (l *Logger) LogTrace(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Trace(arg0 interface{}, args ...interface{}) {
 	l.logger.Trace(arg0, args)
 }
 
-func (l *Logger) LogInfo(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Info(arg0 interface{}, args ...interface{}) {
 	l.logger.Info(arg0, args)
 }
 
-func (l *Logger) LogWarning(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Warn(arg0 interface{}, args ...interface{}) {
 	l.logger.Warn(arg0, args)
 }
 
-func (l *Logger) LogError(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Error(arg0 interface{}, args ...interface{}) {
 	l.logger.Error(arg0, args)
 }
 
-func (l *Logger) LogCritical(arg0 interface{}, args ...interface{}) {
+func (l *Logger) Critical(arg0 interface{}, args ...interface{}) {
 	l.logger.Critical(arg0, args)
 }
 
@@ -103,7 +103,7 @@ func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 
 func (l *Logger) Close(args ...interface{}) {
 	if len(args) > 0 {
-		l.LogError(args)
+		l.Error(args)
 	}
 	l.logger.Close()
 }
