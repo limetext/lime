@@ -8,11 +8,11 @@ import (
 	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/atotto/clipboard"
-	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/logger"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
+	"github.com/limetext/lime/backend/watcher"
 	. "github.com/limetext/text"
 	"path"
 	"runtime"
@@ -23,17 +23,6 @@ import (
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	GetEditor()
-
-	// Load the default Packets
-	paths := []string{
-		LIME_DEFAULTS_PATH,
-		LIME_USER_PACKETS_PATH,
-	}
-	for _, path := range paths {
-		for _, p := range packages.ScanPackets(path) {
-			packets = append(packets, p)
-		}
-	}
 }
 
 type (
@@ -47,9 +36,6 @@ type (
 		console         *View
 		frontend        Frontend
 		keyInput        chan (keys.KeyPress)
-		watcher         *fsnotify.Watcher
-		watchedFiles    map[string]Watched
-		watchLock       sync.Mutex
 		clipboardSetter func(string) error
 		clipboardGetter func() (string, error)
 		clipboard       string
@@ -139,9 +125,7 @@ func GetEditor() *Editor {
 				buffer:  NewBuffer(),
 				scratch: true,
 			},
-			keyInput:     make(chan keys.KeyPress, 32),
-			watcher:      newWatcher(),
-			watchedFiles: make(map[string]Watched),
+			keyInput: make(chan keys.KeyPress, 32),
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
@@ -266,10 +250,6 @@ func (e *Editor) SetActiveWindow(w *Window) {
 
 func (e *Editor) ActiveWindow() *Window {
 	return e.active_window
-}
-
-func (e *Editor) Watcher() *fsnotify.Watcher {
-	return e.watcher
 }
 
 func (e *Editor) NewWindow() *Window {
@@ -461,34 +441,6 @@ func (e *Editor) UnWatch(name string) {
 	}
 	log4go.Finest("UnWatch(%s)", name)
 	delete(e.watchedFiles, name)
-}
-
-func (e *Editor) observeFiles() {
-	for {
-		select {
-		case ev := <-e.watcher.Event:
-			if ev.IsModify() {
-				func() {
-					e.watchLock.Lock()
-					defer e.watchLock.Unlock()
-					f, exist := e.watchedFiles[ev.Name]
-					if exist {
-						f.Reload()
-					}
-				}()
-			}
-		case err := <-e.watcher.Error:
-			log4go.Error("error:", err)
-		}
-	}
-}
-
-func newWatcher() (w *fsnotify.Watcher) {
-	w, err := fsnotify.NewWatcher()
-	if err != nil {
-		log4go.Error("Could not create watcher due to: %v", err)
-	}
-	return
 }
 
 func (ed *Editor) handleLog(s string) {
