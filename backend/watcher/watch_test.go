@@ -84,35 +84,41 @@ func TestRemove(t *testing.T) {
 
 func TestWatch(t *testing.T) {
 	tests := []struct {
-		paths       map[string][]func()
+		paths       map[string]func()
 		expWatched  []string
 		expWatchers []string
 	}{
 		{
-			map[string][]func(){
-				"../testdata/Default.sublime-keymap":   []func(){dum},
-				"../testdata/Default.sublime-settings": []func(){dum},
+			map[string]func(){
+				"../testdata/Default.sublime-keymap":   dum,
+				"../testdata/Default.sublime-settings": dum,
 			},
 			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
 			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
 		},
 		{
-			map[string][]func(){
-				"../testdata":                          []func(){dum},
-				"../testdata/Default.sublime-keymap":   []func(){dum},
-				"../testdata/Default.sublime-settings": []func(){dum},
+			map[string]func(){
+				"../testdata":                          dum,
+				"../testdata/Default.sublime-keymap":   dum,
+				"../testdata/Default.sublime-settings": dum,
 			},
 			[]string{"../testdata", "../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
 			[]string{"../testdata"},
 		},
-		// Directory not nil action
+		{
+			map[string]func(){
+				"../testdata/Default.sublime-keymap":   dum,
+				"../testdata/Default.sublime-settings": dum,
+				"../testdata":                          dum,
+			},
+			[]string{"../testdata", "../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
+			[]string{"../testdata"},
+		},
 		// 2 path refer same file or dir but different(e.g abs path and relative path)
 	}
 	for i, test := range tests {
-		for path, actions := range test.paths {
-			for _, action := range actions {
-				Watch(path, action)
-			}
+		for path, action := range test.paths {
+			Watch(path, action)
 		}
 		if len(watched) != len(test.expWatched) {
 			t.Errorf("Test %d: Expected len of watched %d, but got %d", i, len(test.expWatched), len(watched))
@@ -120,9 +126,6 @@ func TestWatch(t *testing.T) {
 		for _, p := range test.expWatched {
 			if _, exist := watched[p]; !exist {
 				t.Errorf("Test %d: Expected %s exist in watched", i, p)
-			}
-			if len(watched[p]) != len(test.paths[p]) {
-				t.Errorf("Test %d: Expected %s actions len be %d, but got %d", i, p, len(test.paths[p]), len(watched[p]))
 			}
 		}
 		if !reflect.DeepEqual(test.expWatchers, watchers) {

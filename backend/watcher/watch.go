@@ -73,6 +73,15 @@ func Watch(path string, action func()) {
 	watched[path] = append(watched[path], action)
 	if dir {
 		dirs = append(dirs, path)
+		for _, p := range watchers {
+			if filepath.Dir(p) == path {
+				if err := wchr.RemoveWatch(p); err != nil {
+					log4go.Error("Couldn't unwatch file: %s", err)
+					return
+				}
+				watchers = remove(watchers, p)
+			}
+		}
 	}
 }
 
@@ -113,8 +122,15 @@ func Observe() {
 					for _, action := range actions {
 						action()
 					}
-				} else {
-
+				}
+				if existIn(dirs, ev.Name) {
+					for p, actions := range watched {
+						if filepath.Dir(p) == ev.Name && !existIn(watchers, p) {
+							for _, action := range actions {
+								action()
+							}
+						}
+					}
 				}
 			}()
 		case err := <-wchr.Error:
