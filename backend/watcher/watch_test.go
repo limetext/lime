@@ -22,10 +22,6 @@ func dum() {
 	return
 }
 
-func dum1() {
-	return
-}
-
 func TestExistsIn(t *testing.T) {
 	test := struct {
 		array []string
@@ -48,7 +44,7 @@ func TestIsDir(t *testing.T) {
 		paths []string
 		exps  []bool
 	}{
-		[]string{"../testdata/Default.sublime-keymap", "../testdata", ".", "test"},
+		[]string{"testdata/dummy.txt", "testdata", ".", "test"},
 		[]bool{false, true, true, false},
 	}
 	for i, path := range test.paths {
@@ -90,29 +86,29 @@ func TestWatch(t *testing.T) {
 	}{
 		{
 			map[string]func(){
-				"../testdata/Default.sublime-keymap":   dum,
-				"../testdata/Default.sublime-settings": dum,
+				"testdata/dummy.txt": dum,
+				"testdata/test.txt":  dum,
 			},
-			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
+			[]string{"testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata/dummy.txt", "testdata/test.txt"},
 		},
 		{
 			map[string]func(){
-				"../testdata":                          dum,
-				"../testdata/Default.sublime-keymap":   dum,
-				"../testdata/Default.sublime-settings": dum,
+				"testdata":           dum,
+				"testdata/dummy.txt": dum,
+				"testdata/test.txt":  dum,
 			},
-			[]string{"../testdata", "../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata"},
+			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata"},
 		},
 		{
 			map[string]func(){
-				"../testdata/Default.sublime-keymap":   dum,
-				"../testdata/Default.sublime-settings": dum,
-				"../testdata":                          dum,
+				"testdata/dummy.txt": dum,
+				"testdata/test.txt":  dum,
+				"testdata":           dum,
 			},
-			[]string{"../testdata", "../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata"},
+			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata"},
 		},
 		// 2 path refer same file or dir but different(e.g abs path and relative path)
 	}
@@ -146,16 +142,16 @@ func TestUnWatch(t *testing.T) {
 		expWatchers []string
 	}{
 		{
-			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata/Default.sublime-keymap"},
-			[]string{"../testdata/Default.sublime-settings"},
-			[]string{"../testdata/Default.sublime-settings"},
+			[]string{"testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata/dummy.txt"},
+			[]string{"testdata/test.txt"},
+			[]string{"testdata/test.txt"},
 		},
 		{
-			[]string{"../testdata", "../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata"},
-			[]string{"../testdata/Default.sublime-keymap", "../testdata/Default.sublime-settings"},
-			[]string{"../testdata/Default.sublime-settings", "../testdata/Default.sublime-keymap"},
+			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata"},
+			[]string{"testdata/dummy.txt", "testdata/test.txt"},
+			[]string{"testdata/test.txt", "testdata/dummy.txt"},
 		},
 	}
 	for i, test := range tests {
