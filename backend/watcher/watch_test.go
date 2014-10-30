@@ -3,8 +3,11 @@ package watcher
 import (
 	"fmt"
 	"github.com/howeyc/fsnotify"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func reinit() {
@@ -35,21 +38,6 @@ func TestExistsIn(t *testing.T) {
 	for i, exp := range test.exps {
 		if existIn(test.array, test.elms[i]) != exp {
 			t.Errorf("Expected in %v exist result of element %s be %v, but got %v", test.array, test.elms[i], exp, existIn(test.array, test.elms[i]))
-		}
-	}
-}
-
-func TestIsDir(t *testing.T) {
-	test := struct {
-		paths []string
-		exps  []bool
-	}{
-		[]string{"testdata/dummy.txt", "testdata", ".", "test"},
-		[]bool{false, true, true, false},
-	}
-	for i, path := range test.paths {
-		if isDir(path) != test.exps[i] {
-			t.Errorf("Expected %s isDir result be %v, but got %v", path, test.exps[i], isDir(path))
 		}
 	}
 }
@@ -179,26 +167,112 @@ func TestUnWatch(t *testing.T) {
 	}
 }
 
-func TestObserve(t *testing.T) {
+type dumView struct {
+	Text string
+	Name string
+}
 
+func (d *dumView) Reload() {
+	d.Text = "Reloaded"
+}
+
+func (d *dumView) Rename() {
+	d.Name = "Renamed"
+}
+
+func TestObserve(t *testing.T) {
+	path := "testdata/test.txt"
+	v := new(dumView)
+	Watch(path, v.Reload)
+	go Observe()
+
+	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+		t.Fatalf("WriteFile error: %s", err)
+	}
+	time.Sleep(time.Millisecond * 50)
+	if v.Text != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	}
+	ioutil.WriteFile(path, []byte(""), 0644)
+	UnWatch(path)
+	reinit()
 }
 
 func TestObserveDirectory(t *testing.T) {
+	dir := "testdata"
+	path := "testdata/test.txt"
+	v := new(dumView)
+	Watch(path, v.Reload)
+	Watch(dir, nil)
+	go Observe()
 
+	if !reflect.DeepEqual(watchers, []string{"testdata"}) {
+		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watchers)
+	}
+	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+		t.Fatalf("WriteFile error: %s", err)
+	}
+	time.Sleep(time.Millisecond * 50)
+	if v.Text != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	}
+	ioutil.WriteFile(path, []byte(""), 0644)
+	UnWatch(dir)
+	reinit()
 }
 
 func TestObserveCreateEvent(t *testing.T) {
+	path := "testdata/new.txt"
+	v := new(dumView)
+	Watch(path, v.Reload)
+	go Observe()
 
+	if !reflect.DeepEqual(watchers, []string{"testdata"}) {
+		t.Errorf("Expected watchers be equal to %v, but got %v", []string{path}, watchers)
+	}
+	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+		t.Fatalf("WriteFile error: %s", err)
+	}
+	time.Sleep(time.Millisecond * 50)
+	if v.Text != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	}
+	os.Remove(path)
+	UnWatch(path)
+	reinit()
 }
 
 func TestObserveDeleteEvent(t *testing.T) {
+	path := "testdata/dummy.txt"
+	v := new(dumView)
+	Watch(path, v.Reload)
+	go Observe()
 
-}
-
-func TestObserveModifyEvent(t *testing.T) {
-
+	os.Remove(path)
+	time.Sleep(time.Millisecond * 50)
+	if v.Text != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	}
+	if !reflect.DeepEqual(watchers, []string{"testdata"}) {
+		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watchers)
+	}
+	UnWatch("testdata")
+	ioutil.WriteFile(path, []byte(""), 0644)
+	reinit()
 }
 
 func TestObserveRenameEvent(t *testing.T) {
+	path := "testdata/dummy.txt"
+	v := new(dumView)
+	Watch(path, v.Reload)
+	go Observe()
 
+	os.Rename(path, "testdata/rename.txt")
+	time.Sleep(time.Millisecond * 50)
+	if v.Text != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	}
+	os.Rename("testdata/rename.txt", path)
+	UnWatch(path)
+	reinit()
 }

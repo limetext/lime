@@ -25,11 +25,6 @@ func existIn(paths []string, path string) bool {
 	return false
 }
 
-func isDir(path string) bool {
-	fi, err := os.Stat(path)
-	return err == nil && fi.IsDir()
-}
-
 func remove(slice []string, path string) []string {
 	for i, el := range slice {
 		if el == path {
@@ -41,16 +36,22 @@ func remove(slice []string, path string) []string {
 }
 
 func Watch(path string, action func()) {
-	lock.Lock()
-	defer lock.Unlock()
 	log4go.Finest("Watch(%s)", path)
-	dir := isDir(path)
+	fi, err := os.Stat(path)
+	dir := err == nil && fi.IsDir()
+	// If the file doesn't exist currently we will add watcher for file
+	// directory and look for create event inside the directory
+	if !dir && os.IsNotExist(err) {
+		Watch(filepath.Dir(path), nil)
+	}
 	// If the path points to a file and there is no action
 	// Don't watch
 	if !dir && action == nil {
 		log4go.Error("No action for watching the file")
 		return
 	}
+	lock.Lock()
+	defer lock.Unlock()
 	// If exists in watchers we are already watching the path
 	// no need to watch again just adding the action
 	if existIn(watchers, path) {
@@ -115,12 +116,21 @@ func Observe() {
 	for {
 		select {
 		case ev := <-wchr.Event:
+			// The watcher will be removed if the file is deleted
+			// so we need to watch the parent directory for when the
+			// file is created again
+			if ev.IsDelete() {
+				remove(watchers, ev.Name)
+				Watch(filepath.Dir(ev.Name), nil)
+			}
 			func() {
 				lock.Lock()
 				defer lock.Unlock()
 				if actions, exist := watched[ev.Name]; exist {
 					for _, action := range actions {
-						action()
+						if action != nil {
+							action()
+						}
 					}
 				}
 				if existIn(dirs, ev.Name) {
