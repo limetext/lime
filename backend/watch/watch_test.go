@@ -3,10 +3,21 @@ package watch
 import (
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 )
+
+func equal(a1, a2 []string) bool {
+	if len(a1) != len(a2) {
+		return false
+	}
+	for _, a := range a1 {
+		if !exist(a2, a) {
+			return false
+		}
+	}
+	return true
+}
 
 func dum() {
 	return
@@ -62,7 +73,7 @@ func TestWatch(t *testing.T) {
 				t.Errorf("Test %d: Expected %s exist in watched", i, p)
 			}
 		}
-		if !reflect.DeepEqual(test.expWatchers, watcher.watchers) {
+		if !equal(test.expWatchers, watcher.watchers) {
 			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
 		}
 	}
@@ -107,7 +118,7 @@ func TestUnWatch(t *testing.T) {
 				t.Errorf("Test %d: Expected %s exist in watched", i, p)
 			}
 		}
-		if !reflect.DeepEqual(test.expWatchers, watcher.watchers) {
+		if !equal(test.expWatchers, watcher.watchers) {
 			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
 		}
 	}
@@ -158,7 +169,7 @@ func TestObserveDirectory(t *testing.T) {
 	watcher.Watch(dir, nil)
 	go watcher.Observe()
 
-	if !reflect.DeepEqual(watcher.watchers, []string{"testdata"}) {
+	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
 	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
@@ -171,7 +182,7 @@ func TestObserveDirectory(t *testing.T) {
 	ioutil.WriteFile(path, []byte(""), 0644)
 }
 
-func TestObserveCreateEvent(t *testing.T) {
+func TestCreateEvent(t *testing.T) {
 	path := "testdata/new.txt"
 	watcher, err := NewWatcher()
 	if err != nil {
@@ -181,7 +192,7 @@ func TestObserveCreateEvent(t *testing.T) {
 	watcher.Watch(path, v.Reload)
 	go watcher.Observe()
 
-	if !reflect.DeepEqual(watcher.watchers, []string{"testdata"}) {
+	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{path}, watcher.watchers)
 	}
 	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
@@ -194,7 +205,7 @@ func TestObserveCreateEvent(t *testing.T) {
 	os.Remove(path)
 }
 
-func TestObserveDeleteEvent(t *testing.T) {
+func TestDeleteEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
 	watcher, err := NewWatcher()
 	if err != nil {
@@ -206,7 +217,7 @@ func TestObserveDeleteEvent(t *testing.T) {
 
 	os.Remove(path)
 	time.Sleep(time.Millisecond * 50)
-	if !reflect.DeepEqual(watcher.watchers, []string{"testdata"}) {
+	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
 	if v.Text != "Reloaded" {
@@ -215,7 +226,7 @@ func TestObserveDeleteEvent(t *testing.T) {
 	ioutil.WriteFile(path, []byte(""), 0644)
 }
 
-func TestObserveRenameEvent(t *testing.T) {
+func TestRenameEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
 	watcher, err := NewWatcher()
 	if err != nil {
@@ -268,7 +279,7 @@ func TestRemove(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		if exp := remove(test.slice, test.remove); !reflect.DeepEqual(exp, test.exp) {
+		if exp := remove(test.slice, test.remove); !equal(exp, test.exp) {
 			t.Errorf("Test %d: Expected %v be equal to %v", i, exp, test.exp)
 		}
 	}

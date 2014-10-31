@@ -110,6 +110,13 @@ func (w *watcher) Observe() {
 		select {
 		case ev := <-w.wchr.Event:
 			func() {
+				// The watcher will be removed if the file is deleted
+				// so we need to watch the parent directory for when the
+				// file is created again
+				if ev.IsDelete() {
+					w.watchers = remove(w.watchers, ev.Name)
+					w.Watch(filepath.Dir(ev.Name), nil)
+				}
 				w.lock.Lock()
 				defer w.lock.Unlock()
 				if actions, exist := w.watched[ev.Name]; exist {
@@ -127,13 +134,6 @@ func (w *watcher) Observe() {
 							}
 						}
 					}
-				}
-				// The watcher will be removed if the file is deleted
-				// so we need to watch the parent directory for when the
-				// file is created again
-				if ev.IsDelete() {
-					remove(w.watchers, ev.Name)
-					w.Watch(filepath.Dir(ev.Name), nil)
 				}
 			}()
 		case err := <-w.wchr.Error:
