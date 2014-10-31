@@ -8,7 +8,7 @@ import (
 	"sync"
 )
 
-type watcher struct {
+type Watcher struct {
 	wchr     *fsnotify.Watcher
 	watched  map[string][]func() // All watched paths including their actions
 	watchers []string            // helper variable for paths we created watcher on
@@ -16,20 +16,20 @@ type watcher struct {
 	lock     sync.Mutex
 }
 
-func NewWatcher() (*watcher, error) {
+func NewWatcher() *Watcher {
 	wchr, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, err
+		log4go.Error("Could not create watcher due to: %s", err)
+		return nil
 	}
 	watched := make(map[string][]func())
 	watchers := make([]string, 0)
 	dirs := make([]string, 0)
 
-	return &watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}, nil
+	return &Watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}
 }
 
-func (w *watcher) Watch(path string, action func()) {
-	log4go.Finest("Watch(%s)", path)
+func (w *Watcher) Watch(path string, action func()) {
 	fi, err := os.Stat(path)
 	dir := err == nil && fi.IsDir()
 	// If the file doesn't exist currently we will add watcher for file
@@ -68,44 +68,45 @@ func (w *watcher) Watch(path string, action func()) {
 	if dir {
 		w.dirs = append(w.dirs, path)
 		for _, p := range w.watchers {
-			if filepath.Dir(p) == path {
-				if err := w.wchr.RemoveWatch(p); err != nil {
-					log4go.Error("Couldn't unwatch file: %s", err)
-					return
-				}
-				w.watchers = remove(w.watchers, p)
+			if filepath.Dir(p) != path {
+				continue
 			}
+			if err := w.wchr.RemoveWatch(p); err != nil {
+				log4go.Error("Couldn't unwatch file: %s", err)
+				continue
+			}
+			w.watchers = remove(w.watchers, p)
 		}
 	}
 }
 
-func (w *watcher) UnWatch(path string) {
+func (w *Watcher) UnWatch(path string) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	log4go.Finest("UnWatch(%s)", path)
-	if exist(w.watchers, path) {
-		if exist(w.dirs, path) {
-			for p, _ := range w.watched {
-				if filepath.Dir(p) == path && !exist(w.watchers, p) {
-					if err := w.wchr.Watch(p); err != nil {
-						log4go.Error("Could not watch: %s", err)
-						return
-					}
-					w.watchers = append(w.watchers, p)
+	if !exist(w.watchers, path) {
+		return
+	}
+	if exist(w.dirs, path) {
+		for p, _ := range w.watched {
+			if filepath.Dir(p) == path && !exist(w.watchers, p) {
+				if err := w.wchr.Watch(p); err != nil {
+					log4go.Error("Could not watch: %s", err)
+					return
 				}
+				w.watchers = append(w.watchers, p)
 			}
 		}
-		if err := w.wchr.RemoveWatch(path); err != nil {
-			log4go.Error("Couldn't unwatch file: %s", err)
-			return
-		}
-		w.watchers = remove(w.watchers, path)
 	}
+	if err := w.wchr.RemoveWatch(path); err != nil {
+		log4go.Error("Couldn't unwatch file: %s", err)
+		return
+	}
+	w.watchers = remove(w.watchers, path)
 	w.dirs = remove(w.dirs, path)
 	delete(w.watched, path)
 }
 
-func (w *watcher) Observe() {
+func (w *Watcher) Observe() {
 	for {
 		select {
 		case ev := <-w.wchr.Event:
@@ -119,19 +120,22 @@ func (w *watcher) Observe() {
 				}
 				w.lock.Lock()
 				defer w.lock.Unlock()
-				if actions, exist := w.watched[ev.Name]; exist {
-					for _, action := range actions {
-						if action != nil {
-							action()
-						}
+				actions, exist := w.watched[ev.Name]
+				if !exist {
+					return
+				}
+				for _, action := range actions {
+					if action != nil {
+						action()
 					}
 				}
-				if exist(w.dirs, ev.Name) {
-					for p, actions := range w.watched {
-						if filepath.Dir(p) == ev.Name && !exist(w.watchers, p) {
-							for _, action := range actions {
-								action()
-							}
+				if !exist(w.dirs, ev.Name) {
+					return
+				}
+				for p, actions := range w.watched {
+					if filepath.Dir(p) == ev.Name && !exist(w.watchers, p) {
+						for _, action := range actions {
+							action()
 						}
 					}
 				}

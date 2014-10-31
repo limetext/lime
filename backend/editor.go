@@ -12,7 +12,7 @@ import (
 	"github.com/limetext/lime/backend/logger"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
-	"github.com/limetext/lime/backend/watcher"
+	"github.com/limetext/lime/backend/watch"
 	. "github.com/limetext/text"
 	"path"
 	"runtime"
@@ -36,6 +36,7 @@ type (
 		console         *View
 		frontend        Frontend
 		keyInput        chan (keys.KeyPress)
+		watcher         *watch.Watcher
 		clipboardSetter func(string) error
 		clipboardGetter func() (string, error)
 		clipboard       string
@@ -126,6 +127,7 @@ func GetEditor() *Editor {
 				scratch: true,
 			},
 			keyInput: make(chan keys.KeyPress, 32),
+			watcher:  watch.NewWatcher(),
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it

@@ -58,10 +58,7 @@ func TestWatch(t *testing.T) {
 		// 2 path refer same file or dir but different(e.g abs path and relative path)
 	}
 	for i, test := range tests {
-		watcher, err := NewWatcher()
-		if err != nil {
-			t.Fatalf("Couldn't create watcher: %s", err)
-		}
+		watcher := NewWatcher()
 		for path, action := range test.paths {
 			watcher.Watch(path, action)
 		}
@@ -100,10 +97,7 @@ func TestUnWatch(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		watcher, err := NewWatcher()
-		if err != nil {
-			t.Fatalf("Couldn't create watcher: %s", err)
-		}
+		watcher := NewWatcher()
 		for _, path := range test.watchs {
 			watcher.Watch(path, dum)
 		}
@@ -139,10 +133,7 @@ func (d *dumView) Rename() {
 
 func TestObserve(t *testing.T) {
 	path := "testdata/test.txt"
-	watcher, err := NewWatcher()
-	if err != nil {
-		t.Fatalf("Couldn't create watcher: %s", err)
-	}
+	watcher := NewWatcher()
 	v := new(dumView)
 	watcher.Watch(path, v.Reload)
 	go watcher.Observe()
@@ -160,10 +151,7 @@ func TestObserve(t *testing.T) {
 func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
 	path := "testdata/test.txt"
-	watcher, err := NewWatcher()
-	if err != nil {
-		t.Fatalf("Couldn't create watcher: %s", err)
-	}
+	watcher := NewWatcher()
 	v := new(dumView)
 	watcher.Watch(path, v.Reload)
 	watcher.Watch(dir, nil)
@@ -184,10 +172,7 @@ func TestObserveDirectory(t *testing.T) {
 
 func TestCreateEvent(t *testing.T) {
 	path := "testdata/new.txt"
-	watcher, err := NewWatcher()
-	if err != nil {
-		t.Fatalf("Couldn't create watcher: %s", err)
-	}
+	watcher := NewWatcher()
 	v := new(dumView)
 	watcher.Watch(path, v.Reload)
 	go watcher.Observe()
@@ -207,10 +192,7 @@ func TestCreateEvent(t *testing.T) {
 
 func TestDeleteEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
-	watcher, err := NewWatcher()
-	if err != nil {
-		t.Fatalf("Couldn't create watcher: %s", err)
-	}
+	watcher := NewWatcher()
 	v := new(dumView)
 	watcher.Watch(path, v.Reload)
 	go watcher.Observe()
@@ -228,10 +210,7 @@ func TestDeleteEvent(t *testing.T) {
 
 func TestRenameEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
-	watcher, err := NewWatcher()
-	if err != nil {
-		t.Fatalf("Couldn't create watcher: %s", err)
-	}
+	watcher := NewWatcher()
 	v := new(dumView)
 	watcher.Watch(path, v.Reload)
 	go watcher.Observe()
