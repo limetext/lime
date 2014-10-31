@@ -1,4 +1,4 @@
-package watcher
+package watch
 
 import (
 	"io/ioutil"

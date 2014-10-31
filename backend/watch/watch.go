@@ -1,4 +1,4 @@
-package watcher
+package watch
 
 import (
 	"code.google.com/p/log4go"
