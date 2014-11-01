@@ -119,16 +119,20 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 }
 
 type dumView struct {
-	Text string
+	text string
 	name string
 }
 
 func (d *dumView) Reload() {
-	d.Text = "Reloaded"
+	d.text = "Reloaded"
 }
 
 func (d *dumView) Name() string {
 	return d.name
+}
+
+func (d *dumView) Text() string {
+	return d.text
 }
 
 func TestObserve(t *testing.T) {
@@ -142,8 +146,8 @@ func TestObserve(t *testing.T) {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	if v.Text() != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -164,8 +168,8 @@ func TestObserveDirectory(t *testing.T) {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	if v.Text() != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -184,8 +188,8 @@ func TestCreateEvent(t *testing.T) {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	if v.Text() != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
 	os.Remove(name)
 }
@@ -202,8 +206,8 @@ func TestDeleteEvent(t *testing.T) {
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
-	if v.Text != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	if v.Text() != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -217,8 +221,8 @@ func TestRenameEvent(t *testing.T) {
 
 	os.Rename(name, "testdata/rename.txt")
 	time.Sleep(time.Millisecond * 50)
-	if v.Text != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
+	if v.Text() != "Reloaded" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
 	os.Rename("testdata/rename.txt", name)
 }

@@ -28,15 +28,15 @@ func init() {
 type (
 	Editor struct {
 		HasSettings
-		windows         []*Window
-		active_window   *Window
-		loginput        bool
-		cmdhandler      commandHandler
-		keyBindings     keys.KeyBindings
-		console         *View
-		frontend        Frontend
-		keyInput        chan (keys.KeyPress)
-		watcher         *watch.Watcher
+		windows       []*Window
+		active_window *Window
+		loginput      bool
+		cmdhandler    commandHandler
+		keyBindings   keys.KeyBindings
+		console       *View
+		frontend      Frontend
+		keyInput      chan (keys.KeyPress)
+		*watch.Watcher
 		clipboardSetter func(string) error
 		clipboardGetter func() (string, error)
 		clipboard       string
@@ -127,14 +127,14 @@ func GetEditor() *Editor {
 				scratch: true,
 			},
 			keyInput: make(chan keys.KeyPress, 32),
-			watcher:  watch.NewWatcher(),
 		}
+		ed.Watcher = watch.NewWatcher()
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log4go.Global.Close()
 		log4go.Global.AddFilter("console", log4go.DEBUG, logger.NewLogger(ed.handleLog))
 		go ed.inputthread()
-		go ed.observeFiles()
+		go ed.Observe()
 	}
 	return ed
 }
@@ -192,7 +192,7 @@ func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
-		e.Watch(NewWatchedPackage(pkg))
+		e.Watch(pkg)
 	}
 	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
 }
@@ -208,7 +208,7 @@ func (e *Editor) loadSetting(pkg *packages.Packet) {
 		log4go.Error(err)
 	} else {
 		log4go.Info("Loaded %s", pkg.Name())
-		e.Watch(NewWatchedPackage(pkg))
+		e.Watch(pkg)
 	}
 }
 
@@ -422,27 +422,6 @@ func (e *Editor) GetClipboard() string {
 	}
 
 	return e.clipboard
-}
-
-func (e *Editor) Watch(file Watched) {
-	log4go.Finest("Watch(%v)", file)
-	if err := e.watcher.Watch(file.Name()); err != nil {
-		log4go.Error("Could not watch file: %v", err)
-	} else {
-		e.watchLock.Lock()
-		defer e.watchLock.Unlock()
-		e.watchedFiles[file.Name()] = file
-	}
-}
-
-func (e *Editor) UnWatch(name string) {
-	e.watchLock.Lock()
-	defer e.watchLock.Unlock()
-	if err := e.watcher.RemoveWatch(name); err != nil {
-		log4go.Error("Couldn't unwatch file: %v", err)
-	}
-	log4go.Finest("UnWatch(%s)", name)
-	delete(e.watchedFiles, name)
 }
 
 func (ed *Editor) handleLog(s string) {

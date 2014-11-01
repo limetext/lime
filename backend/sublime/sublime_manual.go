@@ -170,16 +170,16 @@ func loadPlugin(p *packages.Plugin, m *py.Module) {
 		}
 	}
 	p.LoadPackets()
-	watch(backend.NewWatchedPackage(p))
+	watch(p)
 }
 
 var (
 	watcher            *fsnotify.Watcher
-	watchedPlugins     map[string]*backend.WatchedPackage
+	watchedPlugins     map[string]*packages.Plugin
 	watchedPluginsLock sync.Mutex
 )
 
-func watch(plugin *backend.WatchedPackage) {
+func watch(plugin *packages.Plugin) {
 	log4go.Finest("Watch(%v)", plugin)
 	if err := watcher.Watch(plugin.Name()); err != nil {
 		log4go.Error("Could not watch plugin: %v", err)
@@ -210,7 +210,7 @@ func observePlugins(m *py.Module) {
 			watchedPluginsLock.Lock()
 			if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
 				p.Reload()
-				loadPlugin(p.Package().(*packages.Plugin), m)
+				loadPlugin(p, m)
 			}
 			watchedPluginsLock.Unlock()
 		case err := <-watcher.Error:
@@ -239,7 +239,7 @@ func Init() {
 		log4go.Error("Could not create watcher due to: %v", err)
 	}
 	watchedPluginsLock.Lock()
-	watchedPlugins = make(map[string]*backend.WatchedPackage)
+	watchedPlugins = make(map[string]*packages.Plugin)
 	watchedPluginsLock.Unlock()
 
 	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")

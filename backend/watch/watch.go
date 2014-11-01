@@ -41,6 +41,7 @@ func NewWatcher() *Watcher {
 }
 
 func (w *Watcher) Watch(watched Watched) {
+	log4go.Finest("Watch(%s)", watched.Name())
 	name := watched.Name()
 	fi, err := os.Stat(name)
 	dir := err == nil && fi.IsDir()
@@ -85,6 +86,7 @@ func (w *Watcher) Watch(watched Watched) {
 }
 
 func (w *Watcher) UnWatch(watched Watched) {
+	log4go.Finest("UnWatch(%s)", watched.Name())
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	name := watched.Name()
@@ -131,7 +133,9 @@ func (w *Watcher) Observe() {
 				// so we need to watch the parent directory for when the
 				// file is created again
 				if ev.IsDelete() {
+					w.lock.Lock()
 					w.watchers = remove(w.watchers, ev.Name)
+					w.lock.Unlock()
 					w.Watch(NewWatchedDir(filepath.Dir(ev.Name)))
 				}
 				w.lock.Lock()
