@@ -3,6 +3,7 @@ package watch
 import (
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -121,9 +122,12 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 type dumView struct {
 	text string
 	name string
+	lock sync.Mutex
 }
 
 func (d *dumView) Reload() {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	d.text = "Reloaded"
 }
 
@@ -132,6 +136,8 @@ func (d *dumView) Name() string {
 }
 
 func (d *dumView) Text() string {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	return d.text
 }
 
@@ -203,9 +209,11 @@ func TestDeleteEvent(t *testing.T) {
 
 	os.Remove(name)
 	time.Sleep(time.Millisecond * 50)
+	watcher.lock.Lock()
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
+	watcher.lock.Unlock()
 	if v.Text() != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
 	}
