@@ -20,11 +20,11 @@ func equal(a1, a2 []string) bool {
 }
 
 type dummy struct {
-	path string
+	name string
 }
 
-func (d *dummy) Path() string {
-	return d.path
+func (d *dummy) Name() string {
+	return d.name
 }
 
 func (d *dummy) Reload() {}
@@ -54,8 +54,8 @@ func TestWatch(t *testing.T) {
 	}
 	for i, test := range tests {
 		watcher := NewWatcher()
-		for _, path := range test.paths {
-			watcher.Watch(&dummy{path})
+		for _, name := range test.paths {
+			watcher.Watch(&dummy{name})
 		}
 		if len(watcher.watched) != len(test.expWatched) {
 			t.Errorf("Test %d: Expected len of watched %d, but got %d", i, len(test.expWatched), len(watcher.watched))
@@ -72,8 +72,8 @@ func TestWatch(t *testing.T) {
 }
 
 func TestUnWatch(t *testing.T) {
-	path := "testdata/dummy.txt"
-	d := &dummy{path}
+	name := "testdata/dummy.txt"
+	d := &dummy{name}
 	watcher := NewWatcher()
 	watcher.Watch(d)
 	watcher.UnWatch(d)
@@ -83,9 +83,9 @@ func TestUnWatch(t *testing.T) {
 }
 
 func TestUnWatchDirectory(t *testing.T) {
-	path := "testdata/dummy.txt"
+	name := "testdata/dummy.txt"
 	dir := "testdata"
-	d := &dummy{path}
+	d := &dummy{name}
 	d1 := NewWatchedDir(dir)
 	watcher := NewWatcher()
 	watcher.Watch(d)
@@ -94,65 +94,65 @@ func TestUnWatchDirectory(t *testing.T) {
 		t.Fatalf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{"testdata"})
 	}
 	watcher.UnWatch(d1)
-	if !equal(watcher.watchers, []string{path}) {
-		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{path})
+	if !equal(watcher.watchers, []string{name}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{name})
 	}
 }
 
 func TestUnWatchOneOfSubscribers(t *testing.T) {
-	path := "testdata/dummy.txt"
-	d1 := &dummy{path}
-	d2 := &dummy{path}
+	name := "testdata/dummy.txt"
+	d1 := &dummy{name}
+	d2 := &dummy{name}
 	watcher := NewWatcher()
 	watcher.Watch(d1)
 	watcher.Watch(d2)
-	if len(watcher.watched[path]) != 2 {
-		t.Fatalf("Expected watched[%s] length be %d, but got %d", path, 2, len(watcher.watched[path]))
+	if len(watcher.watched[name]) != 2 {
+		t.Fatalf("Expected watched[%s] length be %d, but got %d", name, 2, len(watcher.watched[name]))
 	}
 	watcher.UnWatch(d1)
-	if !equal(watcher.watchers, []string{path}) {
-		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{path})
+	if !equal(watcher.watchers, []string{name}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{name})
 	}
-	if len(watcher.watched[path]) != 1 {
-		t.Errorf("Expected watched[%s] length be %d, but got %d", path, 1, len(watcher.watched[path]))
+	if len(watcher.watched[name]) != 1 {
+		t.Errorf("Expected watched[%s] length be %d, but got %d", name, 1, len(watcher.watched[name]))
 	}
 }
 
 type dumView struct {
 	Text string
-	path string
+	name string
 }
 
 func (d *dumView) Reload() {
 	d.Text = "Reloaded"
 }
 
-func (d *dumView) Path() string {
-	return d.path
+func (d *dumView) Name() string {
+	return d.name
 }
 
 func TestObserve(t *testing.T) {
-	path := "testdata/test.txt"
+	name := "testdata/test.txt"
 	watcher := NewWatcher()
-	v := &dumView{path: path}
+	v := &dumView{name: name}
 	watcher.Watch(v)
 	go watcher.Observe()
 
-	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
 	if v.Text != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
 	}
-	ioutil.WriteFile(path, []byte(""), 0644)
+	ioutil.WriteFile(name, []byte(""), 0644)
 }
 
 func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
-	path := "testdata/test.txt"
+	name := "testdata/test.txt"
 	watcher := NewWatcher()
-	v := &dumView{path: path}
+	v := &dumView{name: name}
 	watcher.Watch(v)
 	watcher.Watch(NewWatchedDir(dir))
 	go watcher.Observe()
@@ -160,44 +160,44 @@ func TestObserveDirectory(t *testing.T) {
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
-	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
 	if v.Text != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
 	}
-	ioutil.WriteFile(path, []byte(""), 0644)
+	ioutil.WriteFile(name, []byte(""), 0644)
 }
 
 func TestCreateEvent(t *testing.T) {
-	path := "testdata/new.txt"
+	name := "testdata/new.txt"
 	watcher := NewWatcher()
-	v := &dumView{path: path}
+	v := &dumView{name: name}
 	watcher.Watch(v)
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
-		t.Errorf("Expected watchers be equal to %v, but got %v", []string{path}, watcher.watchers)
+		t.Errorf("Expected watchers be equal to %v, but got %v", []string{name}, watcher.watchers)
 	}
-	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
+	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
 	if v.Text != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
 	}
-	os.Remove(path)
+	os.Remove(name)
 }
 
 func TestDeleteEvent(t *testing.T) {
-	path := "testdata/dummy.txt"
+	name := "testdata/dummy.txt"
 	watcher := NewWatcher()
-	v := &dumView{path: path}
+	v := &dumView{name: name}
 	watcher.Watch(v)
 	go watcher.Observe()
 
-	os.Remove(path)
+	os.Remove(name)
 	time.Sleep(time.Millisecond * 50)
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
@@ -205,22 +205,22 @@ func TestDeleteEvent(t *testing.T) {
 	if v.Text != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
 	}
-	ioutil.WriteFile(path, []byte(""), 0644)
+	ioutil.WriteFile(name, []byte(""), 0644)
 }
 
 func TestRenameEvent(t *testing.T) {
-	path := "testdata/dummy.txt"
+	name := "testdata/dummy.txt"
 	watcher := NewWatcher()
-	v := &dumView{path: path}
+	v := &dumView{name: name}
 	watcher.Watch(v)
 	go watcher.Observe()
 
-	os.Rename(path, "testdata/rename.txt")
+	os.Rename(name, "testdata/rename.txt")
 	time.Sleep(time.Millisecond * 50)
 	if v.Text != "Reloaded" {
 		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text)
 	}
-	os.Rename("testdata/rename.txt", path)
+	os.Rename("testdata/rename.txt", name)
 }
 
 func TestExist(t *testing.T) {
