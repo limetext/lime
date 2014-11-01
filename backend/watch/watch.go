@@ -8,13 +8,24 @@ import (
 	"sync"
 )
 
-type Watcher struct {
-	wchr     *fsnotify.Watcher
-	watched  map[string][]func() // All watched paths including their actions
-	watchers []string            // helper variable for paths we created watcher on
-	dirs     []string            // helper variable for dirs we are watching
-	lock     sync.Mutex
-}
+type (
+	Watched interface {
+		Path() string
+		Reload()
+	}
+
+	Watcher struct {
+		wchr     *fsnotify.Watcher
+		watched  map[string][]Watched // All watched paths
+		watchers []string             // helper variable for paths we created watcher on
+		dirs     []string             // helper variable for dirs we are watching
+		lock     sync.Mutex
+	}
+
+	WatchedDir struct {
+		path string
+	}
+)
 
 func NewWatcher() *Watcher {
 	wchr, err := fsnotify.NewWatcher()
@@ -22,41 +33,34 @@ func NewWatcher() *Watcher {
 		log4go.Error("Could not create watcher due to: %s", err)
 		return nil
 	}
-	watched := make(map[string][]func())
+	watched := make(map[string][]Watched)
 	watchers := make([]string, 0)
 	dirs := make([]string, 0)
 
 	return &Watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}
 }
 
-func (w *Watcher) Watch(path string, action func()) {
+func (w *Watcher) Watch(watched Watched) {
+	path := watched.Path()
 	fi, err := os.Stat(path)
 	dir := err == nil && fi.IsDir()
 	// If the file doesn't exist currently we will add watcher for file
 	// directory and look for create event inside the directory
 	if !dir && os.IsNotExist(err) {
-		w.Watch(filepath.Dir(path), nil)
-	}
-	// If the path points to a file and there is no action
-	// Don't watch
-	if !dir && action == nil {
-		log4go.Error("No action for watching the file")
-		return
+		w.Watch(NewWatchedDir(filepath.Dir(path)))
 	}
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	// If exists in watchers we are already watching the path
 	// no need to watch again just adding the action
 	if exist(w.watchers, path) {
-		if action != nil {
-			w.watched[path] = append(w.watched[path], action)
-		}
+		w.watched[path] = append(w.watched[path], watched)
 		return
 	}
 	// If the file is under one of watched dirs
 	// no need to create watcher
 	if !dir && exist(w.dirs, filepath.Dir(path)) {
-		w.watched[path] = append(w.watched[path], action)
+		w.watched[path] = append(w.watched[path], watched)
 		return
 	}
 	if err := w.wchr.Watch(path); err != nil {
@@ -64,7 +68,7 @@ func (w *Watcher) Watch(path string, action func()) {
 		return
 	}
 	w.watchers = append(w.watchers, path)
-	w.watched[path] = append(w.watched[path], action)
+	w.watched[path] = append(w.watched[path], watched)
 	if dir {
 		w.dirs = append(w.dirs, path)
 		for _, p := range w.watchers {
@@ -80,30 +84,42 @@ func (w *Watcher) Watch(path string, action func()) {
 	}
 }
 
-func (w *Watcher) UnWatch(path string) {
+func (w *Watcher) UnWatch(watched Watched) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	if !exist(w.watchers, path) {
+	path := watched.Path()
+	watcheds, exst := w.watched[path]
+	if !exst {
 		return
 	}
-	if exist(w.dirs, path) {
-		for p, _ := range w.watched {
-			if filepath.Dir(p) == path && !exist(w.watchers, p) {
-				if err := w.wchr.Watch(p); err != nil {
-					log4go.Error("Could not watch: %s", err)
-					return
-				}
-				w.watchers = append(w.watchers, p)
-			}
+	l := len(w.watched[path])
+	for i, wchd := range watcheds {
+		if wchd == watched {
+			w.watched[path][i], w.watched[path][l-1], w.watched[path] = w.watched[path][l-1], nil, w.watched[path][:l-1]
+			l -= 1
+			break
 		}
 	}
-	if err := w.wchr.RemoveWatch(path); err != nil {
-		log4go.Error("Couldn't unwatch file: %s", err)
+	if l == 0 {
+		w.watchers = remove(w.watchers, path)
+		delete(w.watched, path)
+		if err := w.wchr.RemoveWatch(path); err != nil {
+			log4go.Error("Couldn't unwatch file: %s", err)
+		}
+	}
+	if !exist(w.dirs, path) {
 		return
 	}
-	w.watchers = remove(w.watchers, path)
+	for p, _ := range w.watched {
+		if filepath.Dir(p) == path && !exist(w.watchers, p) {
+			if err := w.wchr.Watch(p); err != nil {
+				log4go.Error("Could not watch: %s", err)
+				continue
+			}
+			w.watchers = append(w.watchers, p)
+		}
+	}
 	w.dirs = remove(w.dirs, path)
-	delete(w.watched, path)
 }
 
 func (w *Watcher) Observe() {
@@ -116,26 +132,24 @@ func (w *Watcher) Observe() {
 				// file is created again
 				if ev.IsDelete() {
 					w.watchers = remove(w.watchers, ev.Name)
-					w.Watch(filepath.Dir(ev.Name), nil)
+					w.Watch(NewWatchedDir(filepath.Dir(ev.Name)))
 				}
 				w.lock.Lock()
 				defer w.lock.Unlock()
-				actions, exist := w.watched[ev.Name]
-				if !exist {
+				watcheds, exst := w.watched[ev.Name]
+				if !exst {
 					return
 				}
-				for _, action := range actions {
-					if action != nil {
-						action()
-					}
+				for _, watched := range watcheds {
+					watched.Reload()
 				}
 				if !exist(w.dirs, ev.Name) {
 					return
 				}
-				for p, actions := range w.watched {
+				for p, watcheds := range w.watched {
 					if filepath.Dir(p) == ev.Name && !exist(w.watchers, p) {
-						for _, action := range actions {
-							action()
+						for _, watched := range watcheds {
+							watched.Reload()
 						}
 					}
 				}
@@ -145,6 +159,16 @@ func (w *Watcher) Observe() {
 		}
 	}
 }
+
+func NewWatchedDir(path string) *WatchedDir {
+	return &WatchedDir{path}
+}
+
+func (wd *WatchedDir) Path() string {
+	return wd.path
+}
+
+func (wd *WatchedDir) Reload() {}
 
 // Helper function checking an element exists in a slice
 func exist(paths []string, path string) bool {

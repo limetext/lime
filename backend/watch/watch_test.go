@@ -19,39 +19,34 @@ func equal(a1, a2 []string) bool {
 	return true
 }
 
-func dum() {
-	return
+type dummy struct {
+	path string
 }
+
+func (d *dummy) Path() string {
+	return d.path
+}
+
+func (d *dummy) Reload() {}
 
 func TestWatch(t *testing.T) {
 	tests := []struct {
-		paths       map[string]func()
+		paths       []string
 		expWatched  []string
 		expWatchers []string
 	}{
 		{
-			map[string]func(){
-				"testdata/dummy.txt": dum,
-				"testdata/test.txt":  dum,
-			},
+			[]string{"testdata/dummy.txt", "testdata/test.txt"},
 			[]string{"testdata/dummy.txt", "testdata/test.txt"},
 			[]string{"testdata/dummy.txt", "testdata/test.txt"},
 		},
 		{
-			map[string]func(){
-				"testdata":           dum,
-				"testdata/dummy.txt": dum,
-				"testdata/test.txt":  dum,
-			},
+			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
 			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
 			[]string{"testdata"},
 		},
 		{
-			map[string]func(){
-				"testdata/dummy.txt": dum,
-				"testdata/test.txt":  dum,
-				"testdata":           dum,
-			},
+			[]string{"testdata/dummy.txt", "testdata/test.txt", "testdata"},
 			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
 			[]string{"testdata"},
 		},
@@ -59,8 +54,8 @@ func TestWatch(t *testing.T) {
 	}
 	for i, test := range tests {
 		watcher := NewWatcher()
-		for path, action := range test.paths {
-			watcher.Watch(path, action)
+		for _, path := range test.paths {
+			watcher.Watch(&dummy{path})
 		}
 		if len(watcher.watched) != len(test.expWatched) {
 			t.Errorf("Test %d: Expected len of watched %d, but got %d", i, len(test.expWatched), len(watcher.watched))
@@ -77,65 +72,70 @@ func TestWatch(t *testing.T) {
 }
 
 func TestUnWatch(t *testing.T) {
-	tests := []struct {
-		watchs      []string
-		unWatchs    []string
-		expWatched  []string
-		expWatchers []string
-	}{
-		{
-			[]string{"testdata/dummy.txt", "testdata/test.txt"},
-			[]string{"testdata/dummy.txt"},
-			[]string{"testdata/test.txt"},
-			[]string{"testdata/test.txt"},
-		},
-		{
-			[]string{"testdata", "testdata/dummy.txt", "testdata/test.txt"},
-			[]string{"testdata"},
-			[]string{"testdata/dummy.txt", "testdata/test.txt"},
-			[]string{"testdata/test.txt", "testdata/dummy.txt"},
-		},
+	path := "testdata/dummy.txt"
+	d := &dummy{path}
+	watcher := NewWatcher()
+	watcher.Watch(d)
+	watcher.UnWatch(d)
+	if len(watcher.watched) != 0 {
+		t.Errorf("Expected watcheds be empty, but got %s", watcher.watched)
 	}
-	for i, test := range tests {
-		watcher := NewWatcher()
-		for _, path := range test.watchs {
-			watcher.Watch(path, dum)
-		}
-		for _, path := range test.unWatchs {
-			watcher.UnWatch(path)
-		}
-		if len(watcher.watched) != len(test.expWatched) {
-			t.Errorf("Test %d: Expected len of watched %d, but got %d", i, len(test.expWatched), len(watcher.watched))
-		}
-		for _, p := range test.expWatched {
-			if _, exist := watcher.watched[p]; !exist {
-				t.Errorf("Test %d: Expected %s exist in watched", i, p)
-			}
-		}
-		if !equal(test.expWatchers, watcher.watchers) {
-			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
-		}
+}
+
+func TestUnWatchDirectory(t *testing.T) {
+	path := "testdata/dummy.txt"
+	dir := "testdata"
+	d := &dummy{path}
+	d1 := NewWatchedDir(dir)
+	watcher := NewWatcher()
+	watcher.Watch(d)
+	watcher.Watch(d1)
+	if !equal(watcher.watchers, []string{"testdata"}) {
+		t.Fatalf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{"testdata"})
+	}
+	watcher.UnWatch(d1)
+	if !equal(watcher.watchers, []string{path}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{path})
+	}
+}
+
+func TestUnWatchOneOfSubscribers(t *testing.T) {
+	path := "testdata/dummy.txt"
+	d1 := &dummy{path}
+	d2 := &dummy{path}
+	watcher := NewWatcher()
+	watcher.Watch(d1)
+	watcher.Watch(d2)
+	if len(watcher.watched[path]) != 2 {
+		t.Fatalf("Expected watched[%s] length be %d, but got %d", path, 2, len(watcher.watched[path]))
+	}
+	watcher.UnWatch(d1)
+	if !equal(watcher.watchers, []string{path}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{path})
+	}
+	if len(watcher.watched[path]) != 1 {
+		t.Errorf("Expected watched[%s] length be %d, but got %d", path, 1, len(watcher.watched[path]))
 	}
 }
 
 type dumView struct {
 	Text string
-	Name string
+	path string
 }
 
 func (d *dumView) Reload() {
 	d.Text = "Reloaded"
 }
 
-func (d *dumView) Rename() {
-	d.Name = "Renamed"
+func (d *dumView) Path() string {
+	return d.path
 }
 
 func TestObserve(t *testing.T) {
 	path := "testdata/test.txt"
 	watcher := NewWatcher()
-	v := new(dumView)
-	watcher.Watch(path, v.Reload)
+	v := &dumView{path: path}
+	watcher.Watch(v)
 	go watcher.Observe()
 
 	if err := ioutil.WriteFile(path, []byte("test"), 0644); err != nil {
@@ -152,9 +152,9 @@ func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
 	path := "testdata/test.txt"
 	watcher := NewWatcher()
-	v := new(dumView)
-	watcher.Watch(path, v.Reload)
-	watcher.Watch(dir, nil)
+	v := &dumView{path: path}
+	watcher.Watch(v)
+	watcher.Watch(NewWatchedDir(dir))
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
@@ -173,8 +173,8 @@ func TestObserveDirectory(t *testing.T) {
 func TestCreateEvent(t *testing.T) {
 	path := "testdata/new.txt"
 	watcher := NewWatcher()
-	v := new(dumView)
-	watcher.Watch(path, v.Reload)
+	v := &dumView{path: path}
+	watcher.Watch(v)
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
@@ -193,8 +193,8 @@ func TestCreateEvent(t *testing.T) {
 func TestDeleteEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
 	watcher := NewWatcher()
-	v := new(dumView)
-	watcher.Watch(path, v.Reload)
+	v := &dumView{path: path}
+	watcher.Watch(v)
 	go watcher.Observe()
 
 	os.Remove(path)
@@ -211,8 +211,8 @@ func TestDeleteEvent(t *testing.T) {
 func TestRenameEvent(t *testing.T) {
 	path := "testdata/dummy.txt"
 	watcher := NewWatcher()
-	v := new(dumView)
-	watcher.Watch(path, v.Reload)
+	v := &dumView{path: path}
+	watcher.Watch(v)
 	go watcher.Observe()
 
 	os.Rename(path, "testdata/rename.txt")
