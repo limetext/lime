@@ -162,9 +162,8 @@ func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
 	name := "testdata/test.txt"
 	watcher := NewWatcher()
-	v := &dumView{name: name}
+	v := &dumView{name: dir}
 	watcher.Watch(v)
-	watcher.Watch(NewWatchedDir(dir))
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {

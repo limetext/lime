@@ -515,7 +515,7 @@ func (v *View) Name() string {
 }
 
 func (v *View) Reload() {
-	log4go.Finest("Reloading %s", v.Name())
+	log.Finest("Reloading %s", v.Name())
 	filename := v.Name()
 
 	if saving, ok := v.Settings().Get("lime.saving", false).(bool); ok && saving {
@@ -527,7 +527,7 @@ func (v *View) Reload() {
 	}
 
 	if d, err := ioutil.ReadFile(filename); err != nil {
-		log4go.Error("Could not read file: %s\n. Error was: %v", filename, err)
+		log.Error("Could not read file: %s\n. Error was: %v", filename, err)
 	} else {
 		edit := v.BeginEdit()
 		end := v.Buffer().Size()

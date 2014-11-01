@@ -140,8 +140,9 @@ func (w *Watcher) Observe() {
 				}
 				w.lock.Lock()
 				defer w.lock.Unlock()
-				watcheds, exst := w.watched[ev.Name]
-				if !exst {
+				watcheds := w.watched[ev.Name]
+				watcheds = append(watcheds, w.watched[filepath.Dir(ev.Name)]...)
+				if len(watcheds) == 0 {
 					return
 				}
 				for _, watched := range watcheds {

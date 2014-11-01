@@ -107,10 +107,10 @@ except:
     traceback.print_exc()
     raise
 		`)
+	time.Sleep(time.Millisecond * 10)
 	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
 		t.Fatalf("Couldn't write file: %s", err)
 	}
-	time.Sleep(time.Millisecond * 50)
 	log.Debug("Running %s", "reload_test.py")
 	if _, err := py.Import("reload_test"); err != nil {
 		log.Error(err)
