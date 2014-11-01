@@ -47,7 +47,9 @@ func TestSublime(t *testing.T) {
 	} else {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
-			loadPlugin(p, m)
+			pl := newPlugin(p, m)
+			pl.Reload()
+			watcher.Watch(pl)
 		}
 	}
 
@@ -86,7 +88,7 @@ func TestSublime(t *testing.T) {
 
 class TestToxt(sublime_plugin.TextCommand):
     def run(self, edit):
-        print("my view's id is: %d" % self.view.id())
+        print("my view's id is: %d", self.view.id())
         self.view.insert(edit, 0, "Tada")
 		`)
 	if err := ioutil.WriteFile("testdata/plugins/reload.py", data, 0644); err != nil {
@@ -105,10 +107,10 @@ except:
     traceback.print_exc()
     raise
 		`)
-	time.Sleep(time.Millisecond * 10)
 	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
 		t.Fatalf("Couldn't write file: %s", err)
 	}
+	time.Sleep(time.Millisecond * 50)
 	log4go.Debug("Running %s", "reload_test.py")
 	if _, err := py.Import("reload_test"); err != nil {
 		log4go.Error(err)
