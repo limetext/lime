@@ -5,7 +5,7 @@
 package backend
 
 import (
-	"code.google.com/p/log4go"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/util"
 	"strings"
 )
@@ -57,7 +57,7 @@ func (ve *ViewEvent) Add(cb ViewEventCallback) {
 
 // Trigger this ViewEvent by calling all the registered callbacks in order of registration.
 func (ve *ViewEvent) Call(v *View) {
-	log4go.Finest("%s(%v)", evNames[ve], v.Id())
+	log.Finest("%s(%v)", evNames[ve], v.Id())
 	for _, ev := range *ve {
 		ev(v)
 	}
@@ -72,14 +72,14 @@ func (qe *QueryContextEvent) Add(cb QueryContextCallback) {
 // Searches for a QueryContextCallback and returns the result of the first callback being able to deal with this
 // context, or Unknown if no such callback was found.
 func (qe QueryContextEvent) Call(v *View, key string, operator util.Op, operand interface{}, match_all bool) QueryContextReturn {
-	log4go.Fine("Query context: %s, %v, %v, %v", key, operator, operand, match_all)
+	log.Fine("Query context: %s, %v, %v, %v", key, operator, operand, match_all)
 	for i := range qe {
 		r := qe[i](v, key, operator, operand, match_all)
 		if r != Unknown {
 			return r
 		}
 	}
-	log4go.Fine("Unknown context: %s", key)
+	log.Fine("Unknown context: %s", key)
 	return Unknown
 }
 
@@ -91,7 +91,7 @@ func (we *WindowEvent) Add(cb WindowEventCallback) {
 
 // Trigger this WindowEvent by calling all the registered callbacks in order of registration.
 func (we *WindowEvent) Call(w *Window) {
-	log4go.Finest("%s(%v)", wevNames[we], w.Id())
+	log.Finest("%s(%v)", wevNames[we], w.Id())
 	for _, ev := range *we {
 		ev(w)
 	}

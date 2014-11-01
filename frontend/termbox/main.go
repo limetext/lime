@@ -4,12 +4,12 @@
 package main
 
 import (
-	"code.google.com/p/log4go"
 	"flag"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
@@ -34,59 +34,59 @@ var (
 		// termbox.KeyCtrl3:
 		// termbox.KeyCtrl8
 		//		termbox.KeyCtrl2:      keys.KeyPress{Ctrl: true, Key: '2'},
-		termbox.KeyCtrlSpace:  keys.KeyPress{Ctrl: true, Key: ' '},
-		termbox.KeyCtrlA:      keys.KeyPress{Ctrl: true, Key: 'a'},
-		termbox.KeyCtrlB:      keys.KeyPress{Ctrl: true, Key: 'b'},
-		termbox.KeyCtrlC:      keys.KeyPress{Ctrl: true, Key: 'c'},
-		termbox.KeyCtrlD:      keys.KeyPress{Ctrl: true, Key: 'd'},
-		termbox.KeyCtrlE:      keys.KeyPress{Ctrl: true, Key: 'e'},
-		termbox.KeyCtrlF:      keys.KeyPress{Ctrl: true, Key: 'f'},
-		termbox.KeyCtrlG:      keys.KeyPress{Ctrl: true, Key: 'g'},
-		termbox.KeyCtrlH:      keys.KeyPress{Ctrl: true, Key: 'h'},
-		termbox.KeyCtrlJ:      keys.KeyPress{Ctrl: true, Key: 'j'},
-		termbox.KeyCtrlK:      keys.KeyPress{Ctrl: true, Key: 'k'},
-		termbox.KeyCtrlL:      keys.KeyPress{Ctrl: true, Key: 'l'},
-		termbox.KeyCtrlN:      keys.KeyPress{Ctrl: true, Key: 'n'},
-		termbox.KeyCtrlO:      keys.KeyPress{Ctrl: true, Key: 'o'},
-		termbox.KeyCtrlP:      keys.KeyPress{Ctrl: true, Key: 'p'},
-		termbox.KeyCtrlQ:      keys.KeyPress{Ctrl: true, Key: 'q'},
-		termbox.KeyCtrlR:      keys.KeyPress{Ctrl: true, Key: 'r'},
-		termbox.KeyCtrlS:      keys.KeyPress{Ctrl: true, Key: 's'},
-		termbox.KeyCtrlT:      keys.KeyPress{Ctrl: true, Key: 't'},
-		termbox.KeyCtrlU:      keys.KeyPress{Ctrl: true, Key: 'u'},
-		termbox.KeyCtrlV:      keys.KeyPress{Ctrl: true, Key: 'v'},
-		termbox.KeyCtrlW:      keys.KeyPress{Ctrl: true, Key: 'w'},
-		termbox.KeyCtrlX:      keys.KeyPress{Ctrl: true, Key: 'x'},
-		termbox.KeyCtrlY:      keys.KeyPress{Ctrl: true, Key: 'y'},
-		termbox.KeyCtrlZ:      keys.KeyPress{Ctrl: true, Key: 'z'},
-		termbox.KeyCtrl4:      keys.KeyPress{Ctrl: true, Key: '4'},
-		termbox.KeyCtrl5:      keys.KeyPress{Ctrl: true, Key: '5'},
-		termbox.KeyCtrl6:      keys.KeyPress{Ctrl: true, Key: '6'},
-		termbox.KeyCtrl7:      keys.KeyPress{Ctrl: true, Key: '7'},
-		termbox.KeyEnter:      keys.KeyPress{Key: keys.Enter},
-		termbox.KeySpace:      keys.KeyPress{Key: ' '},
-		termbox.KeyBackspace2: keys.KeyPress{Key: keys.Backspace},
-		termbox.KeyArrowUp:    keys.KeyPress{Key: keys.Up},
-		termbox.KeyArrowDown:  keys.KeyPress{Key: keys.Down},
-		termbox.KeyArrowLeft:  keys.KeyPress{Key: keys.Left},
-		termbox.KeyArrowRight: keys.KeyPress{Key: keys.Right},
-		termbox.KeyDelete:     keys.KeyPress{Key: keys.Delete},
-		termbox.KeyEsc:        keys.KeyPress{Key: keys.Escape},
-		termbox.KeyPgup:       keys.KeyPress{Key: keys.PageUp},
-		termbox.KeyPgdn:       keys.KeyPress{Key: keys.PageDown},
-		termbox.KeyF1:         keys.KeyPress{Key: keys.F1},
-		termbox.KeyF2:         keys.KeyPress{Key: keys.F2},
-		termbox.KeyF3:         keys.KeyPress{Key: keys.F3},
-		termbox.KeyF4:         keys.KeyPress{Key: keys.F4},
-		termbox.KeyF5:         keys.KeyPress{Key: keys.F5},
-		termbox.KeyF6:         keys.KeyPress{Key: keys.F6},
-		termbox.KeyF7:         keys.KeyPress{Key: keys.F7},
-		termbox.KeyF8:         keys.KeyPress{Key: keys.F8},
-		termbox.KeyF9:         keys.KeyPress{Key: keys.F9},
-		termbox.KeyF10:        keys.KeyPress{Key: keys.F10},
-		termbox.KeyF11:        keys.KeyPress{Key: keys.F11},
-		termbox.KeyF12:        keys.KeyPress{Key: keys.F12},
-		termbox.KeyTab:        keys.KeyPress{Key: '\t'},
+		termbox.KeyCtrlSpace:  {Ctrl: true, Key: ' '},
+		termbox.KeyCtrlA:      {Ctrl: true, Key: 'a'},
+		termbox.KeyCtrlB:      {Ctrl: true, Key: 'b'},
+		termbox.KeyCtrlC:      {Ctrl: true, Key: 'c'},
+		termbox.KeyCtrlD:      {Ctrl: true, Key: 'd'},
+		termbox.KeyCtrlE:      {Ctrl: true, Key: 'e'},
+		termbox.KeyCtrlF:      {Ctrl: true, Key: 'f'},
+		termbox.KeyCtrlG:      {Ctrl: true, Key: 'g'},
+		termbox.KeyCtrlH:      {Ctrl: true, Key: 'h'},
+		termbox.KeyCtrlJ:      {Ctrl: true, Key: 'j'},
+		termbox.KeyCtrlK:      {Ctrl: true, Key: 'k'},
+		termbox.KeyCtrlL:      {Ctrl: true, Key: 'l'},
+		termbox.KeyCtrlN:      {Ctrl: true, Key: 'n'},
+		termbox.KeyCtrlO:      {Ctrl: true, Key: 'o'},
+		termbox.KeyCtrlP:      {Ctrl: true, Key: 'p'},
+		termbox.KeyCtrlQ:      {Ctrl: true, Key: 'q'},
+		termbox.KeyCtrlR:      {Ctrl: true, Key: 'r'},
+		termbox.KeyCtrlS:      {Ctrl: true, Key: 's'},
+		termbox.KeyCtrlT:      {Ctrl: true, Key: 't'},
+		termbox.KeyCtrlU:      {Ctrl: true, Key: 'u'},
+		termbox.KeyCtrlV:      {Ctrl: true, Key: 'v'},
+		termbox.KeyCtrlW:      {Ctrl: true, Key: 'w'},
+		termbox.KeyCtrlX:      {Ctrl: true, Key: 'x'},
+		termbox.KeyCtrlY:      {Ctrl: true, Key: 'y'},
+		termbox.KeyCtrlZ:      {Ctrl: true, Key: 'z'},
+		termbox.KeyCtrl4:      {Ctrl: true, Key: '4'},
+		termbox.KeyCtrl5:      {Ctrl: true, Key: '5'},
+		termbox.KeyCtrl6:      {Ctrl: true, Key: '6'},
+		termbox.KeyCtrl7:      {Ctrl: true, Key: '7'},
+		termbox.KeyEnter:      {Key: keys.Enter},
+		termbox.KeySpace:      {Key: ' '},
+		termbox.KeyBackspace2: {Key: keys.Backspace},
+		termbox.KeyArrowUp:    {Key: keys.Up},
+		termbox.KeyArrowDown:  {Key: keys.Down},
+		termbox.KeyArrowLeft:  {Key: keys.Left},
+		termbox.KeyArrowRight: {Key: keys.Right},
+		termbox.KeyDelete:     {Key: keys.Delete},
+		termbox.KeyEsc:        {Key: keys.Escape},
+		termbox.KeyPgup:       {Key: keys.PageUp},
+		termbox.KeyPgdn:       {Key: keys.PageDown},
+		termbox.KeyF1:         {Key: keys.F1},
+		termbox.KeyF2:         {Key: keys.F2},
+		termbox.KeyF3:         {Key: keys.F3},
+		termbox.KeyF4:         {Key: keys.F4},
+		termbox.KeyF5:         {Key: keys.F5},
+		termbox.KeyF6:         {Key: keys.F6},
+		termbox.KeyF7:         {Key: keys.F7},
+		termbox.KeyF8:         {Key: keys.F8},
+		termbox.KeyF9:         {Key: keys.F9},
+		termbox.KeyF10:        {Key: keys.F10},
+		termbox.KeyF11:        {Key: keys.F11},
+		termbox.KeyF12:        {Key: keys.F12},
+		termbox.KeyTab:        {Key: '\t'},
 	}
 	palLut    func(col textmate.Color) termbox.Attribute
 	scheme    *textmate.Theme
@@ -150,7 +150,7 @@ func createFrontend() *tbfe {
 
 	path := path.Join("..", "..", "3rdparty", "bundles", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		scheme = sc
 	}
@@ -341,17 +341,17 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log4go.Error(msg)
+	log.Error(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) MessageDialog(msg string) {
-	log4go.Info(msg)
+	log.Info(msg)
 }
 
 // TODO(q): Actually show a dialog
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log4go.Info(msg, ok)
+	log.Info(msg, ok)
 	return false
 }
 
@@ -404,7 +404,7 @@ func (t *tbfe) renderthread() {
 	dorender := func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log4go.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+				log.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 1 {
 					panic(r)
 				}
@@ -436,7 +436,7 @@ func (t *tbfe) renderthread() {
 	}
 
 	for _ = range t.dorender {
-		log4go.Finest("Rendering")
+		log.Finest("Rendering")
 		dorender()
 	}
 }
@@ -533,7 +533,7 @@ func (t *tbfe) loop() {
 			mp := util.Prof.Enter("evchan")
 			switch ev.Type {
 			case termbox.EventError:
-				log4go.Debug("error occured")
+				log.Debug("error occured")
 				return
 			case termbox.EventResize:
 				t.handleResize(ev.Height, ev.Width, false)
@@ -615,9 +615,9 @@ func setColorMode() {
 	)
 
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
-		log4go.Error("Unable to use 256 color mode: %s", err)
+		log.Error("Unable to use 256 color mode: %s", err)
 	} else {
-		log4go.Debug("Using 256 color mode")
+		log.Debug("Using 256 color mode")
 		mode256 = true
 	}
 
@@ -659,7 +659,7 @@ func setColorMode() {
 				}
 			}
 			l := len(pal)
-			log4go.Debug("Adding colour: %d %+v %+v", l, col, tc)
+			log.Debug("Adding colour: %d %+v %+v", l, col, tc)
 			pal = append(pal, tc)
 			termbox.SetColorPalette(pal)
 			return termbox.Attribute(l)
@@ -701,21 +701,23 @@ func createNewView(filename string, window *backend.Window) *backend.View {
 func main() {
 	flag.Parse()
 
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewFileLogWriter("debug.log", *rotateLog))
+	log.AddFilter("file", log.FINEST, log.NewFileLogWriter("debug.log", *rotateLog))
 	defer func() {
 		py.NewLock()
 		py.Finalize()
 	}()
 
 	if err := termbox.Init(); err != nil {
-		log4go.Exit(err)
+		log.Close(err)
+		return
 	}
 
 	defer func() {
 		termbox.Close()
-		log4go.Debug(util.Prof)
+		log.Debug(util.Prof)
 		if err := recover(); err != nil {
-			log4go.Crash(err)
+			log.Critical(err)
+			panic(err)
 		}
 	}()
 

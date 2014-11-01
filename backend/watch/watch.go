@@ -1,8 +1,8 @@
 package watch
 
 import (
-	"code.google.com/p/log4go"
 	"github.com/howeyc/fsnotify"
+	"github.com/limetext/lime/backend/log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -30,7 +30,7 @@ type (
 func NewWatcher() *Watcher {
 	wchr, err := fsnotify.NewWatcher()
 	if err != nil {
-		log4go.Error("Could not create watcher due to: %s", err)
+		log.Error("Could not create watcher due to: %s", err)
 		return nil
 	}
 	watched := make(map[string][]Watched)
@@ -41,7 +41,7 @@ func NewWatcher() *Watcher {
 }
 
 func (w *Watcher) Watch(watched Watched) {
-	log4go.Finest("Watch(%s)", watched.Name())
+	log.Finest("Watch(%s)", watched.Name())
 	name := watched.Name()
 	fi, err := os.Stat(name)
 	dir := err == nil && fi.IsDir()
@@ -65,7 +65,7 @@ func (w *Watcher) Watch(watched Watched) {
 		return
 	}
 	if err := w.wchr.Watch(name); err != nil {
-		log4go.Error("Could not watch: %s", err)
+		log.Error("Could not watch: %s", err)
 		return
 	}
 	w.watchers = append(w.watchers, name)
@@ -77,7 +77,7 @@ func (w *Watcher) Watch(watched Watched) {
 				continue
 			}
 			if err := w.wchr.RemoveWatch(p); err != nil {
-				log4go.Error("Couldn't unwatch file: %s", err)
+				log.Error("Couldn't unwatch file: %s", err)
 				continue
 			}
 			w.watchers = remove(w.watchers, p)
@@ -86,7 +86,7 @@ func (w *Watcher) Watch(watched Watched) {
 }
 
 func (w *Watcher) UnWatch(watched Watched) {
-	log4go.Finest("UnWatch(%s)", watched.Name())
+	log.Finest("UnWatch(%s)", watched.Name())
 	w.lock.Lock()
 	defer w.lock.Unlock()
 	name := watched.Name()
@@ -106,7 +106,7 @@ func (w *Watcher) UnWatch(watched Watched) {
 		w.watchers = remove(w.watchers, name)
 		delete(w.watched, name)
 		if err := w.wchr.RemoveWatch(name); err != nil {
-			log4go.Error("Couldn't unwatch file: %s", err)
+			log.Error("Couldn't unwatch file: %s", err)
 		}
 	}
 	if !exist(w.dirs, name) {
@@ -115,7 +115,7 @@ func (w *Watcher) UnWatch(watched Watched) {
 	for p, _ := range w.watched {
 		if filepath.Dir(p) == name && !exist(w.watchers, p) {
 			if err := w.wchr.Watch(p); err != nil {
-				log4go.Error("Could not watch: %s", err)
+				log.Error("Could not watch: %s", err)
 				continue
 			}
 			w.watchers = append(w.watchers, p)
@@ -159,7 +159,7 @@ func (w *Watcher) Observe() {
 				}
 			}()
 		case err := <-w.wchr.Error:
-			log4go.Error("Watcher error: %s", err)
+			log.Error("Watcher error: %s", err)
 		}
 	}
 }

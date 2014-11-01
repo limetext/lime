@@ -52,11 +52,11 @@ func TestPackets(t *testing.T) {
 			"testdata/Vintage/Vintageous.sublime-settings",
 		},
 		map[string][]string{
-			"setting": []string{
+			"setting": {
 				"testdata/Default.sublime-settings",
 				"testdata/Vintage/Vintageous.sublime-settings",
 			},
-			"keymap": []string{
+			"keymap": {
 				"testdata/Vintage/Default.sublime-keymap",
 			},
 		},

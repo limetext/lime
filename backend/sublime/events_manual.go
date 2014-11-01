@@ -5,10 +5,10 @@
 package sublime
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/text"
 )
@@ -83,10 +83,10 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	defer l.Unlock()
 	pv, err := toPython(v)
 	if err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	}
 	defer pv.Decref()
-	log4go.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
+	log.Fine("onEvent: %v, %v, %v", c, c.inner, pv)
 	// interrupt := true
 	// defer func() { interrupt = false }()
 	// go func() {
@@ -97,7 +97,7 @@ func (c *ViewEventGlue) onEvent(v *backend.View) {
 	// }()
 
 	if ret, err := c.inner.Base().CallFunctionObjArgs(pv); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else if ret != nil {
 		ret.Decref()
 	}
@@ -128,31 +128,31 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 		err                      error
 	)
 	if pv, err = toPython(v); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer pv.Decref()
 
 	if pk, err = toPython(key); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer pk.Decref()
 
 	if po, err = toPython(operator); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer po.Decref()
 
 	if poa, err = toPython(operand); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer poa.Decref()
 
 	if pm, err = toPython(match_all); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer pm.Decref()
@@ -166,13 +166,13 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 	// }()
 
 	if ret, err = c.inner.Base().CallFunctionObjArgs(pv, pk, po, poa, pm); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return backend.Unknown
 	}
 	defer ret.Decref()
 
 	//	if ret != nil {
-	log4go.Fine("onQueryContext: %v, %v", pv, ret.Base())
+	log.Fine("onQueryContext: %v, %v", pv, ret.Base())
 	if r2, ok := ret.(*py.Bool); ok {
 		if r2.Bool() {
 			return backend.True
@@ -180,7 +180,7 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 			return backend.False
 		}
 	} else {
-		log4go.Fine("other: %v", ret)
+		log.Fine("other: %v", ret)
 	}
 	return backend.Unknown
 }

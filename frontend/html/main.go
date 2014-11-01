@@ -8,13 +8,13 @@ import (
 	"bufio"
 	"bytes"
 	"code.google.com/p/go.net/websocket"
-	"code.google.com/p/log4go"
 	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
@@ -167,20 +167,20 @@ func (t *tbfe) StatusMessage(msg string) {
 }
 
 func (t *tbfe) ErrorMessage(msg string) {
-	log4go.Error(msg)
+	log.Error(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "errorMessage", "msg": msg})
 }
 
 func (t *tbfe) MessageDialog(msg string) {
-	log4go.Info(msg)
+	log.Info(msg)
 
 	t.BroadcastData(map[string]interface{}{"type": "messageDialog", "msg": msg})
 }
 
 // TODO: wait for client response, return true/false
 func (t *tbfe) OkCancelDialog(msg, ok string) bool {
-	log4go.Info(msg, ok)
+	log.Info(msg, ok)
 
 	t.BroadcastData(map[string]interface{}{"type": "okCancelDialog", "msg": msg, "ok": ok})
 
@@ -196,7 +196,7 @@ var pc = 0
 func (t *tbfe) render(w io.Writer) {
 	defer func() {
 		if r := recover(); r != nil {
-			log4go.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+			log.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 			if pc > 1 {
 				panic(r)
 			}
@@ -215,7 +215,7 @@ func (t *tbfe) render(w io.Writer) {
 	//	runes := []rune(t.status_message)
 }
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
-	log4go.Debug("key: %s", req)
+	log.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
 	var kp keys.KeyPress
 	v, _ := strconv.ParseInt(kc, 10, 32)
@@ -240,7 +240,7 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
-	log4go.Debug("view: %s", req)
+	log.Debug("view: %s", req)
 	if t.dirty {
 		t.dirty = false
 		t.render(w)
@@ -250,7 +250,7 @@ func (t *tbfe) view(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
-	log4go.Debug("theme: %s", req)
+	log.Debug("theme: %s", req)
 
 	reqpath, _ := url.QueryUnescape(req.RequestURI)
 
@@ -274,7 +274,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 		fi, err := os.Open(filepath)
 		if err != nil {
 			w.WriteHeader(500)
-			log4go.Error(err)
+			log.Error(err)
 			return
 		}
 
@@ -289,7 +289,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s := time.Now()
 	w.Header().Set("Content-Type", "text/html")
-	log4go.Debug("Serving client: %s", req)
+	log.Debug("Serving client: %s", req)
 
 	c := scheme.Spice(&render.ViewRegions{})
 
@@ -302,7 +302,7 @@ func (t *tbfe) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r := strings.NewReplacer("{{foregroundColor}}", htmlcol(c.Foreground), "{{backgroundColor}}", htmlcol(c.Background))
 	r.WriteString(w, string(html))
 
-	log4go.Debug("Done serving client: %s", time.Since(s))
+	log.Debug("Done serving client: %s", time.Since(s))
 }
 
 var clients []*websocket.Conn
@@ -316,8 +316,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	}
 
 	// Send cursor position
-	sel := backend.GetEditor().ActiveWindow().ActiveView().Sel()
-	websocket.JSON.Send(ws, t.GetSelectionMessage(sel))
+	websocket.JSON.Send(ws, t.GetSelectionMessage(backend.GetEditor().ActiveWindow().ActiveView()))
 
 	// Send editor content
 	var buf bytes.Buffer
@@ -330,10 +329,10 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 	for {
 		err := websocket.JSON.Receive(ws, &data)
 		if err != nil {
-			log4go.Error(err)
+			log.Error(err)
 			return
 		}
-		//log4go.Debug("Received: %s", data)
+		//log.LogDebug("Received: %s", data)
 
 		msgType := data["type"].(string)
 
@@ -388,7 +387,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					if key, ok := keymap[keyName]; ok {
 						kp.Key = key
 					} else {
-						log4go.Debug("Unknown key: %s", keyName)
+						log.Debug("Unknown key: %s", keyName)
 						continue
 					}
 				}
@@ -408,7 +407,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 			ed := backend.GetEditor()
 			go ed.RunCommand(command, make(backend.Args))
 		} else {
-			log4go.Info("Unhandled message type: %s", msgType)
+			log.Info("Unhandled message type: %s", msgType)
 		}
 	}
 }
@@ -429,15 +428,11 @@ func (t *tbfe) SetDirty() {
 	}
 }
 
-func (t *tbfe) GetSelectionMessage(sel *RegionSet) map[string]interface{} {
+func (t *tbfe) GetSelectionMessage(v *backend.View) map[string]interface{} {
 	return map[string]interface{}{
 		"type": "selection",
-		"sel":  sel.Regions(),
+		"sel":  v.Sel().Regions(),
 	}
-}
-
-func (t *tbfe) SelectionModified(sel *RegionSet) {
-	t.BroadcastData(t.GetSelectionMessage(sel))
 }
 
 func (t *tbfe) loop() {
@@ -454,7 +449,7 @@ func (t *tbfe) loop() {
 		t.SetDirty()
 	})*/
 	backend.OnSelectionModified.Add(func(v *backend.View) {
-		t.SelectionModified(v.Sel())
+		t.BroadcastData(t.GetSelectionMessage(v))
 	})
 
 	ed := backend.GetEditor()
@@ -463,7 +458,7 @@ func (t *tbfe) loop() {
 	ed.LogCommands(false)
 	c := ed.Console()
 	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		scheme = sc
 	}
@@ -501,21 +496,21 @@ func (t *tbfe) loop() {
 		ed.Init()
 		sublime.Init()
 	}()
-	log4go.Debug("Serving on port %d", *port)
+	log.Debug("Serving on port %d", *port)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)
 	http.HandleFunc("/key", t.key)
 	http.HandleFunc("/themes/", t.theme)
 	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
-		log4go.Error("Error serving: %s", err)
+		log.Error("Error serving: %s", err)
 	}
-	log4go.Debug("Done")
+	log.Debug("Done")
 }
 
 func main() {
 	flag.Parse()
-	log4go.AddFilter("file", log4go.FINEST, log4go.NewConsoleLogWriter())
+	log.AddFilter("file", log.FINEST, log.NewConsoleLogWriter())
 	defer func() {
 		py.NewLock()
 		py.Finalize()

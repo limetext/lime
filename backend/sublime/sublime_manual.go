@@ -5,10 +5,10 @@
 package sublime
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/util"
@@ -25,7 +25,7 @@ func sublime_Console(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 	if i, err := tu.GetItem(0); err != nil {
 		return nil, err
 	} else {
-		log4go.Info("Python sez: %s", i)
+		log.Info("Python sez: %s", i)
 	}
 	return toPython(nil)
 }
@@ -56,7 +56,7 @@ func sublime_set_timeout(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 			defer l.Unlock()
 			defer pyarg.Decref()
 			if ret, err := pyarg.Base().CallFunctionObjArgs(); err != nil {
-				log4go.Debug("Error in callback: %v", err)
+				log.Debug("Error in callback: %v", err)
 			} else {
 				ret.Decref()
 			}
@@ -177,11 +177,11 @@ func (p *plugin) loadPlugin() {
 		fn := f.Name()
 		s, err := py.NewUnicode(path.Base(p.pl.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
-			log4go.Error(err)
+			log.Error(err)
 			return
 		}
 		if r, err := p.m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
-			log4go.Error(err)
+			log.Error(err)
 		} else if r != nil {
 			r.Decref()
 		}
@@ -201,7 +201,7 @@ func Init() {
 	}
 	sys, err := py.Import("sys")
 	if err != nil {
-		log4go.Debug(err)
+		log.Debug(err)
 	} else {
 		defer sys.Decref()
 	}
