@@ -88,7 +88,7 @@ func TestSublime(t *testing.T) {
 
 class TestToxt(sublime_plugin.TextCommand):
     def run(self, edit):
-        print("my view's id is: %d", self.view.id())
+        print("my view's id is: %d" % self.view.id())
         self.view.insert(edit, 0, "Tada")
 		`)
 	if err := ioutil.WriteFile("testdata/plugins/reload.py", data, 0644); err != nil {

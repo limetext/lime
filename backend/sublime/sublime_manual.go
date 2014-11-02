@@ -153,6 +153,8 @@ func init() {
 	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 
+// Wrapper for packages.Plugin and py.Module
+// merges Plugin.Reload and loadPlugin for watcher
 type plugin struct {
 	pl *packages.Plugin
 	m  *py.Module

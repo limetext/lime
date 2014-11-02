@@ -126,8 +126,8 @@ func GetEditor() *Editor {
 				scratch: true,
 			},
 			keyInput: make(chan keys.KeyPress, 32),
+			Watcher:  watch.NewWatcher(),
 		}
-		ed.Watcher = watch.NewWatcher()
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
