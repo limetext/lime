@@ -100,6 +100,8 @@ func TestCreateFrontend(t *testing.T) {
 	}
 
 	frontend.lock.Lock()
+	defer frontend.lock.Unlock()
+
 	*showConsole = true
 	if frontend.editor == nil {
 		t.Error("Editor is nil")
@@ -126,10 +128,8 @@ func TestCreateFrontend(t *testing.T) {
 	}
 
 	if len(frontend.layout) != 2 {
-		t.Error("Layout too big")
+		t.Errorf("Layout has length %d, but should have length 2", len(frontend.layout))
 	}
-	frontend.lock.Unlock()
-
 }
 
 func TestLoopShutdown(t *testing.T) {
