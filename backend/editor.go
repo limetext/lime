@@ -126,7 +126,10 @@ func GetEditor() *Editor {
 				scratch: true,
 			},
 			keyInput: make(chan keys.KeyPress, 32),
-			Watcher:  watch.NewWatcher(),
+		}
+		var err error
+		if ed.Watcher, err = watch.NewWatcher(); err != nil {
+			log.Error("Couldn't create watcher: %s", err)
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it

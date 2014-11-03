@@ -11,7 +11,7 @@ import (
 type (
 	// Watched interface defines the methods that every
 	// watched type should implement we use the Name() as
-	// the path we should watch and Relaod() as the action
+	// the path we should watch and Reload() as the action
 	// we should take on create delete modify and rename event
 	Watched interface {
 		Name() string
@@ -34,20 +34,19 @@ type (
 	}
 )
 
-func NewWatcher() *Watcher {
+func NewWatcher() (*Watcher, error) {
 	wchr, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Error("Could not create watcher due to: %s", err)
-		return nil
+		return nil, err
 	}
 	watched := make(map[string][]Watched)
 	watchers := make([]string, 0)
 	dirs := make([]string, 0)
 
-	return &Watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}
+	return &Watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}, nil
 }
 
-func (w *Watcher) Watch(watched Watched) {
+func (w *Watcher) Watch(watched Watched) error {
 	log.Finest("Watch(%s)", watched.Name())
 	name := watched.Name()
 	fi, err := os.Stat(name)
@@ -55,7 +54,9 @@ func (w *Watcher) Watch(watched Watched) {
 	// If the file doesn't exist currently we will add watcher for file
 	// directory and look for create event inside the directory
 	if !dir && os.IsNotExist(err) {
-		w.Watch(NewWatchedDir(filepath.Dir(name)))
+		if err := w.Watch(NewWatchedDir(filepath.Dir(name))); err != nil {
+			return err
+		}
 	}
 	w.lock.Lock()
 	defer w.lock.Unlock()
@@ -63,17 +64,16 @@ func (w *Watcher) Watch(watched Watched) {
 	// no need to watch again just adding the action
 	if exist(w.watchers, name) {
 		w.watched[name] = append(w.watched[name], watched)
-		return
+		return nil
 	}
 	// If the file is under one of watched dirs
 	// no need to create watcher
 	if !dir && exist(w.dirs, filepath.Dir(name)) {
 		w.watched[name] = append(w.watched[name], watched)
-		return
+		return nil
 	}
 	if err := w.wchr.Watch(name); err != nil {
-		log.Error("Could not watch: %s", err)
-		return
+		return err
 	}
 	w.watchers = append(w.watchers, name)
 	w.watched[name] = append(w.watched[name], watched)
@@ -93,9 +93,10 @@ func (w *Watcher) Watch(watched Watched) {
 			w.watchers = remove(w.watchers, p)
 		}
 	}
+	return nil
 }
 
-func (w *Watcher) UnWatch(watched Watched) {
+func (w *Watcher) UnWatch(watched Watched) error {
 	log.Finest("UnWatch(%s)", watched.Name())
 	w.lock.Lock()
 	defer w.lock.Unlock()
@@ -110,17 +111,17 @@ func (w *Watcher) UnWatch(watched Watched) {
 		}
 	}
 	if l != 0 {
-		return
+		return nil
 	}
 	w.watchers = remove(w.watchers, name)
 	delete(w.watched, name)
 	if exist(w.watchers, name) {
 		if err := w.wchr.RemoveWatch(name); err != nil {
-			log.Error("Couldn't unwatch file: %s", err)
+			return err
 		}
 	}
 	if !exist(w.dirs, name) {
-		return
+		return nil
 	}
 	// If name refers to a watched directory we should put back
 	// watchers on watching files under the directory
@@ -134,6 +135,7 @@ func (w *Watcher) UnWatch(watched Watched) {
 		}
 	}
 	w.dirs = remove(w.dirs, name)
+	return nil
 }
 
 func (w *Watcher) Observe() {

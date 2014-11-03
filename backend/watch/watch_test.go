@@ -54,9 +54,14 @@ func TestWatch(t *testing.T) {
 		// 2 path refer same file or dir but different(e.g abs path and relative path)
 	}
 	for i, test := range tests {
-		watcher := NewWatcher()
+		watcher, err := NewWatcher()
+		if err != nil {
+			t.Fatalf("Couldn't create watcher: %s", err)
+		}
 		for _, name := range test.paths {
-			watcher.Watch(&dummy{name})
+			if err := watcher.Watch(&dummy{name}); err != nil {
+				t.Fatalf("Couldn' Watch %s : %s", name, err)
+			}
 		}
 		if len(watcher.watched) != len(test.expWatched) {
 			t.Errorf("Test %d: Expected len of watched %d, but got %d", i, len(test.expWatched), len(watcher.watched))
@@ -75,9 +80,16 @@ func TestWatch(t *testing.T) {
 func TestUnWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	d := &dummy{name}
-	watcher := NewWatcher()
-	watcher.Watch(d)
-	watcher.UnWatch(d)
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
+	if err := watcher.Watch(d); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", d, err)
+	}
+	if err := watcher.UnWatch(d); err != nil {
+		t.Fatalf("Couldn' UnWatch %s : %s", d, err)
+	}
 	if len(watcher.watched) != 0 {
 		t.Errorf("Expected watcheds be empty, but got %s", watcher.watched)
 	}
@@ -88,13 +100,22 @@ func TestUnWatchDirectory(t *testing.T) {
 	dir := "testdata"
 	d := &dummy{name}
 	d1 := NewWatchedDir(dir)
-	watcher := NewWatcher()
-	watcher.Watch(d)
-	watcher.Watch(d1)
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
+	if err := watcher.Watch(d); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", d, err)
+	}
+	if err := watcher.Watch(d1); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", d1, err)
+	}
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Fatalf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{"testdata"})
 	}
-	watcher.UnWatch(d1)
+	if err := watcher.UnWatch(d1); err != nil {
+		t.Fatalf("Couldn' UnWatch %s : %s", d1, err)
+	}
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{name})
 	}
@@ -104,13 +125,22 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 	name := "testdata/dummy.txt"
 	d1 := &dummy{name}
 	d2 := &dummy{name}
-	watcher := NewWatcher()
-	watcher.Watch(d1)
-	watcher.Watch(d2)
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
+	if err := watcher.Watch(d1); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", d1, err)
+	}
+	if err := watcher.Watch(d2); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", d2, err)
+	}
 	if len(watcher.watched[name]) != 2 {
 		t.Fatalf("Expected watched[%s] length be %d, but got %d", name, 2, len(watcher.watched[name]))
 	}
-	watcher.UnWatch(d1)
+	if err := watcher.UnWatch(d1); err != nil {
+		t.Fatalf("Couldn' UnWatch %s : %s", d1, err)
+	}
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", watcher.watchers, []string{name})
 	}
@@ -143,7 +173,10 @@ func (d *dumView) Text() string {
 
 func TestObserve(t *testing.T) {
 	name := "testdata/test.txt"
-	watcher := NewWatcher()
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
 	v := &dumView{name: name}
 	watcher.Watch(v)
 	go watcher.Observe()
@@ -161,9 +194,14 @@ func TestObserve(t *testing.T) {
 func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
 	name := "testdata/test.txt"
-	watcher := NewWatcher()
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
 	v := &dumView{name: dir}
-	watcher.Watch(v)
+	if err := watcher.Watch(v); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", v, err)
+	}
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
@@ -181,9 +219,14 @@ func TestObserveDirectory(t *testing.T) {
 
 func TestCreateEvent(t *testing.T) {
 	name := "testdata/new.txt"
-	watcher := NewWatcher()
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
 	v := &dumView{name: name}
-	watcher.Watch(v)
+	if err := watcher.Watch(v); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", v, err)
+	}
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
@@ -201,9 +244,14 @@ func TestCreateEvent(t *testing.T) {
 
 func TestDeleteEvent(t *testing.T) {
 	name := "testdata/dummy.txt"
-	watcher := NewWatcher()
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
 	v := &dumView{name: name}
-	watcher.Watch(v)
+	if err := watcher.Watch(v); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", v, err)
+	}
 	go watcher.Observe()
 
 	os.Remove(name)
@@ -221,9 +269,14 @@ func TestDeleteEvent(t *testing.T) {
 
 func TestRenameEvent(t *testing.T) {
 	name := "testdata/dummy.txt"
-	watcher := NewWatcher()
+	watcher, err := NewWatcher()
+	if err != nil {
+		t.Fatalf("Couldn't create watcher: %s", err)
+	}
 	v := &dumView{name: name}
-	watcher.Watch(v)
+	if err := watcher.Watch(v); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", v, err)
+	}
 	go watcher.Observe()
 
 	os.Rename(name, "testdata/rename.txt")

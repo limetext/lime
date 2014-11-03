@@ -208,7 +208,9 @@ func Init() {
 		defer sys.Decref()
 	}
 
-	watcher = watch.NewWatcher()
+	if watcher, err = watch.NewWatcher(); err != nil {
+		log.Error("Couldn't create watcher: %s", err)
+	}
 
 	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
@@ -216,7 +218,9 @@ func Init() {
 		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
 			pl := newPlugin(p, m)
 			pl.Reload()
-			watcher.Watch(pl)
+			if err := watcher.Watch(pl); err != nil {
+				log.Error("Couldn't watch %s: %s", pl.Name(), err)
+			}
 		}
 	}
 
