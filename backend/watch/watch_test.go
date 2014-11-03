@@ -178,7 +178,9 @@ func TestObserve(t *testing.T) {
 		t.Fatalf("Couldn't create watcher: %s", err)
 	}
 	v := &dumView{name: name}
-	watcher.Watch(v)
+	if err := watcher.Watch(v); err != nil {
+		t.Fatalf("Couldn' Watch %s : %s", v, err)
+	}
 	go watcher.Observe()
 
 	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
@@ -254,7 +256,9 @@ func TestDeleteEvent(t *testing.T) {
 	}
 	go watcher.Observe()
 
-	os.Remove(name)
+	if os.Remove(name); err != nil {
+		t.Fatalf("Couldn't remove file %s: %s", name, err)
+	}
 	time.Sleep(time.Millisecond * 50)
 	watcher.lock.Lock()
 	if !equal(watcher.watchers, []string{"testdata"}) {
