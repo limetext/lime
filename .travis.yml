@@ -10,3 +10,11 @@ install:
 script:
   - ./tasks/ci/lime.sh
   - ./tasks/ci/gofmt.sh
+
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/3e692a5224c8490f19bd
+    on_success: change
+    on_failure: always
+    on_start: false
