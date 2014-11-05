@@ -7,6 +7,7 @@ package backend
 import (
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/util"
+	"github.com/limetext/lime/backend/watch"
 	"strings"
 )
 
@@ -160,8 +161,7 @@ func init() {
 		return Unknown
 	})
 
-	OnLoad.Add(func(view *View) {
-		editor := GetEditor()
-		editor.Watch(view)
+	OnLoad.Add(func(v *View) {
+		GetEditor().Watch(v.Buffer().FileName(), "Reload", v.Reload, watch.MODIFY)
 	})
 }

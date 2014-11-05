@@ -218,7 +218,7 @@ func Init() {
 		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
 			pl := newPlugin(p, m)
 			pl.Reload()
-			if err := watcher.Watch(pl); err != nil {
+			if err := watcher.Watch(pl.Name(), "Reload", pl.Reload); err != nil {
 				log.Error("Couldn't watch %s: %s", pl.Name(), err)
 			}
 		}

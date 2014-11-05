@@ -1,0 +1,52 @@
+package watch
+
+const (
+	CREATE = 1 << iota
+	MODIFY
+	DELETE
+	RENAME
+
+	ALL = CREATE | MODIFY | DELETE | RENAME
+)
+
+type (
+	action struct {
+		fn func()
+		ev int
+	}
+
+	actions map[string]action
+)
+
+func (ac action) apply(ev int) {
+	if ac.ev&ev != 0 {
+		if ac.fn != nil {
+			ac.fn()
+		}
+	}
+}
+
+func (acs actions) apply(ev int, keys ...string) {
+	for _, key := range keys {
+		if ac, exist := acs[key]; exist {
+			ac.apply(ev)
+		}
+	}
+}
+
+func (acs actions) applyAll(ev int) {
+	for _, ac := range acs {
+		ac.apply(ev)
+	}
+}
+
+func newEvent(evs []int) int {
+	if len(evs) == 0 {
+		return ALL
+	}
+	event := 0
+	for _, ev := range evs {
+		event |= ev
+	}
+	return event
+}

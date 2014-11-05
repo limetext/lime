@@ -185,7 +185,7 @@ func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 		log.Error(err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg)
+		e.Watch(pkg.Name(), "Reload", pkg.Reload)
 	}
 	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
 }
@@ -201,7 +201,7 @@ func (e *Editor) loadSetting(pkg *packages.Packet) {
 		log.Error(err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg)
+		e.Watch(pkg.Name(), "Reload", pkg.Reload)
 	}
 }
 

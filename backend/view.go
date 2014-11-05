@@ -12,6 +12,7 @@ import (
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/textmate"
 	. "github.com/limetext/lime/backend/util"
+	"github.com/limetext/lime/backend/watch"
 	"github.com/limetext/rubex"
 	. "github.com/limetext/text"
 	"io/ioutil"
@@ -510,13 +511,9 @@ func (v *View) IsDirty() bool {
 	return v.buffer.ChangeCount() != lastSave
 }
 
-func (v *View) Name() string {
-	return v.buffer.FileName()
-}
-
 func (v *View) Reload() {
-	log.Finest("Reloading %s", v.Name())
-	filename := v.Name()
+	filename := v.buffer.FileName()
+	log.Finest("Reloading %s", filename)
 
 	if saving, ok := v.Settings().Get("lime.saving", false).(bool); ok && saving {
 		// This reload was triggered by ourselves saving to this file, so don't reload it
@@ -575,10 +572,12 @@ func (v *View) SaveAs(name string) (err error) {
 	}
 
 	ed := GetEditor()
-	if v.buffer.FileName() != name {
+	if fn := v.buffer.FileName(); fn != name {
 		v.Buffer().SetFileName(name)
-		ed.UnWatch(v)
-		ed.Watch(v)
+		if fn != "" {
+			ed.UnWatch(fn, "Reload")
+		}
+		ed.Watch(name, "Reload", v.Reload, watch.MODIFY)
 	}
 
 	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
@@ -709,7 +708,7 @@ func (v *View) Close() bool {
 		}
 	}
 	if n := v.buffer.FileName(); n != "" {
-		GetEditor().UnWatch(v)
+		GetEditor().UnWatch(n, "Reload")
 	}
 
 	// Call the event first while there's still access possible to the underlying
