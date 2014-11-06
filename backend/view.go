@@ -575,9 +575,10 @@ func (v *View) SaveAs(name string) (err error) {
 	if fn := v.buffer.FileName(); fn != name {
 		v.Buffer().SetFileName(name)
 		if fn != "" {
-			ed.UnWatch(fn, "Reload")
+			ed.Move(fn, name, "Reload")
+		} else {
+			ed.Watch(name, "Reload", v.Reload, watch.MODIFY)
 		}
-		ed.Watch(name, "Reload", v.Reload, watch.MODIFY)
 	}
 
 	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())

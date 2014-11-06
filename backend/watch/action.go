@@ -4,6 +4,7 @@
 
 package watch
 
+// File events
 const (
 	CREATE = 1 << iota
 	MODIFY
@@ -15,10 +16,11 @@ const (
 
 type (
 	action struct {
-		fn func()
-		ev int
+		fn func() // The function that will be applyed
+		ev int    // The events that we should apply the function
 	}
 
+	// Array of actions with a key as an identifier
 	actions map[string]action
 )
 

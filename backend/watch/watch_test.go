@@ -97,6 +97,13 @@ func TestWatch(t *testing.T) {
 	}
 }
 
+func TestWatchEmptyKey(t *testing.T) {
+	watcher := newWatcher(t)
+	if err := watcher.Watch("testdata/dummy.txt", "", dummy); err == nil {
+		t.Errorf("Expected watching with empty key retunr an error")
+	}
+}
+
 func Testwatch(t *testing.T) {
 	watcher := newWatcher(t)
 	if err := watcher.watch("testdata/dummy.txt"); err != nil {
@@ -238,6 +245,101 @@ func TestRemoveDir(t *testing.T) {
 	}
 	if !equal(watcher.watchers, []string{dir, name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
+	}
+}
+
+func TestMove(t *testing.T) {
+	tests := []struct {
+		watch       map[string]map[string]func()
+		move        string
+		dest        string
+		key         string
+		expWatchers []string
+		expDirs     []string
+		expWatched  []string
+		expKey      []string
+	}{
+		{
+			map[string]map[string]func(){
+				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
+			},
+			"testdata/dummy.txt",
+			"testdata/test.txt",
+			"key1",
+			[]string{"testdata/test.txt", "testdata/dummy.txt"},
+			[]string{},
+			[]string{"testdata/test.txt", "testdata/dummy.txt"},
+			[]string{"key1"},
+		},
+		{
+			map[string]map[string]func(){
+				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
+				"testdata/test.txt":  map[string]func(){"k1": dummy, "k2": dummy},
+			},
+			"testdata/dummy.txt",
+			"testdata/test.txt",
+			"key1",
+			[]string{"testdata/test.txt", "testdata/dummy.txt"},
+			[]string{},
+			[]string{"testdata/test.txt", "testdata/dummy.txt"},
+			[]string{"k1", "k2", "key1"},
+		},
+		{
+			map[string]map[string]func(){
+				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
+			},
+			"testdata/dummy.txt",
+			"testdata/test.txt",
+			"",
+			[]string{"testdata/test.txt"},
+			[]string{},
+			[]string{"testdata/test.txt"},
+			[]string{"key1", "key2"},
+		},
+		{
+			map[string]map[string]func(){
+				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
+			},
+			"testdata/dummy.txt",
+			"testdata",
+			"key1",
+			[]string{"testdata"},
+			[]string{"testdata"},
+			[]string{"testdata/dummy.txt", "testdata"},
+			[]string{"key1"},
+		},
+	}
+	for i, test := range tests {
+		watcher := newWatcher(t)
+		for name, acs := range test.watch {
+			for key, ac := range acs {
+				watch(t, watcher, name, key, ac)
+			}
+		}
+		if err := watcher.Move(test.move, test.dest, test.key); err != nil {
+			t.Fatalf("Test %d: Watcher Move error: %s", i, err)
+		}
+		if len(watcher.watched) != len(test.expWatched) {
+			t.Errorf("Test %d: Expected watched %v keys equal to %v", i, watcher.watched, test.expWatched)
+		}
+		for _, p := range test.expWatched {
+			if _, exist := watcher.watched[p]; !exist {
+				t.Errorf("Test %d: Expected %s exist in watcheds: %v", i, p, watcher.watched)
+			}
+		}
+		if !equal(test.expWatchers, watcher.watchers) {
+			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
+		}
+		if !equal(test.expDirs, watcher.dirs) {
+			t.Errorf("Test %d: Expected dirs %v, but got %v", i, test.expDirs, watcher.dirs)
+		}
+		keys := make([]string, 0)
+		for k, _ := range watcher.watched[test.dest] {
+			keys = append(keys, k)
+		}
+		if !equal(test.expKey, keys) {
+			t.Errorf("Test %d: Expected watched['%s'] keys %v, but got %v", i, test.dest, test.expKey, keys)
+		}
 	}
 }
 

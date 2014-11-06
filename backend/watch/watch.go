@@ -5,13 +5,22 @@
 package watch
 
 import (
-	"github.com/howeyc/fsnotify"
-	"github.com/limetext/lime/backend/log"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/howeyc/fsnotify"
+	"github.com/limetext/lime/backend/log"
 )
 
+// Wrapper around fsnotify watcher to suit lime needs
+// Enables:
+// 		- Watching directories, we will have less individual watchers
+// 		- Have multiple subscribers on one file or directory resolves #285
+// 		- Watching a path which doesn't exist yet
+// 		- Watching and applying action on certain events
 type Watcher struct {
 	wchr     *fsnotify.Watcher
 	watched  map[string]actions // All watched paths
@@ -34,13 +43,16 @@ func NewWatcher() (*Watcher, error) {
 
 func (w *Watcher) Watch(name, key string, act func(), events ...int) error {
 	log.Finest("Watch(%s)", name)
+	if key == "" {
+		return errors.New(fmt.Sprintf("Couldn't Watch(%s) with empty key", name))
+	}
 	fi, err := os.Stat(name)
 	isDir := err == nil && fi.IsDir()
 	// If the file doesn't exist currently we will add watcher for file
 	// directory and look for create event inside the directory
 	if os.IsNotExist(err) {
 		log.Debug("File doesn't exist, Watching parent dir")
-		if err := w.Watch(filepath.Dir(name), "", nil); err != nil {
+		if err := w.Watch(filepath.Dir(name), "Dir", nil); err != nil {
 			return err
 		}
 	}
@@ -149,6 +161,50 @@ func (w *Watcher) removeDir(name string) {
 	w.dirs = remove(w.dirs, name)
 }
 
+// Moves action with provided key(all acitons if key is empty)
+// To another path(dest)
+func (w *Watcher) Move(name, dest, key string) error {
+	log.Finest("Moving watched actions with key %s from %s to %s", key, name, dest)
+	w.lock.Lock()
+	acs, ex := w.watched[name]
+	w.lock.Unlock()
+	if !ex {
+		return errors.New(fmt.Sprintf("Moving path(%s) doesn't exists in watcheds", name))
+	}
+	if key != "" {
+		ac, ex := acs[key]
+		if !ex {
+			return errors.New(fmt.Sprintf("key(%s) doesn't exists in actions", key))
+		}
+		if err := w.move(name, dest, key, ac); err != nil {
+			return err
+		}
+		return w.UnWatch(name, key)
+	}
+	for k, ac := range acs {
+		if err := w.move(name, dest, k, ac); err != nil {
+			return err
+		}
+	}
+	return w.UnWatch(name, key)
+}
+
+func (w *Watcher) move(name, dest, key string, ac action) error {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	_, ex := w.watched[dest]
+	if ex {
+		w.watched[dest][key] = ac
+		return nil
+	}
+	w.lock.Unlock()
+	if err := w.Watch(dest, key, ac.fn, ac.ev); err != nil {
+		return err
+	}
+	w.lock.Lock()
+	return nil
+}
+
 func (w *Watcher) Observe() {
 	for {
 		select {
@@ -167,7 +223,7 @@ func (w *Watcher) Observe() {
 					if ev.IsDelete() {
 						w.watchers = remove(w.watchers, ev.Name)
 						w.lock.Unlock()
-						w.Watch(filepath.Dir(ev.Name), "", nil)
+						w.Watch(filepath.Dir(ev.Name), "Dir", nil)
 						w.lock.Lock()
 					}
 					// We will apply parent directory actions to, if one of the files
