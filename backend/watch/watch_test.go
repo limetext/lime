@@ -1,3 +1,7 @@
+// Copyright 2014 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
+
 package watch
 
 import (
@@ -35,7 +39,7 @@ func watch(t *testing.T, watcher *Watcher, name, key string, act func()) {
 }
 
 func unwatch(t *testing.T, watcher *Watcher, name, key string) {
-	if err := watcher.UnWatch(name, "test"); err != nil {
+	if err := watcher.UnWatch(name, key); err != nil {
 		t.Fatalf("Couldn' UnWatch %s : %s", name, err)
 	}
 }
@@ -107,11 +111,28 @@ func Testwatch(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-
+	watcher := newWatcher(t)
+	watcher.add("test", "key", dummy, CREATE)
+	if ev := watcher.watched["test"]["key"].ev; ev != CREATE {
+		t.Errorf("Expected watcher['test']['key'] event equal to %d, but got %d", CREATE, ev)
+	}
 }
 
 func TestFlushDir(t *testing.T) {
-
+	name := "testdata/dummy.txt"
+	dir := "testdata"
+	watcher := newWatcher(t)
+	watch(t, watcher, name, "key", dummy)
+	if !equal(watcher.watchers, []string{name}) {
+		t.Errorf("Expected watchers equal to %v, but got %v", []string{name}, watcher.watchers)
+	}
+	watcher.flushDir(dir)
+	if !equal(watcher.dirs, []string{dir}) {
+		t.Errorf("Expected dirs equal to %v, but got %v", []string{dir}, watcher.dirs)
+	}
+	if !equal(watcher.watchers, []string{}) {
+		t.Errorf("Expected watchers equal to %v, but got %v", []string{}, watcher.watchers)
+	}
 }
 
 func TestUnWatch(t *testing.T) {
@@ -120,12 +141,25 @@ func TestUnWatch(t *testing.T) {
 	watch(t, watcher, name, "test", dummy)
 	unwatch(t, watcher, name, "test")
 	if len(watcher.watched) != 0 {
-		t.Errorf("Expected watcheds be empty, but got %s", watcher.watched)
+		t.Errorf("Expected watcheds be empty, but got %v", watcher.watched)
 	}
 }
 
 func TestUnWatchAll(t *testing.T) {
-
+	name := "testdata/dummy.txt"
+	watcher := newWatcher(t)
+	watch(t, watcher, name, "key1", dummy)
+	watch(t, watcher, name, "key2", dummy)
+	if l := len(watcher.watched[name]); l != 2 {
+		t.Errorf("Expected len of watched['%s'] be %d, but got %d", name, 2, l)
+	}
+	unwatch(t, watcher, name, "")
+	if _, exist := watcher.watched[name]; exist {
+		t.Errorf("Expected all %s watched be removed", name)
+	}
+	if !equal(watcher.watchers, []string{}) {
+		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
+	}
 }
 
 func TestUnWatchDirectory(t *testing.T) {
@@ -161,15 +195,50 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 }
 
 func TestunWatch(t *testing.T) {
-
+	name := "testdata/dummy.txt"
+	watcher := newWatcher(t)
+	watch(t, watcher, name, "key1", dummy)
+	watch(t, watcher, name, "key2", dummy)
+	if err := watcher.unWatch(name); err != nil {
+		t.Fatalf("Couldn't unWatch %s: %s", name, err)
+	}
+	if _, exist := watcher.watched[name]; exist {
+		t.Errorf("Expected all %s watched be removed", name)
+	}
+	if !equal(watcher.watchers, []string{}) {
+		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
+	}
 }
 
 func TestRemoveWatch(t *testing.T) {
-
+	name := "testdata/dummy.txt"
+	watcher := newWatcher(t)
+	watch(t, watcher, name, "key", dummy)
+	watcher.removeWatch(name)
+	if !equal(watcher.watchers, []string{}) {
+		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
+	}
 }
 
 func TestRemoveDir(t *testing.T) {
-
+	name := "testdata/dummy.txt"
+	dir := "testdata"
+	watcher := newWatcher(t)
+	watch(t, watcher, dir, "key", dummy)
+	watch(t, watcher, name, "key", dummy)
+	if !equal(watcher.watchers, []string{dir}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", []string{dir}, watcher.watchers)
+	}
+	if !equal(watcher.dirs, []string{dir}) {
+		t.Errorf("Expected dirs be equal to %s, but got %s", []string{dir}, watcher.dirs)
+	}
+	watcher.removeDir(dir)
+	if !equal(watcher.dirs, []string{}) {
+		t.Errorf("Expected dirs be empty but got %v", watcher.dirs)
+	}
+	if !equal(watcher.watchers, []string{dir, name}) {
+		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
+	}
 }
 
 type dumView struct {

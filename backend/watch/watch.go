@@ -1,3 +1,7 @@
+// Copyright 2014 The lime Authors.
+// Use of this source code is governed by a 2-clause
+// BSD-style license that can be found in the LICENSE file.
+
 package watch
 
 import (
@@ -79,13 +83,13 @@ func (w *Watcher) add(name, key string, act func(), ev int) {
 	w.watched[name][key] = action{act, ev}
 }
 
-// If name refers to a directory and we created watcher on it we
-// will remove watchers created on files under this directory because
+// Remove watchers created on files under this directory because
 // one watcher on the parent directory is enough for all of them
 func (w *Watcher) flushDir(name string) {
-	if !exist(w.dirs, name) {
-		w.dirs = append(w.dirs, name)
+	if exist(w.dirs, name) {
+		return
 	}
+	w.dirs = append(w.dirs, name)
 	for _, p := range w.watchers {
 		if filepath.Dir(p) != name {
 			continue
@@ -131,7 +135,7 @@ func (w *Watcher) removeWatch(name string) error {
 	return nil
 }
 
-// put back watchers on watching files under the directory
+// Put back watchers on watching files under the directory
 func (w *Watcher) removeDir(name string) {
 	for p, _ := range w.watched {
 		if filepath.Dir(p) == name {
