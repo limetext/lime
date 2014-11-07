@@ -13,4 +13,5 @@
 	{ "keys": ["ctrl+c"], "command": "copy"},
 	{ "keys": ["ctrl+x"], "command": "cut"},
 	{ "keys": ["ctrl+v"], "command": "paste"},
+	{ "keys": ["ctrl+t"], "command": "transpose"},
 ]
