@@ -3,6 +3,8 @@
 [![GoDoc](https://godoc.org/github.com/limetext/lime?status.svg)](https://godoc.org/github.com/limetext/lime)
 [![Bug Reports](https://badge.waffle.io/limetext/lime.svg?label=bug&title=bug%20reports)](http://waffle.io/limetext/lime)
 
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 
 # Status
 

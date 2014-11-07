@@ -3,4 +3,4 @@ SOURCES = \
 	dialogs/*.qml
 
 TRANSLATIONS = \
-	locales/lime_fr.ts
+	i18n/lime_fr.ts
