@@ -212,6 +212,9 @@ func (w *Watcher) Observe() {
 			func() {
 				w.lock.Lock()
 				defer w.lock.Unlock()
+				if ev == nil {
+					return
+				}
 				event := evnt(*ev)
 				if acs, ex := w.watched[ev.Name]; ex {
 					acs.applyAll(event)
@@ -222,8 +225,11 @@ func (w *Watcher) Observe() {
 					// file is created again
 					if ev.IsDelete() {
 						w.watchers = remove(w.watchers, ev.Name)
+						dir := filepath.Dir(ev.Name)
 						w.lock.Unlock()
-						w.Watch(filepath.Dir(ev.Name), "Dir", nil)
+						if !exist(w.dirs, dir) {
+							w.Watch(dir, "Dir", nil)
+						}
 						w.lock.Lock()
 					}
 					// We will apply parent directory actions to, if one of the files
