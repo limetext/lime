@@ -7,7 +7,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"code.google.com/p/go.net/websocket"
 	"flag"
 	"fmt"
 	"github.com/limetext/gopy/lib"
@@ -20,6 +19,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
+	"golang.org/x/net/websocket"
 	"io"
 	"io/ioutil"
 	"net/http"
