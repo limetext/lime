@@ -32,19 +32,17 @@ func newWatcher(t *testing.T) *Watcher {
 	return watcher
 }
 
-func watch(t *testing.T, watcher *Watcher, name, key string, act func()) {
-	if err := watcher.Watch(name, key, act); err != nil {
+func watch(t *testing.T, watcher *Watcher, name string, cb interface{}) {
+	if err := watcher.Watch(name, cb); err != nil {
 		t.Fatalf("Couldn' Watch %s : %s", name, err)
 	}
 }
 
-func unwatch(t *testing.T, watcher *Watcher, name, key string) {
-	if err := watcher.UnWatch(name, key); err != nil {
+func unwatch(t *testing.T, watcher *Watcher, name string, cb interface{}) {
+	if err := watcher.UnWatch(name, cb); err != nil {
 		t.Fatalf("Couldn' UnWatch %s : %s", name, err)
 	}
 }
-
-func dummy() {}
 
 func TestNewWatcher(t *testing.T) {
 	watcher := newWatcher(t)
@@ -55,6 +53,42 @@ func TestNewWatcher(t *testing.T) {
 	if len(watcher.watchers) != 0 {
 		t.Errorf("Expected len(watchers) of new watcher %d, but got %d", 0, len(watcher.watchers))
 	}
+}
+
+type dummy struct {
+	text string
+	name string
+	lock sync.Mutex
+}
+
+func (d *dummy) FileChanged(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.text = "Changed"
+}
+
+func (d *dummy) FileCreated(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.text = "Created"
+}
+
+func (d *dummy) FileRemoved(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.text = "Removed"
+}
+
+func (d *dummy) FileRenamed(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	d.text = "Renamed"
+}
+
+func (d *dummy) Text() string {
+	d.lock.Lock()
+	defer d.lock.Unlock()
+	return d.text
 }
 
 func TestWatch(t *testing.T) {
@@ -79,10 +113,11 @@ func TestWatch(t *testing.T) {
 			[]string{"testdata"},
 		},
 	}
+	d := new(dummy)
 	for i, test := range tests {
 		watcher := newWatcher(t)
-		for j, name := range test.paths {
-			watch(t, watcher, name, string(j), dummy)
+		for _, name := range test.paths {
+			watch(t, watcher, name, d)
 		}
 		if len(watcher.watched) != len(test.expWatched) {
 			t.Errorf("Test %d: Expected watched %v keys equal to %v", i, watcher.watched, test.expWatched)
@@ -96,14 +131,6 @@ func TestWatch(t *testing.T) {
 			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
 		}
 		watcher.wchr.Close()
-	}
-}
-
-func TestWatchEmptyKey(t *testing.T) {
-	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
-	if err := watcher.Watch("testdata/dummy.txt", "", dummy); err == nil {
-		t.Errorf("Expected watching with empty key retunr an error")
 	}
 }
 
@@ -124,9 +151,10 @@ func Testwatch(t *testing.T) {
 func TestAdd(t *testing.T) {
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watcher.add("test", "key", dummy, CREATE)
-	if ev := watcher.watched["test"]["key"].ev; ev != CREATE {
-		t.Errorf("Expected watcher['test']['key'] event equal to %d, but got %d", CREATE, ev)
+	d := new(dummy)
+	watcher.add("test", d)
+	if cb := watcher.watched["test"][0]; cb != d {
+		t.Errorf("Expected watcher['test'][0] callback equal to %d, but got %d", d, cb)
 	}
 }
 
@@ -135,7 +163,8 @@ func TestFlushDir(t *testing.T) {
 	dir := "testdata"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "key", dummy)
+	d := new(dummy)
+	watch(t, watcher, name, d)
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers equal to %v, but got %v", []string{name}, watcher.watchers)
 	}
@@ -152,8 +181,9 @@ func TestUnWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "test", dummy)
-	unwatch(t, watcher, name, "test")
+	d := new(dummy)
+	watch(t, watcher, name, d)
+	unwatch(t, watcher, name, d)
 	if len(watcher.watched) != 0 {
 		t.Errorf("Expected watcheds be empty, but got %v", watcher.watched)
 	}
@@ -163,12 +193,14 @@ func TestUnWatchAll(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "key1", dummy)
-	watch(t, watcher, name, "key2", dummy)
+	d1 := new(dummy)
+	d2 := new(dummy)
+	watch(t, watcher, name, d1)
+	watch(t, watcher, name, d2)
 	if l := len(watcher.watched[name]); l != 2 {
 		t.Errorf("Expected len of watched['%s'] be %d, but got %d", name, 2, l)
 	}
-	unwatch(t, watcher, name, "")
+	unwatch(t, watcher, name, nil)
 	if _, exist := watcher.watched[name]; exist {
 		t.Errorf("Expected all %s watched be removed", name)
 	}
@@ -182,12 +214,13 @@ func TestUnWatchDirectory(t *testing.T) {
 	dir := "testdata"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "test", dummy)
-	watch(t, watcher, dir, "test", nil)
+	d := new(dummy)
+	watch(t, watcher, name, d)
+	watch(t, watcher, dir, nil)
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Fatalf("Expected watchers be equal to %s, but got %s", []string{"testdata"}, watcher.watchers)
 	}
-	unwatch(t, watcher, dir, "test")
+	unwatch(t, watcher, dir, nil)
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
 	}
@@ -197,12 +230,14 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "test", dummy)
-	watch(t, watcher, name, "test2", dummy)
+	d1 := new(dummy)
+	d2 := new(dummy)
+	watch(t, watcher, name, d1)
+	watch(t, watcher, name, d2)
 	if len(watcher.watched[name]) != 2 {
 		t.Fatalf("Expected watched[%s] length be %d, but got %d", name, 2, len(watcher.watched[name]))
 	}
-	unwatch(t, watcher, name, "test")
+	unwatch(t, watcher, name, d1)
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
 	}
@@ -215,8 +250,10 @@ func TestunWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "key1", dummy)
-	watch(t, watcher, name, "key2", dummy)
+	d1 := new(dummy)
+	d2 := new(dummy)
+	watch(t, watcher, name, d1)
+	watch(t, watcher, name, d2)
 	if err := watcher.unWatch(name); err != nil {
 		t.Fatalf("Couldn't unWatch %s: %s", name, err)
 	}
@@ -232,7 +269,8 @@ func TestRemoveWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, name, "key", dummy)
+	d := new(dummy)
+	watch(t, watcher, name, d)
 	watcher.removeWatch(name)
 	if !equal(watcher.watchers, []string{}) {
 		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
@@ -244,8 +282,9 @@ func TestRemoveDir(t *testing.T) {
 	dir := "testdata"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	watch(t, watcher, dir, "key", dummy)
-	watch(t, watcher, name, "key", dummy)
+	d := new(dummy)
+	watch(t, watcher, dir, d)
+	watch(t, watcher, name, d)
 	if !equal(watcher.watchers, []string{dir}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{dir}, watcher.watchers)
 	}
@@ -261,138 +300,20 @@ func TestRemoveDir(t *testing.T) {
 	}
 }
 
-func TestMove(t *testing.T) {
-	tests := []struct {
-		watch       map[string]map[string]func()
-		move        string
-		dest        string
-		key         string
-		expWatchers []string
-		expDirs     []string
-		expWatched  []string
-		expKey      []string
-	}{
-		{
-			map[string]map[string]func(){
-				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
-			},
-			"testdata/dummy.txt",
-			"testdata/test.txt",
-			"key1",
-			[]string{"testdata/test.txt", "testdata/dummy.txt"},
-			[]string{},
-			[]string{"testdata/test.txt", "testdata/dummy.txt"},
-			[]string{"key1"},
-		},
-		{
-			map[string]map[string]func(){
-				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
-				"testdata/test.txt":  map[string]func(){"k1": dummy, "k2": dummy},
-			},
-			"testdata/dummy.txt",
-			"testdata/test.txt",
-			"key1",
-			[]string{"testdata/test.txt", "testdata/dummy.txt"},
-			[]string{},
-			[]string{"testdata/test.txt", "testdata/dummy.txt"},
-			[]string{"k1", "k2", "key1"},
-		},
-		{
-			map[string]map[string]func(){
-				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
-			},
-			"testdata/dummy.txt",
-			"testdata/test.txt",
-			"",
-			[]string{"testdata/test.txt"},
-			[]string{},
-			[]string{"testdata/test.txt"},
-			[]string{"key1", "key2"},
-		},
-		{
-			map[string]map[string]func(){
-				"testdata/dummy.txt": map[string]func(){"key1": dummy, "key2": dummy},
-			},
-			"testdata/dummy.txt",
-			"testdata",
-			"key1",
-			[]string{"testdata"},
-			[]string{"testdata"},
-			[]string{"testdata/dummy.txt", "testdata"},
-			[]string{"key1"},
-		},
-	}
-	for i, test := range tests {
-		watcher := newWatcher(t)
-		for name, acs := range test.watch {
-			for key, ac := range acs {
-				watch(t, watcher, name, key, ac)
-			}
-		}
-		if err := watcher.Move(test.move, test.dest, test.key); err != nil {
-			t.Fatalf("Test %d: Watcher Move error: %s", i, err)
-		}
-		if len(watcher.watched) != len(test.expWatched) {
-			t.Errorf("Test %d: Expected watched %v keys equal to %v", i, watcher.watched, test.expWatched)
-		}
-		for _, p := range test.expWatched {
-			if _, exist := watcher.watched[p]; !exist {
-				t.Errorf("Test %d: Expected %s exist in watcheds: %v", i, p, watcher.watched)
-			}
-		}
-		if !equal(test.expWatchers, watcher.watchers) {
-			t.Errorf("Test %d: Expected watchers %v, but got %v", i, test.expWatchers, watcher.watchers)
-		}
-		if !equal(test.expDirs, watcher.dirs) {
-			t.Errorf("Test %d: Expected dirs %v, but got %v", i, test.expDirs, watcher.dirs)
-		}
-		keys := make([]string, 0)
-		for k, _ := range watcher.watched[test.dest] {
-			keys = append(keys, k)
-		}
-		if !equal(test.expKey, keys) {
-			t.Errorf("Test %d: Expected watched['%s'] keys %v, but got %v", i, test.dest, test.expKey, keys)
-		}
-		watcher.wchr.Close()
-	}
-}
-
-type dumView struct {
-	text string
-	name string
-	lock sync.Mutex
-}
-
-func (d *dumView) Reload() {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-	d.text = "Reloaded"
-}
-
-func (d *dumView) Name() string {
-	return d.name
-}
-
-func (d *dumView) Text() string {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-	return d.text
-}
-
 func TestObserve(t *testing.T) {
 	name := "testdata/test.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	v := &dumView{name: name}
-	watch(t, watcher, name, "test", v.Reload)
+	d := &dummy{name: name}
+	watch(t, watcher, name, d)
 	go watcher.Observe()
 
 	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text() != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
+	if d.Text() != "Changed" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Changed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -402,8 +323,8 @@ func TestObserveDirectory(t *testing.T) {
 	name := "testdata/test.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	v := &dumView{name: dir}
-	watch(t, watcher, dir, "test", v.Reload)
+	d := &dummy{name: dir}
+	watch(t, watcher, dir, d)
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
@@ -413,8 +334,8 @@ func TestObserveDirectory(t *testing.T) {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text() != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
+	if d.Text() != "Changed" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Changed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -423,19 +344,19 @@ func TestCreateEvent(t *testing.T) {
 	name := "testdata/new.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	v := &dumView{name: name}
-	watch(t, watcher, name, "test", v.Reload)
+	d := &dummy{name: name}
+	watch(t, watcher, name, d)
 	go watcher.Observe()
 
 	if !equal(watcher.watchers, []string{"testdata"}) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
-	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
+	if err := ioutil.WriteFile(name, []byte(""), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
 	time.Sleep(time.Millisecond * 50)
-	if v.Text() != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
+	if d.Text() != "Created" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Created", d.Text())
 	}
 	os.Remove(name)
 }
@@ -444,8 +365,8 @@ func TestDeleteEvent(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	v := &dumView{name: name}
-	watch(t, watcher, name, "test", v.Reload)
+	d := &dummy{name: name}
+	watch(t, watcher, name, d)
 	go watcher.Observe()
 
 	if err := os.Remove(name); err != nil {
@@ -457,8 +378,8 @@ func TestDeleteEvent(t *testing.T) {
 		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
 	}
 	watcher.lock.Unlock()
-	if v.Text() != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
+	if d.Text() != "Removed" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Removed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -467,14 +388,14 @@ func TestRenameEvent(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
-	v := &dumView{name: name}
-	watch(t, watcher, name, "test", v.Reload)
+	d := &dummy{name: name}
+	watch(t, watcher, name, d)
 	go watcher.Observe()
 
 	os.Rename(name, "testdata/rename.txt")
 	time.Sleep(time.Millisecond * 50)
-	if v.Text() != "Reloaded" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Reloaded", v.Text())
+	if d.Text() != "Renamed" {
+		t.Errorf("Expected dumView Text %s, but got %s", "Renamed", d.Text())
 	}
 	os.Rename("testdata/rename.txt", name)
 }

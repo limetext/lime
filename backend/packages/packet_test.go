@@ -31,7 +31,7 @@ func TestPacket(t *testing.T) {
 		if err := ioutil.WriteFile(test.path, []byte(test.data), 0644); err != nil {
 			t.Fatalf("Test %d: Can't write file: %s", i, err)
 		}
-		s.Reload()
+		s.Load()
 		if d1 := s.Get().([]byte); test.data != string(d1) {
 			t.Errorf("Test %d: Expected %s but, got %s", i, test.data, string(d1))
 		}

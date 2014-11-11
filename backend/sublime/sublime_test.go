@@ -13,7 +13,6 @@ import (
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/util"
-	"github.com/limetext/lime/backend/watch"
 	"github.com/limetext/text"
 	"io/ioutil"
 	"os"
@@ -49,8 +48,8 @@ func TestSublime(t *testing.T) {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
 			pl := newPlugin(p, m)
-			pl.Reload()
-			if err := watcher.Watch(pl.Name(), "Reload", pl.Reload, watch.MODIFY); err != nil {
+			pl.reload()
+			if err := watcher.Watch(pl.Name(), pl); err != nil {
 				t.Fatalf("Couldn't watch %s: %s", pl.Name(), err)
 			}
 		}

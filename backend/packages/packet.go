@@ -51,7 +51,7 @@ func (p *Packet) Get() interface{} {
 }
 
 // Forces editor to load the packet again
-func (p *Packet) Reload() {
+func (p *Packet) FileChanged() {
 	p.Load()
 }
 
@@ -69,7 +69,7 @@ func (p *Packet) UnmarshalJSON(data []byte) error {
 
 // Returns packet type(settings, commands, keymaps, ...)
 func (p *Packet) group() string {
-	for _, key := range Types {
+	for _, key := range types {
 		if strings.Contains(filepath.Ext(p.Name()), key) {
 			return key
 		}
@@ -99,7 +99,7 @@ func ScanPackets(path string) Packets {
 			return err
 		}
 		s := filepath.Ext(info.Name())
-		for _, t := range Types {
+		for _, t := range types {
 			if t != "settings" && strings.Contains(s, t) {
 				packets = append(packets, NewPacket(path, new(keys.KeyBindings)))
 			}

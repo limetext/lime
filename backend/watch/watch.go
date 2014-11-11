@@ -6,7 +6,6 @@ package watch
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -15,57 +14,71 @@ import (
 	"github.com/limetext/lime/backend/log"
 )
 
-// Wrapper around fsnotify watcher to suit lime needs
-// Enables:
-// 		- Watching directories, we will have less individual watchers
-// 		- Have multiple subscribers on one file or directory resolves #285
-// 		- Watching a path which doesn't exist yet
-// 		- Watching and applying action on certain events
-type Watcher struct {
-	wchr     *fsnotify.Watcher
-	watched  map[string]actions // All watched paths
-	watchers []string           // helper variable for paths we created watcher on
-	dirs     []string           // helper variable for dirs we are watching
-	lock     sync.Mutex
-}
+type (
+	FileChangedCallback interface {
+		FileChanged(string)
+	}
+	FileCreatedCallback interface {
+		FileCreated(string)
+	}
+	FileRemovedCallback interface {
+		FileRemoved(string)
+	}
+	FileRenamedCallback interface {
+		FileRenamed(string)
+	}
+
+	// Wrapper around fsnotify watcher to suit lime needs
+	// Enables:
+	// 		- Watching directories, we will have less individual watchers
+	// 		- Have multiple subscribers on one file or directory resolves #285
+	// 		- Watching a path which doesn't exist yet
+	// 		- Watching and applying action on certain events
+	Watcher struct {
+		wchr     *fsnotify.Watcher
+		watched  map[string][]interface{}
+		watchers []string // helper variable for paths we created watcher on
+		dirs     []string // helper variable for dirs we are watching
+		lock     sync.Mutex
+	}
+)
 
 func NewWatcher() (*Watcher, error) {
 	wchr, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
-	watched := make(map[string]actions)
-	watchers := make([]string, 0)
-	dirs := make([]string, 0)
+	w := &Watcher{wchr: wchr}
+	w.watched = make(map[string][]interface{})
+	w.watchers = make([]string, 0)
+	w.dirs = make([]string, 0)
 
-	return &Watcher{wchr: wchr, watched: watched, watchers: watchers, dirs: dirs}, nil
+	return w, nil
 }
 
-func (w *Watcher) Watch(name, key string, act func(), events ...int) error {
+func (w *Watcher) Watch(name string, cb interface{}) error {
 	log.Finest("Watch(%s)", name)
-	if key == "" {
-		return errors.New(fmt.Sprintf("Couldn't Watch(%s) with empty key", name))
-	}
 	fi, err := os.Stat(name)
 	isDir := err == nil && fi.IsDir()
 	// If the file doesn't exist currently we will add watcher for file
 	// directory and look for create event inside the directory
 	if os.IsNotExist(err) {
 		log.Debug("File doesn't exist, Watching parent dir")
-		if err := w.Watch(filepath.Dir(name), "Dir", nil); err != nil {
+		if err := w.Watch(filepath.Dir(name), nil); err != nil {
 			return err
 		}
 	}
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	if exist(w.dirs, name) && act == nil {
-		return nil
+	if err := w.add(name, cb); err != nil {
+		if !isDir || exist(w.dirs, name) {
+			return err
+		}
 	}
-	w.add(name, key, act, newEvent(events))
 	// If exists in watchers we are already watching the path
-	// no need to watch again just adding the action
 	// Or
 	// If the file is under one of watched dirs
+	//
 	// no need to create watcher
 	if exist(w.watchers, name) || (!isDir && exist(w.dirs, filepath.Dir(name))) {
 		return nil
@@ -79,20 +92,33 @@ func (w *Watcher) Watch(name, key string, act func(), events ...int) error {
 	return nil
 }
 
+func (w *Watcher) add(name string, cb interface{}) error {
+	numok := 0
+	if _, ok := cb.(FileChangedCallback); ok {
+		numok++
+	}
+	if _, ok := cb.(FileCreatedCallback); ok {
+		numok++
+	}
+	if _, ok := cb.(FileRemovedCallback); ok {
+		numok++
+	}
+	if _, ok := cb.(FileRenamedCallback); ok {
+		numok++
+	}
+	if numok == 0 {
+		return errors.New("The callback argument does satisfy any File*Callback interfaces")
+	}
+	w.watched[name] = append(w.watched[name], cb)
+	return nil
+}
+
 func (w *Watcher) watch(name string) error {
 	if err := w.wchr.Watch(name); err != nil {
 		return err
 	}
 	w.watchers = append(w.watchers, name)
 	return nil
-}
-
-func (w *Watcher) add(name, key string, act func(), ev int) {
-	_, exist := w.watched[name]
-	if !exist {
-		w.watched[name] = make(actions)
-	}
-	w.watched[name][key] = action{act, ev}
 }
 
 // Remove watchers created on files under this directory because
@@ -103,38 +129,39 @@ func (w *Watcher) flushDir(name string) {
 	}
 	w.dirs = append(w.dirs, name)
 	for _, p := range w.watchers {
-		if filepath.Dir(p) != name {
-			continue
+		if filepath.Dir(p) == name {
+			if err := w.removeWatch(p); err != nil {
+				log.Error("Couldn't unwatch file %s: %s", p, err)
+			}
 		}
-		if err := w.wchr.RemoveWatch(p); err != nil {
-			log.Error("Couldn't unwatch file %s: %s", p, err)
-			continue
-		}
-		w.watchers = remove(w.watchers, p)
 	}
 }
 
-func (w *Watcher) UnWatch(name, key string) error {
+func (w *Watcher) UnWatch(name string, cb interface{}) error {
 	log.Finest("UnWatch(%s)", name)
 	w.lock.Lock()
 	defer w.lock.Unlock()
-	if key == "" {
+	if cb == nil {
 		return w.unWatch(name)
 	}
-	delete(w.watched[name], key)
+	for i, c := range w.watched[name] {
+		if c == cb {
+			w.watched[name][i] = w.watched[name][len(w.watched[name])-1]
+			w.watched[name][len(w.watched[name])-1] = nil
+			w.watched[name] = w.watched[name][:len(w.watched[name])-1]
+			break
+		}
+	}
 	if len(w.watched[name]) == 0 {
-		return w.unWatch(name)
+		w.unWatch(name)
 	}
 	return nil
 }
 
 func (w *Watcher) unWatch(name string) error {
+	delete(w.watched, name)
 	if err := w.removeWatch(name); err != nil {
 		return err
-	}
-	delete(w.watched, name)
-	if exist(w.dirs, name) {
-		w.removeDir(name)
 	}
 	return nil
 }
@@ -144,6 +171,9 @@ func (w *Watcher) removeWatch(name string) error {
 		return err
 	}
 	w.watchers = remove(w.watchers, name)
+	if exist(w.dirs, name) {
+		w.removeDir(name)
+	}
 	return nil
 }
 
@@ -151,58 +181,13 @@ func (w *Watcher) removeWatch(name string) error {
 func (w *Watcher) removeDir(name string) {
 	for p, _ := range w.watched {
 		if filepath.Dir(p) == name {
-			if err := w.wchr.Watch(p); err != nil {
+			if err := w.watch(p); err != nil {
 				log.Error("Could not watch: %s", err)
 				continue
 			}
-			w.watchers = append(w.watchers, p)
 		}
 	}
 	w.dirs = remove(w.dirs, name)
-}
-
-// Moves action with provided key(all acitons if key is empty)
-// To another path(dest)
-func (w *Watcher) Move(name, dest, key string) error {
-	log.Finest("Moving watched actions with key %s from %s to %s", key, name, dest)
-	w.lock.Lock()
-	acs, ex := w.watched[name]
-	w.lock.Unlock()
-	if !ex {
-		return errors.New(fmt.Sprintf("Moving path(%s) doesn't exists in watcheds", name))
-	}
-	if key != "" {
-		ac, ex := acs[key]
-		if !ex {
-			return errors.New(fmt.Sprintf("key(%s) doesn't exists in actions", key))
-		}
-		if err := w.move(name, dest, key, ac); err != nil {
-			return err
-		}
-		return w.UnWatch(name, key)
-	}
-	for k, ac := range acs {
-		if err := w.move(name, dest, k, ac); err != nil {
-			return err
-		}
-	}
-	return w.UnWatch(name, key)
-}
-
-func (w *Watcher) move(name, dest, key string, ac action) error {
-	w.lock.Lock()
-	defer w.lock.Unlock()
-	_, ex := w.watched[dest]
-	if ex {
-		w.watched[dest][key] = ac
-		return nil
-	}
-	w.lock.Unlock()
-	if err := w.Watch(dest, key, ac.fn, ac.ev); err != nil {
-		return err
-	}
-	w.lock.Lock()
-	return nil
 }
 
 func (w *Watcher) Observe() {
@@ -215,37 +200,38 @@ func (w *Watcher) Observe() {
 				if ev == nil {
 					return
 				}
-				event := evnt(*ev)
-				if acs, ex := w.watched[ev.Name]; ex {
-					acs.applyAll(event)
-				}
-				if !exist(w.dirs, ev.Name) {
-					// The watcher will be removed if the file is deleted
-					// so we need to watch the parent directory for when the
-					// file is created again
-					if ev.IsDelete() {
-						w.watchers = remove(w.watchers, ev.Name)
-						dir := filepath.Dir(ev.Name)
-						w.lock.Unlock()
-						if !exist(w.dirs, dir) {
-							w.Watch(dir, "Dir", nil)
+				w.apply(*ev)
+				name := ev.Name
+				// If the name refers to a directory run all watched
+				// callbacks for wathed files under the directory
+				if exist(w.dirs, name) {
+					for p, _ := range w.watched {
+						if filepath.Dir(p) == name {
+							ev.Name = p
+							w.apply(*ev)
 						}
-						w.lock.Lock()
-					}
-					// We will apply parent directory actions to, if one of the files
-					// inside the directory has changed
-					if acs, ex := w.watched[filepath.Dir(ev.Name)]; ex {
-						acs.applyAll(event)
-					}
-					return
-				}
-				// If the ev.Name refers to a directory run all watched actions
-				// for wathed files under the directory
-				for p, acs := range w.watched {
-					if filepath.Dir(p) == ev.Name {
-						acs.applyAll(event)
 					}
 				}
+				dir := filepath.Dir(name)
+				// The watcher will be removed if the file is deleted
+				// so we need to watch the parent directory for when the
+				// file is created again
+				if ev.IsDelete() {
+					w.watchers = remove(w.watchers, name)
+					w.lock.Unlock()
+					w.Watch(dir, nil)
+					w.lock.Lock()
+				}
+				// We will apply parent directory FileChanged callbacks to,
+				// if one of the files inside the directory has changed
+				if cbs, exist := w.watched[dir]; ev.IsModify() && exist {
+					for _, cb := range cbs {
+						if c, ok := cb.(FileChangedCallback); ok {
+							c.FileChanged(dir)
+						}
+					}
+				}
+
 			}()
 		case err := <-w.wchr.Error:
 			log.Error("Watcher error: %s", err)
@@ -253,19 +239,27 @@ func (w *Watcher) Observe() {
 	}
 }
 
-func evnt(ev fsnotify.FileEvent) int {
-	event := 0
-	if ev.IsCreate() {
-		event |= CREATE
+func (w *Watcher) apply(ev fsnotify.FileEvent) {
+	for _, cb := range w.watched[ev.Name] {
+		if ev.IsCreate() {
+			if c, ok := cb.(FileCreatedCallback); ok {
+				c.FileCreated(ev.Name)
+			}
+		}
+		if ev.IsModify() {
+			if c, ok := cb.(FileChangedCallback); ok {
+				c.FileChanged(ev.Name)
+			}
+		}
+		if ev.IsDelete() {
+			if c, ok := cb.(FileRemovedCallback); ok {
+				c.FileRemoved(ev.Name)
+			}
+		}
+		if ev.IsRename() {
+			if c, ok := cb.(FileRenamedCallback); ok {
+				c.FileRenamed(ev.Name)
+			}
+		}
 	}
-	if ev.IsDelete() {
-		event |= DELETE
-	}
-	if ev.IsModify() {
-		event |= MODIFY
-	}
-	if ev.IsRename() {
-		event |= RENAME
-	}
-	return event
 }
