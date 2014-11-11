@@ -643,6 +643,8 @@ func (v *View) UndoStack() *UndoStack {
 // Transform() takes a ColourScheme and a viewport and returns a Recipe suitable
 // for rendering the contents of this View that is visible in that viewport.
 func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Recipe {
+	pe := Prof.Enter("view.Transform")
+	defer pe.Exit()
 	v.lock.Lock()
 	defer v.lock.Unlock()
 	if v.syntax == nil {
