@@ -311,9 +311,9 @@ func TestObserve(t *testing.T) {
 	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
-	time.Sleep(time.Millisecond * 50)
+	time.Sleep(time.Millisecond * 100)
 	if d.Text() != "Changed" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Changed", d.Text())
+		t.Errorf("Expected dummy Text %s, but got %s", "Changed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -333,9 +333,9 @@ func TestObserveDirectory(t *testing.T) {
 	if err := ioutil.WriteFile(name, []byte("test"), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
-	time.Sleep(time.Millisecond * 50)
+	time.Sleep(time.Millisecond * 100)
 	if d.Text() != "Changed" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Changed", d.Text())
+		t.Errorf("Expected dummy Text %s, but got %s", "Changed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
 }
@@ -354,9 +354,9 @@ func TestCreateEvent(t *testing.T) {
 	if err := ioutil.WriteFile(name, []byte(""), 0644); err != nil {
 		t.Fatalf("WriteFile error: %s", err)
 	}
-	time.Sleep(time.Millisecond * 50)
+	time.Sleep(time.Millisecond * 100)
 	if d.Text() != "Created" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Created", d.Text())
+		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
 	}
 	os.Remove(name)
 }
@@ -372,20 +372,19 @@ func TestDeleteEvent(t *testing.T) {
 	if err := os.Remove(name); err != nil {
 		t.Fatalf("Couldn't remove file %s: %s", name, err)
 	}
-	time.Sleep(time.Millisecond * 50)
-	watcher.lock.Lock()
-	if !equal(watcher.watchers, []string{"testdata"}) {
-		t.Errorf("Expected watchers be equal to %v, but got %v", []string{"testdata"}, watcher.watchers)
-	}
-	watcher.lock.Unlock()
+	time.Sleep(time.Millisecond * 100)
 	if d.Text() != "Removed" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Removed", d.Text())
+		t.Errorf("Expected dummy Text %s, but got %s", "Removed", d.Text())
 	}
 	ioutil.WriteFile(name, []byte(""), 0644)
+	time.Sleep(time.Millisecond * 100)
+	if d.Text() != "Created" {
+		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
+	}
 }
 
 func TestRenameEvent(t *testing.T) {
-	name := "testdata/dummy.txt"
+	name := "testdata/test.txt"
 	watcher := newWatcher(t)
 	defer watcher.wchr.Close()
 	d := &dummy{name: name}
@@ -393,9 +392,9 @@ func TestRenameEvent(t *testing.T) {
 	go watcher.Observe()
 
 	os.Rename(name, "testdata/rename.txt")
-	time.Sleep(time.Millisecond * 50)
+	time.Sleep(time.Millisecond * 100)
 	if d.Text() != "Renamed" {
-		t.Errorf("Expected dumView Text %s, but got %s", "Renamed", d.Text())
+		t.Errorf("Expected dummy Text %s, but got %s", "Renamed", d.Text())
 	}
 	os.Rename("testdata/rename.txt", name)
 }
