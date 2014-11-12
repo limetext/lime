@@ -32,9 +32,8 @@ func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 	dir, i := func(position int, positive bool) (int, int) {
 		if positive {
 			return 1, position
-		} else {
-			return -1, position - 1
 		}
+		return -1, position - 1
 	}(us.position, relative > 0)
 	for relative *= dir; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
 		if !modifying_only || (modifying_only && us.actions[i].composite.Len() != 0) {
@@ -43,9 +42,8 @@ func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 	}
 	if i >= 0 && i < len(us.actions) {
 		return i, false
-	} else {
-		return 0, true
 	}
+	return 0, true
 }
 
 // Reverts the last action on the UndoStack.
@@ -81,9 +79,8 @@ func (us *UndoStack) Redo(hard bool) {
 	to := func(temp int, negative bool) int {
 		if negative {
 			return len(us.actions)
-		} else {
-			return temp
 		}
+		return temp
 	}(us.index(1, hard))
 	for us.position < to {
 		us.actions[us.position].Apply()
