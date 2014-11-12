@@ -26,7 +26,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			mp++
 		}
 	}
-
+	// NOTE: Needs description
 	innerContext := func(i, count int) {
 		if count%2 == 0 {
 			for index := 0; index != count; index += 2 {
@@ -41,7 +41,24 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			}
 		}
 	}
-
+	// minValue returns the minimum value of two integers.
+	minValue := func(x, y int) int {
+		if x > y {
+			return y
+		} else {
+			return x
+		}
+	}
+	// addContext adds context if the context has changed.
+	addContext := func(i, iLast, contextLast *int, changed *bool) {
+		if *changed {
+			m := minValue(*iLast, *contextLast) - *i
+			if m > 0 {
+				innerContext(*i, minValue(m, context))
+			}
+		}
+	}
+	// NOTE: Needs description and needs to be converted into a for loop.
 	var inner func(i, j, k, iLast, contextLast int)
 	inner = func(i, j, k, iLast, contextLast int) {
 		changed := false
@@ -50,9 +67,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			if k > 0 {
 				c = i - 1
 			}
-
 			inner(i-1, j-1, k-1, iLast, c)
-
 			// add context before the change
 			if k > 0 {
 				ret = append(ret, "  "+av[i-1])
@@ -66,24 +81,8 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			inner(i-1, j, context, i-1, contextLast)
 			ret = append(ret, "- "+av[i-1])
 		}
-
-		if changed {
-			// add context after the change
-			l := iLast
-			if l > contextLast {
-				l = contextLast
-			}
-
-			m := l - i
-			if m > 0 {
-				if m > context {
-					m = context
-				}
-				innerContext(i, m)
-			}
-		}
+		addContext(&i, &iLast, &contextLast, &changed)
 	}
-
 	inner(len(av), len(bv), 0, len(av), len(av))
 	return
 }
