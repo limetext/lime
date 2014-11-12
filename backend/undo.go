@@ -38,18 +38,14 @@ func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 	}(us.position, relative > 0)
 	relative *= dir
 	for ; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
-		if modifying_only {
-			if us.actions[i].composite.Len() != 0 {
-				relative--
-			}
-		} else {
+		if !modifying_only || (modifying_only && us.actions[i].composite.Len() != 0) {
 			relative--
 		}
 	}
-	if !(i >= 0 && i < len(us.actions)) {
-		return 0, true
-	} else {
+	if i >= 0 && i < len(us.actions) {
 		return i, false
+	} else {
+		return 0, true
 	}
 }
 
@@ -67,8 +63,7 @@ func (us *UndoStack) Undo(hard bool) {
 		return
 	}
 
-	to, _ := us.index(0, hard)
-	for us.position > to {
+	for to, _ := us.index(0, hard); us.position > to; {
 		us.position--
 		us.actions[us.position].Undo()
 	}
@@ -84,10 +79,13 @@ func (us *UndoStack) Redo(hard bool) {
 		// No more actions to redo
 		return
 	}
-	to, err := us.index(1, hard)
-	if err {
-		to = len(us.actions)
-	}
+	to := func(temp int, negative bool) int {
+		if negative {
+			return len(us.actions)
+		} else {
+			return temp
+		}
+	}(us.index(1, hard))
 	for us.position < to {
 		us.actions[us.position].Apply()
 		us.position++
