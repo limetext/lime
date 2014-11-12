@@ -28,7 +28,7 @@ func (us *UndoStack) Add(a *Edit) {
 // When modifying_only is set to true, only actions actually modifying
 // the buffer (as opposed to just moving the cursor) are counted as an
 // index. Also see comment in Undo.
-func (us *UndoStack) index(relative int, modifying_only bool) int {
+func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 	dir := -1
 	i := us.position
 	if relative > 0 {
@@ -46,11 +46,7 @@ func (us *UndoStack) index(relative int, modifying_only bool) int {
 			relative--
 		}
 	}
-	if i >= 0 && i < len(us.actions) {
-		return i
-	} else {
-		return -1
-	}
+	return i, !(i >= 0 && i < len(us.actions))
 }
 
 // Reverts the last action on the UndoStack.
@@ -66,8 +62,9 @@ func (us *UndoStack) Undo(hard bool) {
 		// Nothing to undo
 		return
 	}
-	to := us.index(0, hard)
-	if to == -1 {
+
+	to, err := us.index(0, hard)
+	if err {
 		to = 0
 	}
 	for us.position > to {
@@ -86,8 +83,8 @@ func (us *UndoStack) Redo(hard bool) {
 		// No more actions to redo
 		return
 	}
-	to := us.index(1, hard)
-	if to == -1 {
+	to, err := us.index(1, hard)
+	if err {
 		to = len(us.actions)
 	}
 	for us.position < to {
@@ -113,8 +110,7 @@ func (us *UndoStack) GlueFrom(mark int) {
 	if mark >= us.position {
 		return
 	}
-	var e Edit
-	e.command = "sequence"
+	e := Edit{command: "sequence"}
 	type entry struct {
 		name string
 		args Args
