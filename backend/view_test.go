@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 )
@@ -303,6 +304,47 @@ func TestTransform(t *testing.T) {
 	if !reflect.DeepEqual(a, c) {
 		t.Errorf("not equal:\n%v\n%v", a, c)
 	}
+}
+
+func BenchmarkTransformTranscribe(b *testing.B) {
+	b.StopTimer()
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
+	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
+
+	d, err := ioutil.ReadFile("view.go")
+	if err != nil {
+		b.Fatal(err)
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	v.Settings().AddOnChange("benchmark", func(key string) {
+		if key == "lime.syntax.updated" {
+			wg.Done()
+		}
+	})
+	e := v.BeginEdit()
+	v.Insert(e, 0, string(d))
+	v.EndEdit(e)
+	wg.Wait()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		v.Transform(sc, Region{0, v.Buffer().Size()}).Transcribe()
+	}
+	fmt.Println(util.Prof.String())
 }
 
 func TestSaveAsNewFile(t *testing.T) {

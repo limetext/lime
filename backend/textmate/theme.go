@@ -10,6 +10,7 @@ import (
 	"github.com/limetext/lime/backend/loaders"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
+	"github.com/limetext/lime/backend/util"
 	"image/color"
 	"io/ioutil"
 	"sort"
@@ -104,6 +105,8 @@ func (s *Settings) UnmarshalJSON(data []byte) error {
 }
 
 func (t *Theme) ClosestMatchingSetting(scope string) *ScopeSetting {
+	pe := util.Prof.Enter("ClosestMatchingSetting")
+	defer pe.Exit()
 	na := scope
 	for len(na) > 0 {
 		sn := na
@@ -129,6 +132,8 @@ func (t *Theme) ClosestMatchingSetting(scope string) *ScopeSetting {
 }
 
 func (t *Theme) Spice(vr *render.ViewRegions) (ret render.Flavour) {
+	pe := util.Prof.Enter("Spice")
+	defer pe.Exit()
 	if len(t.Settings) == 0 {
 		return
 	}

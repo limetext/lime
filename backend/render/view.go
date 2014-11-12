@@ -5,6 +5,7 @@
 package render
 
 import (
+	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/text"
 )
 
@@ -56,6 +57,8 @@ type (
 // Calls Cull on each ViewRegions object contained in the map,
 // removing all entries that are outside of the viewport.
 func (vrm *ViewRegionMap) Cull(viewport text.Region) {
+	pe := util.Prof.Enter("render.vrm.Cull")
+	defer pe.Exit()
 	rm := []string{}
 	for k, v := range *vrm {
 		v.Cull(viewport)
@@ -74,6 +77,8 @@ func (vrm *ViewRegionMap) Cull(viewport text.Region) {
 // and clips the regions that are intersecting it so that
 // all regions remaining are fully contained inside of the viewport.
 func (vr *ViewRegions) Cull(viewport text.Region) {
+	pe := util.Prof.Enter("render.vr.Cull")
+	defer pe.Exit()
 	nr := []text.Region{}
 	for _, r := range vr.Regions.Regions() {
 		if viewport.Intersects(r) {
