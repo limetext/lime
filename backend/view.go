@@ -5,15 +5,15 @@
 package backend
 
 import (
-	"code.google.com/p/log4go"
 	"fmt"
+	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/parser"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/textmate"
 	. "github.com/limetext/lime/backend/util"
 	"github.com/limetext/rubex"
-	. "github.com/quarnster/util/text"
+	. "github.com/limetext/text"
 	"io/ioutil"
 	"os"
 	"path"
@@ -51,9 +51,11 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+
 	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
 		ret.lock.Lock()
 		defer ret.lock.Unlock()
+
 		if name != "syntax" {
 			return
 		}
@@ -134,53 +136,61 @@ func (v *View) parsethread() {
 		defer p.Exit()
 		defer func() {
 			if r := recover(); r != nil {
-				log4go.Error("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
+				log.Error("Panic in parse thread: %v\n%s", r, string(debug.Stack()))
 				if pc > 0 {
 					panic(r)
 				}
 				pc++
 			}
 		}()
+
 		b := v.Buffer()
-		b.Lock()
 		sub := b.Substr(Region{0, b.Size()})
-		b.Unlock()
+
 		source, _ := v.Settings().Get("syntax", "").(string)
 		if len(source) == 0 {
 			return
 		}
+
 		// TODO: Allow other parsers instead of this hardcoded textmate version
 		pr, err := textmate.NewLanguageParser(source, sub)
 		if err != nil {
-			log4go.Error("Couldn't parse: %v", err)
+			log.Error("Couldn't parse: %v", err)
 			return
 		}
+
 		syn, err := parser.NewSyntaxHighlighter(pr)
 		if err != nil {
-			log4go.Error("Couldn't create syntaxhighlighter: %v", err)
+			log.Error("Couldn't create syntaxhighlighter: %v", err)
 			return
 		}
+
 		// Only set if it isn't invalid already, otherwise the
 		// current syntax highlighting will be more accurate
 		// as it will have had incremental adjustments done to it
 		if v.buffer.ChangeCount() != lastParse {
 			return
 		}
+
 		v.lock.Lock()
 		defer v.lock.Unlock()
+
 		v.syntax = syn
 		for k := range v.regions {
 			if strings.HasPrefix(k, "lime.syntax") {
 				delete(v.regions, k)
 			}
 		}
+
 		for k, v2 := range syn.Flatten() {
 			if v2.Regions.HasNonEmpty() {
 				v.regions[k] = v2
 			}
 		}
+
 		return true
 	}
+
 	v.lock.Lock()
 	ch := v.reparseChan
 	v.lock.Unlock()
@@ -188,6 +198,7 @@ func (v *View) parsethread() {
 	if ch == nil {
 		return
 	}
+
 	for pr := range ch {
 		if cc := v.buffer.ChangeCount(); lastParse != cc || pr.forced {
 			lastParse = cc
@@ -240,7 +251,7 @@ func (v *View) loadSettings() {
 
 	ed := GetEditor()
 	if r, err := rubex.Compile(`([A-Za-z]+?)\.(?:[^.]+)$`); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 		return
 	} else if s := r.FindStringSubmatch(syntax); s != nil {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
@@ -393,7 +404,7 @@ func (v *View) BeginEdit() *Edit {
 func (v *View) EndEdit(edit *Edit) {
 	if edit.invalid {
 		// This happens when nesting Edits and the child Edit ends after the parent edit.
-		log4go.Fine("This edit has already been invalidated: %v, %v", edit, v.editstack)
+		log.Fine("This edit has already been invalidated: %v, %v", edit, v.editstack)
 		return
 	}
 
@@ -408,7 +419,7 @@ func (v *View) EndEdit(edit *Edit) {
 	}
 	if i == -1 {
 		// TODO(.): Under what instances does this happen again?
-		log4go.Error("This edit isn't even in the stack... where did it come from? %v, %v", edit, v.editstack)
+		log.Error("This edit isn't even in the stack... where did it come from? %v, %v", edit, v.editstack)
 		return
 	}
 
@@ -416,7 +427,7 @@ func (v *View) EndEdit(edit *Edit) {
 
 	if l := len(v.editstack) - 1; i != l {
 		// TODO(.): See TODO in BeginEdit
-		log4go.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
+		log.Error("This edit wasn't last in the stack... %d !=  %d: %v, %v", i, l, edit, v.editstack)
 	}
 
 	// Invalidate all Edits "below" and including this Edit.
@@ -506,7 +517,7 @@ func (v *View) Save() error {
 
 // Saves the file to the specified filename
 func (v *View) SaveAs(name string) (err error) {
-	log4go.Fine("SaveAs(%s)", name)
+	log.Fine("SaveAs(%s)", name)
 	v.Settings().Set("lime.saving", true)
 	defer v.Settings().Erase("lime.saving")
 	var atomic bool
@@ -565,7 +576,7 @@ func (v *View) nonAtomicSave(name string) error {
 // an index. That would be a "hard" command as it is referred to in UndoStack.Undo.
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
 	// TODO(.): merge history when possible
-	if i := v.undoStack.index(idx, modifying_only); i != -1 {
+	if i, err := v.undoStack.index(idx, modifying_only); !err {
 		e := v.undoStack.actions[i]
 		return e.command, e.args, 1
 	}
@@ -581,7 +592,7 @@ func (v *View) runCommand(cmd TextCommand, name string) error {
 	defer func() {
 		v.EndEdit(e)
 		if r := recover(); r != nil {
-			log4go.Error("Paniced while running text command %s %v: %v\n%s", name, cmd, r, string(debug.Stack()))
+			log.Error("Paniced while running text command %s %v: %v\n%s", name, cmd, r, string(debug.Stack()))
 		}
 	}()
 	p := Prof.Enter("view.cmd." + name)
@@ -632,6 +643,8 @@ func (v *View) UndoStack() *UndoStack {
 // Transform() takes a ColourScheme and a viewport and returns a Recipe suitable
 // for rendering the contents of this View that is visible in that viewport.
 func (v *View) Transform(scheme render.ColourScheme, viewport Region) render.Recipe {
+	pe := Prof.Enter("view.Transform")
+	defer pe.Exit()
 	v.lock.Lock()
 	defer v.lock.Unlock()
 	if v.syntax == nil {
@@ -663,12 +676,13 @@ func (v *View) isClosed() bool {
 }
 
 // Initiate the "close" operation of this view.
-func (v *View) Close() {
+// Returns "true" if the view was closed. Otherwise returns "false".
+func (v *View) Close() bool {
 	OnPreClose.Call(v)
 	if v.IsDirty() {
 		close_anyway := GetEditor().Frontend().OkCancelDialog("File has been modified since last save, close anyway?", "Close")
 		if !close_anyway {
-			return
+			return false
 		}
 	}
 	if n := v.buffer.FileName(); n != "" {
@@ -687,6 +701,8 @@ func (v *View) Close() {
 	defer v.lock.Unlock()
 	close(v.reparseChan)
 	v.reparseChan = nil
+
+	return true
 }
 
 const (
@@ -723,7 +739,7 @@ func (v *View) Classify(point int) (res int) {
 		return
 	}
 	if re, err := rubex.Compile("[A-Z]"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if re.MatchString(b) && !re.MatchString(a) {
 			res |= CLASS_SUB_WORD_START
@@ -742,7 +758,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Punc start & end
 	if re, err := rubex.Compile(ws); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
 			res |= CLASS_PUNCTUATION_START
@@ -752,9 +768,9 @@ func (v *View) Classify(point int) (res int) {
 		}
 		// Word start & end
 		if re1, err := rubex.Compile("\\w"); err != nil {
-			log4go.Error(err)
+			log.Error(err)
 		} else if re2, err := rubex.Compile("\\s"); err != nil {
-			log4go.Error(err)
+			log.Error(err)
 		} else {
 			if re1.MatchString(b) && (re.MatchString(a) || re2.MatchString(a) || a == "") {
 				res |= CLASS_WORD_START
@@ -779,7 +795,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Middle word
 	if re, err := rubex.Compile("\\w"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if re.MatchString(a) && re.MatchString(b) {
 			res |= CLASS_MIDDLE_WORD
@@ -787,7 +803,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Word start & end with punc
 	if re, err := rubex.Compile("\\s"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if (res&CLASS_PUNCTUATION_START == CLASS_PUNCTUATION_START) && (re.MatchString(a) || a == "") {
 			res |= CLASS_WORD_START_WITH_PUNCTUATION
@@ -798,7 +814,7 @@ func (v *View) Classify(point int) (res int) {
 	}
 	// Openning & closing parentheses
 	if re, err := rubex.Compile("[(\\[{]"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_OPENING_PARENTHESIS
@@ -809,7 +825,7 @@ func (v *View) Classify(point int) (res int) {
 		}
 	}
 	if re, err := rubex.Compile("[)\\]}]"); err != nil {
-		log4go.Error(err)
+		log.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_CLOSING_PARENTHESIS
@@ -824,7 +840,7 @@ func (v *View) Classify(point int) (res int) {
 
 // Finds the next location after point that matches the given classes
 // Searches backward if forward is false
-func (v *View) FindByClass(point int, forward bool, classes int) Region {
+func (v *View) FindByClass(point int, forward bool, classes int) int {
 	i := -1
 	if forward {
 		i = 1
@@ -833,13 +849,13 @@ func (v *View) FindByClass(point int, forward bool, classes int) Region {
 	// Sublime doesn't consider initial point even if it matches.
 	for p := point + i; ; p += i {
 		if p <= 0 {
-			return Region{0, 0}
+			return 0
 		}
 		if p >= size {
-			return Region{size, size}
+			return size
 		}
 		if v.Classify(p)&classes != 0 {
-			return Region{p, p}
+			return p
 		}
 	}
 }
