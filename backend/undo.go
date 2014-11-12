@@ -46,7 +46,11 @@ func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 			relative--
 		}
 	}
-	return i, !(i >= 0 && i < len(us.actions))
+	if !(i >= 0 && i < len(us.actions)) {
+		return 0, true
+	} else {
+		return i, false
+	}
 }
 
 // Reverts the last action on the UndoStack.
@@ -63,10 +67,7 @@ func (us *UndoStack) Undo(hard bool) {
 		return
 	}
 
-	to, err := us.index(0, hard)
-	if err {
-		to = 0
-	}
+	to, _ := us.index(0, hard)
 	for us.position > to {
 		us.position--
 		us.actions[us.position].Undo()
