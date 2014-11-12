@@ -54,12 +54,12 @@ func mDiff(av, bv []string, context int) (ret []string) {
 		return x
 	}
 	// addContext adds context if the context has changed.
-	addContext := func(i, iLast, contextLast *int, changed *bool) {
-		if !*changed {
+	addContext := func(i, iLast, contextLast int, changed bool) {
+		if !changed {
 			return
 		}
-		if m := minValue(*iLast, *contextLast) - *i; m > 0 {
-			innerContext(*i, minValue(m, context))
+		if m := minValue(iLast, contextLast) - i; m > 0 {
+			innerContext(i, minValue(m, context))
 		}
 	}
 	// NOTE: Needs description and needs to be converted into a for loop.
@@ -85,7 +85,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			inner(i-1, j, context, i-1, contextLast)
 			ret = append(ret, "- "+av[i-1])
 		}
-		addContext(&i, &iLast, &contextLast, &changed)
+		addContext(i, iLast, contextLast, changed)
 	}
 	inner(len(av), len(bv), 0, len(av), len(av))
 	return
