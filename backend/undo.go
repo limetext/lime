@@ -29,13 +29,13 @@ func (us *UndoStack) Add(a *Edit) {
 // the buffer (as opposed to just moving the cursor) are counted as an
 // index. Also see comment in Undo.
 func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
-	dir := -1
-	i := us.position
-	if relative > 0 {
-		dir = 1
-	} else {
-		i--
-	}
+	dir, i := func(position int, positive bool) (int, int) {
+		if positive {
+			return 1, position
+		} else {
+			return -1, position - 1
+		}
+	}(us.position, relative > 0)
 	relative *= dir
 	for ; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
 		if modifying_only {
