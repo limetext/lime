@@ -10,11 +10,10 @@ import (
 
 // Naive algorithm from http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
 func mDiff(av, bv []string, context int) (ret []string) {
-	matrix := make([]int, (len(av)+1)*(len(bv)+1))
 	pitch := (len(bv) + 1)
+	matrix := make([]int, (len(av)+1)*pitch)
 	for i, a := range av {
 		mp := (i+1)*pitch + 1
-
 		for _, b := range bv {
 			if a == b {
 				matrix[mp] = matrix[mp-1-pitch] + 1
@@ -51,17 +50,16 @@ func mDiff(av, bv []string, context int) (ret []string) {
 	minValue := func(x, y int) int {
 		if x > y {
 			return y
-		} else {
-			return x
 		}
+		return x
 	}
 	// addContext adds context if the context has changed.
 	addContext := func(i, iLast, contextLast *int, changed *bool) {
-		if *changed {
-			m := minValue(*iLast, *contextLast) - *i
-			if m > 0 {
-				innerContext(*i, minValue(m, context))
-			}
+		if !*changed {
+			return
+		}
+		if m := minValue(*iLast, *contextLast) - *i; m > 0 {
+			innerContext(*i, minValue(m, context))
 		}
 	}
 	// NOTE: Needs description and needs to be converted into a for loop.
@@ -102,7 +100,6 @@ func Diff(a, b string) string {
 	b = strings.Replace(b, "\r\n", "\n", -1)
 	if a != b {
 		return strings.Join(mDiff(split(&a), split(&b), 3), "\n")
-	} else {
-		return ""
 	}
+	return ""
 }
