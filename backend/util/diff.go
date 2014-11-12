@@ -27,14 +27,19 @@ func mDiff(av, bv []string, context int) (ret []string) {
 		}
 	}
 
-	var innerContext func(i, count int)
-	innerContext = func(i, count int) {
-		i--
-		count--
-		if count > 0 {
-			innerContext(i, count)
+	innerContext := func(i, count int) {
+		if count%2 == 0 {
+			for index := 0; index != count; index += 2 {
+				ret = append(ret, "  "+av[i])
+				ret = append(ret, "  "+av[i+1])
+				i += 2
+			}
+		} else {
+			for index := 0; index < count; index++ {
+				ret = append(ret, "  "+av[i])
+				i++
+			}
 		}
-		ret = append(ret, "  "+av[i])
 	}
 
 	var inner func(i, j, k, iLast, contextLast int)
@@ -74,7 +79,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 				if m > context {
 					m = context
 				}
-				innerContext(i+m, m)
+				innerContext(i, m)
 			}
 		}
 	}
@@ -83,14 +88,16 @@ func mDiff(av, bv []string, context int) (ret []string) {
 	return
 }
 
+// Diff returns the difference between two strings.
 func Diff(a, b string) string {
-	if a == b {
-		return ""
+	split := func(element *string) []string {
+		return strings.Split(*element, "\n")
 	}
 	a = strings.Replace(a, "\r\n", "\n", -1)
 	b = strings.Replace(b, "\r\n", "\n", -1)
-	if a == b {
+	if a != b {
+		return strings.Join(mDiff(split(&a), split(&b), 3), "\n")
+	} else {
 		return ""
 	}
-	return strings.Join(mDiff(strings.Split(a, "\n"), strings.Split(b, "\n"), 3), "\n")
 }
