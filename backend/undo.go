@@ -36,8 +36,7 @@ func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
 			return -1, position - 1
 		}
 	}(us.position, relative > 0)
-	relative *= dir
-	for ; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
+	for relative *= dir; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
 		if !modifying_only || (modifying_only && us.actions[i].composite.Len() != 0) {
 			relative--
 		}
