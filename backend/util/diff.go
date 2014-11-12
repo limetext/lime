@@ -28,15 +28,23 @@ func mDiff(av, bv []string, context int) (ret []string) {
 	}
 	// NOTE: Needs description
 	innerContext := func(i, count int) {
-		var start int
-		if count%2 != 0 {
+		var index int
+		switch count % 3 {
+		case 0:
+			break
+		case 1:
 			ret = append(ret, "  "+av[i])
-			start, i = 1, i+1
-		}
-		for index := start; index != count; index += 2 {
+			index, i = 1, i+1
+		default:
 			ret = append(ret, "  "+av[i])
 			ret = append(ret, "  "+av[i+1])
-			i += 2
+			index, i = 2, i+2
+		}
+		for ; index != count; index += 3 {
+			ret = append(ret, "  "+av[i])
+			ret = append(ret, "  "+av[i+1])
+			ret = append(ret, "  "+av[i+2])
+			i += 3
 		}
 	}
 	// minValue returns the minimum value of two integers.
