@@ -94,7 +94,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 // Diff returns the difference between two strings.
 func Diff(a, b string) string {
 	split := func(element string) []string {
-		return strings.Split(*element, "\n")
+		return strings.Split(element, "\n")
 	}
 	a = strings.Replace(a, "\r\n", "\n", -1)
 	b = strings.Replace(b, "\r\n", "\n", -1)
