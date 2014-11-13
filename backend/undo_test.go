@@ -31,7 +31,7 @@ func TestUndoStackIndex(t *testing.T) {
 	v.EndEdit(e)
 	us.Add(e)
 
-	if i := us.index(-1, false); i != 0 {
+	if i, _ := us.index(-1, false); i != 0 {
 		t.Errorf("Expected 0, but it got %d", i)
 	}
 }

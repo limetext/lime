@@ -28,29 +28,22 @@ func (us *UndoStack) Add(a *Edit) {
 // When modifying_only is set to true, only actions actually modifying
 // the buffer (as opposed to just moving the cursor) are counted as an
 // index. Also see comment in Undo.
-func (us *UndoStack) index(relative int, modifying_only bool) int {
-	dir := -1
-	i := us.position
-	if relative > 0 {
-		dir = 1
-	} else {
-		i--
-	}
-	relative *= dir
-	for ; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
-		if modifying_only {
-			if us.actions[i].composite.Len() != 0 {
-				relative--
-			}
-		} else {
+func (us *UndoStack) index(relative int, modifying_only bool) (int, bool) {
+	dir, i := func(position int, positive bool) (int, int) {
+		if positive {
+			return 1, position
+		}
+		return -1, position - 1
+	}(us.position, relative > 0)
+	for relative *= dir; i >= 0 && i < len(us.actions) && relative > 0; i += dir {
+		if !modifying_only || (modifying_only && us.actions[i].composite.Len() != 0) {
 			relative--
 		}
 	}
 	if i >= 0 && i < len(us.actions) {
-		return i
-	} else {
-		return -1
+		return i, false
 	}
+	return 0, true
 }
 
 // Reverts the last action on the UndoStack.
@@ -66,11 +59,8 @@ func (us *UndoStack) Undo(hard bool) {
 		// Nothing to undo
 		return
 	}
-	to := us.index(0, hard)
-	if to == -1 {
-		to = 0
-	}
-	for us.position > to {
+
+	for to, _ := us.index(0, hard); us.position > to; {
 		us.position--
 		us.actions[us.position].Undo()
 	}
@@ -86,10 +76,12 @@ func (us *UndoStack) Redo(hard bool) {
 		// No more actions to redo
 		return
 	}
-	to := us.index(1, hard)
-	if to == -1 {
-		to = len(us.actions)
-	}
+	to := func(temp int, negative bool) int {
+		if negative {
+			return len(us.actions)
+		}
+		return temp
+	}(us.index(1, hard))
 	for us.position < to {
 		us.actions[us.position].Apply()
 		us.position++
@@ -113,8 +105,7 @@ func (us *UndoStack) GlueFrom(mark int) {
 	if mark >= us.position {
 		return
 	}
-	var e Edit
-	e.command = "sequence"
+	e := Edit{command: "sequence"}
 	type entry struct {
 		name string
 		args Args

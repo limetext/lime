@@ -598,7 +598,7 @@ func (v *View) nonAtomicSave(name string) error {
 // an index. That would be a "hard" command as it is referred to in UndoStack.Undo.
 func (v *View) CommandHistory(idx int, modifying_only bool) (name string, args Args, count int) {
 	// TODO(.): merge history when possible
-	if i := v.undoStack.index(idx, modifying_only); i != -1 {
+	if i, err := v.undoStack.index(idx, modifying_only); !err {
 		e := v.undoStack.actions[i]
 		return e.command, e.args, 1
 	}
