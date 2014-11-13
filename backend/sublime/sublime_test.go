@@ -47,7 +47,11 @@ func TestSublime(t *testing.T) {
 	} else {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
-			loadPlugin(p, m)
+			pl := newPlugin(p, m)
+			pl.reload()
+			if err := watcher.Watch(pl.Name(), pl); err != nil {
+				t.Fatalf("Couldn't watch %s: %s", pl.Name(), err)
+			}
 		}
 	}
 
@@ -62,6 +66,20 @@ func TestSublime(t *testing.T) {
 		(w.(*Window)).data = &backend.Window{}
 		subl.AddObject("test_window", w)
 	}
+
+	// Testing plugin reload
+	data := []byte(`import sublime, sublime_plugin
+
+class TestToxt(sublime_plugin.TextCommand):
+    def run(self, edit):
+        print("my view's id is: %d" % self.view.id())
+        self.view.insert(edit, 0, "Tada")
+		`)
+	if err := ioutil.WriteFile("testdata/plugins/reload.py", data, 0644); err != nil {
+		t.Fatalf("Couldn't write testdata/plugins/reload.py: %s", err)
+	}
+	defer os.Remove("testdata/plugins/reload.py")
+	time.Sleep(time.Millisecond * 50)
 
 	if dir, err := os.Open("testdata"); err != nil {
 		t.Error(err)
@@ -80,44 +98,6 @@ func TestSublime(t *testing.T) {
 			}
 		}
 	}
-
-	// Testing plugin reload
-	data := []byte(`import sublime, sublime_plugin
-
-class TestToxt(sublime_plugin.TextCommand):
-    def run(self, edit):
-        print("my view's id is: %d" % self.view.id())
-        self.view.insert(edit, 0, "Tada")
-		`)
-	if err := ioutil.WriteFile("testdata/plugins/reload.py", data, 0644); err != nil {
-		t.Fatalf("Couldn't write file: %s", err)
-	}
-	data = []byte(`try:
-    import traceback
-    import sublime
-    print("new file")
-    v = sublime.test_window.new_file()
-    print("running command")
-    v.run_command("test_toxt")
-    print("command ran")
-    assert v.substr(sublime.Region(0, v.size())) == "Tada"
-except:
-    traceback.print_exc()
-    raise
-		`)
-	time.Sleep(time.Millisecond * 10)
-	if err := ioutil.WriteFile("testdata/reload_test.py", data, 0644); err != nil {
-		t.Fatalf("Couldn't write file: %s", err)
-	}
-	log.Debug("Running %s", "reload_test.py")
-	if _, err := py.Import("reload_test"); err != nil {
-		log.Error(err)
-		t.Error(err)
-	} else {
-		log.Debug("Ran %s", "reload_test.py")
-	}
-	os.Remove("testdata/plugins/reload.py")
-	os.Remove("testdata/reload_test.py")
 
 	var f func(indent string, v py.Object, buf *bytes.Buffer)
 	f = func(indent string, v py.Object, buf *bytes.Buffer) {

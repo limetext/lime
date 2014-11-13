@@ -75,7 +75,7 @@ func (p *Plugin) Reload() {
 			continue
 		}
 		s := filepath.Ext(f.Name())
-		for _, t := range Types {
+		for _, t := range types {
 			if !strings.Contains(s, t) {
 				continue
 			}
@@ -98,7 +98,7 @@ func (p *Plugin) Reload() {
 // so here we will load all plugin packets
 func (p *Plugin) LoadPackets() {
 	for _, pckt := range p.packets {
-		pckt.Reload()
+		pckt.Load()
 	}
 }
 

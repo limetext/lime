@@ -6,16 +6,15 @@ package sublime
 
 import (
 	"fmt"
-	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/util"
+	"github.com/limetext/lime/backend/watch"
 	"os"
 	"path"
-	"sync"
 	"time"
 )
 
@@ -154,70 +153,49 @@ func init() {
 	py.AddToPath(path.Join("..", "..", "backend", "sublime"))
 }
 
-func loadPlugin(p *packages.Plugin, m *py.Module) {
-	fi := p.Get().([]os.FileInfo)
+// Wrapper for packages.Plugin and py.Module
+// merges Plugin.Reload and loadPlugin for watcher
+type plugin struct {
+	pl *packages.Plugin
+	m  *py.Module
+}
+
+func newPlugin(p *packages.Plugin, m *py.Module) *plugin {
+	return &plugin{p, m}
+}
+
+func (p *plugin) reload() {
+	p.pl.Reload()
+	p.loadPlugin()
+}
+
+func (p *plugin) FileChanged(name string) {
+	p.reload()
+}
+
+func (p *plugin) Name() string {
+	return p.pl.Name()
+}
+
+func (p *plugin) loadPlugin() {
+	fi := p.pl.Get().([]os.FileInfo)
 	for _, f := range fi {
 		fn := f.Name()
-		s, err := py.NewUnicode(path.Base(p.Name()) + "." + fn[:len(fn)-3])
+		s, err := py.NewUnicode(path.Base(p.pl.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		if r, err := m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
+		if r, err := p.m.Base().CallMethodObjArgs("reload_plugin", s); err != nil {
 			log.Error(err)
 		} else if r != nil {
 			r.Decref()
 		}
 	}
-	p.LoadPackets()
-	watch(backend.NewWatchedPackage(p))
+	p.pl.LoadPackets()
 }
 
-var (
-	watcher            *fsnotify.Watcher
-	watchedPlugins     map[string]*backend.WatchedPackage
-	watchedPluginsLock sync.Mutex
-)
-
-func watch(plugin *backend.WatchedPackage) {
-	log.Finest("Watch(%v)", plugin)
-	if err := watcher.Watch(plugin.Name()); err != nil {
-		log.Error("Could not watch plugin: %v", err)
-	} else {
-		watchedPluginsLock.Lock()
-		watchedPlugins[plugin.Name()] = plugin
-		watchedPluginsLock.Unlock()
-	}
-}
-
-func unWatch(name string) {
-	if err := watcher.RemoveWatch(name); err != nil {
-		log.Error("Couldn't unwatch file: %v", err)
-	}
-	log.Finest("UnWatch(%s)", name)
-	watchedPluginsLock.Lock()
-	delete(watchedPlugins, name)
-	watchedPluginsLock.Unlock()
-}
-
-func observePlugins(m *py.Module) {
-	for {
-		select {
-		case ev := <-watcher.Event:
-			if !(ev.IsModify() || ev.IsCreate()) {
-				continue
-			}
-			watchedPluginsLock.Lock()
-			if p, exist := watchedPlugins[path.Dir(ev.Name)]; exist {
-				p.Reload()
-				loadPlugin(p.Package().(*packages.Plugin), m)
-			}
-			watchedPluginsLock.Unlock()
-		case err := <-watcher.Error:
-			log.Error("error:", err)
-		}
-	}
-}
+var watcher *watch.Watcher
 
 // TODO
 func Init() {
@@ -234,21 +212,21 @@ func Init() {
 		defer sys.Decref()
 	}
 
-	watcher, err = fsnotify.NewWatcher()
-	if err != nil {
-		log.Error("Could not create watcher due to: %v", err)
+	if watcher, err = watch.NewWatcher(); err != nil {
+		log.Error("Couldn't create watcher: %s", err)
 	}
-	watchedPluginsLock.Lock()
-	watchedPlugins = make(map[string]*backend.WatchedPackage)
-	watchedPluginsLock.Unlock()
 
 	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
 	for _, p := range plugins {
 		// TODO: add all plugins after supporting all commands
 		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
-			loadPlugin(p, m)
+			pl := newPlugin(p, m)
+			pl.reload()
+			if err := watcher.Watch(pl.Name(), pl); err != nil {
+				log.Error("Couldn't watch %s: %s", pl.Name(), err)
+			}
 		}
 	}
 
-	go observePlugins(m)
+	go watcher.Observe()
 }

@@ -259,8 +259,11 @@ func (o *View) Py_set_name(tu *py.Tuple) (py.Object, error) {
 			}
 		}
 	}
-	o.data.Buffer().SetName(arg1)
-	return toPython(nil)
+	if err := o.data.Buffer().SetName(arg1); err != nil {
+		return nil, err
+	} else {
+		return toPython(nil)
+	}
 }
 
 func (o *View) Py_size() (py.Object, error) {

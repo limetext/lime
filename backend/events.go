@@ -160,8 +160,7 @@ func init() {
 		return Unknown
 	})
 
-	OnLoad.Add(func(view *View) {
-		editor := GetEditor()
-		editor.Watch(NewWatchedUserFile(view))
+	OnLoad.Add(func(v *View) {
+		GetEditor().Watch(v.Buffer().FileName(), v)
 	})
 }

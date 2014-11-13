@@ -19,10 +19,8 @@ type (
 	}
 )
 
-var (
-	// This is useful when we are loading new plugin or
-	// scanning for user settings, snippets and etc we
-	// will add files which their suffix contains one of
-	// these keywords
-	Types = []string{"settings", "keymap"}
-)
+// This is useful when we are loading new plugin or
+// scanning for user settings, snippets and etc we
+// will add files which their suffix contains one of
+// these keywords
+var types = []string{"settings", "keymap"}

@@ -7,11 +7,11 @@ package backend
 import (
 	"fmt"
 	"github.com/atotto/clipboard"
-	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/packages"
 	. "github.com/limetext/lime/backend/util"
+	"github.com/limetext/lime/backend/watch"
 	. "github.com/limetext/text"
 	"path"
 	"runtime"
@@ -22,33 +22,20 @@ import (
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	GetEditor()
-
-	// Load the default Packets
-	paths := []string{
-		LIME_DEFAULTS_PATH,
-		LIME_USER_PACKETS_PATH,
-	}
-	for _, path := range paths {
-		for _, p := range packages.ScanPackets(path) {
-			packets = append(packets, p)
-		}
-	}
 }
 
 type (
 	Editor struct {
 		HasSettings
-		windows         []*Window
-		activeWindow    *Window
-		logInput        bool
-		cmdHandler      commandHandler
-		keyBindings     keys.KeyBindings
-		console         *View
-		frontend        Frontend
-		keyInput        chan keys.KeyPress
-		watcher         *fsnotify.Watcher
-		watchedFiles    map[string]Watched
-		watchLock       sync.Mutex
+		windows      []*Window
+		activeWindow *Window
+		logInput     bool
+		cmdHandler   commandHandler
+		keyBindings  keys.KeyBindings
+		console      *View
+		frontend     Frontend
+		keyInput     chan (keys.KeyPress)
+		*watch.Watcher
 		clipboardSetter func(string) error
 		clipboardGetter func() (string, error)
 		clipboard       string
@@ -138,15 +125,17 @@ func GetEditor() *Editor {
 				buffer:  NewBuffer(),
 				scratch: true,
 			},
-			keyInput:     make(chan keys.KeyPress, 32),
-			watcher:      newWatcher(),
-			watchedFiles: make(map[string]Watched),
+			keyInput: make(chan keys.KeyPress, 32),
+		}
+		var err error
+		if ed.Watcher, err = watch.NewWatcher(); err != nil {
+			log.Error("Couldn't create watcher: %s", err)
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.Settings() // Just to initialize it
 		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
 		go ed.inputthread()
-		go ed.observeFiles()
+		go ed.Observe()
 	}
 	return ed
 }
@@ -196,7 +185,7 @@ func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 		log.Error(err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(NewWatchedPackage(pkg))
+		e.Watch(pkg.Name(), pkg)
 	}
 	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
 }
@@ -212,7 +201,7 @@ func (e *Editor) loadSetting(pkg *packages.Packet) {
 		log.Error(err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(NewWatchedPackage(pkg))
+		e.Watch(pkg.Name(), pkg)
 	}
 }
 
@@ -256,10 +245,6 @@ func (e *Editor) SetActiveWindow(w *Window) {
 
 func (e *Editor) ActiveWindow() *Window {
 	return e.activeWindow
-}
-
-func (e *Editor) Watcher() *fsnotify.Watcher {
-	return e.watcher
 }
 
 func (e *Editor) NewWindow() *Window {
@@ -434,55 +419,6 @@ func (e *Editor) GetClipboard() string {
 	}
 
 	return e.clipboard
-}
-
-func (e *Editor) Watch(file Watched) {
-	log.Finest("Watch(%v)", file)
-	if err := e.watcher.Watch(file.Name()); err != nil {
-		log.Error("Could not watch file: %v", err)
-	} else {
-		e.watchLock.Lock()
-		defer e.watchLock.Unlock()
-		e.watchedFiles[file.Name()] = file
-	}
-}
-
-func (e *Editor) UnWatch(name string) {
-	e.watchLock.Lock()
-	defer e.watchLock.Unlock()
-	if err := e.watcher.RemoveWatch(name); err != nil {
-		log.Error("Couldn't unwatch file: %v", err)
-	}
-	log.Finest("UnWatch(%s)", name)
-	delete(e.watchedFiles, name)
-}
-
-func (e *Editor) observeFiles() {
-	for {
-		select {
-		case ev := <-e.watcher.Event:
-			if ev.IsModify() {
-				func() {
-					e.watchLock.Lock()
-					defer e.watchLock.Unlock()
-					f, exist := e.watchedFiles[ev.Name]
-					if exist {
-						f.Reload()
-					}
-				}()
-			}
-		case err := <-e.watcher.Error:
-			log.Error("error:", err)
-		}
-	}
-}
-
-func newWatcher() (w *fsnotify.Watcher) {
-	w, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Error("Could not create watcher due to: %v", err)
-	}
-	return
 }
 
 func (ed *Editor) handleLog(s string) {

@@ -510,6 +510,27 @@ func (v *View) IsDirty() bool {
 	return v.buffer.ChangeCount() != lastSave
 }
 
+func (v *View) FileChanged(filename string) {
+	log.Finest("Reloading %s", filename)
+
+	if saving, ok := v.Settings().Get("lime.saving", false).(bool); ok && saving {
+		// This reload was triggered by ourselves saving to this file, so don't reload it
+		return
+	}
+	if !GetEditor().Frontend().OkCancelDialog("File was changed by another program, reload?", "reload") {
+		return
+	}
+
+	if d, err := ioutil.ReadFile(filename); err != nil {
+		log.Error("Could not read file: %s\n. Error was: %v", filename, err)
+	} else {
+		edit := v.BeginEdit()
+		end := v.Buffer().Size()
+		v.Replace(edit, Region{0, end}, string(d))
+		v.EndEdit(edit)
+	}
+}
+
 // Saves the file
 func (v *View) Save() error {
 	return v.SaveAs(v.buffer.FileName())
@@ -549,11 +570,12 @@ func (v *View) SaveAs(name string) (err error) {
 	}
 
 	ed := GetEditor()
-	if v.buffer.FileName() != name {
+	if fn := v.buffer.FileName(); fn != name {
 		v.Buffer().SetFileName(name)
-		// TODO(.): There could be multiple watchers tied to a single filename...
-		ed.UnWatch(v.buffer.FileName())
-		ed.Watch(NewWatchedUserFile(v))
+		if fn != "" {
+			ed.UnWatch(fn, v)
+		}
+		ed.Watch(name, v)
 	}
 
 	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
@@ -686,7 +708,7 @@ func (v *View) Close() bool {
 		}
 	}
 	if n := v.buffer.FileName(); n != "" {
-		GetEditor().UnWatch(n)
+		GetEditor().UnWatch(n, v)
 	}
 
 	// Call the event first while there's still access possible to the underlying

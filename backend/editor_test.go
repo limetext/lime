@@ -7,23 +7,9 @@ package backend
 import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/packages"
-	"github.com/limetext/text"
-	"os"
 	"path"
 	"testing"
 )
-
-type DummyWatched struct {
-	name string
-}
-
-func (d *DummyWatched) Name() string {
-	return d.name
-}
-
-func (d *DummyWatched) Reload() {
-	// noop
-}
 
 func TestGetEditor(t *testing.T) {
 	editor := GetEditor()
@@ -106,67 +92,6 @@ func TestInit(t *testing.T) {
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
-	}
-}
-
-func TestWatch(t *testing.T) {
-	editor := GetEditor()
-	observedFile := &DummyWatched{"editor_test.go"}
-	editor.Watch(observedFile)
-
-	if editor.watchedFiles["editor_test.go"] != observedFile {
-		t.Fatal("Expected editor to watch the specified file")
-	}
-}
-
-func TestWatchOnSaveAs(t *testing.T) {
-	var testfile string = "testdata/Default.sublime-settings"
-	tests := []struct {
-		as string
-	}{
-		{
-			"User.sublime-settings",
-		},
-		{
-			"testdata/User.sublime-settings",
-		},
-	}
-
-	editor := GetEditor()
-	w := editor.NewWindow()
-	defer w.Close()
-
-	for i, test := range tests {
-		v := w.OpenFile(testfile, 0)
-
-		if err := v.SaveAs(test.as); err != nil {
-			t.Fatalf("Test %d: Can't save to `%s`: %s", i, test.as, err)
-		}
-
-		if v.IsDirty() {
-			t.Errorf("Test %d: Expected the view to be clean, but it wasn't", i)
-		}
-
-		if _, exist := editor.watchedFiles[test.as]; !exist {
-			t.Errorf("Test %d: Should watch %s file", i, test.as)
-		}
-
-		v.Close()
-
-		if err := os.Remove(test.as); err != nil {
-			t.Errorf("Test %d: Couldn't remove test file %s", i, test.as)
-		}
-	}
-}
-
-func TestWatchingSettings(t *testing.T) {
-	testFile := "testdata/Default.sublime-settings"
-	ed := GetEditor()
-	set := &text.HasSettings{}
-
-	ed.loadSetting(packages.NewPacket(testFile, set.Settings()))
-	if _, exist := ed.watchedFiles[testFile]; !exist {
-		t.Errorf("Should watch %s file", testFile)
 	}
 }
 
