@@ -5,6 +5,7 @@
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
+[![Bountysource](https://www.bountysource.com/badge/team?team_id=8742&style=raised)](https://www.bountysource.com/teams/limetext?utm_source=limetext&utm_medium=shield&utm_campaign=raised)
 
 # Status
 
