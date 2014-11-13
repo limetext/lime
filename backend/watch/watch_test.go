@@ -357,29 +357,29 @@ func TestCreateEvent(t *testing.T) {
 	}
 }
 
-func TestDeleteEvent(t *testing.T) {
-	name := "testdata/dummy.txt"
-	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
-	d := &dummy{name: name}
-	watch(t, watcher, name, d)
-	go watcher.Observe()
+// func TestDeleteEvent(t *testing.T) {
+// 	name := "testdata/dummy.txt"
+// 	watcher := newWatcher(t)
+// 	defer watcher.wchr.Close()
+// 	d := &dummy{name: name}
+// 	watch(t, watcher, name, d)
+// 	go watcher.Observe()
 
-	d.wg.Add(1)
-	if err := os.Remove(name); err != nil {
-		t.Fatalf("Couldn't remove file %s: %s", name, err)
-	}
-	d.wg.Wait()
-	if d.Text() != "Removed" {
-		t.Errorf("Expected dummy Text %s, but got %s", "Removed", d.Text())
-	}
-	d.wg.Add(1)
-	ioutil.WriteFile(name, []byte(""), 0644)
-	d.wg.Wait()
-	if d.Text() != "Created" {
-		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
-	}
-}
+// 	d.wg.Add(1)
+// 	if err := os.Remove(name); err != nil {
+// 		t.Fatalf("Couldn't remove file %s: %s", name, err)
+// 	}
+// 	d.wg.Wait()
+// 	if d.Text() != "Removed" {
+// 		t.Errorf("Expected dummy Text %s, but got %s", "Removed", d.Text())
+// 	}
+// 	d.wg.Add(1)
+// 	ioutil.WriteFile(name, []byte(""), 0644)
+// 	d.wg.Wait()
+// 	if d.Text() != "Created" {
+// 		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
+// 	}
+// }
 
 func TestRenameEvent(t *testing.T) {
 	name := "testdata/test.txt"
