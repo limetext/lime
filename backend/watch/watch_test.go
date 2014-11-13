@@ -45,13 +45,13 @@ func unwatch(t *testing.T, watcher *Watcher, name string, cb interface{}) {
 
 func TestNewWatcher(t *testing.T) {
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	if len(watcher.dirs) != 0 {
 		t.Errorf("Expected len(dirs) of new watcher %d, but got %d", 0, len(watcher.dirs))
 	}
 	if len(watcher.watchers) != 0 {
 		t.Errorf("Expected len(watchers) of new watcher %d, but got %d", 0, len(watcher.watchers))
 	}
+	watcher.wchr.Close()
 }
 
 type dummy struct {
@@ -129,7 +129,6 @@ func TestWatch(t *testing.T) {
 
 func Testwatch(t *testing.T) {
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	if err := watcher.watch("testdata/dummy.txt"); err != nil {
 		t.Fatalf("Couldn't watch %s", "testdata/dummy.txt")
 	}
@@ -139,23 +138,23 @@ func Testwatch(t *testing.T) {
 	if !equal(watcher.watchers, []string{"testdata/dummy.txt", "testdata/test.txt"}) {
 		t.Errorf("Expected watchers %v, but got %v", []string{"testdata/dummy.txt", "testdata/test.txt"}, watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestAdd(t *testing.T) {
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watcher.add("test", d)
 	if cb := watcher.watched["test"][0]; cb != d {
 		t.Errorf("Expected watcher['test'][0] callback equal to %d, but got %d", d, cb)
 	}
+	watcher.wchr.Close()
 }
 
 func TestFlushDir(t *testing.T) {
 	name := "testdata/dummy.txt"
 	dir := "testdata"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watch(t, watcher, name, d)
 	if !equal(watcher.watchers, []string{name}) {
@@ -168,24 +167,24 @@ func TestFlushDir(t *testing.T) {
 	if !equal(watcher.watchers, []string{}) {
 		t.Errorf("Expected watchers equal to %v, but got %v", []string{}, watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestUnWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watch(t, watcher, name, d)
 	unwatch(t, watcher, name, d)
 	if len(watcher.watched) != 0 {
 		t.Errorf("Expected watcheds be empty, but got %v", watcher.watched)
 	}
+	watcher.wchr.Close()
 }
 
 func TestUnWatchAll(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d1 := new(dummy)
 	d2 := new(dummy)
 	watch(t, watcher, name, d1)
@@ -200,13 +199,13 @@ func TestUnWatchAll(t *testing.T) {
 	if !equal(watcher.watchers, []string{}) {
 		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestUnWatchDirectory(t *testing.T) {
 	name := "testdata/dummy.txt"
 	dir := "testdata"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watch(t, watcher, name, d)
 	watch(t, watcher, dir, nil)
@@ -217,12 +216,12 @@ func TestUnWatchDirectory(t *testing.T) {
 	if !equal(watcher.watchers, []string{name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestUnWatchOneOfSubscribers(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d1 := new(dummy)
 	d2 := new(dummy)
 	watch(t, watcher, name, d1)
@@ -237,12 +236,12 @@ func TestUnWatchOneOfSubscribers(t *testing.T) {
 	if len(watcher.watched[name]) != 1 {
 		t.Errorf("Expected watched[%s] length be %d, but got %d", name, 1, len(watcher.watched[name]))
 	}
+	watcher.wchr.Close()
 }
 
 func TestunWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d1 := new(dummy)
 	d2 := new(dummy)
 	watch(t, watcher, name, d1)
@@ -256,25 +255,25 @@ func TestunWatch(t *testing.T) {
 	if !equal(watcher.watchers, []string{}) {
 		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestRemoveWatch(t *testing.T) {
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watch(t, watcher, name, d)
 	watcher.removeWatch(name)
 	if !equal(watcher.watchers, []string{}) {
 		t.Errorf("Expected watchers be empty but got %v", watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestRemoveDir(t *testing.T) {
 	name := "testdata/dummy.txt"
 	dir := "testdata"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := new(dummy)
 	watch(t, watcher, dir, d)
 	watch(t, watcher, name, d)
@@ -291,13 +290,12 @@ func TestRemoveDir(t *testing.T) {
 	if !equal(watcher.watchers, []string{dir, name}) {
 		t.Errorf("Expected watchers be equal to %s, but got %s", []string{name}, watcher.watchers)
 	}
+	watcher.wchr.Close()
 }
 
 func TestObserve(t *testing.T) {
 	name := "testdata/test.txt"
 	watcher := newWatcher(t)
-	defer ioutil.WriteFile(name, []byte(""), 0644)
-	defer watcher.wchr.Close()
 	d := &dummy{name: name}
 	watch(t, watcher, name, d)
 	go watcher.Observe()
@@ -310,14 +308,14 @@ func TestObserve(t *testing.T) {
 	if d.Text() != "Changed" {
 		t.Errorf("Expected dummy Text %s, but got %s", "Changed", d.Text())
 	}
+	watcher.wchr.Close()
+	ioutil.WriteFile(name, []byte(""), 0644)
 }
 
 func TestObserveDirectory(t *testing.T) {
 	dir := "testdata"
 	name := "testdata/test.txt"
 	watcher := newWatcher(t)
-	defer ioutil.WriteFile(name, []byte(""), 0644)
-	defer watcher.wchr.Close()
 	d := &dummy{name: dir}
 	watch(t, watcher, dir, d)
 	go watcher.Observe()
@@ -333,13 +331,13 @@ func TestObserveDirectory(t *testing.T) {
 	if d.Text() != "Changed" {
 		t.Errorf("Expected dummy Text %s, but got %s", "Changed", d.Text())
 	}
+	watcher.wchr.Close()
+	ioutil.WriteFile(name, []byte(""), 0644)
 }
 
 func TestCreateEvent(t *testing.T) {
 	name := "testdata/new.txt"
 	watcher := newWatcher(t)
-	defer os.Remove(name)
-	defer watcher.wchr.Close()
 	d := &dummy{name: name}
 	watch(t, watcher, name, d)
 	go watcher.Observe()
@@ -355,12 +353,13 @@ func TestCreateEvent(t *testing.T) {
 	if d.Text() != "Created" {
 		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
 	}
+	watcher.wchr.Close()
+	os.Remove(name)
 }
 
 // func TestDeleteEvent(t *testing.T) {
 // 	name := "testdata/dummy.txt"
 // 	watcher := newWatcher(t)
-// 	defer watcher.wchr.Close()
 // 	d := &dummy{name: name}
 // 	watch(t, watcher, name, d)
 // 	go watcher.Observe()
@@ -379,12 +378,12 @@ func TestCreateEvent(t *testing.T) {
 // 	if d.Text() != "Created" {
 // 		t.Errorf("Expected dummy Text %s, but got %s", "Created", d.Text())
 // 	}
+// 	watcher.wchr.Close()
 // }
 
 func TestRenameEvent(t *testing.T) {
 	name := "testdata/test.txt"
 	watcher := newWatcher(t)
-	defer watcher.wchr.Close()
 	d := &dummy{name: name}
 	watch(t, watcher, name, d)
 	go watcher.Observe()
@@ -395,5 +394,6 @@ func TestRenameEvent(t *testing.T) {
 	if d.Text() != "Renamed" {
 		t.Errorf("Expected dummy Text %s, but got %s", "Renamed", d.Text())
 	}
+	watcher.wchr.Close()
 	os.Rename("testdata/rename.txt", name)
 }
