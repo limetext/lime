@@ -234,8 +234,6 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			x = sx
 			if y++; y > ey {
 				break
-			} else if lineNumbers {
-				renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 			}
 			continue
 		}
