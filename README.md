@@ -3,7 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/limetext/lime?status.svg)](https://godoc.org/github.com/limetext/lime)
 [![Bountysource](https://www.bountysource.com/badge/team?team_id=8742&style=raised)](https://www.bountysource.com/teams/limetext?utm_source=limetext&utm_medium=shield&utm_campaign=raised)
 
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime)
 
 # Status
 
@@ -42,9 +42,7 @@ Please refer to the [Building](https://github.com/limetext/lime/wiki/Building) p
 
 # Contributing
 
-Want to hack on Lime? Awesome! Here are instructions to get you started. They are probably not perfect, so please let us know if anything feels wrong or incomplete.
-
-We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
+Want to hack on Lime? Awesome! We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
 
 If your pull request is not accepted on the first try, don't be discouraged! If there's a problem with the implementation, hopefully you received feedback on what to improve.
 
