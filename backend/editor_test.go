@@ -23,8 +23,9 @@ func TestLoadKeyBinding(t *testing.T) {
 	editor.loadKeyBinding(packages.NewPacket("testdata/Default.sublime-keymap", new(keys.KeyBindings)))
 
 	kb := editor.keyBindings.Filter(keys.KeyPress{Key: 'i'})
-	if kb.Len() == 69 {
-		t.Errorf("Expected to have %d keys in the filter, but it had %d", 69, kb.Len())
+	expectedLen := 3
+	if kb.Len() != expectedLen {
+		t.Errorf("Expected to have %d keys in the filter, but it had %d", expectedLen, kb.Len())
 	}
 }
 
