@@ -366,6 +366,12 @@ func TestCreateEvent(t *testing.T) {
 }
 
 func TestDeleteEvent(t *testing.T) {
+	if os.ExpandEnv("$TRAVIS") != "" {
+		// This test just times out on travis (ie the callback is never called).
+		// See https://github.com/limetext/lime/issues/438
+		t.Skip("Skipping test as it doesn't work with travis")
+		return
+	}
 	name := "testdata/dummy.txt"
 	watcher := newWatcher(t)
 	defer wclose(t, watcher)
