@@ -52,29 +52,40 @@ type dummy struct {
 	text string
 	name string
 	wg   sync.WaitGroup
+	lock sync.Mutex
 }
 
 func (d *dummy) FileChanged(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	defer d.wg.Done()
 	d.text = "Changed"
 }
 
 func (d *dummy) FileCreated(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	defer d.wg.Done()
 	d.text = "Created"
 }
 
 func (d *dummy) FileRemoved(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	defer d.wg.Done()
 	d.text = "Removed"
 }
 
 func (d *dummy) FileRenamed(name string) {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	defer d.wg.Done()
 	d.text = "Renamed"
 }
 
 func (d *dummy) Text() string {
+	d.lock.Lock()
+	defer d.lock.Unlock()
 	return d.text
 }
 
