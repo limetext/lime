@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/howeyc/fsnotify"
 	"github.com/limetext/lime/backend/log"
+	"gopkg.in/fsnotify.v1"
 )
 
 type (
@@ -114,7 +114,7 @@ func (w *Watcher) add(name string, cb interface{}) error {
 }
 
 func (w *Watcher) watch(name string) error {
-	if err := w.wchr.Watch(name); err != nil {
+	if err := w.wchr.Add(name); err != nil {
 		return err
 	}
 	w.watchers = append(w.watchers, name)
@@ -167,7 +167,7 @@ func (w *Watcher) unWatch(name string) error {
 }
 
 func (w *Watcher) removeWatch(name string) error {
-	if err := w.wchr.RemoveWatch(name); err != nil {
+	if err := w.wchr.Remove(name); err != nil {
 		return err
 	}
 	w.watchers = remove(w.watchers, name)
@@ -193,14 +193,11 @@ func (w *Watcher) removeDir(name string) {
 func (w *Watcher) Observe() {
 	for {
 		select {
-		case ev := <-w.wchr.Event:
+		case ev := <-w.wchr.Events:
 			func() {
 				w.lock.Lock()
 				defer w.lock.Unlock()
-				if ev == nil {
-					return
-				}
-				w.apply(*ev)
+				w.apply(ev)
 				name := ev.Name
 				// If the name refers to a directory run all watched
 				// callbacks for wathed files under the directory
@@ -208,7 +205,7 @@ func (w *Watcher) Observe() {
 					for p, _ := range w.watched {
 						if filepath.Dir(p) == name {
 							ev.Name = p
-							w.apply(*ev)
+							w.apply(ev)
 						}
 					}
 				}
@@ -216,7 +213,7 @@ func (w *Watcher) Observe() {
 				// The watcher will be removed if the file is deleted
 				// so we need to watch the parent directory for when the
 				// file is created again
-				if ev.IsDelete() {
+				if ev.Op&fsnotify.Remove != 0 {
 					w.watchers = remove(w.watchers, name)
 					w.lock.Unlock()
 					w.Watch(dir, nil)
@@ -224,7 +221,7 @@ func (w *Watcher) Observe() {
 				}
 				// We will apply parent directory FileChanged callbacks to,
 				// if one of the files inside the directory has changed
-				if cbs, exist := w.watched[dir]; ev.IsModify() && exist {
+				if cbs, exist := w.watched[dir]; ev.Op&fsnotify.Write != 0 && exist {
 					for _, cb := range cbs {
 						if c, ok := cb.(FileChangedCallback); ok {
 							c.FileChanged(dir)
@@ -233,30 +230,30 @@ func (w *Watcher) Observe() {
 				}
 
 			}()
-		case err := <-w.wchr.Error:
+		case err := <-w.wchr.Errors:
 			log.Error("Watcher error: %s", err)
 		}
 	}
 }
 
-func (w *Watcher) apply(ev fsnotify.FileEvent) {
+func (w *Watcher) apply(ev fsnotify.Event) {
 	for _, cb := range w.watched[ev.Name] {
-		if ev.IsCreate() {
+		if ev.Op&fsnotify.Create != 0 {
 			if c, ok := cb.(FileCreatedCallback); ok {
 				c.FileCreated(ev.Name)
 			}
 		}
-		if ev.IsModify() {
+		if ev.Op&fsnotify.Write != 0 {
 			if c, ok := cb.(FileChangedCallback); ok {
 				c.FileChanged(ev.Name)
 			}
 		}
-		if ev.IsDelete() {
+		if ev.Op&fsnotify.Remove != 0 {
 			if c, ok := cb.(FileRemovedCallback); ok {
 				c.FileRemoved(ev.Name)
 			}
 		}
-		if ev.IsRename() {
+		if ev.Op&fsnotify.Rename != 0 {
 			if c, ok := cb.(FileRenamedCallback); ok {
 				c.FileRenamed(ev.Name)
 			}
