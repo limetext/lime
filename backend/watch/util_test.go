@@ -4,7 +4,10 @@
 
 package watch
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestExist(t *testing.T) {
 	test := struct {
@@ -41,7 +44,7 @@ func TestRemove(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		if exp := remove(test.slice, test.remove); !equal(exp, test.exp) {
+		if exp := remove(test.slice, test.remove); !reflect.DeepEqual(exp, test.exp) {
 			t.Errorf("Test %d: Expected %v be equal to %v", i, exp, test.exp)
 		}
 	}
