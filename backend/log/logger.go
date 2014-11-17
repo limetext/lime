@@ -46,35 +46,35 @@ func (l *Logger) AddFilter(name string, level Level, writer LogWriter) {
 }
 
 func (l *Logger) Finest(arg0 interface{}, args ...interface{}) {
-	l.logger.Finest(arg0, args)
+	l.logger.Finest(arg0, args...)
 }
 
 func (l *Logger) Fine(arg0 interface{}, args ...interface{}) {
-	l.logger.Fine(arg0, args)
+	l.logger.Fine(arg0, args...)
 }
 
 func (l *Logger) Debug(arg0 interface{}, args ...interface{}) {
-	l.logger.Debug(arg0, args)
+	l.logger.Debug(arg0, args...)
 }
 
 func (l *Logger) Trace(arg0 interface{}, args ...interface{}) {
-	l.logger.Trace(arg0, args)
+	l.logger.Trace(arg0, args...)
 }
 
 func (l *Logger) Info(arg0 interface{}, args ...interface{}) {
-	l.logger.Info(arg0, args)
+	l.logger.Info(arg0, args...)
 }
 
 func (l *Logger) Warn(arg0 interface{}, args ...interface{}) {
-	l.logger.Warn(arg0, args)
+	l.logger.Warn(arg0, args...)
 }
 
 func (l *Logger) Error(arg0 interface{}, args ...interface{}) {
-	l.logger.Error(arg0, args)
+	l.logger.Error(arg0, args...)
 }
 
 func (l *Logger) Critical(arg0 interface{}, args ...interface{}) {
-	l.logger.Critical(arg0, args)
+	l.logger.Critical(arg0, args...)
 }
 
 func (l *Logger) Logf(level Level, format string, args ...interface{}) {
@@ -98,7 +98,7 @@ func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 		lvl = log4go.CRITICAL
 	default:
 	}
-	l.logger.Logf(lvl, format, args)
+	l.logger.Logf(lvl, format, args...)
 }
 
 func (l *Logger) Close(args ...interface{}) {
