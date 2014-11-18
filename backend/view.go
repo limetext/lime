@@ -79,11 +79,21 @@ func (v *View) setBuffer(b Buffer) error {
 	}
 	v.buffer = b
 	// TODO(q): Dynamically load the correct syntax file
-	b.AddCallback(func(_ Buffer, position, delta int) {
-		v.flush(position, delta)
-	})
+	b.AddObserver(v);
 	return nil
 }
+
+// BufferObserver
+
+func (v *View) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	v.flush(region_removed.B, region_removed.A - region_removed.B)
+}
+
+func (v *View) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	v.flush(region_inserted.A, region_inserted.B - region_inserted.A)
+}
+
+// End of Buffer Observer
 
 // Flush is called every time the underlying buffer is changed.
 // It calls Adjust() on all the regions associated with this view,
