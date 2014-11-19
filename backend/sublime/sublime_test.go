@@ -24,6 +24,18 @@ import (
 
 var dummyClipboard string
 
+type consoleObserver struct {
+	T *testing.T
+}
+
+func (o *consoleObserver) Erased(changed_buffer text.Buffer, region_removed text.Region, data_removed []rune) {
+	// do nothing
+}
+
+func (o *consoleObserver) Inserted(changed_buffer text.Buffer, region_inserted text.Region, data_inserted []rune) {
+	o.T.Logf("%s", string(data_inserted))
+}
+
 func TestSublime(t *testing.T) {
 	ed := backend.GetEditor()
 	ed.SetClipboardFuncs(func(n string) (err error) {
@@ -34,9 +46,7 @@ func TestSublime(t *testing.T) {
 	})
 	defer ed.Init()
 
-	ed.Console().Buffer().AddCallback(func(b text.Buffer, pos, delta int) {
-		t.Logf("%s", b.Substr(text.Region{pos, pos + delta}))
-	})
+	ed.Console().Buffer().AddObserver(&consoleObserver{T: t})
 	w := ed.NewWindow()
 	Init()
 	l := py.NewLock()
