@@ -17,11 +17,11 @@ type regionSetAdjuster struct {
 }
 
 func (adjuster *regionSetAdjuster) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
-	adjuster.Set.Adjust(region_removed.B, region_removed.A - region_removed.B)
+	adjuster.Set.Adjust(region_removed.B, region_removed.A-region_removed.B)
 }
 
 func (adjuster *regionSetAdjuster) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
-	adjuster.Set.Adjust(region_inserted.A, region_inserted.B - region_inserted.A)
+	adjuster.Set.Adjust(region_inserted.A, region_inserted.B-region_inserted.A)
 }
 
 func LoadJSON(data []byte, intf interface{}) error {
@@ -57,7 +57,7 @@ func LoadJSON(data []byte, intf interface{}) error {
 			return errors.New("Unhandled node: " + child.Name)
 		}
 	}
-	b.AddObserver(&regionSetAdjuster{Set: &set});
+	b.AddObserver(&regionSetAdjuster{Set: &set})
 	i := 0
 	for {
 		l := set.Len()
