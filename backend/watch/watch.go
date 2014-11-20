@@ -63,7 +63,7 @@ func (w *Watcher) Watch(name string, cb interface{}) error {
 	// If the file doesn't exist currently we will add watcher for file
 	// directory and look for create event inside the directory
 	if os.IsNotExist(err) {
-		log.Debug("File doesn't exist, Watching parent dir")
+		log.Fine("File doesn't exist, Watching parent dir")
 		if err := w.Watch(filepath.Dir(name), nil); err != nil {
 			return err
 		}

@@ -58,7 +58,7 @@ func TestSublime(t *testing.T) {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
 			pl := newPlugin(p, m)
-			pl.reload()
+			pl.loadPlugin()
 			if err := watcher.Watch(pl.Name(), pl); err != nil {
 				t.Fatalf("Couldn't watch %s: %s", pl.Name(), err)
 			}

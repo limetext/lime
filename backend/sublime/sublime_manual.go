@@ -164,13 +164,9 @@ func newPlugin(p *packages.Plugin, m *py.Module) *plugin {
 	return &plugin{p, m}
 }
 
-func (p *plugin) reload() {
+func (p *plugin) FileChanged(name string) {
 	p.pl.Reload()
 	p.loadPlugin()
-}
-
-func (p *plugin) FileChanged(name string) {
-	p.reload()
 }
 
 func (p *plugin) Name() string {
@@ -221,7 +217,7 @@ func Init() {
 		// TODO: add all plugins after supporting all commands
 		if p.Name() == path.Join("..", "..", "3rdparty", "bundles", "Vintageous") {
 			pl := newPlugin(p, m)
-			pl.reload()
+			pl.loadPlugin()
 			if err := watcher.Watch(pl.Name(), pl); err != nil {
 				log.Error("Couldn't watch %s: %s", pl.Name(), err)
 			}
