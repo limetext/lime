@@ -12,6 +12,18 @@ import (
 	. "github.com/limetext/text"
 )
 
+type regionSetAdjuster struct {
+	Set *RegionSet
+}
+
+func (adjuster *regionSetAdjuster) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	adjuster.Set.Adjust(region_removed.B, region_removed.A-region_removed.B)
+}
+
+func (adjuster *regionSetAdjuster) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	adjuster.Set.Adjust(region_inserted.A, region_inserted.B-region_inserted.A)
+}
+
 func LoadJSON(data []byte, intf interface{}) error {
 	var (
 		b   = NewBuffer()
@@ -45,9 +57,7 @@ func LoadJSON(data []byte, intf interface{}) error {
 			return errors.New("Unhandled node: " + child.Name)
 		}
 	}
-	b.AddCallback(func(b Buffer, pos, delta int) {
-		set.Adjust(pos, delta)
-	})
+	b.AddObserver(&regionSetAdjuster{Set: &set})
 	i := 0
 	for {
 		l := set.Len()
