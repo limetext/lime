@@ -14,7 +14,7 @@
 	path = packages/go.tmbundle
 	url = https://github.com/AlanQuatermain/go-tmbundle.git
 [submodule "packages/themes/TextMate-Themes"]
-	path = packages/TextMate-Themes
+	path = packages/themes/TextMate-Themes
 	url = https://github.com/filmgirl/TextMate-Themes.git
 [submodule "packages/GoSublime"]
 	path = packages/GoSublime
