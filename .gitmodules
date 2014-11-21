@@ -1,17 +1,17 @@
-[submodule "3rdparty/bundles/c.tmbundle"]
-	path = 3rdparty/bundles/c.tmbundle
+[submodule "packages/c.tmbundle"]
+	path = packages/c.tmbundle
 	url = https://github.com/textmate/c.tmbundle
-[submodule "3rdparty/bundles/property-list.tmbundle"]
-	path = 3rdparty/bundles/property-list.tmbundle
+[submodule "packages/property-list.tmbundle"]
+	path = packages/property-list.tmbundle
 	url = https://github.com/textmate/property-list.tmbundle
-[submodule "3rdparty/bundles/monokai.tmbundle"]
-	path = 3rdparty/bundles/monokai.tmbundle
+[submodule "packages/monokai.tmbundle"]
+	path = packages/monokai.tmbundle
 	url = https://github.com/textmate/monokai.tmbundle
-[submodule "3rdparty/bundles/xml.tmbundle"]
-	path = 3rdparty/bundles/xml.tmbundle
+[submodule "packages/xml.tmbundle"]
+	path = packages/xml.tmbundle
 	url = https://github.com/textmate/xml.tmbundle.git
-[submodule "3rdparty/bundles/go.tmbundle"]
-	path = 3rdparty/bundles/go.tmbundle
+[submodule "packages/go.tmbundle"]
+	path = packages/go.tmbundle
 	url = https://github.com/AlanQuatermain/go-tmbundle.git
 [submodule "3rdparty/libs/gopy"]
 	path = 3rdparty/libs/gopy
@@ -24,76 +24,76 @@
 [submodule "3rdparty/libs/termbox-go"]
 	path = 3rdparty/libs/termbox-go
 	url = https://github.com/limetext/termbox-go.git
-[submodule "3rdparty/bundles/TextMate-Themes"]
-	path = 3rdparty/bundles/TextMate-Themes
+[submodule "packages/TextMate-Themes"]
+	path = packages/TextMate-Themes
 	url = https://github.com/filmgirl/TextMate-Themes.git
-[submodule "3rdparty/bundles/GoSublime"]
-	path = 3rdparty/bundles/GoSublime
+[submodule "packages/GoSublime"]
+	path = packages/GoSublime
 	url = https://github.com/DisposaBoy/GoSublime.git
-[submodule "3rdparty/bundles/Vintageous"]
-	path = 3rdparty/bundles/Vintageous
+[submodule "packages/Vintageous"]
+	path = packages/Vintageous
 	url = https://github.com/quarnster/Vintageous.git
 	ignore = dirty
-[submodule "3rdparty/bundles/themes/soda"]
-	path = 3rdparty/bundles/themes/soda
+[submodule "packages/themes/soda"]
+	path = packages/themes/soda
 	url = https://github.com/buymeasoda/soda-theme.git
-[submodule "3rdparty/bundles/python.tmbundle"]
-	path = 3rdparty/bundles/python.tmbundle
+[submodule "packages/python.tmbundle"]
+	path = packages/python.tmbundle
 	url = https://github.com/textmate/python.tmbundle.git
-[submodule "3rdparty/bundles/Diff.tmbundle"]
-	path = 3rdparty/bundles/Diff.tmbundle
+[submodule "packages/Diff.tmbundle"]
+	path = packages/Diff.tmbundle
 	url = https://github.com/textmate/Diff.tmbundle.git
-[submodule "3rdparty/bundles/ruby.tmbundle"]
-	path = 3rdparty/bundles/ruby.tmbundle
+[submodule "packages/ruby.tmbundle"]
+	path = packages/ruby.tmbundle
 	url = https://github.com/textmate/ruby.tmbundle.git
-[submodule "3rdparty/bundles/perl.tmbundle"]
-	path = 3rdparty/bundles/perl.tmbundle
+[submodule "packages/perl.tmbundle"]
+	path = packages/perl.tmbundle
 	url = https://github.com/textmate/perl.tmbundle.git
-[submodule "3rdparty/bundles/sql.tmbundle"]
-	path = 3rdparty/bundles/sql.tmbundle
+[submodule "packages/sql.tmbundle"]
+	path = packages/sql.tmbundle
 	url = https://github.com/textmate/sql.tmbundle.git
-[submodule "3rdparty/bundles/html.tmbundle"]
-	path = 3rdparty/bundles/html.tmbundle
+[submodule "packages/html.tmbundle"]
+	path = packages/html.tmbundle
 	url = https://github.com/textmate/html.tmbundle.git
-[submodule "3rdparty/bundles/php.tmbundle"]
-	path = 3rdparty/bundles/php.tmbundle
+[submodule "packages/php.tmbundle"]
+	path = packages/php.tmbundle
 	url = https://github.com/textmate/php.tmbundle.git
-[submodule "3rdparty/bundles/make.tmbundle"]
-	path = 3rdparty/bundles/make.tmbundle
+[submodule "packages/make.tmbundle"]
+	path = packages/make.tmbundle
 	url = https://github.com/textmate/make.tmbundle.git
-[submodule "3rdparty/bundles/java.tmbundle"]
-	path = 3rdparty/bundles/java.tmbundle
+[submodule "packages/java.tmbundle"]
+	path = packages/java.tmbundle
 	url = https://github.com/textmate/java.tmbundle.git
-[submodule "3rdparty/bundles/javascript.tmbundle"]
-	path = 3rdparty/bundles/javascript.tmbundle
+[submodule "packages/javascript.tmbundle"]
+	path = packages/javascript.tmbundle
 	url = https://github.com/textmate/javascript.tmbundle.git
-[submodule "3rdparty/bundles/css.tmbundle"]
-	path = 3rdparty/bundles/css.tmbundle
+[submodule "packages/css.tmbundle"]
+	path = packages/css.tmbundle
 	url = https://github.com/textmate/css.tmbundle.git
-[submodule "3rdparty/bundles/shellscript.tmbundle"]
-	path = 3rdparty/bundles/shellscript.tmbundle
+[submodule "packages/shellscript.tmbundle"]
+	path = packages/shellscript.tmbundle
 	url = https://github.com/textmate/shellscript.tmbundle.git
-[submodule "3rdparty/bundles/json.tmbundle"]
-	path = 3rdparty/bundles/json.tmbundle
+[submodule "packages/json.tmbundle"]
+	path = packages/json.tmbundle
 	url = https://github.com/textmate/json.tmbundle.git
-[submodule "3rdparty/bundles/markdown.tmbundle"]
-	path = 3rdparty/bundles/markdown.tmbundle
+[submodule "packages/markdown.tmbundle"]
+	path = packages/markdown.tmbundle
 	url = https://github.com/textmate/markdown.tmbundle.git
-[submodule "3rdparty/bundles/haskell.tmbundle"]
-	path = 3rdparty/bundles/haskell.tmbundle
+[submodule "packages/haskell.tmbundle"]
+	path = packages/haskell.tmbundle
 	url = https://github.com/textmate/haskell.tmbundle.git
-[submodule "3rdparty/bundles/lua.tmbundle"]
-	path = 3rdparty/bundles/lua.tmbundle
+[submodule "packages/lua.tmbundle"]
+	path = packages/lua.tmbundle
 	url = https://github.com/textmate/lua.tmbundle.git
-[submodule "3rdparty/bundles/yaml.tmbundle"]
-	path = 3rdparty/bundles/yaml.tmbundle
+[submodule "packages/yaml.tmbundle"]
+	path = packages/yaml.tmbundle
 	url = https://github.com/textmate/yaml.tmbundle.git
-[submodule "3rdparty/bundles/d.tmbundle"]
-	path = 3rdparty/bundles/d.tmbundle
+[submodule "packages/d.tmbundle"]
+	path = packages/d.tmbundle
 	url = https://github.com/textmate/d.tmbundle.git
-[submodule "3rdparty/bundles/cmake.tmbundle"]
-	path = 3rdparty/bundles/cmake.tmbundle
+[submodule "packages/cmake.tmbundle"]
+	path = packages/cmake.tmbundle
 	url = https://github.com/textmate/cmake.tmbundle.git
-[submodule "3rdparty/bundles/ini.tmbundle"]
-	path = 3rdparty/bundles/ini.tmbundle
+[submodule "packages/ini.tmbundle"]
+	path = packages/ini.tmbundle
 	url = https://github.com/textmate/ini.tmbundle.git
