@@ -24,7 +24,7 @@ var licenseheader = []byte(`// Copyright ` + year + ` The lime Authors.
 func patch(path string, fi os.FileInfo, err error) error {
 	if fi.IsDir() {
 		switch filepath.Base(path) {
-		case "testdata", "build2", "3rdparty":
+		case "testdata", "build2", "packages":
 			return filepath.SkipDir
 		}
 		return nil

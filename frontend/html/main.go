@@ -261,7 +261,7 @@ func (t *tbfe) theme(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	filepath := path.Join("../../3rdparty/bundles", reqpath)
+	filepath := path.Join("../../packages", reqpath)
 
 	exists := false
 	if s, err := os.Stat(filepath); err == nil {
@@ -457,7 +457,7 @@ func (t *tbfe) loop() {
 	ed.LogInput(false)
 	ed.LogCommands(false)
 	c := ed.Console()
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../packages/themes/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log.Error(err)
 	} else {
 		scheme = sc
@@ -470,7 +470,7 @@ func (t *tbfe) loop() {
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
 	//v.Settings().Set("trace", true)
-	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 	c.Buffer().AddCallback(t.scroll)
 
 	sel := v.Sel()

@@ -686,7 +686,7 @@ func (t *qmlfrontend) loop() (err error) {
 	})
 
 	// TODO: should be done backend side
-	if sc, err := textmate.LoadTheme("../../3rdparty/bundles/TextMate-Themes/Monokai.tmTheme"); err != nil {
+	if sc, err := textmate.LoadTheme("../../packages/themes/TextMate-Themes/Monokai.tmTheme"); err != nil {
 		log.Error(err)
 	} else {
 		scheme = sc
@@ -699,10 +699,10 @@ func (t *qmlfrontend) loop() (err error) {
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
 	// TODO: should be done backend side
-	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 	v = w.OpenFile("../../backend/editor.go", 0)
 	// TODO: should be done backend side
-	v.Settings().Set("syntax", "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {

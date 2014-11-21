@@ -148,7 +148,7 @@ func createFrontend() *tbfe {
 	t.console.Buffer().AddCallback(t.scroll)
 	t.setupCallbacks(t.currentView)
 
-	path := path.Join("..", "..", "3rdparty", "bundles", "TextMate-Themes", "Monokai.tmTheme")
+	path := path.Join("..", "..", "packages", "themes", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
 		log.Error(err)
 	} else {
@@ -690,7 +690,7 @@ func setSchemeSettings() {
 }
 
 func createNewView(filename string, window *backend.Window) *backend.View {
-	syntax := "../../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	syntax := "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v := window.OpenFile(filename, 0)
 
 	v.Settings().Set("trace", true)
