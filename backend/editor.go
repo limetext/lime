@@ -77,8 +77,8 @@ type (
 )
 
 var (
-	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "3rdparty", "bundles")
-	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "3rdparty", "bundles", "User")
+	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "packages")
+	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "packages", "User")
 	LIME_PACKAGES_PATH      = path.Join("..", "..", "packages")
 	LIME_DEFAULTS_PATH      = path.Join("..", "..", "packages", "Default")
 

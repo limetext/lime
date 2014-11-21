@@ -124,7 +124,7 @@ ApplicationWindow {
         id: statusBar
         style: StatusBarStyle {
             background: Image {
-               source: "../../3rdparty/bundles/themes/soda/Soda Dark/status-bar-background.png"
+               source: "../../packages/themes/soda/Soda Dark/status-bar-background.png"
             }
         }
 
@@ -205,7 +205,7 @@ ApplicationWindow {
                                 text: styleData.title
                             }
                             BorderImage {
-                                source: styleData.selected ? "../../3rdparty/bundles/themes/soda/Soda Dark/tab-active.png" : "../../3rdparty/bundles/themes/soda/Soda Dark/tab-inactive.png"
+                                source: styleData.selected ? "../../packages/themes/soda/Soda Dark/tab-active.png" : "../../packages/themes/soda/Soda Dark/tab-inactive.png"
                                 border { left: 5; top: 5; right: 5; bottom: 5 }
                                 width: 180
                                 height: 25
@@ -220,7 +220,7 @@ ApplicationWindow {
                         }
                         tabBar: Image {
                             fillMode: Image.TileHorizontally
-                            source: "../../3rdparty/bundles/themes/soda/Soda Dark/tabset-background.png"
+                            source: "../../packages/themes/soda/Soda Dark/tabset-background.png"
                         }
                         tabsMovable: true
                         frame: Rectangle { color: frontend.defaultBg() }

@@ -258,7 +258,7 @@ func TestStress(t *testing.T) {
 		v.Close()
 	}()
 
-	syntax := "../3rdparty/bundles/go.tmbundle/Syntaxes/Go.tmLanguage"
+	syntax := "../packages/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v.Settings().Set("syntax", syntax)
 	for i := 0; i < 1000; i++ {
 		e := v.BeginEdit()
@@ -282,7 +282,7 @@ func TestTransform(t *testing.T) {
 		v.Close()
 	}()
 
-	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
+	sc, err := textmate.LoadTheme("../packages/themes/TextMate-Themes/GlitterBomb.tmTheme")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +318,7 @@ func BenchmarkTransformTranscribe(b *testing.B) {
 		v.Close()
 	}()
 
-	sc, err := textmate.LoadTheme("../3rdparty/bundles/TextMate-Themes/GlitterBomb.tmTheme")
+	sc, err := textmate.LoadTheme("../packages/themes/TextMate-Themes/GlitterBomb.tmTheme")
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -843,8 +843,8 @@ func TestCloseView2(t *testing.T) {
 }
 
 func TestViewLoadSettings(t *testing.T) {
-	LIME_USER_PACKAGES_PATH = path.Join("..", "3rdparty", "bundles")
-	LIME_USER_PACKETS_PATH = path.Join("..", "3rdparty", "bundles", "User")
+	LIME_USER_PACKAGES_PATH = path.Join("..", "packages")
+	LIME_USER_PACKETS_PATH = path.Join("..", "packages", "User")
 	LIME_PACKAGES_PATH = path.Join("..", "packages")
 	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
 
@@ -863,7 +863,7 @@ func TestViewLoadSettings(t *testing.T) {
 		t.Error("Expected `translate_tabs_to_spaces` be false for a new view but is true")
 	}
 
-	v.Settings().Set("syntax", "../3rdparty/bundles/python.tmbundle/Syntaxes/Python.tmLanguage")
+	v.Settings().Set("syntax", "../packages/python.tmbundle/Syntaxes/Python.tmLanguage")
 	if v.Settings().Get("translate_tabs_to_spaces", false).(bool) != true {
 		t.Error("Expected `translate_tabs_to_spaces` be true for python syntax but is false")
 	}
