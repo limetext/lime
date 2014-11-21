@@ -13,18 +13,7 @@
 [submodule "packages/go.tmbundle"]
 	path = packages/go.tmbundle
 	url = https://github.com/AlanQuatermain/go-tmbundle.git
-[submodule "3rdparty/libs/gopy"]
-	path = 3rdparty/libs/gopy
-	url = https://github.com/limetext/gopy.git
-	ignore = dirty
-[submodule "3rdparty/libs/rubex"]
-	path = 3rdparty/libs/rubex
-	url = https://github.com/limetext/rubex.git
-	ignore = dirty
-[submodule "3rdparty/libs/termbox-go"]
-	path = 3rdparty/libs/termbox-go
-	url = https://github.com/limetext/termbox-go.git
-[submodule "packages/TextMate-Themes"]
+[submodule "packages/themes/TextMate-Themes"]
 	path = packages/TextMate-Themes
 	url = https://github.com/filmgirl/TextMate-Themes.git
 [submodule "packages/GoSublime"]
