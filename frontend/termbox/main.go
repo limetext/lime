@@ -127,11 +127,11 @@ type tbfe struct {
 
 // Creates and initializes the frontend.
 func createFrontend() *tbfe {
-	var t tbfe
-	t.dorender = make(chan bool, render_chan_len)
-	t.shutdown = make(chan bool, 2)
-	t.layout = make(map[*backend.View]layout)
-
+	t := tbfe{
+		dorender: make(chan bool, render_chan_len),
+		shutdown: make(chan bool, 2),
+		layout:   make(map[*backend.View]layout),
+	}
 	t.editor = t.setupEditor()
 	t.console = t.editor.Console()
 	t.currentWindow = t.editor.NewWindow()
@@ -177,24 +177,17 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	runes := v.Buffer().Substr(vr)
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
-
-	style, _ := v.Settings().Get("caret_style", "underline").(string)
-	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
-
-	caretStyle := getCaretStyle(style, inverse)
-	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
-	if caretBlink && blink {
-		caretStyle = 0
-	}
-	tabSize := 4
-	ts := v.Settings().Get("tab_size", tabSize)
-	// TODO(.): crikey...
-	if i, ok := ts.(int); ok {
-		tabSize = i
-	} else if f, ok := ts.(float64); ok {
-		tabSize = int(f)
-	}
-
+	// initialize the value of caretStyle -- perhaps move this into getCaretStyle.
+	caretStyle := func(v *backend.View) termbox.Attribute {
+		style, _ := v.Settings().Get("caret_style", "underline").(string)
+		caret, _ := v.Settings().Get("caret_blink", true).(bool)
+		inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
+		if caret && blink {
+			return 0
+		}
+		return getCaretStyle(style, inverse)
+	}(v)
+	tabSize := getTabSize(v.Settings().Get("tab_size", 4))
 	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
 
 	recipie := v.Transform(scheme, vr).Transcribe()
@@ -208,28 +201,27 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 
 	for i, r := range runes {
 		o := vr.Begin() + i
-		curr := 0
 		fg, bg = defaultFg, defaultBg
 
 		if lineNumbers {
 			renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 		}
 
-		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
+		for curr := 0; curr < len(recipie) && (o >= recipie[curr].Region.Begin()); curr++ {
 			if o < recipie[curr].Region.End() {
 				fg = palLut(textmate.Color(recipie[curr].Flavour.Foreground))
 				bg = palLut(textmate.Color(recipie[curr].Flavour.Background))
 			}
-			curr++
 		}
-		iscursor := sel.Contains(Region{o, o})
-		if iscursor {
+		// If the selection is a cursor
+		if sel.Contains(Region{o, o}) {
 			fg = fg | caretStyle
 			termbox.SetCell(x, y, ' ', fg, bg)
 		}
-		if r == '\t' {
-			add := (x + 1 + (tabSize - 1)) &^ (tabSize - 1)
-			for x < add {
+
+		switch r {
+		case '\t': // controls what happens when a tab is read.
+			for add := (x + 1 + (tabSize - 1)) &^ (tabSize - 1); x < add; {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
@@ -238,7 +230,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 				x++
 			}
 			continue
-		} else if r == '\n' {
+		case '\n': // Controls what happens when a newline is read.
 			x = sx
 			if y++; y > ey {
 				break
@@ -255,8 +247,8 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	fg, bg = defaultFg, defaultBg
 	// Need this if the cursor is at the end of the buffer
 	o := vr.Begin() + len(runes)
-	iscursor := sel.Contains(Region{o, o})
-	if iscursor {
+	// If the selection is a cursor
+	if sel.Contains(Region{o, o}) {
 		fg = fg | caretStyle
 		termbox.SetCell(x, y, ' ', fg, bg)
 	}
@@ -305,14 +297,14 @@ func (t *tbfe) Show(v *backend.View, r Region) {
 	r2 := Region{s2, e2}
 
 	r3 := r1.Cover(r2)
-	diff := 0
+
 	if d1, d2 := Abs(r1.Begin()-r3.Begin()), Abs(r1.End()-r3.End()); d1 > d2 {
-		diff = r3.Begin() - r1.Begin()
+		diff := r3.Begin() - r1.Begin()
+		r3.A, r3.B = r1.Begin()+diff, r1.End()+diff
 	} else {
-		diff = r3.End() - r1.End()
+		diff := r3.End() - r1.End()
+		r3.A, r3.B = r1.Begin()+diff, r1.End()+diff
 	}
-	r3.A = r1.Begin() + diff
-	r3.B = r1.End() + diff
 
 	r3 = t.clip(v, r3.A, r3.B)
 	l.visible = r3
@@ -423,11 +415,25 @@ func (t *tbfe) renderthread() {
 		}
 		runes := []rune(t.status_message)
 		t.lock.Unlock()
-
-		w, h := termbox.Size()
-		for i := 0; i < w && i < len(runes); i++ {
-			termbox.SetCell(i, h-2, runes[i], defaultFg, defaultBg)
-		}
+		// Unrolled termbox.SetCell loop
+		func(t *tbfe, runes []rune, fg, bg termbox.Attribute) {
+			w, h := termbox.Size()
+			minValue, index := minimumValue(w, len(runes)), 0
+			switch minValue % 3 {
+			case 1:
+				termbox.SetCell(index, h-2, runes[index], fg, bg)
+				index++
+			case 2:
+				termbox.SetCell(index, h-2, runes[index], fg, bg)
+				termbox.SetCell(index+1, h-2, runes[index+1], fg, bg)
+				index += 2
+			}
+			for ; index < minValue; index += 3 {
+				termbox.SetCell(index, h-2, runes[index], fg, bg)
+				termbox.SetCell(index+1, h-2, runes[index+1], fg, bg)
+				termbox.SetCell(index+2, h-2, runes[index+2], fg, bg)
+			}
+		}(t, runes, defaultFg, defaultBg)
 
 		for i, v := range vs {
 			t.renderView(v, l[i])
@@ -481,7 +487,6 @@ func (t *tbfe) handleInput(ev termbox.Event) {
 	if ev.Key == termbox.KeyCtrlQ {
 		t.shutdown <- true
 	}
-
 	var kp keys.KeyPress
 	if ev.Ch != 0 {
 		kp.Key = keys.Key(ev.Ch)
@@ -555,28 +560,56 @@ func (t *tbfe) loop() {
 	}
 }
 
-func intToRunes(n int) (runes []rune) {
-	lineStr := strconv.FormatInt(int64(n), 10)
+// getTabSize returns the tab size.
+func getTabSize(ts interface{}) int {
+	// TODO(.): crikey...
+	if i, ok := ts.(int); ok {
+		return i
+	} else if f, ok := ts.(float64); ok {
+		return int(f)
+	}
+	return 4
+}
 
-	return []rune(lineStr)
+// minimumValue returns the minimum value of two pairs of integers
+func minimumValue(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+// intToRunes converts an integer into a series of runes.
+func intToRunes(n int) []rune {
+	return []rune(strconv.FormatInt(int64(n), 10))
 }
 
 func padLineRunes(line []rune, totalLineSize int) (padded []rune) {
 	currentLineSize := len(line)
 	if currentLineSize < totalLineSize {
 		padding := (totalLineSize - currentLineSize)
-
-		for i := 0; i < padding; i++ {
+		var index int
+		switch padding % 3 {
+		case 1:
+			padded = append(padded, ' ')
+			index = 1
+		case 2:
+			padded = append(padded, ' ')
+			padded = append(padded, ' ')
+			index = 2
+		}
+		for ; index < padding; index += 3 {
+			padded = append(padded, ' ')
+			padded = append(padded, ' ')
 			padded = append(padded, ' ')
 		}
 	}
-
 	padded = append(padded, line...)
 	padded = append(padded, ' ')
-
 	return
 }
 
+// renderLineNumber renders the line number on the screen.
 func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.Attribute) {
 	if *x == 0 {
 		lineRunes := padLineRunes(intToRunes(*line), lineNumberRenderSize)
@@ -591,22 +624,18 @@ func renderLineNumber(line, x *int, y, lineNumberRenderSize int, fg, bg termbox.
 
 }
 
+// getCaretStyle returns the selected caret style.
 func getCaretStyle(style string, inverse bool) termbox.Attribute {
-	caret_style := termbox.AttrUnderline
-
-	if style == "block" {
-		caret_style = termbox.AttrReverse
-	}
-
-	if inverse {
+	if caret_style := termbox.AttrUnderline; inverse {
 		if caret_style == termbox.AttrReverse {
-			caret_style = termbox.AttrUnderline
-		} else {
-			caret_style = termbox.AttrReverse
+			return termbox.AttrUnderline
 		}
+		return termbox.AttrReverse
+	} else if style == "block" {
+		return termbox.AttrReverse
+	} else {
+		return caret_style
 	}
-
-	return caret_style
 }
 
 func setColorMode() {
