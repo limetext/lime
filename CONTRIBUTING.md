@@ -4,7 +4,7 @@ All issues reported here should result in **code being changed, added and/or rem
 
 For support please use https://github.com/limetext/support instead.
 
-# 2. Issues should be openened up in the correct repository.
+# 2. Issues should be opened up in the correct repository.
 
 All issues reported here should result in code being changed, added and/or removed **in *this* repository**.
 
