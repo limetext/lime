@@ -10,11 +10,10 @@ import (
 
 // Naive algorithm from http://en.wikipedia.org/wiki/Longest_common_subsequence_problem
 func mDiff(av, bv []string, context int) (ret []string) {
-	matrix := make([]int, (len(av)+1)*(len(bv)+1))
 	pitch := (len(bv) + 1)
+	matrix := make([]int, (len(av)+1)*pitch)
 	for i, a := range av {
 		mp := (i+1)*pitch + 1
-
 		for _, b := range bv {
 			if a == b {
 				matrix[mp] = matrix[mp-1-pitch] + 1
@@ -26,17 +25,44 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			mp++
 		}
 	}
-
-	var innerContext func(i, count int)
-	innerContext = func(i, count int) {
-		i--
-		count--
-		if count > 0 {
-			innerContext(i, count)
+	// NOTE: Needs description
+	innerContext := func(i, count int) {
+		var index int
+		switch count % 3 {
+		case 0:
+			break
+		case 1:
+			ret = append(ret, "  "+av[i])
+			index, i = 1, i+1
+		default:
+			ret = append(ret, "  "+av[i])
+			ret = append(ret, "  "+av[i+1])
+			index, i = 2, i+2
 		}
-		ret = append(ret, "  "+av[i])
+		for ; index != count; index += 3 {
+			ret = append(ret, "  "+av[i])
+			ret = append(ret, "  "+av[i+1])
+			ret = append(ret, "  "+av[i+2])
+			i += 3
+		}
 	}
-
+	// minValue returns the minimum value of two integers.
+	minValue := func(x, y int) int {
+		if x > y {
+			return y
+		}
+		return x
+	}
+	// addContext adds context if the context has changed.
+	addContext := func(i, iLast, contextLast int, changed bool) {
+		if !changed {
+			return
+		}
+		if m := minValue(iLast, contextLast) - i; m > 0 {
+			innerContext(i, minValue(m, context))
+		}
+	}
+	// NOTE: Needs description and needs to be converted into a for loop.
 	var inner func(i, j, k, iLast, contextLast int)
 	inner = func(i, j, k, iLast, contextLast int) {
 		changed := false
@@ -45,9 +71,7 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			if k > 0 {
 				c = i - 1
 			}
-
 			inner(i-1, j-1, k-1, iLast, c)
-
 			// add context before the change
 			if k > 0 {
 				ret = append(ret, "  "+av[i-1])
@@ -61,36 +85,21 @@ func mDiff(av, bv []string, context int) (ret []string) {
 			inner(i-1, j, context, i-1, contextLast)
 			ret = append(ret, "- "+av[i-1])
 		}
-
-		if changed {
-			// add context after the change
-			l := iLast
-			if l > contextLast {
-				l = contextLast
-			}
-
-			m := l - i
-			if m > 0 {
-				if m > context {
-					m = context
-				}
-				innerContext(i+m, m)
-			}
-		}
+		addContext(i, iLast, contextLast, changed)
 	}
-
 	inner(len(av), len(bv), 0, len(av), len(av))
 	return
 }
 
+// Diff returns the difference between two strings.
 func Diff(a, b string) string {
-	if a == b {
-		return ""
+	split := func(element string) []string {
+		return strings.Split(element, "\n")
 	}
 	a = strings.Replace(a, "\r\n", "\n", -1)
 	b = strings.Replace(b, "\r\n", "\n", -1)
-	if a == b {
-		return ""
+	if a != b {
+		return strings.Join(mDiff(split(a), split(b), 3), "\n")
 	}
-	return strings.Join(mDiff(strings.Split(a, "\n"), strings.Split(b, "\n"), 3), "\n")
+	return ""
 }
