@@ -1,4 +1,4 @@
-// Copyright 2013 The lime Authors.
+// Copyright 2014 The lime Authors.
 // Use of this source code is governed by a 2-clause
 // BSD-style license that can be found in the LICENSE file.
 
@@ -13,8 +13,8 @@ import (
 func TestUnmarshalJSONError(t *testing.T) {
 	var o Op
 	err := o.UnmarshalJSON(nil)
-	if err != nil {
-		fmt.Print("Error on unmarshaling")
+	if err == nil {
+		t.Error("Should have found error trying to unmarshal nil")
 	}
 }
 
@@ -27,7 +27,7 @@ func TestUnmarshalJSONDefault(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 
@@ -40,7 +40,7 @@ func TestUnmarshalJSON_Not_equal(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 
@@ -53,7 +53,7 @@ func TestUnmarshalJSON_Regex_match(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 func TestUnmarshalJSON_Not_regex_match(t *testing.T) {
@@ -65,7 +65,7 @@ func TestUnmarshalJSON_Not_regex_match(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 func TestUnmarshalJSON_Regex_contains(t *testing.T) {
@@ -77,7 +77,7 @@ func TestUnmarshalJSON_Regex_contains(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 func TestUnmarshalJSON_Not_regex_contains(t *testing.T) {
@@ -89,7 +89,7 @@ func TestUnmarshalJSON_Not_regex_contains(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
 func TestUnmarshalJSON_Notequal(t *testing.T) {
@@ -101,6 +101,6 @@ func TestUnmarshalJSON_Notequal(t *testing.T) {
 	}
 	err = o.UnmarshalJSON(d)
 	if err != nil {
-		fmt.Print("Error on unmarshaling")
+		t.Error("Error unmarshalling JSON")
 	}
 }
