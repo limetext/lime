@@ -13,7 +13,7 @@ func TestSortByName(t *testing.T) {
 	Prof.data["A"] = ProfileEntry{Calls: 1, Tottime: time.Duration(5)}
 	Prof.data["B"] = ProfileEntry{Calls: 1, Tottime: time.Duration(4)}
 	Prof.data["C"] = ProfileEntry{Calls: 1, Tottime: time.Duration(3)}
-	Prof.data["D"] = ProfileEntry{Calls: 1, Tottime: time.Duration(2)}		
+	Prof.data["D"] = ProfileEntry{Calls: 1, Tottime: time.Duration(2)}
 	results := Prof.SortByName()
 	if results[0].Name != "A" {
 		t.Error("TestSortByName expected A, but got %s", results[0].Name)
@@ -33,7 +33,7 @@ func TestSortByTime(t *testing.T) {
 	Prof.data["A"] = ProfileEntry{Calls: 1, Tottime: time.Duration(1)}
 	Prof.data["C"] = ProfileEntry{Calls: 1, Tottime: time.Duration(2)}
 	Prof.data["D"] = ProfileEntry{Calls: 1, Tottime: time.Duration(3)}
-	Prof.data["B"] = ProfileEntry{Calls: 1, Tottime: time.Duration(4)}		
+	Prof.data["B"] = ProfileEntry{Calls: 1, Tottime: time.Duration(4)}
 	results := Prof.SortByTotalTime()
 	if results[0].Name != "A" {
 		t.Error("TestSortByTime expected A, but got %s", results[0].Name)
@@ -53,7 +53,7 @@ func TestSortByAvgTime(t *testing.T) {
 	Prof.data["A"] = ProfileEntry{Calls: 1, Tottime: time.Duration(1)}
 	Prof.data["C"] = ProfileEntry{Calls: 1, Tottime: time.Duration(2)}
 	Prof.data["D"] = ProfileEntry{Calls: 1, Tottime: time.Duration(3)}
-	Prof.data["B"] = ProfileEntry{Calls: 1, Tottime: time.Duration(4)}		
+	Prof.data["B"] = ProfileEntry{Calls: 1, Tottime: time.Duration(4)}
 	results := Prof.SortByAvgTime()
 	if results[0].Name != "A" {
 		t.Error("TestSortByTime expected A, but got %s", results[0].Name)
