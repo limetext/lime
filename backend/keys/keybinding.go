@@ -26,7 +26,8 @@ type (
 
 	KeyBindings struct {
 		Bindings []*KeyBinding
-		keyOff   int
+		keyOff   int // The index we are in a multiple key sequence keybinding
+		parent   *KeyBindings
 	}
 )
 
@@ -70,10 +71,12 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-func (k *KeyBindings) Merge(other *KeyBindings) {
-	// TODO(.): See issue #196
-	k.Bindings = append(k.Bindings, other.Bindings...)
-	k.DropLessEqualKeys(0)
+func (k *KeyBindings) SetParent(p *KeyBindings) {
+	k.parent = p
+}
+
+func (k *KeyBindings) Parent() *KeyBindings {
+	return k.parent
 }
 
 func (k *KeyBindings) filter(ki int, ret *KeyBindings) {

@@ -350,6 +350,7 @@ func (e *Editor) inputthread() {
 			e.RunCommand(action.Command, action.Args)
 			p2.Exit()
 		} else if possible_actions.KeyOff() > 1 {
+			// TODO: this disables having keyBindings with more than 2 key sequence
 			lastBindings = e.keyBindings
 			goto try_again
 		} else if kp.IsCharacter() {
