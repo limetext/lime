@@ -6,7 +6,6 @@ package util
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -22,7 +21,7 @@ func TestUnmarshalJSONDefault(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -35,7 +34,7 @@ func TestUnmarshalJSON_Not_equal(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("not_equal")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -48,7 +47,7 @@ func TestUnmarshalJSON_Regex_match(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("regex_match")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -60,7 +59,7 @@ func TestUnmarshalJSON_Not_regex_match(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("not_regex_match")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -72,7 +71,7 @@ func TestUnmarshalJSON_Regex_contains(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("regex_contains")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -84,7 +83,7 @@ func TestUnmarshalJSON_Not_regex_contains(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("not_regex_contains")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
@@ -96,7 +95,7 @@ func TestUnmarshalJSON_Notequal(t *testing.T) {
 	var o Op
 	d, err := json.Marshal("not_equal")
 	if err != nil {
-		fmt.Println(err)
+		t.Error("Error marshalling JSON", err)
 		return
 	}
 	err = o.UnmarshalJSON(d)
