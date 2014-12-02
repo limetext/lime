@@ -1,8 +1,8 @@
 package log_test
 
 import (
-	"testing"
 	"github.com/limetext/lime/backend/log"
+	"testing"
 )
 
 func TestGlobalFunctions(t *testing.T) {
