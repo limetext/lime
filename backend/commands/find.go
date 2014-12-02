@@ -7,6 +7,7 @@ package commands
 import (
 	. "github.com/limetext/lime/backend"
 	. "github.com/limetext/text"
+	"strings"
 )
 
 type (
@@ -16,6 +17,13 @@ type (
 	// the next occurrence of the selection and that region too is added to
 	// the selection set.
 	FindUnderExpandCommand struct {
+		DefaultCommand
+	}
+	// The FindNext command searches for the last search term, starting at
+	// the end of the last selection in the buffer, and wrapping around. If
+	// it finds the term, it clears the current selections and selects the
+	// newly-found regions.
+	FindNextCommand struct {
 		DefaultCommand
 	}
 	// The SingleSelectionCommand merges multiple cursors
@@ -41,12 +49,14 @@ func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+// Remembers the last sequence of runes searched for.
+var lastSearch []rune
+
 func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
 	rs := sel.Regions()
 
-	he := sel.HasEmpty()
-	if he {
+	if sel.HasEmpty() {
 		for i, r := range rs {
 			if r2 := v.Buffer().Word(r.A); r2.Size() > r.Size() {
 				rs[i] = r2
@@ -54,11 +64,13 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 		}
 		sel.Clear()
 		sel.AddAll(rs)
+		b := v.Buffer()
+		lastSearch = b.SubstrR(rs[len(rs)-1])
 		return nil
 	}
 	last := rs[len(rs)-1]
 	b := v.Buffer()
-	data := b.SubstrR(last)
+	lastSearch = b.SubstrR(last)
 	next := last
 	size := last.Size()
 	next.A += size
@@ -68,7 +80,7 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 		buf[size-1] = b.Index(next.B - 1)
 		found := true
 		for j, r := range buf {
-			if r != data[j] {
+			if r != lastSearch[j] {
 				found = false
 				break
 			}
@@ -80,6 +92,55 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 		copy(buf, buf[1:])
 		next.A += 1
 		next.B += 1
+	}
+	return nil
+}
+
+func (c *FindNextCommand) Run(v *View, e *Edit) error {
+	/*
+		Correct behavior of FindNext:
+			- If there is no previous search, do nothing
+			- Find the last region in the buffer, start the
+			  search immediately after that.
+			- If the search term is found, clear any existing
+			  selections, and select the newly-found region.
+			- Right now this is doing a case-sensitive search. In ST3
+			  that's a setting.
+	*/
+
+	// If there is no last search term, nothing to do here.
+	if len(lastSearch) == 0 {
+		return nil
+	}
+	sel := v.Sel()
+	rs := sel.Regions()
+	last := 0
+
+	// Ranges are not sorted, so finding the last one requires a search.
+	for _, r := range rs {
+		last = Max(last, r.End())
+	}
+
+	b := v.Buffer()
+	// Start the search right after the last selection.
+	start := last + 1
+	r := Region{start, b.Size() - 1}
+	st := b.Substr(r)
+	p := string(lastSearch)
+	size := len(p)
+	found := strings.Index(st, p)
+	// If not found yet, search from the start of the buffer to our original
+	// starting point.
+	if found == -1 {
+		r = Region{0, start}
+		st = b.Substr(r)
+		found = strings.Index(st, p)
+	}
+	// If we found our string, select it.
+	if found != -1 {
+		newr := Region{r.A + found, r.A + found + size}
+		sel.Clear()
+		sel.Add(newr)
 	}
 	return nil
 }
@@ -99,6 +160,7 @@ func (c *SelectAllCommand) Run(v *View, e *Edit) error {
 func init() {
 	register([]Command{
 		&FindUnderExpandCommand{},
+		&FindNextCommand{},
 		&SingleSelectionCommand{},
 		&SelectAllCommand{},
 	})
