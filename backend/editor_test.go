@@ -11,6 +11,12 @@ import (
 	"testing"
 )
 
+func init() {
+	LIME_USER_PACKAGES_PATH = path.Join("..", "packages")
+	LIME_USER_PACKETS_PATH = path.Join("..", "packages", "User")
+	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
+}
+
 func TestGetEditor(t *testing.T) {
 	editor := GetEditor()
 	if editor == nil {
@@ -20,11 +26,11 @@ func TestGetEditor(t *testing.T) {
 
 func TestLoadKeyBinding(t *testing.T) {
 	editor := GetEditor()
-	editor.loadKeyBinding(packages.NewPacket("testdata/Default.sublime-keymap", new(keys.KeyBindings)))
+	pkg := packages.NewPacket("testdata/Default.sublime-keymap", &editor.keyBindings)
+	editor.loadKeyBinding(pkg)
 
 	kb := editor.keyBindings.Filter(keys.KeyPress{Key: 'i'})
-	expectedLen := 3
-	if kb.Len() != expectedLen {
+	if expectedLen := 3; kb.Len() != expectedLen {
 		t.Errorf("Expected to have %d keys in the filter, but it had %d", expectedLen, kb.Len())
 	}
 }
@@ -33,8 +39,7 @@ func TestLoadKeyBindings(t *testing.T) {
 	editor := GetEditor()
 	editor.loadKeyBindings()
 
-	editor.keyBindings.Len()
-	if editor.keyBindings.Len() <= 0 {
+	if editor.keyBindings.Parent().Parent().Parent().Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 }
@@ -54,10 +59,6 @@ func TestLoadSetting(t *testing.T) {
 }
 
 func TestLoadSettings(t *testing.T) {
-	LIME_USER_PACKAGES_PATH = path.Join("..", "packages")
-	LIME_USER_PACKETS_PATH = path.Join("..", "packages", "User")
-	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
-
 	editor := GetEditor()
 	editor.loadSettings()
 
@@ -86,7 +87,6 @@ func TestInit(t *testing.T) {
 	editor := GetEditor()
 	editor.Init()
 
-	editor.keyBindings.Len()
 	if editor.keyBindings.Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}

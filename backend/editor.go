@@ -81,10 +81,6 @@ var (
 	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "packages", "User")
 	LIME_PACKAGES_PATH      = path.Join("..", "..", "packages")
 	LIME_DEFAULTS_PATH      = path.Join("..", "..", "packages", "Default")
-
-	// All user individual settings, snippets, etc.
-	// will be in here for later loading
-	packets packages.Packets
 )
 
 func (h *DummyFrontend) SetDefaultAction(action bool) {
@@ -158,7 +154,6 @@ func getClipboard() (string, error) {
 
 func (e *Editor) Init() {
 	ed.SetClipboardFuncs(setClipboard, getClipboard)
-	ed.loadDefaultPackets()
 	ed.loadKeyBindings()
 	ed.loadSettings()
 }
@@ -168,18 +163,6 @@ func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (str
 	e.clipboardGetter = getter
 }
 
-func (e *Editor) loadDefaultPackets() {
-	paths := []string{
-		LIME_DEFAULTS_PATH,
-		LIME_USER_PACKETS_PATH,
-	}
-	for _, path := range paths {
-		for _, p := range packages.ScanPackets(path) {
-			packets = append(packets, p)
-		}
-	}
-}
-
 func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
 		log.Error(err)
@@ -187,13 +170,33 @@ func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 		log.Info("Loaded %s", pkg.Name())
 		e.Watch(pkg.Name(), pkg)
 	}
-	e.keyBindings.Merge(pkg.MarshalTo().(*keys.KeyBindings))
 }
 
 func (e *Editor) loadKeyBindings() {
-	for _, p := range packets.Filter("keymap") {
-		e.loadKeyBinding(p)
-	}
+	var (
+		defBindings     = new(keys.KeyBindings)
+		platBindings    = new(keys.KeyBindings)
+		usrPlatBindings = new(keys.KeyBindings)
+	)
+	e.keyBindings.SetParent(usrPlatBindings)
+	usrPlatBindings.SetParent(platBindings)
+	platBindings.SetParent(defBindings)
+
+	p := path.Join(LIME_DEFAULTS_PATH, "Default.sublime-keymap")
+	defPckt := packages.NewPacket(p, defBindings)
+	e.loadKeyBinding(defPckt)
+
+	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.plat()+").sublime-keymap")
+	platPckt := packages.NewPacket(p, platBindings)
+	e.loadKeyBinding(platPckt)
+
+	p = path.Join(LIME_USER_PACKETS_PATH, "Default.sublime-keymap")
+	usrPlatPckt := packages.NewPacket(p, usrPlatBindings)
+	e.loadKeyBinding(usrPlatPckt)
+
+	p = path.Join(LIME_USER_PACKETS_PATH, "Default ("+e.plat()+").sublime-keymap")
+	usrPckt := packages.NewPacket(p, &e.keyBindings)
+	e.loadKeyBinding(usrPckt)
 }
 
 func (e *Editor) loadSetting(pkg *packages.Packet) {
@@ -208,7 +211,7 @@ func (e *Editor) loadSetting(pkg *packages.Packet) {
 func (e *Editor) loadSettings() {
 	defSettings, platSettings := &HasSettings{}, &HasSettings{}
 	platSettings.Settings().SetParent(defSettings)
-	ed.Settings().SetParent(platSettings)
+	e.Settings().SetParent(platSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
 	defPckt := packages.NewPacket(p, defSettings.Settings())
@@ -219,8 +222,8 @@ func (e *Editor) loadSettings() {
 	e.loadSetting(platPckt)
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
-	userPckt := packages.NewPacket(p, e.Settings())
-	e.loadSetting(userPckt)
+	usrPckt := packages.NewPacket(p, e.Settings())
+	e.loadSetting(usrPckt)
 }
 
 func (e *Editor) PackagesPath() string {

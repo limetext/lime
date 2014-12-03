@@ -6,7 +6,6 @@ package packages
 
 import (
 	"encoding/json"
-	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/loaders"
 	"github.com/limetext/lime/backend/log"
 	"io/ioutil"
@@ -91,28 +90,4 @@ func (p Packets) Filter(key string) Packets {
 		}
 	}
 	return pckts
-}
-
-// Initialize scan for loading user and limetext defaults
-// except settings because for settings we have a hierarchy
-// i.e commands, snippets etc
-func ScanPackets(path string) Packets {
-	var packets Packets
-	walkFn := func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			log.Error("Error on walking: %s", err)
-			return err
-		}
-		s := filepath.Ext(info.Name())
-		for _, t := range types {
-			if t != "settings" && strings.Contains(s, t) {
-				packets = append(packets, NewPacket(path, new(keys.KeyBindings)))
-			}
-		}
-		return nil
-	}
-	if err := filepath.Walk(path, walkFn); err != nil {
-		log.Error("Can't walk: %s", err)
-	}
-	return packets
 }
