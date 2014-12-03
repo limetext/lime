@@ -49,15 +49,21 @@ func (k *KeyBindings) Swap(i, j int) {
 // Drops all KeyBindings that are a sequence of key presses less or equal
 // to the given number.
 func (k *KeyBindings) DropLessEqualKeys(count int) {
-	for i := 0; i < len(k.Bindings); {
-		if len(k.Bindings[i].Keys) <= count {
-			k.Bindings[i] = k.Bindings[len(k.Bindings)-1]
-			k.Bindings = k.Bindings[:len(k.Bindings)-1]
-		} else {
-			i++
+	for {
+		for i := 0; i < len(k.Bindings); {
+			if len(k.Bindings[i].Keys) <= count {
+				k.Bindings[i] = k.Bindings[len(k.Bindings)-1]
+				k.Bindings = k.Bindings[:len(k.Bindings)-1]
+			} else {
+				i++
+			}
 		}
+		sort.Sort(k)
+		if k.parent == nil {
+			break
+		}
+		k = k.parent
 	}
-	sort.Sort(k)
 }
 
 func (k *KeyBindings) UnmarshalJSON(d []byte) error {
@@ -73,6 +79,8 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 
 func (k *KeyBindings) SetParent(p *KeyBindings) {
 	k.parent = p
+	// All parents and childs keyOff must be equal
+	p.keyOff = k.keyOff
 }
 
 func (k *KeyBindings) Parent() *KeyBindings {
@@ -80,11 +88,22 @@ func (k *KeyBindings) Parent() *KeyBindings {
 }
 
 func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
-	idx := sort.Search(k.Len(), func(i int) bool {
-		return k.Bindings[i].Keys[k.keyOff].Index() >= ki
-	})
-	for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
-		ret.Bindings = append(ret.Bindings, k.Bindings[i])
+	r := ret
+	for {
+		idx := sort.Search(k.Len(), func(i int) bool {
+			return k.Bindings[i].Keys[k.keyOff].Index() >= ki
+		})
+		for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
+			r.Bindings = append(r.Bindings, k.Bindings[i])
+		}
+		if k.parent == nil {
+			break
+		}
+		k = k.parent
+		if r.parent == nil {
+			r.SetParent(new(KeyBindings))
+		}
+		r = r.parent
 	}
 }
 
@@ -115,22 +134,28 @@ func (k *KeyBindings) Action(qc func(key string, operator Op, operand interface{
 	p := Prof.Enter("key.action")
 	defer p.Exit()
 
-	for i := range k.Bindings {
-		if len(k.Bindings[i].Keys) > k.keyOff {
-			// This key binding is of a key sequence longer than what is currently
-			// probed for. For example, the binding is for the sequence ['a','b','c'], but
-			// the user has only pressed ['a','b'] so far.
-			continue
-		}
-		for _, c := range k.Bindings[i].Context {
-			if !qc(c.Key, c.Operator, c.Operand, c.MatchAll) {
-				goto skip
+	for {
+		for i := range k.Bindings {
+			if len(k.Bindings[i].Keys) > k.keyOff {
+				// This key binding is of a key sequence longer than what is currently
+				// probed for. For example, the binding is for the sequence ['a','b','c'], but
+				// the user has only pressed ['a','b'] so far.
+				continue
 			}
+			for _, c := range k.Bindings[i].Context {
+				if !qc(c.Key, c.Operator, c.Operand, c.MatchAll) {
+					goto skip
+				}
+			}
+			if kb == nil || kb.priority < k.Bindings[i].priority {
+				kb = k.Bindings[i]
+			}
+		skip:
 		}
-		if kb == nil || kb.priority < k.Bindings[i].priority {
-			kb = k.Bindings[i]
+		if kb != nil || k.parent == nil {
+			break
 		}
-	skip:
+		k = k.parent
 	}
 	return
 }

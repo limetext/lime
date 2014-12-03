@@ -64,14 +64,18 @@ func TestSetParent(t *testing.T) {
 		t.Fatalf("Error loading json: %s", err)
 	}
 
+	p.keyOff = 10
 	bd.SetParent(&p)
+	if bd.keyOff != p.keyOff {
+		t.Fatalf("Expected parent and child keyOff be equal %d != %d", p.keyOff, bd.keyOff)
+	}
 
-	ret := bd.Filter(KeyPress{Key: 'D', Ctrl: true})
+	ret := bd.Filter(KeyPress{Key: 'd', Ctrl: true})
 	if ret.Len() != 1 {
-		t.Errorf("Expected ret keyBindings len %d, but got %d", 1, ret.Len())
+		t.Fatalf("Expected ret keyBindings len %d, but got %d", 1, ret.Len())
 	}
 	if ret.parent.Len() != 1 {
-		t.Errorf("Expected ret parent keyBindings len %d, but got %d", 1, ret.parent.Len())
+		t.Fatalf("Expected ret parent keyBindings len %d, but got %d", 1, ret.parent.Len())
 	}
 	if cmd := ret.Bindings[0].Command; cmd != "test4" {
 		t.Errorf("Expected Command %s, but got %s", "test4", cmd)
@@ -104,7 +108,7 @@ func TestParent(t *testing.T) {
 
 	bd.SetParent(&p)
 
-	if cmd := bd.Parent().Bindings[1].Command; cmd != "t2" {
+	if cmd := bd.Parent().Bindings[0].Command; cmd != "t2" {
 		t.Errorf("Expected Command %s, but got %s", "t2", cmd)
 	}
 }
@@ -122,10 +126,6 @@ func TestKeyBindingsFilter(t *testing.T) {
 			KeyPress{Key: 'i'},
 			1,
 		},
-		{
-			KeyPress{Key: 'p'},
-			1,
-		},
 	}
 
 	if d, err := ioutil.ReadFile("testdata/Default.sublime-keymap"); err != nil {
@@ -133,12 +133,6 @@ func TestKeyBindingsFilter(t *testing.T) {
 	} else {
 		var bindings KeyBindings
 		loaders.LoadJSON(d, &bindings)
-
-		if d, err = ioutil.ReadFile("testdata/test.sublime-keymap"); err != nil {
-			t.Fatalf("Couldn't read %s: %s", fn, err)
-		}
-		loaders.LoadJSON(d, &p)
-		bd.SetParent(&p)
 
 		for i, test := range tests {
 			if b := bindings.Filter(test.kp); b.Len() != test.count {
@@ -170,10 +164,10 @@ func TestKeyBindingsAction(t *testing.T) {
 		loaders.LoadJSON(d, &bindings)
 
 		if d, err = ioutil.ReadFile("testdata/test.sublime-keymap"); err != nil {
-			t.Fatalf("Couldn't read %s: %s", fn, err)
+			t.Fatal(err)
 		}
 		loaders.LoadJSON(d, &p)
-		bd.SetParent(&p)
+		bindings.SetParent(&p)
 
 		for i, test := range tests {
 			qc := func(key string, operator util.Op, operand interface{}, match_all bool) bool {
