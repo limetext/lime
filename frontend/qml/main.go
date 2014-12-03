@@ -386,8 +386,16 @@ func (t *qmlfrontend) OkCancelDialog(msg, ok string) bool {
 	return q.Show(msg, "StandardIcon.Question") == 1
 }
 
-func (t *qmlfrontend) scroll(b Buffer, pos, delta int) {
+func (t *qmlfrontend) scroll(b Buffer) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
+}
+
+func (t *qmlfrontend) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	t.scroll(changed_buffer)
+}
+
+func (t *qmlfrontend) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	t.scroll(changed_buffer)
 }
 
 func (fv *frontendView) Line(index int) *lineStruct {
@@ -488,6 +496,14 @@ func (fv *frontendView) bufferChanged(buf Buffer, pos, delta int) {
 	}
 }
 
+func (fv *frontendView) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	fv.bufferChanged(changed_buffer, region_removed.B, region_removed.A-region_removed.B)
+}
+
+func (fv *frontendView) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	fv.bufferChanged(changed_buffer, region_inserted.A, region_inserted.B-region_inserted.A)
+}
+
 func (fv *frontendView) formatLine(line int) {
 	prof := util.Prof.Enter("frontendView.formatLine")
 	defer prof.Exit()
@@ -562,7 +578,7 @@ func (fv *frontendView) onChange(name string) {
 // Called when a new view is opened
 func (t *qmlfrontend) onNew(v *backend.View) {
 	fv := &frontendView{bv: v}
-	v.Buffer().AddCallback(fv.bufferChanged)
+	v.Buffer().AddObserver(fv)
 	v.Settings().AddOnChange("blah", fv.onChange)
 
 	fv.Title.Text = v.Buffer().FileName()
@@ -635,8 +651,8 @@ func (t *qmlfrontend) loop() (err error) {
 	ed.LogCommands(false)
 	c := ed.Console()
 	t.Console = &frontendView{bv: c}
-	c.Buffer().AddCallback(t.Console.bufferChanged)
-	c.Buffer().AddCallback(t.scroll)
+	c.Buffer().AddObserver(t.Console)
+	c.Buffer().AddObserver(t)
 
 	var (
 		engine    *qml.Engine

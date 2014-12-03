@@ -125,6 +125,11 @@ type tbfe struct {
 	currentWindow  *backend.Window
 }
 
+type tbfeBufferDeltaObserver struct {
+	t    *tbfe
+	view *backend.View
+}
+
 // Creates and initializes the frontend.
 func createFrontend() *tbfe {
 	var t tbfe
@@ -145,7 +150,7 @@ func createFrontend() *tbfe {
 		t.currentView = t.currentWindow.NewFile()
 	}
 
-	t.console.Buffer().AddCallback(t.scroll)
+	t.console.Buffer().AddObserver(&t)
 	t.setupCallbacks(t.currentView)
 
 	path := path.Join("..", "..", "packages", "themes", "TextMate-Themes", "Monokai.tmTheme")
@@ -356,19 +361,22 @@ func (t *tbfe) OkCancelDialog(msg, ok string) bool {
 	return false
 }
 
-func (t *tbfe) scroll(b Buffer, pos, delta int) {
+func (t *tbfe) scroll(b Buffer) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
+}
+
+func (t *tbfe) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	t.scroll(changed_buffer)
+}
+
+func (t *tbfe) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	t.scroll(changed_buffer)
 }
 
 func (t tbfe) setupCallbacks(view *backend.View) {
 	// Ensure that the visible region currently presented is
 	// inclusive of the insert/erase delta.
-	view.Buffer().AddCallback(func(b Buffer, pos, delta int) {
-		t.lock.Lock()
-		visible := t.layout[view].visible
-		t.lock.Unlock()
-		t.Show(view, Region{visible.Begin(), visible.End() + delta})
-	})
+	view.Buffer().AddObserver(&tbfeBufferDeltaObserver{t: &t, view: view})
 
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
@@ -553,6 +561,21 @@ func (t *tbfe) loop() {
 		}
 		p.Exit()
 	}
+}
+
+func (bdo *tbfeBufferDeltaObserver) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	ensureVisibleRegionContainsInsertOrEraseDelta(bdo.t, bdo.view, region_removed.A-region_removed.B)
+}
+
+func (bdo *tbfeBufferDeltaObserver) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	ensureVisibleRegionContainsInsertOrEraseDelta(bdo.t, bdo.view, region_inserted.B-region_inserted.A)
+}
+
+func ensureVisibleRegionContainsInsertOrEraseDelta(t *tbfe, view *backend.View, delta int) {
+	t.lock.Lock()
+	visible := t.layout[view].visible
+	t.lock.Unlock()
+	t.Show(view, Region{visible.Begin(), visible.End() + delta})
 }
 
 func intToRunes(n int) (runes []rune) {

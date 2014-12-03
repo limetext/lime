@@ -60,6 +60,14 @@ type tbfe struct {
 	dirty          bool
 }
 
+func (t *tbfe) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
+	t.scroll(changed_buffer)
+}
+
+func (t *tbfe) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
+	t.scroll(changed_buffer)
+}
+
 func htmlcol(c render.Colour) string {
 	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
@@ -187,7 +195,7 @@ func (t *tbfe) OkCancelDialog(msg, ok string) bool {
 	return false
 }
 
-func (t *tbfe) scroll(b Buffer, pos, delta int) {
+func (t *tbfe) scroll(b Buffer) {
 	t.Show(backend.GetEditor().Console(), Region{b.Size(), b.Size()})
 }
 
@@ -471,7 +479,7 @@ func (t *tbfe) loop() {
 	v := w.OpenFile("main.go", 0)
 	//v.Settings().Set("trace", true)
 	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
-	c.Buffer().AddCallback(t.scroll)
+	c.Buffer().AddObserver(t)
 
 	sel := v.Sel()
 	sel.Clear()
