@@ -77,7 +77,6 @@ fold_end "test.termbox"
 if [ "$ret" == "0" ]; then
 	fold_start "coveralls" "post to coveralls"
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
-	let ret=$ret+$?
 	fold_end "coveralls"
 fi
 
