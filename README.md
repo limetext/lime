@@ -5,11 +5,16 @@
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime)
 
+
 # Status
 
 The [frontends](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself isn't too far away.
 
-[Your help is needed](https://github.com/limetext/lime#contributing) to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) as your own and submit a pull request!
+If you want to help us build Lime, great! We'd love your help. See [here](https://github.com/limetext/lime#contributing) for how you could be most useful.
+
+This project is not yet ready for daily use, and we currently lack the resource to support users. If you are in need of help building, running, or otherwise using Lime, try the [wiki](https://github.com/limetext/lime/wiki/_pages) or your search engine of choice. If you still need help, consider opening an issue in [limetext/support](https://github.com/limetext/support). Issues opened in this project that don't relate to bugs or improvements will be closed.
+
+Your help is needed to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) and submit a pull request!
 
 
 # What is Lime?
@@ -42,11 +47,13 @@ Please refer to the [Building](https://github.com/limetext/lime/wiki/Building) p
 
 # Contributing
 
-Want to hack on Lime? Awesome! We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
+Want to help build Lime? Awesome! We are always thrilled to receive pull requests, and do our best to process them as fast as possible. Not sure if that typo is worth a pull request? Do it! We will appreciate it.
 
 If your pull request is not accepted on the first try, don't be discouraged! If there's a problem with the implementation, hopefully you received feedback on what to improve.
 
-Where is a good place to start? The [Contributing](https://github.com/limetext/lime/wiki/Contributing) page in the [wiki](https://github.com/limetext/lime/wiki/_pages) has some suggestions.
+Where is a good place to start? The [Contributing](https://github.com/limetext/lime/wiki/Contributing) page in the wiki has some suggestions. Think the [wiki](https://github.com/limetext/lime/wiki/_pages) needs clarifying, or something is missing? Go ahead and make the change.
+
+Guidelines for making contributions can be found in [CONTRIBUTING.md](https://github.com/limetext/lime/blob/master/CONTRIBUTING.md).
 
 Want to chat? Find us on [Gitter](https://gitter.im/limetext/lime).
 
