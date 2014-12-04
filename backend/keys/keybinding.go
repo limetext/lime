@@ -88,22 +88,21 @@ func (k *KeyBindings) Parent() *KeyBindings {
 }
 
 func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
-	r := ret
 	for {
 		idx := sort.Search(k.Len(), func(i int) bool {
 			return k.Bindings[i].Keys[k.seqIndex].Index() >= ki
 		})
 		for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.seqIndex].Index() == ki; i++ {
-			r.Bindings = append(r.Bindings, k.Bindings[i])
+			ret.Bindings = append(ret.Bindings, k.Bindings[i])
 		}
 		if k.parent == nil {
 			break
 		}
 		k = k.parent
-		if r.parent == nil {
-			r.SetParent(new(KeyBindings))
+		if ret.parent == nil {
+			ret.SetParent(new(KeyBindings))
 		}
-		r = r.parent
+		ret = ret.parent
 	}
 }
 
