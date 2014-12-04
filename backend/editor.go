@@ -328,7 +328,7 @@ func (e *Editor) inputthread() {
 			lvl++
 		}
 		log.Logf(lvl, "Key: %v", kp)
-		if lastBindings.KeyOff() == 0 {
+		if lastBindings.SeqIndex() == 0 {
 			lastBindings = e.keyBindings
 		}
 	try_again:
@@ -352,7 +352,7 @@ func (e *Editor) inputthread() {
 			p2 := Prof.Enter("hi.perform")
 			e.RunCommand(action.Command, action.Args)
 			p2.Exit()
-		} else if possible_actions.KeyOff() > 1 {
+		} else if possible_actions.SeqIndex() > 1 {
 			// TODO: this disables having keyBindings with more than 2 key sequence
 			lastBindings = e.keyBindings
 			goto try_again

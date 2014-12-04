@@ -64,10 +64,10 @@ func TestSetParent(t *testing.T) {
 		t.Fatalf("Error loading json: %s", err)
 	}
 
-	p.keyOff = 10
+	p.seqIndex = 10
 	bd.SetParent(&p)
-	if bd.keyOff != p.keyOff {
-		t.Fatalf("Expected parent and child keyOff be equal %d != %d", p.keyOff, bd.keyOff)
+	if bd.seqIndex != p.seqIndex {
+		t.Fatalf("Expected parent and child seqIndex be equal %d != %d", p.seqIndex, bd.seqIndex)
 	}
 
 	ret := bd.Filter(KeyPress{Key: 'd', Ctrl: true})

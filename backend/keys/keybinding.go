@@ -26,7 +26,7 @@ type (
 
 	KeyBindings struct {
 		Bindings []*KeyBinding
-		keyOff   int // The index we are in a multiple key sequence keybinding
+		seqIndex int // The index we are in a multiple key sequence keybinding
 		parent   *KeyBindings
 	}
 )
@@ -38,7 +38,7 @@ func (k *KeyBindings) Len() int {
 
 // Compares one KeyBinding to another for sorting purposes.
 func (k *KeyBindings) Less(i, j int) bool {
-	return k.Bindings[i].Keys[k.keyOff].Index() < k.Bindings[j].Keys[k.keyOff].Index()
+	return k.Bindings[i].Keys[k.seqIndex].Index() < k.Bindings[j].Keys[k.seqIndex].Index()
 }
 
 // Swaps the two KeyBindings at the given positions.
@@ -79,8 +79,8 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 
 func (k *KeyBindings) SetParent(p *KeyBindings) {
 	k.parent = p
-	// All parents and childs keyOff must be equal
-	p.keyOff = k.keyOff
+	// All parents and childs seqIndex must be equal
+	p.seqIndex = k.seqIndex
 }
 
 func (k *KeyBindings) Parent() *KeyBindings {
@@ -91,9 +91,9 @@ func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
 	r := ret
 	for {
 		idx := sort.Search(k.Len(), func(i int) bool {
-			return k.Bindings[i].Keys[k.keyOff].Index() >= ki
+			return k.Bindings[i].Keys[k.seqIndex].Index() >= ki
 		})
-		for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.keyOff].Index() == ki; i++ {
+		for i := idx; i < len(k.Bindings) && k.Bindings[i].Keys[k.seqIndex].Index() == ki; i++ {
 			r.Bindings = append(r.Bindings, k.Bindings[i])
 		}
 		if k.parent == nil {
@@ -114,8 +114,8 @@ func (k *KeyBindings) Filter(kp KeyPress) (ret KeyBindings) {
 	defer p.Exit()
 
 	kp.fix()
-	k.DropLessEqualKeys(k.keyOff)
-	ret.keyOff = k.keyOff + 1
+	k.DropLessEqualKeys(k.seqIndex)
+	ret.seqIndex = k.seqIndex + 1
 	ki := kp.Index()
 
 	k.filter(ki, &ret)
@@ -136,7 +136,7 @@ func (k *KeyBindings) Action(qc func(key string, operator Op, operand interface{
 
 	for {
 		for i := range k.Bindings {
-			if len(k.Bindings[i].Keys) > k.keyOff {
+			if len(k.Bindings[i].Keys) > k.seqIndex {
 				// This key binding is of a key sequence longer than what is currently
 				// probed for. For example, the binding is for the sequence ['a','b','c'], but
 				// the user has only pressed ['a','b'] so far.
@@ -160,8 +160,8 @@ func (k *KeyBindings) Action(qc func(key string, operator Op, operand interface{
 	return
 }
 
-func (k *KeyBindings) KeyOff() int {
-	return k.keyOff
+func (k *KeyBindings) SeqIndex() int {
+	return k.seqIndex
 }
 
 func (k KeyBindings) String() string {
