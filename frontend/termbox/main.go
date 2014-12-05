@@ -268,6 +268,12 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 
 	// restore original caretStyle before blink modification
 	caretStyle = caretStyle
+
+	if rs := sel.Regions(); len(rs) > 0 {
+		if r := rs[len(rs)-1]; !vr.Covers(r) {
+			t.Show(v, r)
+		}
+	}
 }
 
 func (t *tbfe) clip(v *backend.View, s, e int) Region {
