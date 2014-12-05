@@ -7,7 +7,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/howeyc/fsnotify"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
@@ -18,6 +17,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
+	"gopkg.in/fsnotify.v1"
 	"gopkg.in/qml.v1"
 	"image/color"
 	"io"
