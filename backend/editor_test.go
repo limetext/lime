@@ -87,11 +87,11 @@ func TestInit(t *testing.T) {
 	editor := GetEditor()
 	editor.Init()
 
-	if editor.keyBindings.Len() <= 0 {
+	if editor.keyBindings.Parent().Parent().Parent().Len() <= 0 {
 		t.Errorf("Expected editor to have some keys bound, but it didn't")
 	}
 
-	if editor.Settings().Has("tab_size") != true {
+	if editor.Settings().Parent().Settings().Parent().Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")
 	}
 }
