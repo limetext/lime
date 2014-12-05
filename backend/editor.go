@@ -153,9 +153,9 @@ func getClipboard() (string, error) {
 }
 
 func (e *Editor) Init() {
-	ed.SetClipboardFuncs(setClipboard, getClipboard)
-	ed.loadKeyBindings()
-	ed.loadSettings()
+	e.SetClipboardFuncs(setClipboard, getClipboard)
+	e.loadKeyBindings()
+	e.loadSettings()
 }
 
 func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (string, error)) {
@@ -256,7 +256,7 @@ func (e *Editor) NewWindow() *Window {
 	w := e.windows[len(e.windows)-1]
 	edl.Unlock()
 	w.Settings().SetParent(e)
-	ed.SetActiveWindow(w)
+	e.SetActiveWindow(w)
 	OnNewWindow.Call(w)
 	return w
 }
@@ -425,10 +425,10 @@ func (e *Editor) GetClipboard() string {
 	return e.clipboard
 }
 
-func (ed *Editor) handleLog(s string) {
-	c := ed.Console()
+func (e *Editor) handleLog(s string) {
+	c := e.Console()
 	f := fmt.Sprintf("%08d %d %s", c.Buffer().Size(), len(s), s)
-	e := c.BeginEdit()
-	c.Insert(e, c.Buffer().Size(), f)
-	c.EndEdit(e)
+	edit := c.BeginEdit()
+	c.Insert(edit, c.Buffer().Size(), f)
+	c.EndEdit(edit)
 }
