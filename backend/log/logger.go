@@ -5,7 +5,7 @@
 package log
 
 import (
-	"code.google.com/p/log4go"
+	"github.com/limetext/log4go"
 )
 
 type (

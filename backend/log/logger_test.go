@@ -5,8 +5,8 @@
 package log_test
 
 import (
-	"code.google.com/p/log4go"
 	"github.com/limetext/lime/backend/log"
+	"github.com/limetext/log4go"
 	"sync"
 	"testing"
 )

@@ -5,8 +5,8 @@
 package log
 
 import (
-	"code.google.com/p/log4go"
 	. "github.com/limetext/lime/backend/util"
+	"github.com/limetext/log4go"
 	"sync"
 )
 
