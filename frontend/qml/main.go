@@ -17,7 +17,7 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
-	"gopkg.in/fsnotify.v1"
+	"gopkg.in/fsnotify.v0"
 	"gopkg.in/qml.v1"
 	"image/color"
 	"io"
