@@ -41,15 +41,20 @@ func (p *Packet) Name() string {
 // Returns packet file data if any error occurred
 // on reading file we will return nil
 func (p *Packet) Get() interface{} {
+	e := []byte(`{}`)
+	if p.group() == "keymap" {
+		e = []byte(`[]`)
+	}
+
 	if _, err := os.Stat(p.path); os.IsNotExist(err) {
 		log.Finest("%s doesn't exist yet", p.path)
-		return []byte(`{}`)
+		return e
 	}
 
 	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
 		log.Error("Couldn't read file: %s", err)
-		return []byte(`{}`)
+		return e
 	}
 	return d
 }

@@ -165,7 +165,7 @@ func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (str
 
 func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log.Error(err)
+		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
 		e.Watch(pkg.Name(), pkg)
