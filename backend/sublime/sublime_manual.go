@@ -195,15 +195,18 @@ func (p *plugin) loadPlugin() {
 	}
 }
 
-func (p *plugin) loadKeyBinding() {
-
+func (p *plugin) load(pkg *packages.Packet) {
+	if err := pkg.Load(); err != nil {
+		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
+	} else {
+		log.Info("Loaded %s", pkg.Name())
+		if err := watcher.Watch(pkg.Name(), pkg); err != nil {
+			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
+		}
+	}
 }
 
 func (p *plugin) loadKeyBindings() {
-
-}
-
-func (p *plugin) loadSetting() {
 
 }
 

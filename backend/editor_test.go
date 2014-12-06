@@ -27,7 +27,7 @@ func TestGetEditor(t *testing.T) {
 func TestLoadKeyBinding(t *testing.T) {
 	editor := GetEditor()
 	pkg := packages.NewPacket("testdata/Default.sublime-keymap", editor.KeyBindings())
-	editor.loadKeyBinding(pkg)
+	editor.load(pkg)
 
 	kb := editor.KeyBindings().Filter(keys.KeyPress{Key: 'i'})
 	if expectedLen := 3; kb.Len() != expectedLen {
@@ -46,7 +46,7 @@ func TestLoadKeyBindings(t *testing.T) {
 
 func TestLoadSetting(t *testing.T) {
 	editor := GetEditor()
-	editor.loadSetting(packages.NewPacket("testdata/Default.sublime-settings", editor.Settings()))
+	editor.load(packages.NewPacket("testdata/Default.sublime-settings", editor.Settings()))
 
 	if editor.Settings().Has("tab_size") != true {
 		t.Error("Expected editor settings to have tab_size, but it didn't")

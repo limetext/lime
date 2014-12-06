@@ -173,7 +173,7 @@ func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (str
 	e.clipboardGetter = getter
 }
 
-func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
+func (e *Editor) load(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
 		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
 	} else {
@@ -190,27 +190,16 @@ func (e *Editor) loadKeyBindings() {
 	e.platformBindings.KeyBindings().SetParent(e.defaultBindings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Default.sublime-keymap")
-	e.loadKeyBinding(packages.NewPacket(p, e.defaultBindings.KeyBindings()))
+	e.load(packages.NewPacket(p, e.defaultBindings.KeyBindings()))
 
 	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	e.loadKeyBinding(packages.NewPacket(p, e.platformBindings.KeyBindings()))
+	e.load(packages.NewPacket(p, e.platformBindings.KeyBindings()))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Default.sublime-keymap")
-	e.loadKeyBinding(packages.NewPacket(p, e.userBindings.KeyBindings()))
+	e.load(packages.NewPacket(p, e.userBindings.KeyBindings()))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	e.loadKeyBinding(packages.NewPacket(p, e.KeyBindings()))
-}
-
-func (e *Editor) loadSetting(pkg *packages.Packet) {
-	if err := pkg.Load(); err != nil {
-		log.Error(err)
-	} else {
-		log.Info("Loaded %s", pkg.Name())
-		if err := e.Watch(pkg.Name(), pkg); err != nil {
-			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
-		}
-	}
+	e.load(packages.NewPacket(p, e.KeyBindings()))
 }
 
 func (e *Editor) loadSettings() {
@@ -218,13 +207,13 @@ func (e *Editor) loadSettings() {
 	e.Settings().SetParent(e.platformSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
-	e.loadSetting(packages.NewPacket(p, e.defaultSettings.Settings()))
+	e.load(packages.NewPacket(p, e.defaultSettings.Settings()))
 
 	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
-	e.loadSetting(packages.NewPacket(p, e.platformSettings.Settings()))
+	e.load(packages.NewPacket(p, e.platformSettings.Settings()))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
-	e.loadSetting(packages.NewPacket(p, e.Settings()))
+	e.load(packages.NewPacket(p, e.Settings()))
 }
 
 func (e *Editor) PackagesPath() string {
