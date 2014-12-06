@@ -92,9 +92,6 @@ func (w *Window) OpenFile(filename string, flags int) *View {
 }
 
 func (w *Window) SetActiveView(v *View) {
-	// w.lock.Lock()
-	// defer w.lock.Unlock()
-
 	if w.active_view != nil {
 		OnDeactivated.Call(w.active_view)
 	}

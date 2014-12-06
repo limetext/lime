@@ -27,18 +27,23 @@ func init() {
 type (
 	Editor struct {
 		HasSettings
-		windows      []*Window
-		activeWindow *Window
-		logInput     bool
-		cmdHandler   commandHandler
-		keyBindings  keys.KeyBindings
-		console      *View
-		frontend     Frontend
-		keyInput     chan (keys.KeyPress)
 		*watch.Watcher
-		clipboardSetter func(string) error
-		clipboardGetter func() (string, error)
-		clipboard       string
+		windows          []*Window
+		activeWindow     *Window
+		logInput         bool
+		cmdHandler       commandHandler
+		defaultBindings  *keys.KeyBindings
+		platformBindings *keys.KeyBindings
+		userBindings     *keys.KeyBindings
+		keyBindings      keys.KeyBindings
+		console          *View
+		frontend         Frontend
+		keyInput         chan (keys.KeyPress)
+		clipboardSetter  func(string) error
+		clipboardGetter  func() (string, error)
+		clipboard        string
+		defaultSettings  *HasSettings
+		platformSettings *HasSettings
 	}
 
 	// The Frontend interface defines the API
@@ -127,7 +132,12 @@ func GetEditor() *Editor {
 		if ed.Watcher, err = watch.NewWatcher(); err != nil {
 			log.Error("Couldn't create watcher: %s", err)
 		}
+		ed.defaultBindings = new(keys.KeyBindings)
+		ed.platformBindings = new(keys.KeyBindings)
+		ed.userBindings = new(keys.KeyBindings)
 		ed.console.Settings().Set("is_widget", true)
+		ed.defaultSettings = new(HasSettings)
+		ed.platformSettings = new(HasSettings)
 		ed.Settings() // Just to initialize it
 		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
 		go ed.inputthread()
@@ -168,35 +178,28 @@ func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
 		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg.Name(), pkg)
+		if err := e.Watch(pkg.Name(), pkg); err != nil {
+			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
+		}
 	}
 }
 
 func (e *Editor) loadKeyBindings() {
-	var (
-		defBindings     = new(keys.KeyBindings)
-		platBindings    = new(keys.KeyBindings)
-		usrPlatBindings = new(keys.KeyBindings)
-	)
-	e.keyBindings.SetParent(usrPlatBindings)
-	usrPlatBindings.SetParent(platBindings)
-	platBindings.SetParent(defBindings)
+	e.keyBindings.SetParent(e.userBindings)
+	e.userBindings.SetParent(e.platformBindings)
+	e.platformBindings.SetParent(e.defaultBindings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Default.sublime-keymap")
-	defPckt := packages.NewPacket(p, defBindings)
-	e.loadKeyBinding(defPckt)
+	e.loadKeyBinding(packages.NewPacket(p, e.defaultBindings))
 
 	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	platPckt := packages.NewPacket(p, platBindings)
-	e.loadKeyBinding(platPckt)
+	e.loadKeyBinding(packages.NewPacket(p, e.platformBindings))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Default.sublime-keymap")
-	usrPlatPckt := packages.NewPacket(p, usrPlatBindings)
-	e.loadKeyBinding(usrPlatPckt)
+	e.loadKeyBinding(packages.NewPacket(p, e.userBindings))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	usrPckt := packages.NewPacket(p, &e.keyBindings)
-	e.loadKeyBinding(usrPckt)
+	e.loadKeyBinding(packages.NewPacket(p, &e.keyBindings))
 }
 
 func (e *Editor) loadSetting(pkg *packages.Packet) {
@@ -204,26 +207,24 @@ func (e *Editor) loadSetting(pkg *packages.Packet) {
 		log.Error(err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg.Name(), pkg)
+		if err := e.Watch(pkg.Name(), pkg); err != nil {
+			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
+		}
 	}
 }
 
 func (e *Editor) loadSettings() {
-	defSettings, platSettings := &HasSettings{}, &HasSettings{}
-	platSettings.Settings().SetParent(defSettings)
-	e.Settings().SetParent(platSettings)
+	e.platformSettings.Settings().SetParent(e.defaultSettings)
+	e.Settings().SetParent(e.platformSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
-	defPckt := packages.NewPacket(p, defSettings.Settings())
-	e.loadSetting(defPckt)
+	e.loadSetting(packages.NewPacket(p, e.defaultSettings.Settings()))
 
 	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
-	platPckt := packages.NewPacket(p, platSettings.Settings())
-	e.loadSetting(platPckt)
+	e.loadSetting(packages.NewPacket(p, e.platformSettings.Settings()))
 
 	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
-	usrPckt := packages.NewPacket(p, e.Settings())
-	e.loadSetting(usrPckt)
+	e.loadSetting(packages.NewPacket(p, e.Settings()))
 }
 
 func (e *Editor) PackagesPath() string {

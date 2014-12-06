@@ -160,8 +160,13 @@ type plugin struct {
 	m  *py.Module
 }
 
-func newPlugin(p *packages.Plugin, m *py.Module) *plugin {
-	return &plugin{p, m}
+func newPlugin(pl *packages.Plugin, m *py.Module) (p *plugin) {
+	p = &plugin{pl, m}
+	p.FileChanged()
+	if err := watcher.Watch(p.Name(), p); err != nil {
+		log.Error("Couldn't watch %s: %s", p.Name(), err)
+	}
+	return
 }
 
 func (p *plugin) FileChanged(name string) {
@@ -188,7 +193,22 @@ func (p *plugin) loadPlugin() {
 			r.Decref()
 		}
 	}
-	p.pl.LoadPackets()
+}
+
+func (p *plugin) loadKeyBindings() {
+
+}
+
+func (p *plugin) loadKeyBindings() {
+	ed := backend.GetEditor()
+}
+
+func (p *plugin) loadSetting() {
+
+}
+
+func (p *plugin) loadSettings() {
+	ed := backend.GetEditor()
 }
 
 var watcher *watch.Watcher
@@ -217,10 +237,6 @@ func Init() {
 		// TODO: add all plugins after supporting all commands
 		if p.Name() == path.Join("..", "..", "packages", "Vintageous") {
 			pl := newPlugin(p, m)
-			pl.loadPlugin()
-			if err := watcher.Watch(pl.Name(), pl); err != nil {
-				log.Error("Couldn't watch %s: %s", pl.Name(), err)
-			}
 		}
 	}
 
