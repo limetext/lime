@@ -23,5 +23,19 @@ function fold_end {
 	fi
 }
 
+function diff_test {
+	# WARNING: This function is dangerous!
+	$1
+	changed=$(git status --porcelain)
+	if [ "$changed" != "" ]; then
+		echo "\"$1\" hasn't been run!"
+		echo "Changed files:"
+		echo "$changed"
+		test_result=1
+		git checkout -- .
+	fi
+}
+
 export -f fold_start
 export -f fold_end
+export -f diff_test
