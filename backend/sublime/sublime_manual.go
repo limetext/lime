@@ -199,7 +199,7 @@ func (p *plugin) load(pkg *packages.Packet) {
 	} else {
 		log.Info("Loaded %s", pkg.Name())
 		if err := watcher.Watch(pkg.Name(), pkg); err != nil {
-			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
+			log.Warn("Couldn't watch %s: %s", pkg.Name(), err)
 		}
 	}
 }
@@ -211,10 +211,10 @@ func (p *plugin) loadKeyBindings() {
 	ed.KeyBindings().SetParent(p)
 	p.KeyBindings().Parent().KeyBindings().SetParent(tmp)
 
-	pt := path.Join(backend.LIME_PACKAGES_PATH, "Default.sublime-keymap")
+	pt := path.Join(p.Name(), "Default.sublime-keymap")
 	p.load(packages.NewPacket(pt, p.KeyBindings().Parent().KeyBindings()))
 
-	pt = path.Join(backend.LIME_PACKAGES_PATH, "Default ("+ed.Plat()+").sublime-keymap")
+	pt = path.Join(p.Name(), "Default ("+ed.Plat()+").sublime-keymap")
 	p.load(packages.NewPacket(pt, p.KeyBindings()))
 }
 
@@ -225,10 +225,10 @@ func (p *plugin) loadSettings() {
 	ed.Settings().SetParent(p)
 	p.Settings().Parent().Settings().Parent().Settings().SetParent(tmp)
 
-	pt := path.Join(backend.LIME_PACKAGES_PATH, "Preferences.sublime-settings")
+	pt := path.Join(p.Name(), "Preferences.sublime-settings")
 	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings().Parent().Settings()))
 
-	pt = path.Join(backend.LIME_PACKAGES_PATH, "Preferences ("+ed.Plat()+").sublime-settings")
+	pt = path.Join(p.Name(), "Preferences ("+ed.Plat()+").sublime-settings")
 	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings()))
 
 	pt = path.Join(backend.LIME_USER_PACKAGES_PATH, "Preferences.sublime-settings")
@@ -256,13 +256,12 @@ func Init() {
 		log.Error("Couldn't create watcher: %s", err)
 	}
 
-	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
-	for _, p := range plugins {
-		// TODO: add all plugins after supporting all commands
-		if p.Name() == path.Join("..", "..", "packages", "Vintageous") {
-			newPlugin(p, m)
-		}
-	}
+	// TODO: add all plugins after supporting all commands
+	// plugins := packages.ScanPlugins(backend.LIME_PACKAGES_PATH, ".py")
+	// for _, p := range plugins {
+	// 	newPlugin(p, m)
+	// }
+	newPlugin(packages.NewPlugin(path.Join(backend.LIME_PACKAGES_PATH, "Vintageous"), ".py"), m)
 
 	go watcher.Observe()
 }

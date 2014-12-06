@@ -178,7 +178,7 @@ func (e *Editor) load(pkg *packages.Packet) {
 	} else {
 		log.Info("Loaded %s", pkg.Name())
 		if err := e.Watch(pkg.Name(), pkg); err != nil {
-			log.Error("Couldn't watch %s: %s", pkg.Name(), err)
+			log.Warn("Couldn't watch %s: %s", pkg.Name(), err)
 		}
 	}
 }
