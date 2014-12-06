@@ -11,30 +11,30 @@ YELLOW="\e[33m"
 RESET="\e[0m"
 
 function fold_start {
-    if [ "$TRAVIS" == "true" ]; then
-        echo -en "travis_fold:start:$1\r"
-        echo "\$ $2"
-    fi
+	if [ "$TRAVIS" == "true" ]; then
+		echo -en "travis_fold:start:$1\r"
+		echo "\$ $2"
+	fi
 }
 
 function fold_end {
-    if [ "$TRAVIS" == "true" ]; then
-        echo -en "travis_fold:end:$1\r"
-    fi
+	if [ "$TRAVIS" == "true" ]; then
+		echo -en "travis_fold:end:$1\r"
+	fi
 }
 
 function run_tests {
 	go test "$1" -covermode=count -coverprofile=tmp.cov
 	build_result=$?
 	# Can't do race tests at the same time as coverage as it'll report
-	# lots of false positives then..
+	# lots of false positives
 	go test -race "$1"
 	let build_result=$build_result+$?
 	echo -ne "${YELLOW}=>${RESET} test $1 - "
 	if [ "$build_result" == "0" ]; then
-	    echo -e "${GREEN}SUCCEEDED${RESET}"
+		echo -e "${GREEN}SUCCEEDED${RESET}"
 	else
-	    echo -e "${RED}FAILED${RESET}"
+		echo -e "${RED}FAILED${RESET}"
 	fi
 }
 
