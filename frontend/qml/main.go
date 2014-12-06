@@ -645,7 +645,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	ed := backend.GetEditor()
 	ed.Init()
-	sublime.Init()
+	go sublime.Init()
 	ed.SetFrontend(t)
 	ed.LogInput(false)
 	ed.LogCommands(false)

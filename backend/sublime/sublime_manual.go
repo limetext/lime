@@ -156,8 +156,8 @@ func init() {
 // Wrapper for packages.Plugin and py.Module
 // merges Plugin.Reload and loadPlugin for watcher
 type plugin struct {
-	pl *packages.Plugin
-	m  *py.Module
+	*packages.Plugin
+	m *py.Module
 }
 
 func newPlugin(pl *packages.Plugin, m *py.Module) (p *plugin) {
@@ -166,23 +166,21 @@ func newPlugin(pl *packages.Plugin, m *py.Module) (p *plugin) {
 	if err := watcher.Watch(p.Name(), p); err != nil {
 		log.Error("Couldn't watch %s: %s", p.Name(), err)
 	}
+	p.loadKeyBindings()
+	p.loadSettings()
 	return
 }
 
 func (p *plugin) FileChanged(name string) {
-	p.pl.Reload()
+	p.Reload()
 	p.loadPlugin()
 }
 
-func (p *plugin) Name() string {
-	return p.pl.Name()
-}
-
 func (p *plugin) loadPlugin() {
-	fi := p.pl.Get().([]os.FileInfo)
+	fi := p.Get().([]os.FileInfo)
 	for _, f := range fi {
 		fn := f.Name()
-		s, err := py.NewUnicode(path.Base(p.pl.Name()) + "." + fn[:len(fn)-3])
+		s, err := py.NewUnicode(path.Base(p.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
 			log.Error(err)
 			return
@@ -207,11 +205,34 @@ func (p *plugin) load(pkg *packages.Packet) {
 }
 
 func (p *plugin) loadKeyBindings() {
+	ed := backend.GetEditor()
+	tmp := ed.KeyBindings().Parent()
 
+	ed.KeyBindings().SetParent(p)
+	p.KeyBindings().Parent().KeyBindings().SetParent(tmp)
+
+	pt := path.Join(backend.LIME_PACKAGES_PATH, "Default.sublime-keymap")
+	p.load(packages.NewPacket(pt, p.KeyBindings().Parent().KeyBindings()))
+
+	pt = path.Join(backend.LIME_PACKAGES_PATH, "Default ("+ed.Plat()+").sublime-keymap")
+	p.load(packages.NewPacket(pt, p.KeyBindings()))
 }
 
 func (p *plugin) loadSettings() {
+	ed := backend.GetEditor()
+	tmp := ed.Settings().Parent()
 
+	ed.Settings().SetParent(p)
+	p.Settings().Parent().Settings().Parent().Settings().SetParent(tmp)
+
+	pt := path.Join(backend.LIME_PACKAGES_PATH, "Preferences.sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings().Parent().Settings()))
+
+	pt = path.Join(backend.LIME_PACKAGES_PATH, "Preferences ("+ed.Plat()+").sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings()))
+
+	pt = path.Join(backend.LIME_USER_PACKAGES_PATH, "Preferences.sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings()))
 }
 
 var watcher *watch.Watcher

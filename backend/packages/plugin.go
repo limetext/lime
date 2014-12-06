@@ -27,7 +27,6 @@ type (
 		defaultSettings  *text.HasSettings
 		platformSettings *text.HasSettings
 		defaultBindings  *keys.HasKeyBindings
-		platformBindings *keys.HasKeyBindings
 	}
 )
 
@@ -42,13 +41,11 @@ func NewPlugin(path string, suffix string) (p *Plugin) {
 	p.defaultSettings = new(text.HasSettings)
 	p.platformSettings = new(text.HasSettings)
 	p.defaultBindings = new(keys.HasKeyBindings)
-	p.platformBindings = new(keys.HasKeyBindings)
 
 	p.Settings().SetParent(p.platformSettings)
 	p.platformSettings.Settings().SetParent(p.defaultSettings)
 
-	p.KeyBindings().SetParent(p.platformBindings)
-	p.platformBindings.KeyBindings().SetParent(p.defaultBindings)
+	p.KeyBindings().SetParent(p.defaultBindings)
 	return
 }
 

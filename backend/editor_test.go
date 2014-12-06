@@ -12,8 +12,8 @@ import (
 )
 
 func init() {
-	LIME_USER_PACKAGES_PATH = path.Join("..", "packages")
-	LIME_USER_PACKETS_PATH = path.Join("..", "packages", "User")
+	LIME_PACKAGES_PATH = path.Join("..", "packages")
+	LIME_USER_PACKAGES_PATH = path.Join("..", "packages", "User")
 	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
 }
 

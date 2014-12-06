@@ -267,10 +267,10 @@ func (v *View) loadSettings() {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
 		ed.load(packages.NewPacket(p, defSettings.Settings()))
 
-		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.plat()+").sublime-settings")
+		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.Plat()+").sublime-settings")
 		ed.load(packages.NewPacket(p, platSettings.Settings()))
 
-		p = path.Join(LIME_USER_PACKETS_PATH, s[1]+".sublime-settings")
+		p = path.Join(LIME_USER_PACKAGES_PATH, s[1]+".sublime-settings")
 		ed.load(packages.NewPacket(p, usrSettings.Settings()))
 	}
 }

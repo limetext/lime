@@ -82,8 +82,7 @@ type (
 )
 
 var (
-	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "packages")
-	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "packages", "User")
+	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "packages", "User")
 	LIME_PACKAGES_PATH      = path.Join("..", "..", "packages")
 	LIME_DEFAULTS_PATH      = path.Join("..", "..", "packages", "Default")
 )
@@ -190,16 +189,20 @@ func (e *Editor) loadKeyBindings() {
 	e.platformBindings.KeyBindings().SetParent(e.defaultBindings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Default.sublime-keymap")
-	e.load(packages.NewPacket(p, e.defaultBindings.KeyBindings()))
+	defPckt := packages.NewPacket(p, e.defaultBindings.KeyBindings())
+	e.load(defPckt)
 
-	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	e.load(packages.NewPacket(p, e.platformBindings.KeyBindings()))
+	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.Plat()+").sublime-keymap")
+	platPckt := packages.NewPacket(p, e.platformBindings.KeyBindings())
+	e.load(platPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Default.sublime-keymap")
-	e.load(packages.NewPacket(p, e.userBindings.KeyBindings()))
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Default.sublime-keymap")
+	usrPckt := packages.NewPacket(p, e.userBindings.KeyBindings())
+	e.load(usrPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	e.load(packages.NewPacket(p, e.KeyBindings()))
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Default ("+e.Plat()+").sublime-keymap")
+	usrPlatPckt := packages.NewPacket(p, e.KeyBindings())
+	e.load(usrPlatPckt)
 }
 
 func (e *Editor) loadSettings() {
@@ -207,17 +210,20 @@ func (e *Editor) loadSettings() {
 	e.Settings().SetParent(e.platformSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
-	e.load(packages.NewPacket(p, e.defaultSettings.Settings()))
+	defPckt := packages.NewPacket(p, e.defaultSettings.Settings())
+	e.load(defPckt)
 
-	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
-	e.load(packages.NewPacket(p, e.platformSettings.Settings()))
+	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.Plat()+").sublime-settings")
+	platPckt := packages.NewPacket(p, e.platformSettings.Settings())
+	e.load(platPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
-	e.load(packages.NewPacket(p, e.Settings()))
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Preferences.sublime-settings")
+	usrPckt := packages.NewPacket(p, e.Settings())
+	e.load(usrPckt)
 }
 
 func (e *Editor) PackagesPath() string {
-	return LIME_USER_PACKAGES_PATH
+	return LIME_PACKAGES_PATH
 }
 
 func (e *Editor) Console() *View {
@@ -275,7 +281,7 @@ func (e *Editor) Platform() string {
 	return runtime.GOOS
 }
 
-func (e *Editor) plat() string {
+func (e *Editor) Plat() string {
 	switch e.Platform() {
 	case "windows":
 		return "Windows"

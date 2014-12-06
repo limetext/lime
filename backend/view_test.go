@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	"path"
 	"reflect"
 	"sync"
 	"testing"
@@ -843,11 +842,6 @@ func TestCloseView2(t *testing.T) {
 }
 
 func TestViewLoadSettings(t *testing.T) {
-	LIME_USER_PACKAGES_PATH = path.Join("..", "packages")
-	LIME_USER_PACKETS_PATH = path.Join("..", "packages", "User")
-	LIME_PACKAGES_PATH = path.Join("..", "packages")
-	LIME_DEFAULTS_PATH = path.Join("..", "packages", "Default")
-
 	GetEditor().loadSettings()
 
 	w := GetEditor().NewWindow()

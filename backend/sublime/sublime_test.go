@@ -44,7 +44,7 @@ func TestSublime(t *testing.T) {
 	}, func() (string, error) {
 		return dummyClipboard, nil
 	})
-	defer ed.Init()
+	ed.Init()
 
 	ed.Console().Buffer().AddObserver(&consoleObserver{T: t})
 	w := ed.NewWindow()
