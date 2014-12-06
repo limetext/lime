@@ -20,14 +20,14 @@ type (
 	// settings, snippets, commands and etc as packets
 	Plugin struct {
 		text.HasSettings
+		keys.HasKeyBindings
 		path             string
 		suffix           string
 		files            []os.FileInfo
 		defaultSettings  *text.HasSettings
 		platformSettings *text.HasSettings
-		defaultBindings  *keys.KeyBindings
-		platformBindings *keys.KeyBindings
-		keyBindings      *keys.KeyBindings
+		defaultBindings  *keys.HasKeyBindings
+		platformBindings *keys.HasKeyBindings
 	}
 )
 
@@ -41,15 +41,14 @@ func NewPlugin(path string, suffix string) (p *Plugin) {
 	p = &Plugin{path: path, suffix: suffix}
 	p.defaultSettings = new(text.HasSettings)
 	p.platformSettings = new(text.HasSettings)
-	p.defaultBindings = new(keys.KeyBindings)
-	p.platformBindings = new(keys.KeyBindings)
-	p.keyBindings = new(keys.KeyBindings)
+	p.defaultBindings = new(keys.HasKeyBindings)
+	p.platformBindings = new(keys.HasKeyBindings)
 
 	p.Settings().SetParent(p.platformSettings)
 	p.platformSettings.Settings().SetParent(p.defaultSettings)
 
-	p.keyBindings.SetParent(p.platformBindings)
-	p.platformBindings.SetParent(p.defaultBindings)
+	p.KeyBindings().SetParent(p.platformBindings)
+	p.platformBindings.KeyBindings().SetParent(p.defaultBindings)
 	return
 }
 

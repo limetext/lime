@@ -162,7 +162,7 @@ type plugin struct {
 
 func newPlugin(pl *packages.Plugin, m *py.Module) (p *plugin) {
 	p = &plugin{pl, m}
-	p.FileChanged()
+	p.FileChanged(p.Name())
 	if err := watcher.Watch(p.Name(), p); err != nil {
 		log.Error("Couldn't watch %s: %s", p.Name(), err)
 	}
@@ -195,12 +195,12 @@ func (p *plugin) loadPlugin() {
 	}
 }
 
-func (p *plugin) loadKeyBindings() {
+func (p *plugin) loadKeyBinding() {
 
 }
 
 func (p *plugin) loadKeyBindings() {
-	ed := backend.GetEditor()
+
 }
 
 func (p *plugin) loadSetting() {
@@ -208,7 +208,7 @@ func (p *plugin) loadSetting() {
 }
 
 func (p *plugin) loadSettings() {
-	ed := backend.GetEditor()
+
 }
 
 var watcher *watch.Watcher
@@ -236,7 +236,7 @@ func Init() {
 	for _, p := range plugins {
 		// TODO: add all plugins after supporting all commands
 		if p.Name() == path.Join("..", "..", "packages", "Vintageous") {
-			pl := newPlugin(p, m)
+			newPlugin(p, m)
 		}
 	}
 

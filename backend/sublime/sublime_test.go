@@ -57,7 +57,7 @@ func TestSublime(t *testing.T) {
 	} else {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
-			pl := newPlugin(p, m)
+			newPlugin(p, m)
 		}
 	}
 
