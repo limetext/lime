@@ -1,27 +1,6 @@
 #!/usr/bin/env bash
 
-# Just so that our oniguruma.pc is found if
-# the user doesn't have an oniguruma.pc.
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/../../../github.com/limetext/rubex
-
-# Colors.
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-RESET="\e[0m"
-
-function fold_start {
-	if [ "$TRAVIS" == "true" ]; then
-		echo -en "travis_fold:start:$1\r"
-		echo "\$ $2"
-	fi
-}
-
-function fold_end {
-	if [ "$TRAVIS" == "true" ]; then
-		echo -en "travis_fold:end:$1\r"
-	fi
-}
+source "$(dirname -- "$0")/setup.sh"
 
 function run_tests {
 	go test "$1" -covermode=count -coverprofile=tmp.cov
