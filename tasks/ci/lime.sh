@@ -46,6 +46,7 @@ function test_all {
 		if [ "$test_result" == "0" ]; then
 			sed 1d tmp.cov >> coverage.cov
 		fi
+		rm tmp.cov
 	done
 	test_result=$a
 }
@@ -79,5 +80,7 @@ if [ "$ret" == "0" ]; then
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
 	fold_end "coveralls"
 fi
+
+rm coverage.cov
 
 exit $ret
