@@ -287,8 +287,6 @@ func TestTransform(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
-
 	d, err := ioutil.ReadFile("view.go")
 	if err != nil {
 		t.Fatal(err)
@@ -296,6 +294,12 @@ func TestTransform(t *testing.T) {
 	e := v.BeginEdit()
 	v.Insert(e, 0, string(d))
 	v.EndEdit(e)
+
+	if v.Transform(sc, Region{0, 100}) != nil {
+		t.Error("Expected view.Transform return nil when the syntax isn't set yet")
+	}
+
+	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
 
 	time.Sleep(time.Second)
 	a := v.Transform(sc, Region{0, 100}).Transcribe()
@@ -632,6 +636,12 @@ func TestExpandByClass(t *testing.T) {
 			Region{9, 11},
 			CLASS_WORD_START | CLASS_WORD_END,
 			Region{8, 12},
+		},
+		{
+			"abc Hi -test lime",
+			Region{-1, 20},
+			CLASS_WORD_START,
+			Region{0, 17},
 		},
 	}
 
