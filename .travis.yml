@@ -8,8 +8,9 @@ install:
   - sudo apt-get install -qq libonig-dev mercurial python3.4 python3.4-dev xclip
 
 script:
-  - ./tasks/ci/lime.sh
-  - ./tasks/ci/gofmt.sh
+  - ./tasks/ci/run_tests.sh
+  - ./tasks/ci/check_gen.sh
+  - ./tasks/ci/check_fmt.sh
 
 notifications:
   webhooks:
