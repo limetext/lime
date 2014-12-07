@@ -51,6 +51,7 @@ type (
 
 func newView(w *Window) *View {
 	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+	ret.loadSettings()
 
 	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
 		ret.lock.Lock()
