@@ -27,6 +27,7 @@ function diff_test {
 	# WARNING: This function is dangerous!
 	$1
 	changed=$(git status --porcelain)
+	test_result=0
 	if [ "$changed" != "" ]; then
 		echo "\"$1\" hasn't been run!"
 		echo "Changed files:"
