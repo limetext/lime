@@ -27,6 +27,13 @@ func TestLoadKeyBindingsFromJSON(t *testing.T) {
 	}
 }
 
+func TestUnmarshalError(t *testing.T) {
+	var bindings KeyBindings
+	if err := bindings.UnmarshalJSON([]byte(``)); err == nil {
+		t.Errorf("Expected error on loading empty string")
+	}
+}
+
 func TestDropLessEqualKeys(t *testing.T) {
 	fn := "testdata/Default.sublime-keymap"
 	d, err := ioutil.ReadFile(fn)
@@ -144,16 +151,29 @@ func TestKeyBindingsFilter(t *testing.T) {
 
 func TestKeyBindingsAction(t *testing.T) {
 	tests := []struct {
-		kp KeyPress
-		ck string
+		kp     KeyPress
+		retNil bool
+		ck     string
 	}{
 		{
 			KeyPress{Key: 'i'},
+			false,
 			"test3",
 		},
 		{
 			KeyPress{Key: 'p'},
+			false,
 			"t2",
+		},
+		{
+			KeyPress{Key: 'i', Ctrl: true},
+			true,
+			"",
+		},
+		{
+			KeyPress{Key: 'c'},
+			false,
+			"t5",
 		},
 	}
 
@@ -174,9 +194,21 @@ func TestKeyBindingsAction(t *testing.T) {
 				return key == test.ck
 			}
 			b := bindings.Filter(test.kp)
-			if a := b.Action(qc); a.Context[0].Key != test.ck {
+			if a := b.Action(qc); test.retNil {
+				if a != nil {
+					t.Errorf("Test %d: Expected action to be nil but got %v", i, a)
+				}
+			} else if a.Context[0].Key != test.ck {
 				t.Errorf("Test %d: Expected %s, but got %s", i, test.ck, a.Context[0].Key)
 			}
 		}
+	}
+}
+
+func TestSeqIndex(t *testing.T) {
+	var bd KeyBindings
+	bd.seqIndex = 3
+	if bd.SeqIndex() != 3 {
+		t.Errorf("Expected SeqIndex %d, but got %d", 3, bd.SeqIndex())
 	}
 }

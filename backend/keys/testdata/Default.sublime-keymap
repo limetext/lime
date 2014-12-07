@@ -3,4 +3,6 @@
     { "keys": ["ctrl+i", "k"], "command": "test2", "context": [{ "key": "test2" }] },
     { "keys": ["i"], "command": "test3", "context": [{ "key": "test3" }] },
     { "keys": ["ctrl+d"], "command": "test4", "context": [{ "key": "test4" }] },
+    { "keys": ["c"], "command": "test5", "context": [{ "key": "t5" }] },
+    { "keys": ["c"], "command": "test5", "context": [{ "key": "test5" }] },
 ]
