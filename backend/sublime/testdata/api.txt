@@ -377,6 +377,7 @@ message_dialog
 new_window
 ok_cancel_dialog
 packages_path
+plat
 platform
 register
 run_command
