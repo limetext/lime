@@ -5,6 +5,7 @@
 package commands
 
 import (
+	"errors"
 	. "github.com/limetext/lime/backend"
 	. "github.com/limetext/text"
 	"strings"
@@ -52,6 +53,10 @@ func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
 // Remembers the last sequence of runes searched for.
 var lastSearch []rune
 
+func GetLastSearch() []rune {
+	return lastSearch
+}
+
 func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	sel := v.Sel()
 	rs := sel.Regions()
@@ -96,6 +101,39 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func GetNextSelection(v *View, e *Edit, search string) (Region, error) {
+	sel := v.Sel()
+	rs := sel.Regions()
+	last := 0
+
+	// Ranges are not sorted, so finding the last one requires a search.
+	for _, r := range rs {
+		last = Max(last, r.End())
+	}
+
+	b := v.Buffer()
+	// Start the search right after the last selection.
+	start := last
+	r := Region{start, b.Size()}
+	st := b.Substr(r)
+	p := search
+	size := len(p)
+	found := strings.Index(st, p)
+	// If not found yet, search from the start of the buffer to our original
+	// starting point.
+	if found == -1 {
+		r = Region{0, start}
+		st = b.Substr(r)
+		found = strings.Index(st, p)
+	}
+	// If we found our string, select it.
+	if found != -1 {
+		newr := Region{r.A + found, r.A + found + size}
+		return newr, nil
+	}
+	return Region{}, errors.New("Selection not Found")
+}
+
 func (c *FindNextCommand) Run(v *View, e *Edit) error {
 	/*
 		Correct behavior of FindNext:
@@ -112,36 +150,13 @@ func (c *FindNextCommand) Run(v *View, e *Edit) error {
 	if len(lastSearch) == 0 {
 		return nil
 	}
+	newr, err := GetNextSelection(v, e, string(lastSearch))
+	if err != nil {
+		return err
+	}
 	sel := v.Sel()
-	rs := sel.Regions()
-	last := 0
-
-	// Ranges are not sorted, so finding the last one requires a search.
-	for _, r := range rs {
-		last = Max(last, r.End())
-	}
-
-	b := v.Buffer()
-	// Start the search right after the last selection.
-	start := last + 1
-	r := Region{start, b.Size() - 1}
-	st := b.Substr(r)
-	p := string(lastSearch)
-	size := len(p)
-	found := strings.Index(st, p)
-	// If not found yet, search from the start of the buffer to our original
-	// starting point.
-	if found == -1 {
-		r = Region{0, start}
-		st = b.Substr(r)
-		found = strings.Index(st, p)
-	}
-	// If we found our string, select it.
-	if found != -1 {
-		newr := Region{r.A + found, r.A + found + size}
-		sel.Clear()
-		sel.Add(newr)
-	}
+	sel.Clear()
+	sel.Add(newr)
 	return nil
 }
 
