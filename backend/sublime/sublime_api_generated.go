@@ -121,6 +121,18 @@ func sublime_PackagesPath() (py.Object, error) {
 	return pyret0, err
 }
 
+func sublime_Plat() (py.Object, error) {
+	ret0 := backend.GetEditor().Plat()
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = toPython(ret0)
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
 func sublime_Platform() (py.Object, error) {
 	ret0 := backend.GetEditor().Platform()
 	var err error
@@ -226,6 +238,7 @@ var sublime_methods = []py.Method{
 	{Name: "log_input", Func: sublime_LogInput},
 	{Name: "new_window", Func: sublime_NewWindow},
 	{Name: "packages_path", Func: sublime_PackagesPath},
+	{Name: "plat", Func: sublime_Plat},
 	{Name: "platform", Func: sublime_Platform},
 	{Name: "run_command", Func: sublime_RunCommand},
 	{Name: "set_clipboard", Func: sublime_SetClipboard},
