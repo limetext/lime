@@ -27,18 +27,23 @@ func init() {
 type (
 	Editor struct {
 		HasSettings
-		windows      []*Window
-		activeWindow *Window
-		logInput     bool
-		cmdHandler   commandHandler
-		keyBindings  keys.KeyBindings
-		console      *View
-		frontend     Frontend
-		keyInput     chan (keys.KeyPress)
+		keys.HasKeyBindings
 		*watch.Watcher
-		clipboardSetter func(string) error
-		clipboardGetter func() (string, error)
-		clipboard       string
+		windows          []*Window
+		activeWindow     *Window
+		logInput         bool
+		cmdHandler       commandHandler
+		console          *View
+		frontend         Frontend
+		keyInput         chan (keys.KeyPress)
+		clipboardSetter  func(string) error
+		clipboardGetter  func() (string, error)
+		clipboard        string
+		defaultSettings  *HasSettings
+		platformSettings *HasSettings
+		defaultBindings  *keys.HasKeyBindings
+		platformBindings *keys.HasKeyBindings
+		userBindings     *keys.HasKeyBindings
 	}
 
 	// The Frontend interface defines the API
@@ -77,8 +82,7 @@ type (
 )
 
 var (
-	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "packages")
-	LIME_USER_PACKETS_PATH  = path.Join("..", "..", "packages", "User")
+	LIME_USER_PACKAGES_PATH = path.Join("..", "..", "packages", "User")
 	LIME_PACKAGES_PATH      = path.Join("..", "..", "packages")
 	LIME_DEFAULTS_PATH      = path.Join("..", "..", "packages", "Default")
 )
@@ -128,7 +132,12 @@ func GetEditor() *Editor {
 			log.Error("Couldn't create watcher: %s", err)
 		}
 		ed.console.Settings().Set("is_widget", true)
+		ed.defaultSettings = new(HasSettings)
+		ed.platformSettings = new(HasSettings)
 		ed.Settings() // Just to initialize it
+		ed.defaultBindings = new(keys.HasKeyBindings)
+		ed.platformBindings = new(keys.HasKeyBindings)
+		ed.userBindings = new(keys.HasKeyBindings)
 		log.AddFilter("console", log.DEBUG, log.NewLogWriter(ed.handleLog))
 		go ed.inputthread()
 		go ed.Observe()
@@ -163,71 +172,58 @@ func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (str
 	e.clipboardGetter = getter
 }
 
-func (e *Editor) loadKeyBinding(pkg *packages.Packet) {
+func (e *Editor) load(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
 		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg.Name(), pkg)
+		if err := e.Watch(pkg.Name(), pkg); err != nil {
+			log.Warn("Couldn't watch %s: %s", pkg.Name(), err)
+		}
 	}
 }
 
 func (e *Editor) loadKeyBindings() {
-	var (
-		defBindings     = new(keys.KeyBindings)
-		platBindings    = new(keys.KeyBindings)
-		usrPlatBindings = new(keys.KeyBindings)
-	)
-	e.keyBindings.SetParent(usrPlatBindings)
-	usrPlatBindings.SetParent(platBindings)
-	platBindings.SetParent(defBindings)
+	e.KeyBindings().SetParent(e.userBindings)
+	e.userBindings.KeyBindings().SetParent(e.platformBindings)
+	e.platformBindings.KeyBindings().SetParent(e.defaultBindings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Default.sublime-keymap")
-	defPckt := packages.NewPacket(p, defBindings)
-	e.loadKeyBinding(defPckt)
+	defPckt := packages.NewPacket(p, e.defaultBindings.KeyBindings())
+	e.load(defPckt)
 
-	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	platPckt := packages.NewPacket(p, platBindings)
-	e.loadKeyBinding(platPckt)
+	p = path.Join(LIME_DEFAULTS_PATH, "Default ("+e.Plat()+").sublime-keymap")
+	platPckt := packages.NewPacket(p, e.platformBindings.KeyBindings())
+	e.load(platPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Default.sublime-keymap")
-	usrPlatPckt := packages.NewPacket(p, usrPlatBindings)
-	e.loadKeyBinding(usrPlatPckt)
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Default.sublime-keymap")
+	usrPckt := packages.NewPacket(p, e.userBindings.KeyBindings())
+	e.load(usrPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Default ("+e.plat()+").sublime-keymap")
-	usrPckt := packages.NewPacket(p, &e.keyBindings)
-	e.loadKeyBinding(usrPckt)
-}
-
-func (e *Editor) loadSetting(pkg *packages.Packet) {
-	if err := pkg.Load(); err != nil {
-		log.Error(err)
-	} else {
-		log.Info("Loaded %s", pkg.Name())
-		e.Watch(pkg.Name(), pkg)
-	}
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Default ("+e.Plat()+").sublime-keymap")
+	usrPlatPckt := packages.NewPacket(p, e.KeyBindings())
+	e.load(usrPlatPckt)
 }
 
 func (e *Editor) loadSettings() {
-	defSettings, platSettings := &HasSettings{}, &HasSettings{}
-	platSettings.Settings().SetParent(defSettings)
-	e.Settings().SetParent(platSettings)
+	e.platformSettings.Settings().SetParent(e.defaultSettings)
+	e.Settings().SetParent(e.platformSettings)
 
 	p := path.Join(LIME_DEFAULTS_PATH, "Preferences.sublime-settings")
-	defPckt := packages.NewPacket(p, defSettings.Settings())
-	e.loadSetting(defPckt)
+	defPckt := packages.NewPacket(p, e.defaultSettings.Settings())
+	e.load(defPckt)
 
-	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.plat()+").sublime-settings")
-	platPckt := packages.NewPacket(p, platSettings.Settings())
-	e.loadSetting(platPckt)
+	p = path.Join(LIME_DEFAULTS_PATH, "Preferences ("+e.Plat()+").sublime-settings")
+	platPckt := packages.NewPacket(p, e.platformSettings.Settings())
+	e.load(platPckt)
 
-	p = path.Join(LIME_USER_PACKETS_PATH, "Preferences.sublime-settings")
+	p = path.Join(LIME_USER_PACKAGES_PATH, "Preferences.sublime-settings")
 	usrPckt := packages.NewPacket(p, e.Settings())
-	e.loadSetting(usrPckt)
+	e.load(usrPckt)
 }
 
 func (e *Editor) PackagesPath() string {
-	return LIME_USER_PACKAGES_PATH
+	return LIME_PACKAGES_PATH
 }
 
 func (e *Editor) Console() *View {
@@ -285,7 +281,7 @@ func (e *Editor) Platform() string {
 	return runtime.GOOS
 }
 
-func (e *Editor) plat() string {
+func (e *Editor) Plat() string {
 	switch e.Platform() {
 	case "windows":
 		return "Windows"
@@ -329,7 +325,7 @@ func (e *Editor) inputthread() {
 		}
 		log.Logf(lvl, "Key: %v", kp)
 		if lastBindings.SeqIndex() == 0 {
-			lastBindings = e.keyBindings
+			lastBindings = *e.KeyBindings()
 		}
 	try_again:
 		possible_actions := lastBindings.Filter(kp)
@@ -354,7 +350,7 @@ func (e *Editor) inputthread() {
 			p2.Exit()
 		} else if possible_actions.SeqIndex() > 1 {
 			// TODO: this disables having keyBindings with more than 2 key sequence
-			lastBindings = e.keyBindings
+			lastBindings = *e.KeyBindings()
 			goto try_again
 		} else if kp.IsCharacter() {
 			p2 := Prof.Enter("hi.character")

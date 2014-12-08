@@ -156,28 +156,31 @@ func init() {
 // Wrapper for packages.Plugin and py.Module
 // merges Plugin.Reload and loadPlugin for watcher
 type plugin struct {
-	pl *packages.Plugin
-	m  *py.Module
+	*packages.Plugin
+	m *py.Module
 }
 
-func newPlugin(p *packages.Plugin, m *py.Module) *plugin {
-	return &plugin{p, m}
+func newPlugin(pl *packages.Plugin, m *py.Module) (p *plugin) {
+	p = &plugin{pl, m}
+	p.FileChanged(p.Name())
+	if err := watcher.Watch(p.Name(), p); err != nil {
+		log.Error("Couldn't watch %s: %s", p.Name(), err)
+	}
+	p.loadKeyBindings()
+	p.loadSettings()
+	return
 }
 
 func (p *plugin) FileChanged(name string) {
-	p.pl.Reload()
+	p.Reload()
 	p.loadPlugin()
 }
 
-func (p *plugin) Name() string {
-	return p.pl.Name()
-}
-
 func (p *plugin) loadPlugin() {
-	fi := p.pl.Get().([]os.FileInfo)
+	fi := p.Get().([]os.FileInfo)
 	for _, f := range fi {
 		fn := f.Name()
-		s, err := py.NewUnicode(path.Base(p.pl.Name()) + "." + fn[:len(fn)-3])
+		s, err := py.NewUnicode(path.Base(p.Name()) + "." + fn[:len(fn)-3])
 		if err != nil {
 			log.Error(err)
 			return
@@ -188,7 +191,48 @@ func (p *plugin) loadPlugin() {
 			r.Decref()
 		}
 	}
-	p.pl.LoadPackets()
+}
+
+func (p *plugin) load(pkg *packages.Packet) {
+	if err := pkg.Load(); err != nil {
+		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
+	} else {
+		log.Info("Loaded %s", pkg.Name())
+		if err := watcher.Watch(pkg.Name(), pkg); err != nil {
+			log.Warn("Couldn't watch %s: %s", pkg.Name(), err)
+		}
+	}
+}
+
+func (p *plugin) loadKeyBindings() {
+	ed := backend.GetEditor()
+	tmp := ed.KeyBindings().Parent()
+
+	ed.KeyBindings().SetParent(p)
+	p.KeyBindings().Parent().KeyBindings().SetParent(tmp)
+
+	pt := path.Join(p.Name(), "Default.sublime-keymap")
+	p.load(packages.NewPacket(pt, p.KeyBindings().Parent().KeyBindings()))
+
+	pt = path.Join(p.Name(), "Default ("+ed.Plat()+").sublime-keymap")
+	p.load(packages.NewPacket(pt, p.KeyBindings()))
+}
+
+func (p *plugin) loadSettings() {
+	ed := backend.GetEditor()
+	tmp := ed.Settings().Parent()
+
+	ed.Settings().SetParent(p)
+	p.Settings().Parent().Settings().Parent().Settings().SetParent(tmp)
+
+	pt := path.Join(p.Name(), "Preferences.sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings().Parent().Settings()))
+
+	pt = path.Join(p.Name(), "Preferences ("+ed.Plat()+").sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings().Parent().Settings()))
+
+	pt = path.Join(backend.LIME_USER_PACKAGES_PATH, "Preferences.sublime-settings")
+	p.load(packages.NewPacket(pt, p.Settings()))
 }
 
 var watcher *watch.Watcher
@@ -212,17 +256,12 @@ func Init() {
 		log.Error("Couldn't create watcher: %s", err)
 	}
 
-	plugins := packages.ScanPlugins(backend.LIME_USER_PACKAGES_PATH, ".py")
-	for _, p := range plugins {
-		// TODO: add all plugins after supporting all commands
-		if p.Name() == path.Join("..", "..", "packages", "Vintageous") {
-			pl := newPlugin(p, m)
-			pl.loadPlugin()
-			if err := watcher.Watch(pl.Name(), pl); err != nil {
-				log.Error("Couldn't watch %s: %s", pl.Name(), err)
-			}
-		}
-	}
+	// TODO: add all plugins after supporting all commands
+	// plugins := packages.ScanPlugins(backend.LIME_PACKAGES_PATH, ".py")
+	// for _, p := range plugins {
+	// 	newPlugin(p, m)
+	// }
+	newPlugin(packages.NewPlugin(path.Join(backend.LIME_PACKAGES_PATH, "Vintageous"), ".py"), m)
 
 	go watcher.Observe()
 }

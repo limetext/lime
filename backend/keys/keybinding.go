@@ -24,12 +24,27 @@ type (
 		priority int
 	}
 
+	// An utility struct that(same as HasSettings ) is typically embedded in
+	// other type structs to make that type implement the KeyBindingsInterface
+	HasKeyBindings struct {
+		keybindings KeyBindings
+	}
+
+	// Defines an interface for types that have keybindings
+	KeyBindingsInterface interface {
+		KeyBindings() *KeyBindings
+	}
+
 	KeyBindings struct {
 		Bindings []*KeyBinding
 		seqIndex int // The index we are in a multiple key sequence keybinding
-		parent   *KeyBindings
+		parent   KeyBindingsInterface
 	}
 )
+
+func (k *HasKeyBindings) KeyBindings() *KeyBindings {
+	return &k.keybindings
+}
 
 // Returns the number of KeyBindings.
 func (k *KeyBindings) Len() int {
@@ -62,7 +77,7 @@ func (k *KeyBindings) DropLessEqualKeys(count int) {
 		if k.parent == nil {
 			break
 		}
-		k = k.parent
+		k = k.parent.KeyBindings()
 	}
 }
 
@@ -77,13 +92,13 @@ func (k *KeyBindings) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
-func (k *KeyBindings) SetParent(p *KeyBindings) {
+func (k *KeyBindings) SetParent(p KeyBindingsInterface) {
 	k.parent = p
 	// All parents and childs seqIndex must be equal
-	p.seqIndex = k.seqIndex
+	p.KeyBindings().seqIndex = k.seqIndex
 }
 
-func (k *KeyBindings) Parent() *KeyBindings {
+func (k *KeyBindings) Parent() KeyBindingsInterface {
 	return k.parent
 }
 
@@ -98,11 +113,11 @@ func (k *KeyBindings) filter(ki int, ret *KeyBindings) {
 		if k.parent == nil {
 			break
 		}
-		k = k.parent
+		k = k.parent.KeyBindings()
 		if ret.parent == nil {
-			ret.SetParent(new(KeyBindings))
+			ret.SetParent(new(HasKeyBindings))
 		}
-		ret = ret.parent
+		ret = ret.parent.KeyBindings()
 	}
 }
 
@@ -154,7 +169,7 @@ func (k *KeyBindings) Action(qc func(key string, operator Op, operand interface{
 		if kb != nil || k.parent == nil {
 			break
 		}
-		k = k.parent
+		k = k.parent.KeyBindings()
 	}
 	return
 }

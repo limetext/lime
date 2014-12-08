@@ -54,7 +54,10 @@ func TestDropLessEqualKeys(t *testing.T) {
 func TestSetParent(t *testing.T) {
 	fn := "testdata/Default.sublime-keymap"
 	fnp := "testdata/test.sublime-keymap"
-	var bd, p KeyBindings
+	var (
+		bd KeyBindings
+		p  HasKeyBindings
+	)
 
 	d, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -67,27 +70,27 @@ func TestSetParent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't read %s: %s", fn, err)
 	}
-	if err = loaders.LoadJSON(d, &p); err != nil {
+	if err = loaders.LoadJSON(d, p.KeyBindings()); err != nil {
 		t.Fatalf("Error loading json: %s", err)
 	}
 
-	p.seqIndex = 10
+	p.KeyBindings().seqIndex = 10
 	bd.SetParent(&p)
-	if bd.seqIndex != p.seqIndex {
-		t.Fatalf("Expected parent and child seqIndex be equal %d != %d", p.seqIndex, bd.seqIndex)
+	if bd.seqIndex != p.KeyBindings().seqIndex {
+		t.Fatalf("Expected parent and child seqIndex be equal %d != %d", p.KeyBindings().seqIndex, bd.seqIndex)
 	}
 
 	ret := bd.Filter(KeyPress{Key: 'd', Ctrl: true})
 	if ret.Len() != 1 {
 		t.Fatalf("Expected ret keyBindings len %d, but got %d", 1, ret.Len())
 	}
-	if ret.parent.Len() != 1 {
-		t.Fatalf("Expected ret parent keyBindings len %d, but got %d", 1, ret.parent.Len())
+	if ret.parent.KeyBindings().Len() != 1 {
+		t.Fatalf("Expected ret parent keyBindings len %d, but got %d", 1, ret.parent.KeyBindings().Len())
 	}
 	if cmd := ret.Bindings[0].Command; cmd != "test4" {
 		t.Errorf("Expected Command %s, but got %s", "test4", cmd)
 	}
-	if cmd := ret.parent.Bindings[0].Command; cmd != "t1" {
+	if cmd := ret.parent.KeyBindings().Bindings[0].Command; cmd != "t1" {
 		t.Errorf("Expected Command %s, but got %s", "t1", cmd)
 	}
 }
@@ -95,7 +98,10 @@ func TestSetParent(t *testing.T) {
 func TestParent(t *testing.T) {
 	fn := "testdata/Default.sublime-keymap"
 	fnp := "testdata/test.sublime-keymap"
-	var bd, p KeyBindings
+	var (
+		bd KeyBindings
+		p  HasKeyBindings
+	)
 
 	d, err := ioutil.ReadFile(fn)
 	if err != nil {
@@ -109,13 +115,13 @@ func TestParent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Couldn't read %s: %s", fn, err)
 	}
-	if err = loaders.LoadJSON(d, &p); err != nil {
+	if err = loaders.LoadJSON(d, p.KeyBindings()); err != nil {
 		t.Fatalf("Error loading json: %s", err)
 	}
 
 	bd.SetParent(&p)
 
-	if cmd := bd.Parent().Bindings[0].Command; cmd != "t2" {
+	if cmd := bd.Parent().KeyBindings().Bindings[0].Command; cmd != "t2" {
 		t.Errorf("Expected Command %s, but got %s", "t2", cmd)
 	}
 }
@@ -180,13 +186,16 @@ func TestKeyBindingsAction(t *testing.T) {
 	if d, err := ioutil.ReadFile("testdata/Default.sublime-keymap"); err != nil {
 		t.Fatal(err)
 	} else {
-		var bindings, p KeyBindings
+		var (
+			bindings KeyBindings
+			p        HasKeyBindings
+		)
 		loaders.LoadJSON(d, &bindings)
 
 		if d, err = ioutil.ReadFile("testdata/test.sublime-keymap"); err != nil {
 			t.Fatal(err)
 		}
-		loaders.LoadJSON(d, &p)
+		loaders.LoadJSON(d, p.KeyBindings())
 		bindings.SetParent(&p)
 
 		for i, test := range tests {

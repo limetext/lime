@@ -60,7 +60,7 @@ func (p *Packet) Get() interface{} {
 }
 
 // Forces editor to load the packet again
-func (p *Packet) FileChanged() {
+func (p *Packet) FileChanged(name string) {
 	p.Load()
 }
 

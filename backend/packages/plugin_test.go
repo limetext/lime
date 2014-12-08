@@ -15,20 +15,16 @@ func TestPlugin(t *testing.T) {
 		path   string
 		suffix string
 		files  []string
-		pkcts  []string
 	}{
 		{
 			"testdata/Vintage",
 			".py",
 			[]string{"action_cmds.py", "state.py", "transformers.py"},
-			[]string{
-				"testdata/Vintage/Vintageous.sublime-settings",
-				"testdata/Vintage/Default.sublime-keymap",
-			},
 		},
 	}
 	for i, test := range tests {
 		p := NewPlugin(test.path, test.suffix)
+		p.Reload()
 		if p.Name() != test.path {
 			t.Errorf("Test %d: Expected plugin name %s but, got %s", i, test.path, p.Name())
 		}
@@ -42,18 +38,6 @@ func TestPlugin(t *testing.T) {
 			}
 			if !found {
 				t.Errorf("Test %d: Expected to find %s in %s plugin", i, f, p.Name())
-			}
-		}
-		for _, f := range test.pkcts {
-			found := false
-			for _, pckt := range p.packets {
-				if f == pckt.Name() {
-					found = true
-					break
-				}
-			}
-			if !found {
-				t.Errorf("Test %d: Expected to find %s in %s plugin packets", i, f, p.Name())
 			}
 		}
 	}
@@ -73,25 +57,10 @@ func TestPluginReload(t *testing.T) {
 			break
 		}
 	}
-	os.Remove("testdata/Closetag/test.vim")
 	if !found {
 		t.Errorf("Expected to find test.vim file in %s", p.Name())
 	}
-	if err := ioutil.WriteFile("testdata/Closetag/test.settings", []byte("testing packets"), 0644); err != nil {
-		t.Fatalf("Couldn't write file: %s", err)
-	}
-	p.Reload()
-	found = false
-	for _, p := range p.packets {
-		if p.Name() == "testdata/Closetag/test.settings" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Errorf("Expected to find testdata/Closetag/test.settings file in %s", p.Name())
-	}
-	os.Remove("testdata/Closetag/test.settings")
+	os.Remove("testdata/Closetag/test.vim")
 }
 
 func TestScanPlugins(t *testing.T) {

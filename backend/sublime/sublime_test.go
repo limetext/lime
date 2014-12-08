@@ -44,7 +44,7 @@ func TestSublime(t *testing.T) {
 	}, func() (string, error) {
 		return dummyClipboard, nil
 	})
-	defer ed.Init()
+	ed.Init()
 
 	ed.Console().Buffer().AddObserver(&consoleObserver{T: t})
 	w := ed.NewWindow()
@@ -57,11 +57,7 @@ func TestSublime(t *testing.T) {
 	} else {
 		plugins := packages.ScanPlugins("testdata/", ".py")
 		for _, p := range plugins {
-			pl := newPlugin(p, m)
-			pl.loadPlugin()
-			if err := watcher.Watch(pl.Name(), pl); err != nil {
-				t.Fatalf("Couldn't watch %s: %s", pl.Name(), err)
-			}
+			newPlugin(p, m)
 		}
 	}
 

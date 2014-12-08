@@ -10,7 +10,6 @@ import (
 	"github.com/limetext/text"
 	"os"
 	pt "path"
-	"path/filepath"
 	"strings"
 )
 
@@ -21,10 +20,13 @@ type (
 	// settings, snippets, commands and etc as packets
 	Plugin struct {
 		text.HasSettings
-		path    string
-		suffix  string
-		files   []os.FileInfo
-		packets Packets
+		keys.HasKeyBindings
+		path             string
+		suffix           string
+		files            []os.FileInfo
+		defaultSettings  *text.HasSettings
+		platformSettings *text.HasSettings
+		defaultBindings  *keys.HasKeyBindings
 	}
 )
 
@@ -34,10 +36,17 @@ type (
 // the plugin is written in python the suffix should
 // be ".py". We will use this function at initialization
 // to add user plugins and on new_plugin command
-func NewPlugin(path string, suffix string) *Plugin {
-	var p *Plugin = &Plugin{path: path, suffix: suffix}
-	p.Reload()
-	return p
+func NewPlugin(path string, suffix string) (p *Plugin) {
+	p = &Plugin{path: path, suffix: suffix}
+	p.defaultSettings = new(text.HasSettings)
+	p.platformSettings = new(text.HasSettings)
+	p.defaultBindings = new(keys.HasKeyBindings)
+
+	p.Settings().SetParent(p.platformSettings)
+	p.platformSettings.Settings().SetParent(p.defaultSettings)
+
+	p.KeyBindings().SetParent(p.defaultBindings)
+	return
 }
 
 func (p *Plugin) Name() string {
@@ -53,10 +62,7 @@ func (p *Plugin) Get() interface{} {
 // On plugin reload we will scan for plugin files
 // and packets in plugin path
 func (p *Plugin) Reload() {
-	var (
-		files []os.FileInfo
-		pckts Packets
-	)
+	var files []os.FileInfo
 	log.Info("Reloading plugin %s", p.Name())
 	f, err := os.Open(p.path)
 	if err != nil {
@@ -72,34 +78,9 @@ func (p *Plugin) Reload() {
 	for _, f := range fi {
 		if p.suffix != "" && strings.HasSuffix(f.Name(), p.suffix) {
 			files = append(files, f)
-			continue
-		}
-		s := filepath.Ext(f.Name())
-		for _, t := range types {
-			if !strings.Contains(s, t) {
-				continue
-			}
-			var pckt *Packet
-			if t == "keymap" {
-				pckt = NewPacket(pt.Join(p.path, f.Name()), new(keys.KeyBindings))
-			} else {
-				// We don't have any settings hierarchy for plugins at this moment
-				pckt = NewPacket(pt.Join(p.path, f.Name()), p.Settings())
-			}
-			pckts = append(pckts, pckt)
 		}
 	}
 	p.files = files
-	p.packets = pckts
-}
-
-// When the plugin is initialized we won't
-// load plugin packets until we are asked to
-// so here we will load all plugin packets
-func (p *Plugin) LoadPackets() {
-	for _, pckt := range p.packets {
-		pckt.Load()
-	}
 }
 
 // Scaning path for finding plugins that contain files
