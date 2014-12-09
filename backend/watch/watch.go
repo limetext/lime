@@ -133,7 +133,7 @@ func (w *Watcher) flushDir(name string) {
 	}
 	w.dirs = append(w.dirs, name)
 	for _, p := range w.watchers {
-		if filepath.Dir(p) == name {
+		if filepath.Dir(p) == name && !exist(w.dirs, p) {
 			if err := w.removeWatch(p); err != nil {
 				log.Error("Couldn't unwatch file %s: %s", p, err)
 			}
