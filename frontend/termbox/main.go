@@ -187,6 +187,8 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
 
 	caretStyle := getCaretStyle(style, inverse)
+	oldCaretStyle := caretStyle
+
 	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
 	if caretBlink && blink {
 		caretStyle = 0
@@ -267,7 +269,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	}
 
 	// restore original caretStyle before blink modification
-	caretStyle = caretStyle
+	caretStyle = oldCaretStyle
 
 	if rs := sel.Regions(); len(rs) > 0 {
 		if r := rs[len(rs)-1]; !vr.Covers(r) {
