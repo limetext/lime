@@ -58,7 +58,7 @@ func TestGetCaretStyle(t *testing.T) {
 
 	for _, tc := range testcases {
 		if style := getCaretStyle(tc.style, tc.inverse); style != tc.expected {
-			t.Errorf("Expected %s, got %s", tc.expected, style)
+			t.Errorf("Expected %v, got %v", tc.expected, style)
 		}
 	}
 }

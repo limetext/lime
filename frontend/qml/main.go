@@ -348,7 +348,7 @@ Item {MessageDialog {
 	engine.Context().SetVar("q", q)
 	component, err := engine.LoadString("dialog.qml", src)
 	if err != nil {
-		log.Error("Unable to instanciate dialog: %s", err)
+		log.Errorf("Unable to instanciate dialog: %s", err)
 		return 0
 	}
 	var wg sync.WaitGroup
@@ -722,7 +722,7 @@ func (t *qmlfrontend) loop() (err error) {
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Error("Unable to create file watcher: %s", err)
+		log.Errorf("Unable to create file watcher: %s", err)
 		return
 	}
 	defer watch.Close()
