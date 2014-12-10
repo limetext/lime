@@ -55,7 +55,7 @@ func runCopyTest(command string, tests *[]copyTest, t *testing.T) {
 			t.Errorf("Test %d: Expected clipboard to be %q, but got %q", i, test.expClip, ed.GetClipboard())
 		}
 
-		b := v.Buffer().Substr(text.Region{0, v.Buffer().Size()})
+		b := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()})
 
 		if b != test.expBuf {
 			t.Errorf("Test %d: Expected buffer to be %q, but got %q", i, test.expBuf, b)

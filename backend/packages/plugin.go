@@ -66,13 +66,13 @@ func (p *Plugin) Reload() {
 	log.Info("Reloading plugin %s", p.Name())
 	f, err := os.Open(p.path)
 	if err != nil {
-		log.Error("Couldn't open dir: %s", err)
+		log.Errorf("Couldn't open dir: %s", err)
 		return
 	}
 	defer f.Close()
 	fi, err := f.Readdir(-1)
 	if err != nil {
-		log.Error("Couldn't read dir: %s", err)
+		log.Errorf("Couldn't read dir: %s", err)
 		return
 	}
 	for _, f := range fi {

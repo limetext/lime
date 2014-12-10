@@ -93,8 +93,8 @@ func (vr *ViewRegions) Cull(viewport text.Region) {
 }
 
 // Creates a copy of this ViewRegions object.
-func (vr *ViewRegions) Clone() ViewRegions {
+func (vr *ViewRegions) Clone() *ViewRegions {
 	ret := ViewRegions{Scope: vr.Scope, Icon: vr.Icon, Flags: vr.Flags}
 	ret.Regions.AddAll(vr.Regions.Regions())
-	return ret
+	return &ret
 }

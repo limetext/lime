@@ -385,7 +385,7 @@ func TestSaveAsNewFile(t *testing.T) {
 		}
 
 		if v.IsDirty() {
-			t.Errorf("Test %d: Expected the view to be clean, but it wasn't")
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't", i)
 		}
 
 		data, err := ioutil.ReadFile(test.file)
@@ -454,7 +454,7 @@ func TestSaveAsOpenFile(t *testing.T) {
 		}
 
 		if v.IsDirty() {
-			t.Errorf("Test %d: Expected the view to be clean, but it wasn't")
+			t.Errorf("Test %d: Expected the view to be clean, but it wasn't", i)
 		}
 
 		if _, err := os.Stat(test.as); os.IsNotExist(err) {

@@ -89,7 +89,7 @@ func TestViewRegionMapCull(t *testing.T) {
 				t.Errorf("Test %d: Expected %s, but got %s", i, test.expA, rA)
 			}
 		} else if _, ok := vrm["A"]; ok {
-			t.Errorf("Test %d: Expected %s, but got %s", i, test.expA, vrm["A"])
+			t.Errorf("Test %d: Expected %s, but got %v", i, test.expA, vrm["A"])
 		}
 
 		if test.expB != nil {
@@ -99,7 +99,7 @@ func TestViewRegionMapCull(t *testing.T) {
 				t.Errorf("Test %d: Expected %s, but got %s", i, test.expB, rB)
 			}
 		} else if _, ok := vrm["B"]; ok {
-			t.Errorf("Test %d: Expected %s, but got %s", i, test.expB, vrm["B"])
+			t.Errorf("Test %d: Expected %s, but got %v", i, test.expB, vrm["B"])
 		}
 	}
 }
@@ -202,12 +202,12 @@ func TestViewRegionsCull(t *testing.T) {
 }
 
 func TestViewRegionsClone(t *testing.T) {
-	vr := ViewRegions{
+	vr := &ViewRegions{
 		Scope: "testScope",
 		Icon:  "testIcon",
 		Flags: 100,
 	}
-	vr.Regions.AddAll([]text.Region{{0, 0}, {120, 300}, {24, 34}, {45, 40}})
+	vr.Regions.AddAll([]text.Region{{A: 0, B: 0}, {A: 120, B: 300}, {A: 24, B: 34}, {A: 45, B: 40}})
 
 	c := vr.Clone()
 	if !reflect.DeepEqual(c, vr) {

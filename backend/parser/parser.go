@@ -128,7 +128,7 @@ func (nh *nodeHighlighter) updateScope(point int) {
 		return
 	}
 
-	search := text.Region{point, point + 1}
+	search := text.Region{A: point, B: point + 1}
 	if nh.lastScopeNode != nil && nh.lastScopeNode.Range.Covers(search) {
 		if len(nh.lastScopeNode.Children) != 0 {
 			if no := nh.findScope(search, nh.lastScopeNode); no != nh.lastScopeNode && no != nil {
@@ -148,7 +148,7 @@ func (nh *nodeHighlighter) ScopeExtent(point int) text.Region {
 	nh.updateScope(point)
 	if nh.lastScopeNode != nil {
 		r := nh.lastScopeNode.Range
-		return text.Region{r.A, r.B}
+		return text.Region{A: r.A, B: r.B}
 	}
 	return text.Region{}
 }
@@ -167,7 +167,7 @@ func (nh *nodeHighlighter) flatten(vrmap render.ViewRegionMap, scopename string,
 			reg := vrmap[scopename]
 			reg.Flags |= render.DRAW_TEXT
 			reg.Scope = scopename
-			reg.Regions.Add(text.Region{cur.A, c.Range.A})
+			reg.Regions.Add(text.Region{A: cur.A, B: c.Range.A})
 			vrmap[scopename] = reg
 		}
 		cur.A = c.Range.B
@@ -178,7 +178,7 @@ func (nh *nodeHighlighter) flatten(vrmap render.ViewRegionMap, scopename string,
 		reg := vrmap[scopename]
 		reg.Flags |= render.DRAW_TEXT
 		reg.Scope = scopename
-		reg.Regions.Add(text.Region{cur.A, cur.B})
+		reg.Regions.Add(text.Region{A: cur.A, B: cur.B})
 		vrmap[scopename] = reg
 	}
 }

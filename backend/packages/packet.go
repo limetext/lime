@@ -53,7 +53,7 @@ func (p *Packet) Get() interface{} {
 
 	d, err := ioutil.ReadFile(p.path)
 	if err != nil {
-		log.Error("Couldn't read file: %s", err)
+		log.Errorf("Couldn't read file: %s", err)
 		return e
 	}
 	return d
