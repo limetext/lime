@@ -2,10 +2,9 @@
 // Use of this source code is governed by a 2-clause
 // BSD-style license that can be found in the LICENSE file.
 
-package log_test
+package log
 
 import (
-	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/log4go"
 	"os"
 	"testing"
@@ -14,7 +13,7 @@ import (
 const logfn = "some file"
 
 func TestNewFileLogWriter(t *testing.T) {
-	l := log.NewFileLogWriter(logfn, true)
+	l := NewFileLogWriter(logfn, true)
 	defer os.Remove(logfn)
 	if l == nil {
 		t.Error("NewFileLogWriter produced a nil")
@@ -23,7 +22,7 @@ func TestNewFileLogWriter(t *testing.T) {
 }
 
 func TestFileLogWriterLogWrite(t *testing.T) {
-	l := log.NewFileLogWriter(logfn, true)
+	l := NewFileLogWriter(logfn, true)
 	defer os.Remove(logfn)
 	logRecord := &log4go.LogRecord{}
 	l.LogWrite(logRecord) // Void function. Testing for coverage.
