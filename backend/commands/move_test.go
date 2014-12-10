@@ -11,7 +11,16 @@ import (
 	"testing"
 )
 
-func TestMove(t *testing.T) {
+type MoveTest struct {
+	in      []Region
+	by      string
+	extend  bool
+	forward bool
+	exp     []Region
+	args    Args
+}
+
+func runMoveTest(tests []MoveTest, t *testing.T, text string) {
 	ed := GetEditor()
 
 	w := ed.NewWindow()
@@ -24,19 +33,29 @@ func TestMove(t *testing.T) {
 	}()
 
 	e := v.BeginEdit()
-	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.Insert(e, 0, text)
 	v.EndEdit(e)
 
-	type Test struct {
-		in      []Region
-		by      string
-		extend  bool
-		forward bool
-		exp     []Region
-		args    Args
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		args := Args{"by": test.by, "extend": test.extend, "forward": test.forward}
+		if test.args != nil {
+			for k, v := range test.args {
+				args[k] = v
+			}
+		}
+		ed.CommandHandler().RunTextCommand(v, "move", args)
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
+		}
 	}
+}
 
-	tests := []Test{
+func TestMove(t *testing.T) {
+	tests := []MoveTest{
 		{
 			[]Region{{1, 1}, {3, 3}, {6, 6}},
 			"characters",
@@ -151,11 +170,11 @@ func TestMove(t *testing.T) {
 			nil,
 		},
 		{
-			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			[]Region{{36, 36}},
 			"lines",
 			false,
 			true,
-			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			[]Region{{36, 36}},
 			nil,
 		},
 		{
@@ -167,36 +186,17 @@ func TestMove(t *testing.T) {
 			nil,
 		},
 		{
-			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			[]Region{{36, 36}},
 			"characters",
 			false,
 			true,
-			[]Region{{v.Buffer().Size(), v.Buffer().Size()}},
+			[]Region{{36, 36}},
 			nil,
 		},
 	}
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		args := Args{"by": test.by, "extend": test.extend, "forward": test.forward}
-		if test.args != nil {
-			for k, v := range test.args {
-				args[k] = v
-			}
-		}
-		ed.CommandHandler().RunTextCommand(v, "move", args)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
-		}
-	}
+	runMoveTest(tests, t, "Hello World!\nTest123123\nAbrakadabra\n")
 
-	e = v.BeginEdit()
-	v.Insert(e, v.Buffer().Size(), "abc")
-	v.EndEdit(e)
-
-	tests = []Test{
+	tests = []MoveTest{
 		{
 			[]Region{{100, 100}},
 			"lines",
@@ -206,23 +206,7 @@ func TestMove(t *testing.T) {
 			nil,
 		},
 	}
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		args := Args{"by": test.by, "extend": test.extend, "forward": test.forward}
-		if test.args != nil {
-			for k, v := range test.args {
-				args[k] = v
-			}
-		}
-
-		ed.CommandHandler().RunTextCommand(v, "move", args)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
-		}
-	}
+	runMoveTest(tests, t, "abc")
 }
 
 func TestMoveTo(t *testing.T) {

@@ -20,6 +20,8 @@ const (
 	BOF
 	// End of file
 	EOF
+	// Current level close bracket
+	Brackets
 )
 
 const (
@@ -27,8 +29,18 @@ const (
 	Characters MoveByType = iota
 	// Move by Stops (TODO(.): what exactly is a stop?)
 	Stops
-	// Move by lines
+	// Move by Lines
 	Lines
+	// Move by Words
+	Words
+	// Move by Word Ends
+	WordEnds
+	// Move by Sub Words
+	SubWords
+	// Move by Sub Word Ends
+	SubWordEnds
+	// Move by Page
+	Pages
 )
 
 type (
@@ -44,7 +56,8 @@ type (
 		// Used together with By=Stops, and ??? (TODO(.): document better)
 		WordBegin bool
 		// Used together with By=Stops, and ??? (TODO(.): document better)
-		WordEnd bool
+		PunctBegin bool
+		Separators bool
 	}
 
 	// Specifies the type of "move" operation
@@ -103,6 +116,8 @@ func (mt *MoveToType) Set(v interface{}) error {
 		*mt = BOF
 	case "eof":
 		*mt = EOF
+	case "brackets":
+		*mt = Brackets
 	default:
 		return fmt.Errorf("move_to: Unimplemented 'to' type: %s", to)
 	}
@@ -129,6 +144,10 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 		move_action(v, c.Extend, func(r text.Region) int {
 			return v.Buffer().Size()
 		})
+	case Brackets:
+		move_action(v, c.Extend, func(r text.Region) int {
+
+		})
 	default:
 		return fmt.Errorf("move_to: Unimplemented 'to' action: %d", c.To)
 	}
@@ -143,6 +162,16 @@ func (m *MoveByType) Set(v interface{}) error {
 		*m = Characters
 	case "stops":
 		*m = Stops
+	case "words":
+		*m = Words
+	case "word_ends":
+		*m = WordEnds
+	case "subwords":
+		*m = SubWords
+	case "subword_ends":
+		*m = SubWordEnds
+	case "pages":
+		*m = Pages
 	default:
 		return fmt.Errorf("move: Unimplemented 'by' action: %s", by)
 	}
