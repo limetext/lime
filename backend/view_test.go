@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
-	. "github.com/limetext/text"
+	"github.com/limetext/text"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -32,11 +32,11 @@ func TestView(t *testing.T) {
 	v.Insert(edit, 0, "abcd")
 	v.EndEdit(edit)
 	v.selection.Clear()
-	r := []Region{
-		{0, 0},
-		{1, 1},
-		{2, 2},
-		{3, 3},
+	r := []text.Region{
+		{A: 0, B: 0},
+		{A: 1, B: 1},
+		{A: 2, B: 2},
+		{A: 3, B: 3},
 	}
 	for _, r2 := range r {
 		v.selection.Add(r2)
@@ -50,24 +50,24 @@ func TestView(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "1234a1234b1234c1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "1234a1234b1234c1234d" {
 		t.Error(d)
 	}
 	v.undoStack.Undo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "abcd" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "abcd" {
 		t.Error("expected 'abcd', but got: ", d)
 	}
 	v.undoStack.Redo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "1234a1234b1234c1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "1234a1234b1234c1234d" {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", d)
 	}
 
 	v.selection.Clear()
-	r = []Region{
-		{0, 0},
-		{5, 5},
-		{10, 10},
-		{15, 15},
+	r = []text.Region{
+		{A: 0, B: 0},
+		{A: 5, B: 5},
+		{A: 10, B: 10},
+		{A: 15, B: 15},
 	}
 	for _, r2 := range r {
 		v.selection.Add(r2)
@@ -81,34 +81,34 @@ func TestView(t *testing.T) {
 	}
 	v.EndEdit(edit)
 
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "hello world1234ahello world1234bhello world1234chello world1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(d)
 	}
 	v.undoStack.Undo(true)
 
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "1234a1234b1234c1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "1234a1234b1234c1234d" {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", d)
 	}
 	v.undoStack.Undo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "abcd" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "abcd" {
 		t.Error("expected 'abcd', but got: ", d)
 	}
 	v.undoStack.Undo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "" {
 		t.Error("expected '', but got: ", d)
 	}
 	v.undoStack.Redo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "abcd" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "abcd" {
 		t.Error("expected 'abcd', but got: ", d)
 	}
 
 	v.undoStack.Redo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "1234a1234b1234c1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "1234a1234b1234c1234d" {
 		t.Error("expected '1234a1234b1234c1234d', but got: ", d)
 	}
 
 	v.undoStack.Redo(true)
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "hello world1234ahello world1234bhello world1234chello world1234d" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "hello world1234ahello world1234bhello world1234chello world1234d" {
 		t.Error(d)
 	}
 }
@@ -129,18 +129,18 @@ func TestErase(t *testing.T) {
 	v.Insert(edit, 0, "1234abcd5678abcd")
 	v.EndEdit(edit)
 	s.Clear()
-	v.Sel().Add(Region{4, 8})
-	v.Sel().Add(Region{12, 16})
+	v.Sel().Add(text.Region{A: 4, B: 8})
+	v.Sel().Add(text.Region{A: 12, B: 16})
 
 	edit = v.BeginEdit()
 	for i := 0; i < s.Len(); i++ {
 		v.Erase(edit, s.Get(i))
 	}
 	v.EndEdit(edit)
-	if !reflect.DeepEqual(s.Regions(), []Region{{4, 4}, {8, 8}}) {
+	if !reflect.DeepEqual(s.Regions(), []text.Region{{A: 4, B: 4}, {A: 8, B: 8}}) {
 		t.Error(s)
 	}
-	if d := v.buffer.Substr(Region{0, v.buffer.Size()}); d != "12345678" {
+	if d := v.buffer.Substr(text.Region{A: 0, B: v.buffer.Size()}); d != "12345678" {
 		t.Error(d)
 	}
 }
@@ -169,9 +169,9 @@ func TestExtractScope(t *testing.T) {
 		e := v.BeginEdit()
 		v.Insert(e, 0, string(d))
 		v.EndEdit(e)
-		last := Region{-1, -1}
+		last := text.Region{A: -1, B: -1}
 		str := ""
-		nr := Region{0, 0}
+		nr := text.Region{A: 0, B: 0}
 		for v.ExtractScope(1) == nr {
 			time.Sleep(time.Millisecond)
 		}
@@ -265,7 +265,7 @@ func TestStress(t *testing.T) {
 			v.Insert(e, 0, "h")
 		}
 		for i := 0; i < 100; i++ {
-			v.Erase(e, Region{0, 1})
+			v.Erase(e, text.Region{A: 0, B: 1})
 		}
 		v.EndEdit(e)
 	}
@@ -294,16 +294,16 @@ func TestTransform(t *testing.T) {
 	v.Insert(e, 0, string(d))
 	v.EndEdit(e)
 
-	if v.Transform(sc, Region{0, 100}) != nil {
+	if v.Transform(sc, text.Region{A: 0, B: 100}) != nil {
 		t.Error("Expected view.Transform return nil when the syntax isn't set yet")
 	}
 
 	v.Settings().Set("syntax", "textmate/testdata/Go.tmLanguage")
 
 	time.Sleep(time.Second)
-	a := v.Transform(sc, Region{0, 100}).Transcribe()
-	v.Transform(sc, Region{100, 200}).Transcribe()
-	c := v.Transform(sc, Region{0, 100}).Transcribe()
+	a := v.Transform(sc, text.Region{A: 0, B: 100}).Transcribe()
+	v.Transform(sc, text.Region{A: 100, B: 200}).Transcribe()
+	c := v.Transform(sc, text.Region{A: 0, B: 100}).Transcribe()
 	if !reflect.DeepEqual(a, c) {
 		t.Errorf("not equal:\n%v\n%v", a, c)
 	}
@@ -345,7 +345,7 @@ func BenchmarkTransformTranscribe(b *testing.B) {
 	wg.Wait()
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		v.Transform(sc, Region{0, v.Buffer().Size()}).Transcribe()
+		v.Transform(sc, text.Region{A: 0, B: v.Buffer().Size()}).Transcribe()
 	}
 	fmt.Println(util.Prof.String())
 }
@@ -602,45 +602,45 @@ func TestFindByClass(t *testing.T) {
 func TestExpandByClass(t *testing.T) {
 	tests := []struct {
 		text    string
-		start   Region
+		start   text.Region
 		classes int
-		expect  Region
+		expect  text.Region
 	}{
 		{
 			"abc Hi -test lime",
-			Region{1, 2},
+			text.Region{A: 1, B: 2},
 			CLASS_WORD_START,
-			Region{0, 4},
+			text.Region{A: 0, B: 4},
 		},
 		{
 			"abc Hi -test lime",
-			Region{8, 10},
+			text.Region{A: 8, B: 10},
 			CLASS_WORD_START | CLASS_WORD_END,
-			Region{6, 12},
+			text.Region{A: 6, B: 12},
 		},
 		{
 			"abc Hi -test lime",
-			Region{12, 14},
+			text.Region{A: 12, B: 14},
 			CLASS_PUNCTUATION_START,
-			Region{7, 17},
+			text.Region{A: 7, B: 17},
 		},
 		{
 			"abc Hi -test lime",
-			Region{12, 14},
+			text.Region{A: 12, B: 14},
 			CLASS_PUNCTUATION_END,
-			Region{8, 17},
+			text.Region{A: 8, B: 17},
 		},
 		{
 			"abc Hi -test lime",
-			Region{9, 11},
+			text.Region{A: 9, B: 11},
 			CLASS_WORD_START | CLASS_WORD_END,
-			Region{8, 12},
+			text.Region{A: 8, B: 12},
 		},
 		{
 			"abc Hi -test lime",
-			Region{-1, 20},
+			text.Region{A: -1, B: 20},
 			CLASS_WORD_START,
-			Region{0, 17},
+			text.Region{A: 0, B: 17},
 		},
 	}
 
@@ -672,7 +672,7 @@ func TestSetBuffer(t *testing.T) {
 		v.Close()
 	}()
 
-	b := NewBuffer()
+	b := text.NewBuffer()
 	b.SetName("test")
 
 	_ = v.setBuffer(b)
@@ -691,12 +691,12 @@ func TestSetBufferTwice(t *testing.T) {
 		v.Close()
 	}()
 
-	b1 := NewBuffer()
+	b1 := text.NewBuffer()
 	b1.SetName("test1")
 
 	_ = v.setBuffer(b1)
 
-	b2 := NewBuffer()
+	b2 := text.NewBuffer()
 	b2.SetName("test2")
 
 	err := v.setBuffer(b2)

@@ -163,7 +163,7 @@ func (r *RootPattern) String() (ret string) {
 }
 
 func (s *Language) String() string {
-	return fmt.Sprintf("%s\n%s\n", s.ScopeName, s.RootPattern, s.Repository)
+	return fmt.Sprintf("%s\n%s\n%s\n", s.ScopeName, s.RootPattern, s.Repository)
 }
 
 func (p *Pattern) tweak(l *Language) {
@@ -346,7 +346,7 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 	parentIndex := make([]int, len(ranges))
 	parents := make([]*parser.Node, len(parentIndex))
 	for i := range ranges {
-		ranges[i] = text.Region{mo[i*2+0], mo[i*2+1]}
+		ranges[i] = text.Region{A: mo[i*2+0], B: mo[i*2+1]}
 		if i < 2 {
 			parents[i] = parent
 			continue
@@ -381,7 +381,7 @@ func (p *Pattern) CreateCaptureNodes(data string, pos int, d parser.DataSource, 
 }
 
 func (p *Pattern) CreateNode(data string, pos int, d parser.DataSource, mo MatchObject) (ret *parser.Node) {
-	ret = &parser.Node{Name: p.Name, Range: text.Region{mo[0], mo[1]}, P: d}
+	ret = &parser.Node{Name: p.Name, Range: text.Region{A: mo[0], B: mo[1]}, P: d}
 	defer ret.UpdateRange()
 
 	if p.Match.re != nil {
@@ -472,7 +472,7 @@ func (lp *LanguageParser) Parse() (*parser.Node, error) {
 	rn := parser.Node{P: lp, Name: lp.l.ScopeName}
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Panic during parse: %v\n", r)
+			log.Errorf("Panic during parse: %v\n", r)
 			log.Debug("%v", rn)
 		}
 	}()
