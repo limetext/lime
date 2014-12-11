@@ -146,7 +146,28 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 		})
 	case Brackets:
 		move_action(v, c.Extend, func(r text.Region) int {
-
+			text := v.Buffer().Substr(tex.Region{r.B, v.Buffer().Size()})
+			count := 1
+			for i, c := range text {
+				switch c {
+				case '(':
+					c++
+				case '[':
+					c++
+				case '{':
+					c++
+				case ')':
+					c--
+				case ']':
+					c--
+				case '}':
+					c--
+				}
+				if c == 0 {
+					return i + r.B
+				}
+			}
+			return r.B
 		})
 	default:
 		return fmt.Errorf("move_to: Unimplemented 'to' action: %d", c.To)

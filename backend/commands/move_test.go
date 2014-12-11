@@ -22,14 +22,13 @@ type MoveTest struct {
 
 func runMoveTest(tests []MoveTest, t *testing.T, text string) {
 	ed := GetEditor()
-
 	w := ed.NewWindow()
-	defer w.Close()
-
 	v := w.NewFile()
+
 	defer func() {
 		v.SetScratch(true)
 		v.Close()
+		w.Close()
 	}()
 
 	e := v.BeginEdit()
