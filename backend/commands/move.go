@@ -53,11 +53,20 @@ type (
 		Extend bool
 		// Whether to move forward or backwards
 		Forward bool
-		// Used together with By=Stops, and ??? (TODO(.): document better)
+		// Used together with By=Stops, go to word begin
 		WordBegin bool
-		// Used together with By=Stops, and ??? (TODO(.): document better)
+		// Used together with By=Stops, go to word end
+		WordEnd bool
+		// Used together with By=Stops, go to punctuation begin
 		PunctBegin bool
-		Separators bool
+		// Used together with By=Stops, go to punctuation end
+		PunctEnd bool
+		// Used together with By=Stops, extends "word_separators" defined by settings
+		Separators string
+		// Used together with By=Stops, go to an empty line
+		EmptyLine bool
+		// Used together with By=Stops, TODO: ???
+		ClipToLine bool
 	}
 
 	// Specifies the type of "move" operation
