@@ -9,6 +9,7 @@ import (
 	. "github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/text"
+	"strings"
 )
 
 const (
@@ -154,29 +155,60 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 			return v.Buffer().Size()
 		})
 	case Brackets:
-		move_action(v, c.Extend, func(r text.Region) int {
-			text := v.Buffer().Substr(tex.Region{r.B, v.Buffer().Size()})
-			count := 1
-			for i, c := range text {
-				switch c {
-				case '(':
-					c++
-				case '[':
-					c++
-				case '{':
-					c++
-				case ')':
-					c--
-				case ']':
-					c--
-				case '}':
-					c--
-				}
-				if c == 0 {
-					return i + r.B
+		move_action(v, c.Extend, func(r text.Region) (pos int) {
+			var (
+				of          int
+				co          = 1
+				str, br, rv string
+				opening     = "([{"
+				closing     = ")]}"
+			)
+			pos = r.B
+
+			// next and before character
+			n := v.Buffer().Substr(text.Region{r.B, r.B + 1})
+			b := v.Buffer().Substr(text.Region{r.B, r.B - 1})
+			if strings.ContainsAny(n, opening) {
+				str = v.Buffer().Substr(text.Region{r.B + 1, v.Buffer().Size()})
+				br = n
+				rv = revert(n)
+				of = 2
+			} else if strings.ContainsAny(b, closing) {
+				str = v.Buffer().Substr(text.Region{0, r.B - 1})
+				br = b
+				rv = revert(b)
+				str = reverse(str)
+				co = -1
+				of = -2
+			} else if strings.ContainsAny(n, closing) {
+				str = v.Buffer().Substr(text.Region{0, r.B - 1})
+				br = n
+				rv = revert(n)
+				str = reverse(str)
+				co = -1
+				of = -1
+			} else {
+				str = v.Buffer().Substr(text.Region{r.B, v.Buffer().Size()})
+				bef := v.Buffer().Substr(text.Region{0, r.B})
+				if p := strings.LastIndexAny(bef, opening); p == -1 {
+					return
+				} else {
+					br = string(bef[p])
+					rv = revert(br)
 				}
 			}
-			return r.B
+			count := 1
+			for i, c := range str {
+				if ch := string(c); ch == br {
+					count++
+				} else if ch == rv {
+					count--
+				}
+				if count == 0 {
+					return i*co + r.B + of
+				}
+			}
+			return
 		})
 	default:
 		return fmt.Errorf("move_to: Unimplemented 'to' action: %d", c.To)
@@ -259,6 +291,32 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 		})
 	}
 	return nil
+}
+
+func revert(c string) string {
+	switch c {
+	case "(":
+		return ")"
+	case ")":
+		return "("
+	case "[":
+		return "]"
+	case "]":
+		return "["
+	case "{":
+		return "}"
+	case "}":
+		return "{"
+	}
+	return ""
+}
+
+func reverse(s string) string {
+	r := []rune(s)
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return string(r)
 }
 
 func (c *ScrollLinesCommand) Run(v *View, e *Edit) error {

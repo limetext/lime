@@ -194,27 +194,16 @@ func TestMove(t *testing.T) {
 		},
 	}
 	runMoveTest(tests, t, "Hello World!\nTest123123\nAbrakadabra\n")
-
-	tests = []MoveTest{
-		{
-			[]Region{{100, 100}},
-			"lines",
-			false,
-			false,
-			[]Region{{27, 27}},
-			nil,
-		},
-	}
-	runMoveTest(tests, t, "abc")
 }
 
-func TestMoveTo(t *testing.T) {
-	/*
-	   Correct behavior of MoveTo:
-	       - Moves each cursor directly to the indicated position.
-	       - If extend, the selection will be extended in the direction of movement
-	*/
+type MoveToTest struct {
+	in     []Region
+	to     string
+	extend bool
+	exp    []Region
+}
 
+func runMoveToTest(tests []MoveToTest, t *testing.T, text string) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 	defer w.Close()
@@ -227,15 +216,28 @@ func TestMoveTo(t *testing.T) {
 
 	e := v.BeginEdit()
 
-	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
+	v.Insert(e, 0, text)
 	v.EndEdit(e)
 
-	type MoveToTest struct {
-		in     []Region
-		to     string
-		extend bool
-		exp    []Region
+	for i, test := range tests {
+		v.Sel().Clear()
+		for _, r := range test.in {
+			v.Sel().Add(r)
+		}
+		args := Args{"to": test.to, "extend": test.extend}
+		ed.CommandHandler().RunTextCommand(v, "move_to", args)
+		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
+			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
+		}
 	}
+}
+
+func TestMoveTo(t *testing.T) {
+	/*
+	   Correct behavior of MoveTo:
+	       - Moves each cursor directly to the indicated position.
+	       - If extend, the selection will be extended in the direction of movement
+	*/
 
 	singleCursor := []Region{{16, 16}}
 
@@ -266,7 +268,8 @@ func TestMoveTo(t *testing.T) {
 	diffLineBackwardThenForwardSelections := []Region{{6, 4}, {20, 21}}
 	diffLineBackwardThenForwardSelectionsReversed := []Region{{20, 21}, {6, 4}}
 
-	vbufflen := v.Buffer().Size()
+	text := "Hello World!\nTest123123\nAbrakadabra\n"
+	vbufflen := 36
 
 	tests := []MoveToTest{
 		// BOF move
@@ -1390,17 +1393,114 @@ func TestMoveTo(t *testing.T) {
 		},
 	}
 
-	for i, test := range tests {
-		v.Sel().Clear()
-		for _, r := range test.in {
-			v.Sel().Add(r)
-		}
-		args := Args{"to": test.to, "extend": test.extend}
-		ed.CommandHandler().RunTextCommand(v, "move_to", args)
-		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed. Expected %v, but got %v: %+v", i, test.exp, sr, test)
-		}
+	runMoveToTest(tests, t, text)
+
+	tests = []MoveToTest{
+		// Brackets move
+		{
+			[]Region{{1, 1}},
+			"brackets",
+			false,
+			[]Region{{1, 1}},
+		},
+		{
+			[]Region{{7, 7}},
+			"brackets",
+			false,
+			[]Region{{31, 31}},
+		},
+		{
+			[]Region{{5, 5}},
+			"brackets",
+			false,
+			[]Region{{32, 32}},
+		},
+		{
+			[]Region{{9, 9}, {14, 14}},
+			"brackets",
+			false,
+			[]Region{{31, 31}, {16, 16}},
+		},
+		{
+			[]Region{{16, 16}},
+			"brackets",
+			false,
+			[]Region{{13, 13}},
+		},
+		{
+			[]Region{{32, 32}},
+			"brackets",
+			false,
+			[]Region{{5, 5}},
+		},
+		{
+			[]Region{{32, 12}},
+			"brackets",
+			false,
+			[]Region{{17, 17}},
+		},
+		{
+			[]Region{{35, 35}},
+			"brackets",
+			false,
+			// Sublime text 3 result is []Region{{35, 35}}
+			// but i think this is a bug
+			[]Region{{38, 38}},
+		},
+		{
+			[]Region{{8, 9}, {10, 10}},
+			"brackets",
+			false,
+			[]Region{{31, 31}},
+		},
+		{
+			[]Region{{34, 34}},
+			"brackets",
+			false,
+			[]Region{{34, 34}},
+		},
+		{
+			[]Region{{33, 33}},
+			"brackets",
+			false,
+			// Sublime text 3 result is []Region{{33, 33}}
+			// but i think this is a bug
+			[]Region{{39, 39}},
+		},
+		{
+			[]Region{{36, 36}},
+			"brackets",
+			false,
+			[]Region{{36, 36}},
+		},
+		{
+			[]Region{{38, 38}},
+			"brackets",
+			false,
+			[]Region{{34, 34}},
+		},
+		// Breackets extend
+		{
+			[]Region{{8, 9}, {10, 10}},
+			"brackets",
+			true,
+			[]Region{{8, 31}},
+		},
+		{
+			[]Region{{17, 17}},
+			"brackets",
+			true,
+			[]Region{{17, 24}},
+		},
+		{
+			[]Region{{1, 1}, {14, 14}},
+			"brackets",
+			true,
+			[]Region{{1, 1}, {14, 16}},
+		},
 	}
+
+	runMoveToTest(tests, t, "test (moveto(abc){\ntada}Test123)1{23)a}baraba")
 }
 
 type scfe struct {
