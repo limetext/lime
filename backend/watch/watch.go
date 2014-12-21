@@ -135,7 +135,7 @@ func (w *Watcher) flushDir(name string) {
 	for _, p := range w.watchers {
 		if filepath.Dir(p) == name && !exist(w.dirs, p) {
 			if err := w.removeWatch(p); err != nil {
-				log.Error("Couldn't unwatch file %s: %s", p, err)
+				log.Errorf("Couldn't unwatch file %s: %s", p, err)
 			}
 		}
 	}
@@ -186,7 +186,7 @@ func (w *Watcher) removeDir(name string) {
 	for p, _ := range w.watched {
 		if filepath.Dir(p) == name {
 			if err := w.watch(p); err != nil {
-				log.Error("Could not watch: %s", err)
+				log.Errorf("Could not watch: %s", err)
 				continue
 			}
 		}
@@ -235,7 +235,7 @@ func (w *Watcher) Observe() {
 
 			}()
 		case err := <-w.wchr.Errors:
-			log.Error("Watcher error: %s", err)
+			log.Errorf("Watcher error: %s", err)
 		}
 	}
 }

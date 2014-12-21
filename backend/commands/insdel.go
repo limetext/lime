@@ -82,7 +82,7 @@ func (c *LeftDeleteCommand) Run(v *View, e *Edit) error {
 				if prev_col < 0 {
 					prev_col = 0
 				}
-				d := v.Buffer().SubstrR(text.Region{prev_col, r.A})
+				d := v.Buffer().SubstrR(text.Region{A: prev_col, B: r.A})
 				i := len(d) - 1
 				for r.A > prev_col && i >= 0 && d[i] == ' ' {
 					r.A--
@@ -139,9 +139,9 @@ func (c *DeleteWordCommand) Run(v *View, e *Edit) error {
 		if r.Empty() {
 			p := c.findByClass(r.A, class, v)
 			if c.Forward {
-				r = text.Region{r.A, p}
+				r = text.Region{A: r.A, B: p}
 			} else {
-				r = text.Region{p, r.A}
+				r = text.Region{A: p, B: r.A}
 			}
 		}
 		rs = append(rs, r)
@@ -164,7 +164,7 @@ func (c *DeleteWordCommand) findByClass(point int, class int, v *View) int {
 		if point > end {
 			point = end
 		}
-		s := v.Buffer().Substr(text.Region{point, point + 2})
+		s := v.Buffer().Substr(text.Region{A: point, B: point + 2})
 		if strings.Contains(s, "\t") && strings.Contains(s, " ") {
 			class = CLASS_WORD_START | CLASS_PUNCTUATION_START | CLASS_LINE_END
 		}
@@ -174,7 +174,7 @@ func (c *DeleteWordCommand) findByClass(point int, class int, v *View) int {
 		if point < end {
 			point = end
 		}
-		s := v.Buffer().Substr(text.Region{point - 2, point})
+		s := v.Buffer().Substr(text.Region{A: point - 2, B: point})
 		if strings.Contains(s, "\t") && strings.Contains(s, " ") {
 			class = CLASS_WORD_END | CLASS_PUNCTUATION_END | CLASS_LINE_START
 		}

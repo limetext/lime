@@ -86,14 +86,16 @@ func (p *Profiler) Results() (ret []ProfileResult) {
 	}
 	return ret
 }
+
 func (v *ProfileResult) Avg() time.Duration {
 	return v.Tottime / time.Duration(v.Calls)
 }
+
 func (v ProfileResult) String() string {
 	return fmt.Sprintf("%64s %6d, %20s, %20s", v.Name, v.Calls, v.Tottime, v.Avg())
 }
 
-func (p Profiler) String() (ret string) {
+func (p *Profiler) String() (ret string) {
 	pr := p.SortByAvgTime()
 	ret = fmt.Sprintf("%64s %6s, %20s, %20s\n", "Name", "Calls", "Total Time", "Average")
 	for _, v := range pr {

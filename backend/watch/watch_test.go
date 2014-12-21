@@ -152,7 +152,7 @@ func TestAdd(t *testing.T) {
 	d := new(dummy)
 	watcher.add("test", d)
 	if cb := watcher.watched["test"][0]; cb != d {
-		t.Errorf("Expected watcher['test'][0] callback equal to %d, but got %d", d, cb)
+		t.Errorf("Expected watcher['test'][0] callback equal to %v, but got %v", d, cb)
 	}
 }
 

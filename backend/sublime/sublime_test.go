@@ -173,7 +173,7 @@ class TestToxt(sublime_plugin.TextCommand):
 			if strings.HasSuffix(v.Buffer().FileName(), "sample.txt") {
 				continue
 			}
-			if strings.Index(v.Buffer().Substr(text.Region{0, v.Buffer().Size()}), "FAILED") != -1 {
+			if strings.Index(v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}), "FAILED") != -1 {
 				t.Error(v.Buffer())
 			}
 		}

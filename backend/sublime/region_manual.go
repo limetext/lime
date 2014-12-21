@@ -31,7 +31,7 @@ func (o *Region) PyRichCompare(other py.Object, op py.Op) (py.Object, error) {
 		} else if b2, ok := b.(*py.Long); !ok {
 			return nil, fmt.Errorf("Can only compare with int tuples and other regions")
 		} else {
-			o2 = text.Region{int(a2.Int64()), int(b2.Int64())}
+			o2 = text.Region{A: int(a2.Int64()), B: int(b2.Int64())}
 		}
 	default:
 		return nil, fmt.Errorf("Can only compare with int tuples and other regions")

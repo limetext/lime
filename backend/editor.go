@@ -129,7 +129,7 @@ func GetEditor() *Editor {
 		}
 		var err error
 		if ed.Watcher, err = watch.NewWatcher(); err != nil {
-			log.Error("Couldn't create watcher: %s", err)
+			log.Errorf("Couldn't create watcher: %s", err)
 		}
 		ed.console.Settings().Set("is_widget", true)
 		ed.defaultSettings = new(HasSettings)
@@ -174,7 +174,7 @@ func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (str
 
 func (e *Editor) load(pkg *packages.Packet) {
 	if err := pkg.Load(); err != nil {
-		log.Error("Failed to load packet %s: %s", pkg.Name(), err)
+		log.Errorf("Failed to load packet %s: %s", pkg.Name(), err)
 	} else {
 		log.Info("Loaded %s", pkg.Name())
 		if err := e.Watch(pkg.Name(), pkg); err != nil {
@@ -270,7 +270,7 @@ func (e *Editor) remove(w *Window) {
 			return
 		}
 	}
-	log.Error("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
+	log.Errorf("Wanted to remove window %+v, but it doesn't appear to be a child of this editor", w)
 }
 
 func (e *Editor) Arch() string {
@@ -309,7 +309,7 @@ func (e *Editor) inputthread() {
 	doinput := func(kp keys.KeyPress) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
+				log.Errorf("Panic in inputthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 0 {
 					panic(r)
 				}
@@ -404,7 +404,7 @@ func (e *Editor) RunCommand(name string, args Args) {
 
 func (e *Editor) SetClipboard(n string) {
 	if err := e.clipboardSetter(n); err != nil {
-		log.Error("Could not set clipboard: %v", err)
+		log.Errorf("Could not set clipboard: %v", err)
 	}
 
 	// Keep a local copy in case the system clipboard isn't working
@@ -415,7 +415,7 @@ func (e *Editor) GetClipboard() string {
 	if n, err := e.clipboardGetter(); err == nil {
 		return n
 	} else {
-		log.Error("Could not get clipboard: %v", err)
+		log.Errorf("Could not get clipboard: %v", err)
 	}
 
 	return e.clipboard

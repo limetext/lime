@@ -204,7 +204,7 @@ var pc = 0
 func (t *tbfe) render(w io.Writer) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+			log.Errorf("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 			if pc > 1 {
 				panic(r)
 			}
@@ -511,7 +511,7 @@ func (t *tbfe) loop() {
 	http.HandleFunc("/themes/", t.theme)
 	http.Handle("/ws", websocket.Handler(t.WebsocketServer))
 	if err := http.ListenAndServe(fmt.Sprintf("localhost:%d", *port), nil); err != nil {
-		log.Error("Error serving: %s", err)
+		log.Errorf("Error serving: %s", err)
 	}
 	log.Debug("Done")
 }

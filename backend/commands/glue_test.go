@@ -34,24 +34,24 @@ func TestGlueCmds(t *testing.T) {
 	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.UndoStack().Position() != 1 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "redo", nil)
-	if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	if v.UndoStack().Position() != 1 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 
@@ -65,20 +65,20 @@ func TestGlueCmds(t *testing.T) {
 	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.UndoStack().Position() != 1 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "undo", nil)
-	if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
+	if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\n" {
 		t.Error(d)
 	}
 	ch.RunTextCommand(v, "redo", nil)
-	if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 	if v.UndoStack().Position() != 1 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 
@@ -93,14 +93,14 @@ func TestGlueCmds(t *testing.T) {
 	ch.RunTextCommand(v, "glue_marked_undo_groups", nil)
 	if v.UndoStack().Position() != 2 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Helabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Helabc" {
 		t.Error(d)
 	}
 
 	ch.RunTextCommand(v, "undo", nil)
 	if v.UndoStack().Position() != 1 {
 		t.Error(v.UndoStack().Position())
-	} else if d := v.Buffer().Substr(text.Region{0, v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
+	} else if d := v.Buffer().Substr(text.Region{A: 0, B: v.Buffer().Size()}); d != "Hello World!\nTest123123\nAbrakadabra\nabc" {
 		t.Error(d)
 	}
 }

@@ -187,6 +187,8 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
 
 	caretStyle := getCaretStyle(style, inverse)
+	oldCaretStyle := caretStyle
+
 	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
 	if caretBlink && blink {
 		caretStyle = 0
@@ -267,7 +269,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	}
 
 	// restore original caretStyle before blink modification
-	caretStyle = caretStyle
+	caretStyle = oldCaretStyle
 
 	if rs := sel.Regions(); len(rs) > 0 {
 		if r := rs[len(rs)-1]; !vr.Covers(r) {
@@ -379,10 +381,10 @@ func (t *tbfe) Inserted(changed_buffer Buffer, region_inserted Region, data_inse
 	t.scroll(changed_buffer)
 }
 
-func (t tbfe) setupCallbacks(view *backend.View) {
+func (t *tbfe) setupCallbacks(view *backend.View) {
 	// Ensure that the visible region currently presented is
 	// inclusive of the insert/erase delta.
-	view.Buffer().AddObserver(&tbfeBufferDeltaObserver{t: &t, view: view})
+	view.Buffer().AddObserver(&tbfeBufferDeltaObserver{t: t, view: view})
 
 	backend.OnNew.Add(func(v *backend.View) {
 		v.Settings().AddOnChange("lime.frontend.termbox.render", func(name string) { t.render() })
@@ -419,7 +421,7 @@ func (t *tbfe) renderthread() {
 	dorender := func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Error("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
+				log.Errorf("Panic in renderthread: %v\n%s", r, string(debug.Stack()))
 				if pc > 1 {
 					panic(r)
 				}
@@ -645,7 +647,7 @@ func setColorMode() {
 	)
 
 	if err := termbox.SetColorMode(termbox.ColorMode256); err != nil {
-		log.Error("Unable to use 256 color mode: %s", err)
+		log.Errorf("Unable to use 256 color mode: %s", err)
 	} else {
 		log.Debug("Using 256 color mode")
 		mode256 = true
@@ -653,14 +655,14 @@ func setColorMode() {
 
 	if !mode256 {
 		pal = pal[:10] // Not correct, but whatever
-		pal[termbox.ColorBlack] = termbox.RGB{0, 0, 0}
-		pal[termbox.ColorWhite] = termbox.RGB{255, 255, 255}
-		pal[termbox.ColorRed] = termbox.RGB{255, 0, 0}
-		pal[termbox.ColorGreen] = termbox.RGB{0, 255, 0}
-		pal[termbox.ColorBlue] = termbox.RGB{0, 0, 255}
-		pal[termbox.ColorMagenta] = termbox.RGB{255, 0, 255}
-		pal[termbox.ColorYellow] = termbox.RGB{255, 255, 0}
-		pal[termbox.ColorCyan] = termbox.RGB{0, 255, 255}
+		pal[termbox.ColorBlack] = termbox.RGB{R: 0, G: 0, B: 0}
+		pal[termbox.ColorWhite] = termbox.RGB{R: 255, G: 255, B: 255}
+		pal[termbox.ColorRed] = termbox.RGB{R: 255, G: 0, B: 0}
+		pal[termbox.ColorGreen] = termbox.RGB{R: 0, G: 255, B: 0}
+		pal[termbox.ColorBlue] = termbox.RGB{R: 0, G: 0, B: 255}
+		pal[termbox.ColorMagenta] = termbox.RGB{R: 255, G: 0, B: 255}
+		pal[termbox.ColorYellow] = termbox.RGB{R: 255, G: 255, B: 0}
+		pal[termbox.ColorCyan] = termbox.RGB{R: 0, G: 255, B: 255}
 
 		diff := func(i, j byte) int {
 			v := int(i) - int(j)
@@ -682,7 +684,7 @@ func setColorMode() {
 		}
 	} else {
 		palLut = func(col textmate.Color) termbox.Attribute {
-			tc := termbox.RGB{col.R, col.G, col.B}
+			tc := termbox.RGB{R: col.R, G: col.G, B: col.B}
 			for i, c := range pal {
 				if c == tc {
 					return termbox.Attribute(i)

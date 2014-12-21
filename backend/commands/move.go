@@ -331,7 +331,7 @@ func (c *ScrollLinesCommand) Run(v *View, e *Edit) error {
 		r -= c.Amount
 	}
 	r = v.Buffer().TextPoint(r, 0)
-	fe.Show(v, text.Region{r, r})
+	fe.Show(v, text.Region{A: r, B: r})
 	return nil
 }
 

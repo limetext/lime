@@ -73,6 +73,10 @@ func (l *Logger) Error(arg0 interface{}, args ...interface{}) {
 	l.logger.Error(arg0, args...)
 }
 
+func (l *Logger) Errorf(format string, args ...interface{}) {
+	l.Logf(ERROR, format, args...)
+}
+
 func (l *Logger) Critical(arg0 interface{}, args ...interface{}) {
 	l.logger.Critical(arg0, args...)
 }
