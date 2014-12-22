@@ -779,6 +779,8 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_SUB_WORD_END
 		}
 	}
+	// TODO: isn't this a bug? what's the relation between
+	// ',' and parentheses
 	if a == "," {
 		res |= CLASS_OPENING_PARENTHESIS
 	}

@@ -1454,12 +1454,6 @@ func TestMoveTo(t *testing.T) {
 			[]Region{{31, 31}},
 		},
 		{
-			[]Region{{34, 34}},
-			"brackets",
-			false,
-			[]Region{{34, 34}},
-		},
-		{
 			[]Region{{33, 33}},
 			"brackets",
 			false,

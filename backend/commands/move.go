@@ -169,11 +169,16 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 			n := v.Buffer().Substr(text.Region{r.B, r.B + 1})
 			b := v.Buffer().Substr(text.Region{r.B, r.B - 1})
 			if strings.ContainsAny(n, opening) {
+				// TODO: Maybe it's better to use sth like view.FindByClass or even
+				// view.FindByClass() function itself instead of getting whole text
+				// and looping through it. With using view.FindByClass() function
+				// backward we won't need to reverse the text anymore
 				str = v.Buffer().Substr(text.Region{r.B + 1, v.Buffer().Size()})
 				br = n
 				rv = revert(n)
 				of = 2
 			} else if strings.ContainsAny(b, closing) {
+				// TODO: same as above
 				str = v.Buffer().Substr(text.Region{0, r.B - 1})
 				br = b
 				rv = revert(b)
@@ -181,6 +186,7 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 				co = -1
 				of = -2
 			} else if strings.ContainsAny(n, closing) {
+				// TODO: same as above
 				str = v.Buffer().Substr(text.Region{0, r.B - 1})
 				br = n
 				rv = revert(n)
@@ -188,6 +194,7 @@ func (c *MoveToCommand) Run(v *View, e *Edit) error {
 				co = -1
 				of = -1
 			} else {
+				// TODO: same as above
 				str = v.Buffer().Substr(text.Region{r.B, v.Buffer().Size()})
 				bef := v.Buffer().Substr(text.Region{0, r.B})
 				if p := strings.LastIndexAny(bef, opening); p == -1 {
