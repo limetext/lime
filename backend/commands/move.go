@@ -301,6 +301,13 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 			return v.FindByClass(in.B, c.Forward, CLASS_WORD_START|
 				CLASS_LINE_END|CLASS_LINE_START)
 		})
+	case WordEnds:
+		move_action(v, c.Extend, func(in text.Region) int {
+			return v.FindByClass(in.B, c.Forward, CLASS_WORD_END|
+				CLASS_LINE_END|CLASS_LINE_START)
+		})
+	case Pages:
+		// TODO: Should know how many lines does the frontend show in one page
 	}
 	return nil
 }

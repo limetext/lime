@@ -191,6 +191,38 @@ func TestMove(t *testing.T) {
 			[]Region{{12, 12}},
 			nil,
 		},
+		{
+			[]Region{{1, 1}},
+			"word_ends",
+			true,
+			true,
+			[]Region{{1, 5}},
+			nil,
+		},
+		{
+			[]Region{{5, 5}},
+			"word_ends",
+			false,
+			true,
+			[]Region{{11, 11}},
+			nil,
+		},
+		{
+			[]Region{{11, 11}, {13, 15}},
+			"word_ends",
+			false,
+			true,
+			[]Region{{12, 12}, {23, 23}},
+			nil,
+		},
+		{
+			[]Region{{13, 13}},
+			"word_ends",
+			false,
+			false,
+			[]Region{{12, 12}},
+			nil,
+		},
 		// Try moving outside the buffer
 		{
 			[]Region{{0, 0}},
