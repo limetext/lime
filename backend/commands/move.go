@@ -296,6 +296,11 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 			}
 			return v.Buffer().TextPoint(r, col)
 		})
+	case Words:
+		move_action(v, c.Extend, func(in text.Region) int {
+			return v.FindByClass(in.B, c.Forward, CLASS_WORD_START|
+				CLASS_LINE_END|CLASS_LINE_START)
+		})
 	}
 	return nil
 }
