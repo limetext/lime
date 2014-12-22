@@ -1,6 +1,6 @@
 language: go
 
-go: 1.3.3
+go: 1.4
 
 install:
   - echo 'yes' | sudo add-apt-repository ppa:fkrull/deadsnakes
