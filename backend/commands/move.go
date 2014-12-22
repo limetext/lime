@@ -306,6 +306,18 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 			return v.FindByClass(in.B, c.Forward, CLASS_WORD_END|
 				CLASS_LINE_END|CLASS_LINE_START)
 		})
+	case SubWords:
+		move_action(v, c.Extend, func(in text.Region) int {
+			return v.FindByClass(in.B, c.Forward, CLASS_SUB_WORD_START|
+				CLASS_WORD_START|CLASS_PUNCTUATION_START|CLASS_LINE_END|
+				CLASS_LINE_START)
+		})
+	case SubWordEnds:
+		move_action(v, c.Extend, func(in text.Region) int {
+			return v.FindByClass(in.B, c.Forward, CLASS_SUB_WORD_END|
+				CLASS_WORD_END|CLASS_PUNCTUATION_END|CLASS_LINE_END|
+				CLASS_LINE_START)
+		})
 	case Pages:
 		// TODO: Should know how many lines does the frontend show in one page
 	}
