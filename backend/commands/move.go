@@ -54,6 +54,8 @@ type (
 		Extend bool
 		// Whether to move forward or backwards
 		Forward bool
+		// Used together with By=Stops, extends "word_separators" defined by settings
+		Separators string
 		// Used together with By=Stops, go to word begin
 		WordBegin bool
 		// Used together with By=Stops, go to word end
@@ -62,8 +64,6 @@ type (
 		PunctBegin bool
 		// Used together with By=Stops, go to punctuation end
 		PunctEnd bool
-		// Used together with By=Stops, extends "word_separators" defined by settings
-		Separators string
 		// Used together with By=Stops, go to an empty line
 		EmptyLine bool
 		// Used together with By=Stops, TODO: ???
@@ -264,26 +264,28 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 			return r.B + dir
 		})
 	case Stops:
-		move_action(v, c.Extend, func(r text.Region) int {
-			var next text.Region
-			word := v.Buffer().Word(r.B)
-			if c.WordEnd && c.Forward && r.B < word.End() {
-				next = word
-			} else if c.WordBegin && !c.Forward && r.B > word.Begin() {
-				next = word
-			} else if c.Forward {
-				next = v.Buffer().Word(word.B + 1)
-			} else {
-				next = v.Buffer().Word(word.A - 1)
-				next = v.Buffer().Word(next.A - 1)
-			}
+		move_action(v, c.Extend, func(in text.Region) int {
+			tmp := v.Settings().Get("word_separators", DEFAULT_SEPARATORS).(string)
+			defer v.Settings().Set("word_separators", tmp)
+			v.Settings().Set("word_separators", c.Separators)
 
+			classes := 0
 			if c.WordBegin {
-				return next.A
-			} else if c.WordEnd {
-				return next.B
+				classes |= CLASS_WORD_START
 			}
-			return r.B
+			if c.WordEnd {
+				classes |= CLASS_WORD_END
+			}
+			if c.PunctBegin {
+				classes |= CLASS_PUNCTUATION_START
+			}
+			if c.PunctEnd {
+				classes |= CLASS_PUNCTUATION_END
+			}
+			if c.EmptyLine {
+				classes |= CLASS_EMPTY_LINE
+			}
+			return v.FindByClass(in.B, c.Forward, classes)
 		})
 	case Lines:
 		move_action(v, c.Extend, func(in text.Region) int {

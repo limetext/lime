@@ -753,12 +753,14 @@ const (
 	CLASS_WORD_END_WITH_PUNCTUATION
 	CLASS_OPENING_PARENTHESIS
 	CLASS_CLOSING_PARENTHESIS
+
+	DEFAULT_SEPARATORS = "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]"
 )
 
 // Classifies point, returning a bitwise OR of zero or more of defined flags
 func (v *View) Classify(point int) (res int) {
 	var a, b string = "", ""
-	ws := v.Settings().Get("word_separators", "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]").(string)
+	ws := v.Settings().Get("word_separators", DEFAULT_SEPARATORS).(string)
 	if point > 0 {
 		a = v.buffer.Substr(Region{point - 1, point})
 	}
@@ -795,10 +797,11 @@ func (v *View) Classify(point int) (res int) {
 	if re, err := rubex.Compile(ws); err != nil {
 		log.Error(err)
 	} else {
-		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
+		// Why ws != ""? See https://github.com/limetext/rubex/issues/2
+		if ((re.MatchString(b) && ws != "") || b == "") && !(re.MatchString(a) && ws != "") {
 			res |= CLASS_PUNCTUATION_START
 		}
-		if (re.MatchString(a) || a == "") && !re.MatchString(b) {
+		if ((re.MatchString(a) && ws != "") || a == "") && !(re.MatchString(b) && ws != "") {
 			res |= CLASS_PUNCTUATION_END
 		}
 		// Word start & end
@@ -807,16 +810,14 @@ func (v *View) Classify(point int) (res int) {
 		} else if re2, err := rubex.Compile("\\s"); err != nil {
 			log.Error(err)
 		} else {
-			if re1.MatchString(b) && (re.MatchString(a) || re2.MatchString(a) || a == "") {
+			if re1.MatchString(b) && ((re.MatchString(a) && ws != "") || re2.MatchString(a) || a == "") {
 				res |= CLASS_WORD_START
 			}
-			if re1.MatchString(a) && (re.MatchString(b) || re2.MatchString(b) || b == "") {
+			if re1.MatchString(a) && ((re.MatchString(b) && ws != "") || re2.MatchString(b) || b == "") {
 				res |= CLASS_WORD_END
 			}
 		}
 	}
-	// SubWord start & end
-
 	// Line start & end
 	if a == "\n" || a == "" {
 		res |= CLASS_LINE_START
@@ -840,10 +841,10 @@ func (v *View) Classify(point int) (res int) {
 	if re, err := rubex.Compile("\\s"); err != nil {
 		log.Error(err)
 	} else {
-		if (res&CLASS_PUNCTUATION_START == CLASS_PUNCTUATION_START) && (re.MatchString(a) || a == "") {
+		if (res&CLASS_PUNCTUATION_START != 0) && (re.MatchString(a) || a == "") {
 			res |= CLASS_WORD_START_WITH_PUNCTUATION
 		}
-		if (res&CLASS_PUNCTUATION_END == CLASS_PUNCTUATION_END) && (re.MatchString(b) || b == "") {
+		if (res&CLASS_PUNCTUATION_END != 0) && (re.MatchString(b) || b == "") {
 			res |= CLASS_WORD_END_WITH_PUNCTUATION
 		}
 	}

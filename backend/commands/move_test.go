@@ -324,6 +324,60 @@ func TestMove(t *testing.T) {
 	runMoveTest(tests, t, "Hello World!\nTest123123\nAbrakadabra\n")
 }
 
+func TestMoveByStops(t *testing.T) {
+	tests := []MoveTest{
+		{
+			[]Region{{45, 45}},
+			"stops",
+			false,
+			true,
+			[]Region{{56, 56}},
+			Args{"word_end": true},
+		},
+		{
+			[]Region{{45, 45}},
+			"stops",
+			false,
+			true,
+			[]Region{{46, 46}},
+			Args{"word_end": true, "separators": ""},
+		},
+		{
+			[]Region{{8, 8}},
+			"stops",
+			false,
+			true,
+			[]Region{{24, 24}},
+			Args{"empty_line": true},
+		},
+		{
+			[]Region{{0, 0}},
+			"stops",
+			false,
+			true,
+			[]Region{{4, 4}},
+			Args{"word_begin": true, "separators": "l"},
+		},
+		{
+			[]Region{{58, 58}},
+			"stops",
+			false,
+			true,
+			[]Region{{61, 61}},
+			Args{"punct_begin": true},
+		},
+		{
+			[]Region{{7, 7}},
+			"stops",
+			false,
+			true,
+			[]Region{{12, 12}},
+			Args{"punct_end": true},
+		},
+	}
+	runMoveTest(tests, t, "Hello WorLd!\nTest12312{\n\n3Stop (testing) tada}\n Abr_akad[abra")
+}
+
 type MoveToTest struct {
 	in     []Region
 	to     string
