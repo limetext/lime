@@ -19,6 +19,10 @@ type (
 		Set(v interface{}) error
 	}
 
+	CustomDefault interface {
+		Default(key string) interface{}
+	}
+
 	// The CustomInit interface can be optionally implemented
 	// by a Command and will be called instead of the default
 	// command initialization code.

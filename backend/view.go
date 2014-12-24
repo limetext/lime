@@ -754,7 +754,7 @@ const (
 	CLASS_OPENING_PARENTHESIS
 	CLASS_CLOSING_PARENTHESIS
 
-	DEFAULT_SEPARATORS = "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]"
+	DEFAULT_SEPARATORS = "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^`{|}~]"
 )
 
 // Classifies point, returning a bitwise OR of zero or more of defined flags
@@ -768,11 +768,21 @@ func (v *View) Classify(point int) (res int) {
 		b = v.buffer.Substr(Region{point, point + 1})
 	}
 
-	// Special cases
+	// Out of range
 	if v.buffer.Size() == 0 || point < 0 || point > v.buffer.Size() {
 		res = 3520
 		return
 	}
+
+	// If before and after the point are separators return 0
+	if re, err := rubex.Compile(ws); err != nil {
+		log.Error(err)
+	} else if a == b && re.MatchString(a) {
+		res = 0
+		return
+	}
+
+	// SubWord start & end
 	if re, err := rubex.Compile("[A-Z]"); err != nil {
 		log.Error(err)
 	} else {
@@ -781,18 +791,13 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_SUB_WORD_END
 		}
 	}
-	// TODO: isn't this a bug? what's the relation between
-	// ',' and parentheses
-	if a == "," {
-		res |= CLASS_OPENING_PARENTHESIS
+	if a == "_" && b != "_" {
+		res |= CLASS_SUB_WORD_START
 	}
-	if b == "," {
-		res |= CLASS_CLOSING_PARENTHESIS
+	if b == "_" && a != "_" {
+		res |= CLASS_SUB_WORD_END
 	}
-	if a == "," && b == "," {
-		res = 0
-		return
-	}
+
 	// Punc start & end
 	if re, err := rubex.Compile(ws); err != nil {
 		log.Error(err)
@@ -818,13 +823,18 @@ func (v *View) Classify(point int) (res int) {
 			}
 		}
 	}
+
 	// Line start & end
 	if a == "\n" || a == "" {
 		res |= CLASS_LINE_START
 	}
 	if b == "\n" || b == "" {
 		res |= CLASS_LINE_END
+		if ws == "" {
+			res |= CLASS_WORD_END
+		}
 	}
+
 	// Empty line
 	if (a == "\n" && b == "\n") || (a == "" && b == "") {
 		res |= CLASS_EMPTY_LINE
@@ -837,6 +847,7 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_MIDDLE_WORD
 		}
 	}
+
 	// Word start & end with punc
 	if re, err := rubex.Compile("\\s"); err != nil {
 		log.Error(err)
@@ -848,16 +859,13 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_WORD_END_WITH_PUNCTUATION
 		}
 	}
+
 	// Openning & closing parentheses
 	if re, err := rubex.Compile("[(\\[{]"); err != nil {
 		log.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_OPENING_PARENTHESIS
-		}
-		if re.MatchString(a) && a == b {
-			res = 0
-			return
 		}
 	}
 	if re, err := rubex.Compile("[)\\]}]"); err != nil {
@@ -866,11 +874,16 @@ func (v *View) Classify(point int) (res int) {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_CLOSING_PARENTHESIS
 		}
-		if re.MatchString(a) && a == b {
-			res = 0
-			return
-		}
 	}
+	// TODO: isn't this a bug? what's the relation between
+	// ',' and parentheses
+	if a == "," {
+		res |= CLASS_OPENING_PARENTHESIS
+	}
+	if b == "," {
+		res |= CLASS_CLOSING_PARENTHESIS
+	}
+
 	return
 }
 

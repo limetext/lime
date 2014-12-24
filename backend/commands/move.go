@@ -326,6 +326,13 @@ func (c *MoveCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
+func (c *MoveCommand) Default(key string) interface{} {
+	if key == "separators" {
+		return DEFAULT_SEPARATORS
+	}
+	return nil
+}
+
 func revert(c string) string {
 	switch c {
 	case "(":
