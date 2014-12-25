@@ -85,7 +85,6 @@ Item {
                 // made backend side aren't propagated.
                 id: dummy
                 font.family: viewItem.fontFace
-                font.pointSize: viewItem.fontSize
                 textFormat: TextEdit.RichText
                 visible: false
                 Component.onCompleted: {
