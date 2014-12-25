@@ -118,6 +118,18 @@ ApplicationWindow {
                 onTriggered: frontend.runCommand("paste");
             }
         }
+        Menu {
+            title: qsTr("&View")
+            MenuItem {
+                text: qsTr("Sh&ow/Hide Console")
+                shortcut: "Ctrl+`"
+                onTriggered: if (consoleView.visible == true) { consoleView.visible=false } else { consoleView.visible=true }
+            }
+            MenuItem {
+                text: qsTr("Sh&ow/Hide Statusbar")
+                onTriggered: if (statusBar.visible == true) { statusBar.visible=false } else { statusBar.visible=true } 
+            }
+        }
     }
 
     statusBar: StatusBar {
@@ -298,6 +310,7 @@ ApplicationWindow {
             }
             LimeView {
                 id: consoleView
+                visible: false
                 myView: frontend.console
                 height: 100
             }
