@@ -24,6 +24,9 @@ Item {
             myView.fix(viewItem);
         }
     }
+    onFontSizeChanged: {
+        dummy.font.pointSize = fontSize;
+    }
     function addLine() {
         view.model.append({});
     }

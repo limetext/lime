@@ -60,7 +60,7 @@ type (
 		// Sets the status message shown in the status bar
 		StatusMessage(string)
 
-		// Displays an error message to the usser
+		// Displays an error message to the user
 		ErrorMessage(string)
 
 		// Displays a message dialog to the user
