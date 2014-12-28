@@ -250,7 +250,10 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			if y++; y > ey {
 				break
 			} else if lineNumbers {
-				renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
+				// This results in additional calls to renderLineNumber.
+				// Maybe just accumulate positions needing line numbers, rendering them
+				// after the loop?
+				renderLineNumber(&line, &x, y, lineNumberRenderSize, defaultFg, defaultBg)
 			}
 			continue
 		}

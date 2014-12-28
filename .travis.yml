@@ -3,12 +3,11 @@ language: go
 go: 1.4
 
 install:
-  - echo 'yes' | sudo add-apt-repository ppa:fkrull/deadsnakes
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libonig-dev mercurial python3.4 python3.4-dev xclip
+  - ./tasks/ci/install.sh
 
 script:
   - ./tasks/ci/run_tests.sh
+  - ./tasks/ci/build_frontends.sh
   - ./tasks/ci/check_gen.sh --force
   - ./tasks/ci/check_fmt.sh --force
 

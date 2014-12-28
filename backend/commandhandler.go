@@ -61,6 +61,11 @@ func (ch *commandHandler) init(cmd interface{}, args Args) error {
 		fv, ok := args[key]
 		if !ok {
 			fv = reflect.Zero(ft.Type).Interface()
+			if def, ok := cmd.(CustomDefault); ok {
+				if val := def.Default(key); val != nil {
+					fv = val
+				}
+			}
 		}
 		if f.CanAddr() {
 			if f2, ok := f.Addr().Interface().(CustomSet); ok {

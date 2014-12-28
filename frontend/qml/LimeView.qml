@@ -5,7 +5,7 @@ Item {
     id: viewItem
     property var myView
     property bool isMinimap: false
-    property double fontSize: isMinimap ? 4 : 12
+    property int fontSize: isMinimap ? 4 : 12
     property string fontFace: "Helvetica"
     property var cursor: Qt.IBeamCursor
     property bool ctrl: false
@@ -23,6 +23,9 @@ Item {
             view.myView = myView;
             myView.fix(viewItem);
         }
+    }
+    onFontSizeChanged: {
+        dummy.font.pointSize = fontSize;
     }
     function addLine() {
         view.model.append({});
@@ -85,9 +88,11 @@ Item {
                 // made backend side aren't propagated.
                 id: dummy
                 font.family: viewItem.fontFace
-                font.pointSize: viewItem.fontSize
                 textFormat: TextEdit.RichText
                 visible: false
+                Component.onCompleted: {
+                    dummy.font.pointSize = viewItem.fontSize
+                }
             }
             function measure(el, line, x) {
                 var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));

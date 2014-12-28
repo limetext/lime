@@ -753,12 +753,14 @@ const (
 	CLASS_WORD_END_WITH_PUNCTUATION
 	CLASS_OPENING_PARENTHESIS
 	CLASS_CLOSING_PARENTHESIS
+
+	DEFAULT_SEPARATORS = "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^`{|}~]"
 )
 
 // Classifies point, returning a bitwise OR of zero or more of defined flags
 func (v *View) Classify(point int) (res int) {
 	var a, b string = "", ""
-	ws := v.Settings().Get("word_separators", "[!\"#$%&'()*+,\\-./:;<=>?@\\[\\\\\\]^_`{|}~]").(string)
+	ws := v.Settings().Get("word_separators", DEFAULT_SEPARATORS).(string)
 	if point > 0 {
 		a = v.buffer.Substr(Region{point - 1, point})
 	}
@@ -766,11 +768,21 @@ func (v *View) Classify(point int) (res int) {
 		b = v.buffer.Substr(Region{point, point + 1})
 	}
 
-	// Special cases
+	// Out of range
 	if v.buffer.Size() == 0 || point < 0 || point > v.buffer.Size() {
 		res = 3520
 		return
 	}
+
+	// If before and after the point are separators return 0
+	if re, err := rubex.Compile(ws); err != nil {
+		log.Error(err)
+	} else if a == b && re.MatchString(a) {
+		res = 0
+		return
+	}
+
+	// SubWord start & end
 	if re, err := rubex.Compile("[A-Z]"); err != nil {
 		log.Error(err)
 	} else {
@@ -779,24 +791,22 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_SUB_WORD_END
 		}
 	}
-	if a == "," {
-		res |= CLASS_OPENING_PARENTHESIS
+	if a == "_" && b != "_" {
+		res |= CLASS_SUB_WORD_START
 	}
-	if b == "," {
-		res |= CLASS_CLOSING_PARENTHESIS
+	if b == "_" && a != "_" {
+		res |= CLASS_SUB_WORD_END
 	}
-	if a == "," && b == "," {
-		res = 0
-		return
-	}
+
 	// Punc start & end
 	if re, err := rubex.Compile(ws); err != nil {
 		log.Error(err)
 	} else {
-		if (re.MatchString(b) || b == "") && !re.MatchString(a) {
+		// Why ws != ""? See https://github.com/limetext/rubex/issues/2
+		if ((re.MatchString(b) && ws != "") || b == "") && !(re.MatchString(a) && ws != "") {
 			res |= CLASS_PUNCTUATION_START
 		}
-		if (re.MatchString(a) || a == "") && !re.MatchString(b) {
+		if ((re.MatchString(a) && ws != "") || a == "") && !(re.MatchString(b) && ws != "") {
 			res |= CLASS_PUNCTUATION_END
 		}
 		// Word start & end
@@ -805,15 +815,14 @@ func (v *View) Classify(point int) (res int) {
 		} else if re2, err := rubex.Compile("\\s"); err != nil {
 			log.Error(err)
 		} else {
-			if re1.MatchString(b) && (re.MatchString(a) || re2.MatchString(a) || a == "") {
+			if re1.MatchString(b) && ((re.MatchString(a) && ws != "") || re2.MatchString(a) || a == "") {
 				res |= CLASS_WORD_START
 			}
-			if re1.MatchString(a) && (re.MatchString(b) || re2.MatchString(b) || b == "") {
+			if re1.MatchString(a) && ((re.MatchString(b) && ws != "") || re2.MatchString(b) || b == "") {
 				res |= CLASS_WORD_END
 			}
 		}
 	}
-	// SubWord start & end
 
 	// Line start & end
 	if a == "\n" || a == "" {
@@ -821,7 +830,11 @@ func (v *View) Classify(point int) (res int) {
 	}
 	if b == "\n" || b == "" {
 		res |= CLASS_LINE_END
+		if ws == "" {
+			res |= CLASS_WORD_END
+		}
 	}
+
 	// Empty line
 	if (a == "\n" && b == "\n") || (a == "" && b == "") {
 		res |= CLASS_EMPTY_LINE
@@ -834,27 +847,25 @@ func (v *View) Classify(point int) (res int) {
 			res |= CLASS_MIDDLE_WORD
 		}
 	}
+
 	// Word start & end with punc
 	if re, err := rubex.Compile("\\s"); err != nil {
 		log.Error(err)
 	} else {
-		if (res&CLASS_PUNCTUATION_START == CLASS_PUNCTUATION_START) && (re.MatchString(a) || a == "") {
+		if (res&CLASS_PUNCTUATION_START != 0) && (re.MatchString(a) || a == "") {
 			res |= CLASS_WORD_START_WITH_PUNCTUATION
 		}
-		if (res&CLASS_PUNCTUATION_END == CLASS_PUNCTUATION_END) && (re.MatchString(b) || b == "") {
+		if (res&CLASS_PUNCTUATION_END != 0) && (re.MatchString(b) || b == "") {
 			res |= CLASS_WORD_END_WITH_PUNCTUATION
 		}
 	}
+
 	// Openning & closing parentheses
 	if re, err := rubex.Compile("[(\\[{]"); err != nil {
 		log.Error(err)
 	} else {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_OPENING_PARENTHESIS
-		}
-		if re.MatchString(a) && a == b {
-			res = 0
-			return
 		}
 	}
 	if re, err := rubex.Compile("[)\\]}]"); err != nil {
@@ -863,11 +874,16 @@ func (v *View) Classify(point int) (res int) {
 		if re.MatchString(a) || re.MatchString(b) {
 			res |= CLASS_CLOSING_PARENTHESIS
 		}
-		if re.MatchString(a) && a == b {
-			res = 0
-			return
-		}
 	}
+	// TODO: isn't this a bug? what's the relation between
+	// ',' and parentheses
+	if a == "," {
+		res |= CLASS_OPENING_PARENTHESIS
+	}
+	if b == "," {
+		res |= CLASS_CLOSING_PARENTHESIS
+	}
+
 	return
 }
 
