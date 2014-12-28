@@ -145,6 +145,12 @@ func GetEditor() *Editor {
 	return ed
 }
 
+func DestroyEditor() {
+	edl.Lock()
+	defer edl.Unlock()
+	ed = nil
+}
+
 func (e *Editor) Frontend() Frontend {
 	return e.frontend
 }

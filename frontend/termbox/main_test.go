@@ -64,6 +64,7 @@ func TestGetCaretStyle(t *testing.T) {
 }
 
 func TestUpdateVisibleRegion(t *testing.T) {
+	defer backend.DestroyEditor()
 	var (
 		fe tbfe
 		e  = backend.GetEditor()
@@ -85,6 +86,7 @@ func TestUpdateVisibleRegion(t *testing.T) {
 }
 
 func TestCreateFrontend(t *testing.T) {
+	defer backend.DestroyEditor()
 	var frontend *tbfe
 	frontendWasCreated := make(chan bool, 0)
 	go func() {
@@ -133,6 +135,7 @@ func TestCreateFrontend(t *testing.T) {
 }
 
 func TestLoopShutdown(t *testing.T) {
+	defer backend.DestroyEditor()
 	frontend := createFrontend()
 
 	loopHasExited := make(chan bool, 0)
