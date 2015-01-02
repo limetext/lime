@@ -127,7 +127,7 @@ ApplicationWindow {
             }
             MenuItem {
                 text: qsTr("Sh&ow/Hide Statusbar")
-                onTriggered: if (statusBar.visible == true) { statusBar.visible=false } else { statusBar.visible=true } 
+                onTriggered: if (statusBar.visible == true) { statusBar.visible=false } else { statusBar.visible=true }
             }
         }
     }
@@ -187,11 +187,11 @@ ApplicationWindow {
     Item {
         anchors.fill: parent
         Keys.onPressed: {
-            view().ctrl = (event.modifiers && Qt.ControlModifier) ? true : false;
+            view().ctrl = (event.key == Qt.Key_Control) ? true : false;
             event.accepted = frontend.handleInput(event.key, event.modifiers)
         }
         Keys.onReleased: {
-            view().ctrl = (event.modifiers && Qt.ControlModifier) ? false : view().ctrl;
+            view().ctrl = (event.key == Qt.Key_Control) ? false : view().ctrl;
         }
         focus: true // Focus required for Keys.onPressed
         SplitView {
