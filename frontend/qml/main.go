@@ -402,7 +402,7 @@ func (fv *frontendView) Line(index int) *lineStruct {
 	return fv.FormattedLine[index]
 }
 
-func (fv *frontendView) Lines() int {
+func (fv *frontendView) RegionLines() int {
 	var count int = 0
 	regs := fv.bv.Sel().Regions()
 	for _, r := range regs {
@@ -516,7 +516,6 @@ func (fv *frontendView) formatLine(line int) {
 		}
 	}
 	if vr.Size() == 0 {
-		// TODO: draw cursor if here
 		if fv.FormattedLine[line].Text != "" {
 			fv.FormattedLine[line].Text = ""
 			t.qmlChanged(fv.FormattedLine[line], fv.FormattedLine[line])

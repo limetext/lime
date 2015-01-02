@@ -44,13 +44,18 @@ Item {
 
         property bool showBars: false
         property var cursor: parent.cursor
-        delegate: Text {
-            property var line: myView.line(index)
-            font.family: viewItem.fontFace
-            font.pointSize: viewItem.fontSize
-            text: line.text
-            textFormat: TextEdit.RichText
-            color: "white"
+        delegate: Rectangle {
+            width: parent.width
+            height: childrenRect.height
+            color: "transparent"
+            Text {
+                property var line: myView.line(index)
+                font.family: viewItem.fontFace
+                font.pointSize: viewItem.fontSize
+                text: line.text+" "
+                textFormat: TextEdit.RichText
+                color: "white"
+            }
         }
         states: [
             State {
@@ -94,13 +99,14 @@ Item {
                     dummy.font.pointSize = viewItem.fontSize
                 }
             }
-            function measure(el, line, x) {
+            function measure(line, x) {
                 var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));
+                var str = myView.back().buffer().substr(line);
+                dummy.text = str;
                 // If we are clicking out of line width return end of line column
-                if(x > el.width) return myView.back().buffer().rowCol(line.b)[1]
-                var str  = myView.back().buffer().substr(line);
+                if(x > dummy.width) return myView.back().buffer().rowCol(line.b)[1]
                 // We try to start searching from somewhere close to click position
-                var col  = Math.floor(0.5 + str.length * x/el.width);
+                var col = Math.floor(0.5 + str.length * x/dummy.width);
 
                 // Trying to find closest column to clicked position
                 dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
@@ -120,7 +126,7 @@ Item {
                 var index = view.indexAt(0, mouse.y+view.contentY);
                 var s = sel();
                 if (item != null && sel != null) {
-                    var col = measure(item, index, mouse.x);
+                    var col = measure(index, mouse.x);
                     point.r = myView.back().buffer().textPoint(index, col);
                     if (point.p != null && point.p != point.r) {
                         // Remove the last region and replace it with new one
@@ -138,7 +144,7 @@ Item {
                     var item  = view.itemAt(0, mouse.y+view.contentY)
                     var index = view.indexAt(0, mouse.y+view.contentY)
                     if (item != null) {
-                        var col = measure(item, index, mouse.x);
+                        var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
                         if (!ctrl) sel().clear();
@@ -151,7 +157,7 @@ Item {
                     var item  = view.itemAt(0, mouse.y+view.contentY)
                     var index = view.indexAt(0, mouse.y+view.contentY)
                     if (item != null) {
-                        var col = measure(item, index, mouse.x);
+                        var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
                         if (!ctrl) sel().clear();
@@ -213,7 +219,7 @@ Item {
     Repeater {
         id: regs
         model: (!isMinimap && sel()) ? sel().len() : 0
-        Rectangle {
+        delegate: Rectangle {
             property var rowcol
             property var cursor: children[0]
             color: "#444444"
@@ -252,15 +258,15 @@ Item {
         function lines(sel, buf) {
             if (!sel) return;
             var lines = new Array();
-            var sel = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a};
-            var rc = {a: buf.rowCol(sel.a), b: buf.rowCol(sel.b)};
+            var ss = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a};
+            var rc = {a: buf.rowCol(ss.a), b: buf.rowCol(ss.b)};
 
             for(var i = rc.a[0]; i <= rc.b[0]; i++) {
-                var mysel = buf.line(buf.textPoint(i, 0));
+                var lr = buf.line(buf.textPoint(i, 0));
                 // Sometimes null don't know why
-                if (!mysel) continue;
-                var a = (i == rc.a[0]) ? sel.a : mysel.a;
-                var b = (i == rc.b[0]) ? sel.b : mysel.b;
+                if (!lr) continue;
+                var a = (i == rc.a[0]) ? ss.a : lr.a;
+                var b = (i == rc.b[0]) ? ss.b : lr.b;
                 var res = (b > a) ? {a: a, b: b} : {a: b, b: a};
                 lines.push(res);
             }
@@ -275,7 +281,7 @@ Item {
             var buf = back.buffer();
             if (!buf) return;
             var of = 0;
-            regs.model = myView.lines();
+            regs.model = myView.regionLines();
             for(var i = 0; i < s.len(); i++) {
                 var rect = regs.itemAt(i);
                 var mysel = s.get(i);
