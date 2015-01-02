@@ -100,8 +100,8 @@ Item {
                 }
             }
             function measure(line, x) {
-                var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0));
-                var str = myView.back().buffer().substr(line);
+                var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0)),
+                    str = myView.back().buffer().substr(line);
                 dummy.text = str;
                 // If we are clicking out of line width return end of line column
                 if(x > dummy.width) return myView.back().buffer().rowCol(line.b)[1]
@@ -110,8 +110,8 @@ Item {
 
                 // Trying to find closest column to clicked position
                 dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
-                var d = Math.abs(x - dummy.width);
-                var add = (x > dummy.width) ? 1 : -1
+                var d = Math.abs(x - dummy.width),
+                    add = (x > dummy.width) ? 1 : -1;
                 while(Math.abs(x - dummy.width) <= d) {
                     d = Math.abs(x - dummy.width);
                     col += add;
@@ -122,9 +122,9 @@ Item {
                 return col;
             }
             onPositionChanged: {
-                var item  = view.itemAt(0, mouse.y+view.contentY);
-                var index = view.indexAt(0, mouse.y+view.contentY);
-                var s = sel();
+                var item  = view.itemAt(0, mouse.y+view.contentY),
+                    index = view.indexAt(0, mouse.y+view.contentY),
+                    s = sel();
                 if (item != null && sel != null) {
                     var col = measure(index, mouse.x);
                     point.r = myView.back().buffer().textPoint(index, col);
@@ -141,8 +141,8 @@ Item {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
                 if (!isMinimap) {
-                    var item  = view.itemAt(0, mouse.y+view.contentY)
-                    var index = view.indexAt(0, mouse.y+view.contentY)
+                    var item  = view.itemAt(0, mouse.y+view.contentY),
+                        index = view.indexAt(0, mouse.y+view.contentY);
                     if (item != null) {
                         var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
@@ -154,8 +154,8 @@ Item {
             }
             onDoubleClicked: {
                 if (!isMinimap) {
-                    var item  = view.itemAt(0, mouse.y+view.contentY)
-                    var index = view.indexAt(0, mouse.y+view.contentY)
+                    var item  = view.itemAt(0, mouse.y+view.contentY),
+                        index = view.indexAt(0, mouse.y+view.contentY);
                     if (item != null) {
                         var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
@@ -166,11 +166,11 @@ Item {
                 }
             }
             onWheel: {
-                var delta = wheel.pixelDelta
-                var scaleFactor = 30
+                var delta = wheel.pixelDelta,
+                    scaleFactor = 30;
                 if (delta.x == 0 && delta.y == 0) {
-                    delta = wheel.angleDelta
-                    scaleFactor = 15
+                    delta = wheel.angleDelta;
+                    scaleFactor = 15;
                 }
                 view.flick(delta.x*scaleFactor, delta.y*scaleFactor);
                 wheel.accepted = true;
@@ -240,10 +240,8 @@ Item {
         running: true
         repeat: true
         function measure(p, rowcol, cursor, buf) {
-            var line = buf.line(p);
-            if (!line) return 0;
-            var str  = buf.substr(line);
-            if (!str) return 0;
+            var line = buf.line(p),
+                str  = buf.substr(line);
 
             str = str.substr(0, rowcol[1]);
             cursor.textFormat = TextEdit.RichText;
@@ -252,43 +250,37 @@ Item {
             cursor.textFormat = TextEdit.PlainText;
             cursor.text = "";
 
-            return (ret == null) ? 0 : ret;
+            return (!ret) ? 0 : ret;
         }
         // Works like buffer.Lines()
         function lines(sel, buf) {
-            if (!sel) return;
-            var lines = new Array();
-            var ss = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a};
-            var rc = {a: buf.rowCol(ss.a), b: buf.rowCol(ss.b)};
+            var lines = new Array(),
+                ss = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a},
+                rc = {a: buf.rowCol(ss.a), b: buf.rowCol(ss.b)};
 
             for(var i = rc.a[0]; i <= rc.b[0]; i++) {
-                var lr = buf.line(buf.textPoint(i, 0));
-                // Sometimes null don't know why
-                if (!lr) continue;
-                var a = (i == rc.a[0]) ? ss.a : lr.a;
-                var b = (i == rc.b[0]) ? ss.b : lr.b;
-                var res = (b > a) ? {a: a, b: b} : {a: b, b: a};
+                var lr = buf.line(buf.textPoint(i, 0)),
+                    a = (i == rc.a[0]) ? ss.a : lr.a,
+                    b = (i == rc.b[0]) ? ss.b : lr.b,
+                    res = (b > a) ? {a: a, b: b} : {a: b, b: a};
                 lines.push(res);
             }
             return lines;
         }
         onTriggered: {
-            // TODO(.): not too happy about actively polling like this
-            var s = sel();
-            if (!s) return;
-            var back = myView.back()
-            if (!back) return;
-            var buf = back.buffer();
-            if (!buf) return;
-            var of = 0;
+            if (myView == undefined) return;
+            var s = sel(),
+                back = myView.back(),
+                buf = back.buffer(),
+                of = 0;
             regs.model = myView.regionLines();
             for(var i = 0; i < s.len(); i++) {
-                var rect = regs.itemAt(i);
-                var mysel = s.get(i);
+                var rect = regs.itemAt(i),
+                    mysel = s.get(i);
                 if (!mysel || !rect) continue;
 
-                var rowcol;
-                var lns = lines(mysel, buf);
+                var rowcol,
+                    lns = lines(mysel, buf);
 
                 if (mysel.b <= mysel.a) lns.reverse();
                 for(var j = 0; j < lns.length; j++) {
@@ -305,8 +297,8 @@ Item {
                 rect.cursor.x = (mysel.b <= mysel.a) ? 0 : rect.width;
                 rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);;
 
-                var style = myView.setting("caret_style");
-                var inv = myView.setting("inverse_caret_state");
+                var style = myView.setting("caret_style"),
+                    inv = myView.setting("inverse_caret_state");
                 if (style == "underscore") {
                     if (inv) {
                         rect.cursor.text = "_";
@@ -320,7 +312,7 @@ Item {
             // Clearing
             for(var i = of+s.len()+1; i < regs.count; i++) {
                 var rect = regs.itemAt(i);
-                if (rect == null) continue;
+                if (!rect) continue;
                 rect.width = 0;
             }
         }
