@@ -45,25 +45,6 @@ func runFindTest(tests *[]findTest, t *testing.T, commands ...string) {
 	}
 }
 
-func TestSingleSelection(t *testing.T) {
-	tests := []findTest{
-		{
-			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
-			[]Region{{1, 1}},
-		},
-		{
-			[]Region{{2, 2}, {3, 3}, {6, 6}},
-			[]Region{{2, 2}},
-		},
-		{
-			[]Region{{5, 5}},
-			[]Region{{5, 5}},
-		},
-	}
-
-	runFindTest(&tests, t, "single_selection")
-}
-
 func TestFindUnderExpand(t *testing.T) {
 	tests := []findTest{
 		{
@@ -92,23 +73,4 @@ func TestFindNext(t *testing.T) {
 	}
 
 	runFindTest(&tests, t, "find_under_expand", "find_next")
-}
-
-func TestSelectAll(t *testing.T) {
-	tests := []findTest{
-		{
-			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
-			[]Region{{0, 36}},
-		},
-		{
-			[]Region{{2, 2}, {3, 3}, {6, 6}},
-			[]Region{{0, 36}},
-		},
-		{
-			[]Region{{5, 5}},
-			[]Region{{0, 36}},
-		},
-	}
-
-	runFindTest(&tests, t, "select_all")
 }

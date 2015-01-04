@@ -27,28 +27,7 @@ type (
 	FindNextCommand struct {
 		DefaultCommand
 	}
-	// The SingleSelectionCommand merges multiple cursors
-	// into a single one.
-	SingleSelectionCommand struct {
-		DefaultCommand
-	}
-	// The SelectAllCommand selects the whole buffer of the current file
-	SelectAllCommand struct {
-		DefaultCommand
-	}
 )
-
-func (c *SingleSelectionCommand) Run(v *View, e *Edit) error {
-	/*
-		Correct behavior of SingleSelect:
-			- Remove all selection regions but the first.
-	*/
-
-	r := v.Sel().Get(0)
-	v.Sel().Clear()
-	v.Sel().Add(r)
-	return nil
-}
 
 // Remembers the last sequence of runes searched for.
 var lastSearch []rune
@@ -160,23 +139,9 @@ func (c *FindNextCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
-func (c *SelectAllCommand) Run(v *View, e *Edit) error {
-	/*
-		Correct behavior of SelectAll:
-			- Select a single region of (0, view.buffersize())
-	*/
-
-	r := Region{0, v.Buffer().Size()}
-	v.Sel().Clear()
-	v.Sel().Add(r)
-	return nil
-}
-
 func init() {
 	register([]Command{
 		&FindUnderExpandCommand{},
 		&FindNextCommand{},
-		&SingleSelectionCommand{},
-		&SelectAllCommand{},
 	})
 }
