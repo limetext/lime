@@ -336,9 +336,6 @@ func generateWrapper(ptr reflect.Type, canCreate bool, ignorefunc func(name stri
 	}
 	ret += cons
 	ret += generatemethods(ptr, ignorefunc)
-	if ptr.Kind() != reflect.Struct {
-		ret += generatemethods(t, ignorefunc)
-	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if !f.Anonymous && f.Name[0] == strings.ToUpper(f.Name[:1])[0] {
