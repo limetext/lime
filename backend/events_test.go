@@ -128,3 +128,18 @@ func TestOnPostSave(t *testing.T) {
 		t.Errorf("Couldn't remove test file %s", testfile)
 	}
 }
+
+func TestOnNewWindow(t *testing.T) {
+	callCount := 0
+
+	OnNewWindow.Add(func(w *Window) {
+		callCount++
+	})
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	if callCount != 1 {
+		t.Fatalf("%d != 1", callCount)
+	}
+}
