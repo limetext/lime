@@ -77,6 +77,36 @@ func TestWindowClose(t *testing.T) {
 	}
 }
 
+func TestWindowCloseFail(t *testing.T) {
+	ed := GetEditor()
+
+	fe := ed.Frontend()
+	if dfe, ok := fe.(*DummyFrontend); ok {
+		dfe.SetDefaultAction(false)
+	}
+
+	w := ed.NewWindow()
+	l := len(ed.Windows())
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
+	edit := v.BeginEdit()
+	v.Insert(edit, 0, "test")
+	v.EndEdit(edit)
+
+	if w.Close() {
+		t.Errorf("Expected window to fail to close, but it didn't")
+	}
+
+	if len(ed.Windows()) != l {
+		t.Error("Expected window not to close, but it did")
+	}
+}
+
 func TestWindowCloseAllViews(t *testing.T) {
 	w := GetEditor().NewWindow()
 	defer w.Close()
@@ -88,5 +118,42 @@ func TestWindowCloseAllViews(t *testing.T) {
 
 	if len(w.Views()) != 0 {
 		t.Errorf("Expected 0 open views, but got %d", len(w.Views()))
+	}
+}
+
+func TestWindowCloseAllViewsFail(t *testing.T) {
+	ed := GetEditor()
+
+	fe := ed.Frontend()
+	if dfe, ok := fe.(*DummyFrontend); ok {
+		dfe.SetDefaultAction(false)
+	}
+
+	w := ed.NewWindow()
+	defer w.Close()
+
+	w.NewFile()
+	v := w.NewFile()
+
+	l := len(w.Views())
+
+	w.NewFile()
+	defer func() {
+		for _, vw := range w.Views() {
+			vw.SetScratch(true)
+			vw.Close()
+		}
+	}()
+
+	edit := v.BeginEdit()
+	v.Insert(edit, 0, "test")
+	v.EndEdit(edit)
+
+	if w.CloseAllViews() {
+		t.Errorf("Expected views to fail to close, but they didn't")
+	}
+
+	if len(w.Views()) != l {
+		t.Error("Expected only one view to close, but more did")
 	}
 }
