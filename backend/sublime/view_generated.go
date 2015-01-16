@@ -149,6 +149,27 @@ func (o *View) Py_erase_regions(tu *py.Tuple) (py.Object, error) {
 	return toPython(nil)
 }
 
+func (o *View) Py_erase_status(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 string
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(string); !ok {
+				return nil, fmt.Errorf("Expected type string for backend.View.EraseStatus() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	o.data.EraseStatus(arg1)
+	return toPython(nil)
+}
+
 func (o *View) Py_extract_scope(tu *py.Tuple) (py.Object, error) {
 	var (
 		arg1 int
@@ -251,6 +272,34 @@ func (o *View) Py_get_regions(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 	ret0 := o.data.GetRegions(arg1)
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = toPython(ret0)
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
+func (o *View) Py_get_status(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 string
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(string); !ok {
+				return nil, fmt.Errorf("Expected type string for backend.View.GetStatus() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	ret0 := o.data.GetStatus(arg1)
 	var err error
 	var pyret0 py.Object
 
@@ -535,6 +584,41 @@ func (o *View) Py_set_scratch(tu *py.Tuple) (py.Object, error) {
 		}
 	}
 	o.data.SetScratch(arg1)
+	return toPython(nil)
+}
+
+func (o *View) Py_set_status(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 string
+		arg2 string
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(string); !ok {
+				return nil, fmt.Errorf("Expected type string for backend.View.SetStatus() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	if v, err := tu.GetItem(1); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(string); !ok {
+				return nil, fmt.Errorf("Expected type string for backend.View.SetStatus() arg2, not %s", v.Type())
+			} else {
+				arg2 = v2
+			}
+		}
+	}
+	o.data.SetStatus(arg1, arg2)
 	return toPython(nil)
 }
 
