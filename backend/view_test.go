@@ -938,3 +938,101 @@ func BenchmarkScopeNameRandom(b *testing.B) {
 		}
 	}
 }
+
+func TestViewStatus(t *testing.T) {
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
+	test := struct {
+		keys, vals []string
+	}{
+		[]string{"a", "", "d"},
+		[]string{"b", "c", ""},
+	}
+
+	for i, key := range test.keys {
+		v.SetStatus(key, test.vals[i])
+	}
+	for i, key := range test.keys {
+		if val := v.GetStatus(key); val != test.vals[i] {
+			t.Errorf("Expected view status with key %s be %s, but got %s", key, test.vals[i], val)
+		}
+	}
+}
+
+func TestSetStatus(t *testing.T) {
+	tests := []struct {
+		keys, vals []string
+		exp        status
+	}{
+		{
+			[]string{"a", "", "d"},
+			[]string{"b", "c", ""},
+			status(map[string]string{"a": "b", "": "c", "d": ""}),
+		},
+	}
+
+	s := newStatus()
+	for i, test := range tests {
+		for j, key := range test.keys {
+			s.SetStatus(key, test.vals[j])
+		}
+		if !reflect.DeepEqual(s, test.exp) {
+			t.Errorf("Test %d: Expected %v be equal to %v", i, s, test.exp)
+		}
+	}
+}
+
+func TestGetStatus(t *testing.T) {
+	tests := []struct {
+		st  status
+		get map[string]string
+	}{
+		{
+			status(map[string]string{"a": "b", "": "c", "d": ""}),
+			map[string]string{"a": "b", "": "c", "d": ""},
+		},
+	}
+
+	for i, test := range tests {
+		for key, exp := range test.get {
+			if val := test.st.GetStatus(key); val != exp {
+				t.Errorf("Test %d: Expected key %s value be %s, but got %s", i, key, exp, val)
+			}
+		}
+	}
+}
+
+func TestEraseStatus(t *testing.T) {
+	tests := []struct {
+		st   status
+		keys []string
+		exp  status
+	}{
+		{
+			status(map[string]string{"a": "b", "c": "d"}),
+			[]string{"a"},
+			status(map[string]string{"c": "d"}),
+		},
+		{
+			status(map[string]string{"a": "b", "": "c", "d": ""}),
+			[]string{"", "d"},
+			status(map[string]string{"a": "b"}),
+		},
+	}
+
+	for i, test := range tests {
+		for _, key := range test.keys {
+			test.st.EraseStatus(key)
+		}
+		if !reflect.DeepEqual(test.st, test.exp) {
+			t.Errorf("Test %d: Expected %v be equal to %v", i, test.st, test.exp)
+		}
+	}
+}

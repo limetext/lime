@@ -30,6 +30,7 @@ type (
 	View struct {
 		HasSettings
 		HasId
+		status
 		name        string
 		window      *Window
 		buffer      Buffer
@@ -47,10 +48,12 @@ type (
 	parseReq struct {
 		forced bool
 	}
+
+	status map[string]string
 )
 
 func newView(w *Window) *View {
-	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+	ret := &View{window: w, regions: make(render.ViewRegionMap), status: newStatus()}
 	ret.loadSettings()
 
 	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
@@ -933,4 +936,20 @@ func (v *View) ExpandByClass(r Region, classes int) Region {
 	for ; b < size && (v.Classify(b)&classes == 0); b += 1 {
 	}
 	return Region{a, b}
+}
+
+func newStatus() status {
+	return make(status)
+}
+
+func (s status) SetStatus(key string, val string) {
+	s[key] = val
+}
+
+func (s status) GetStatus(key string) string {
+	return s[key]
+}
+
+func (s status) EraseStatus(key string) {
+	delete(s, key)
 }
