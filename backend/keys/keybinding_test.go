@@ -5,10 +5,11 @@
 package keys
 
 import (
-	"github.com/limetext/lime/backend/loaders"
-	"github.com/limetext/lime/backend/util"
 	"io/ioutil"
 	"testing"
+
+	"github.com/limetext/lime/backend/loaders"
+	"github.com/limetext/lime/backend/util"
 )
 
 func TestLoadKeyBindingsFromJSON(t *testing.T) {
@@ -219,5 +220,26 @@ func TestSeqIndex(t *testing.T) {
 	bd.seqIndex = 3
 	if bd.SeqIndex() != 3 {
 		t.Errorf("Expected SeqIndex %d, but got %d", 3, bd.SeqIndex())
+	}
+}
+
+func TestKeyBindingsString(t *testing.T) {
+	fn := "testdata/test.sublime-keymap"
+	var bd KeyBindings
+
+	d, err := ioutil.ReadFile(fn)
+	if err != nil {
+		t.Fatalf("Couldn't read %s: %s", fn, err)
+	}
+	if err = loaders.LoadJSON(d, &bd); err != nil {
+		t.Fatalf("Error loading json: %s", err)
+	}
+
+	expected :=
+		`&{Keys:[p] Command:t2 Args:map[] Context:[{rawKeyContext:{Key:t2 Operator:0 Operand:true MatchAll:false}}] priority:1}
+&{Keys:[ctrl+d ctrl+k] Command:t1 Args:map[] Context:[{rawKeyContext:{Key:t1 Operator:0 Operand:true MatchAll:false}}] priority:0}
+`
+	if bd.String() != expected {
+		t.Errorf("Expected String %s, but got %s", expected, bd.String())
 	}
 }
