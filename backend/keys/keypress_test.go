@@ -87,9 +87,23 @@ func TestKeyPressFix(t *testing.T) {
 	}
 }
 
+func TestKeyPressUnmarshalJSON(t *testing.T) {
+	var k KeyPress
+	d := `"super+ctrl+alt+shift+f1+λλλ"`
+	err := k.UnmarshalJSON([]byte(d))
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestKeyPressString(t *testing.T) {
-	k := KeyPress{'a', true, true, false, false}
-	if k.String() != "super+shift+a" {
-		t.Errorf("Expected %q, but got %q", "super+shift+a", k.String())
+	k1 := KeyPress{'a', true, true, false, false}
+	if k1.String() != "super+shift+a" {
+		t.Errorf("Expected %q, but got %q", "super+shift+a", k1.String())
+	}
+
+	k2 := KeyPress{'b', true, false, true, true}
+	if k2.String() != "ctrl+alt+shift+b" {
+		t.Errorf("Expected %q, but got %q", "ctrl+alt+shift+b", k2.String())
 	}
 }
