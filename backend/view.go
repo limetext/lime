@@ -18,6 +18,7 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -158,7 +159,7 @@ func (v *View) parsethread() {
 			}
 		}()
 
-		b := v.Buffer()
+		b := v.buffer
 		sub := b.Substr(Region{0, b.Size()})
 
 		source, _ := v.Settings().Get("syntax", "").(string)
@@ -539,7 +540,7 @@ func (v *View) FileChanged(filename string) {
 		log.Errorf("Could not read file: %s\n. Error was: %v", filename, err)
 	} else {
 		edit := v.BeginEdit()
-		end := v.Buffer().Size()
+		end := v.buffer.Size()
 		v.Replace(edit, Region{0, end}, string(d))
 		v.EndEdit(edit)
 	}
@@ -585,7 +586,7 @@ func (v *View) SaveAs(name string) (err error) {
 
 	ed := GetEditor()
 	if fn := v.buffer.FileName(); fn != name {
-		v.Buffer().SetFileName(name)
+		v.buffer.SetFileName(name)
 		if fn != "" {
 			ed.UnWatch(fn, v)
 		}
@@ -936,6 +937,33 @@ func (v *View) ExpandByClass(r Region, classes int) Region {
 	for ; b < size && (v.Classify(b)&classes == 0); b += 1 {
 	}
 	return Region{a, b}
+}
+
+const (
+	LITERAL = 1 << iota
+	IGNORECASE
+)
+
+func (v *View) Find(pat string, pos int, flags int) Region {
+	r := Region{pos, v.buffer.Size()}
+	s := v.buffer.Substr(r)
+
+	if flags&LITERAL != 0 {
+		pat = "\\Q" + pat
+	}
+	if flags&IGNORECASE != 0 {
+		pat = "(?im)" + pat
+	} else {
+		pat = "(?m)" + pat
+	}
+	// Using regexp instead of rubex because rubex doesn't
+	// support flag for treating pattern as a literal text
+	if re, err := regexp.Compile(pat); err != nil {
+		log.Error(err)
+	} else if loc := re.FindStringIndex(s); loc != nil {
+		return Region{pos + loc[0], pos + loc[1]}
+	}
+	return Region{-1, -1}
 }
 
 func newStatus() status {

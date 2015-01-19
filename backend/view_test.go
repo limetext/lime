@@ -966,6 +966,46 @@ func TestViewStatus(t *testing.T) {
 	}
 }
 
+func TestFind(t *testing.T) {
+	in := "testing\nview.find\n[lite*r.al|ignoreCAsE]\n\tabra_kadabra\n\n"
+	tests := []struct {
+		pat   string
+		pos   int
+		flags int
+		exp   text.Region
+	}{
+		{"view", 2, 0, text.Region{8, 12}},
+		{"eof", 50, 0, text.Region{-1, -1}},
+		{"caSE", 10, IGNORECASE, text.Region{35, 39}},
+		{"[lite*r", 1, LITERAL, text.Region{18, 25}},
+		{".Al", 1, LITERAL | IGNORECASE, text.Region{25, 28}},
+		{"^\n", 4, 0, text.Region{55, 56}},
+		{"[A-C]", 4, 0, text.Region{35, 36}},
+		{"abra$", 4, 0, text.Region{50, 54}},
+		{"i(nd|ng)", 4, 0, text.Region{4, 7}},
+		{"p?aSe", 4, IGNORECASE, text.Region{36, 39}},
+	}
+
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
+	e := v.BeginEdit()
+	v.Insert(e, 0, in)
+	v.EndEdit(e)
+
+	for i, test := range tests {
+		if ret := v.Find(test.pat, test.pos, test.flags); !reflect.DeepEqual(ret, test.exp) {
+			t.Errorf("Test %d: Expected return region be %s, but got %s", i, test.exp, ret)
+		}
+	}
+}
+
 func TestSetStatus(t *testing.T) {
 	tests := []struct {
 		keys, vals []string

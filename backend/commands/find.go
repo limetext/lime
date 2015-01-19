@@ -85,7 +85,7 @@ func GetNextSelection(v *View, e *Edit, search string) (Region, error) {
 	rs := sel.Regions()
 	last := 0
 
-	// Ranges are not sorted, so finding the last one requires a search.
+	// Regions are not sorted, so finding the last one requires a search.
 	for _, r := range rs {
 		last = Max(last, r.End())
 	}
