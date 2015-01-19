@@ -256,6 +256,7 @@ View
 	expand_by_class
 	extract_scope
 	file_name
+	find
 	find_by_class
 	full_line
 	get_regions
