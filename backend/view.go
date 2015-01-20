@@ -246,7 +246,6 @@ func (v *View) reparse(forced bool) {
 // Will load view settings respect to current syntax
 // e.g if current syntax is Python settings order will be:
 // Packages/Python/Python.sublime-settings
-// Packages/Python/Python (Windows).sublime-settings
 // Packages/User/Python.sublime-settings
 // <Buffer Specific Settings>
 func (v *View) loadSettings() {
@@ -257,11 +256,10 @@ func (v *View) loadSettings() {
 		return
 	}
 
-	defSettings, usrSettings, platSettings := &HasSettings{}, &HasSettings{}, &HasSettings{}
+	defSettings, usrSettings := &HasSettings{}, &HasSettings{}
 
 	defSettings.Settings().SetParent(v.window)
-	platSettings.Settings().SetParent(defSettings)
-	usrSettings.Settings().SetParent(platSettings)
+	usrSettings.Settings().SetParent(defSettings)
 	v.Settings().SetParent(usrSettings)
 
 	ed := GetEditor()
@@ -271,9 +269,6 @@ func (v *View) loadSettings() {
 	} else if s := r.FindStringSubmatch(syntax); s != nil {
 		p := path.Join(LIME_PACKAGES_PATH, s[1], s[1]+".sublime-settings")
 		ed.load(packages.NewPacket(p, defSettings.Settings()))
-
-		p = path.Join(LIME_PACKAGES_PATH, s[1], s[1]+" ("+ed.Plat()+").sublime-settings")
-		ed.load(packages.NewPacket(p, platSettings.Settings()))
 
 		p = path.Join(LIME_USER_PACKAGES_PATH, s[1]+".sublime-settings")
 		ed.load(packages.NewPacket(p, usrSettings.Settings()))
