@@ -516,7 +516,7 @@ func (v *View) IsDirty() bool {
 	if v.IsScratch() {
 		return false
 	}
-	lastSave, _ := v.buffer.Settings().Get("lime.last_save_change_count", -1).(int)
+	lastSave, _ := v.Settings().Get("lime.last_save_change_count", -1).(int)
 	return v.buffer.ChangeCount() != lastSave
 }
 
@@ -588,7 +588,7 @@ func (v *View) SaveAs(name string) (err error) {
 		ed.Watch(name, v)
 	}
 
-	v.buffer.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
+	v.Settings().Set("lime.last_save_change_count", v.buffer.ChangeCount())
 	OnPostSave.Call(v)
 	return nil
 }
