@@ -80,7 +80,7 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	return nil
 }
 
-func GetNextSelection(v *View, e *Edit, search string) (Region, error) {
+func GetNextSelection(v *View, search string) (Region, error) {
 	sel := v.Sel()
 	rs := sel.Regions()
 	last := 0
@@ -129,7 +129,7 @@ func (c *FindNextCommand) Run(v *View, e *Edit) error {
 	if len(lastSearch) == 0 {
 		return nil
 	}
-	newr, err := GetNextSelection(v, e, string(lastSearch))
+	newr, err := GetNextSelection(v, string(lastSearch))
 	if err != nil {
 		return err
 	}

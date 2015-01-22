@@ -27,7 +27,7 @@ func SetReplaceSearchText(replace string) {
 func (c *ReplaceNextCommand) Run(v *View, e *Edit) error {
 	// use selection function from find.go to get the next region
 	lastSearch := GetLastSearch()
-	selection, err := GetNextSelection(v, e, string(lastSearch))
+	selection, err := GetNextSelection(v, string(lastSearch))
 	if err != nil {
 		return err
 	}
