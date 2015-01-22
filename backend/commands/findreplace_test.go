@@ -12,8 +12,9 @@ import (
 )
 
 type findTest struct {
-	in  []Region
-	exp []Region
+	text string
+	in   []Region
+	exp  []Region
 }
 
 func runFindTest(tests []findTest, t *testing.T, commands ...string) {
@@ -27,11 +28,10 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 		v.Close()
 	}()
 
-	e := v.BeginEdit()
-	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
-	v.EndEdit(e)
-
 	for i, test := range tests {
+		e := v.BeginEdit()
+		v.Insert(e, 0, test.text)
+		v.EndEdit(e)
 		v.Sel().Clear()
 		for _, r := range test.in {
 			v.Sel().Add(r)
@@ -42,16 +42,21 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
 			t.Errorf("Test %d: Expected %s, but got %s", i, test.exp, sr)
 		}
+		e = v.BeginEdit()
+		v.Erase(e, Region{0, v.Buffer().Size()})
+		v.EndEdit(e)
 	}
 }
 
 func TestFindUnderExpand(t *testing.T) {
 	tests := []findTest{
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{0, 0}},
 			[]Region{{0, 5}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{19, 20}},
 			[]Region{{19, 20}, {22, 23}},
 		},
@@ -63,10 +68,12 @@ func TestFindUnderExpand(t *testing.T) {
 func TestFindNext(t *testing.T) {
 	tests := []findTest{
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{17, 20}},
 			[]Region{{17, 20}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{21, 23}},
 			[]Region{{18, 20}},
 		},

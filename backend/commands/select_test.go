@@ -12,14 +12,17 @@ import (
 func TestSingleSelection(t *testing.T) {
 	tests := []findTest{
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{1, 1}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{2, 2}, {3, 3}, {6, 6}},
 			[]Region{{2, 2}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{5, 5}},
 			[]Region{{5, 5}},
 		},
@@ -31,14 +34,17 @@ func TestSingleSelection(t *testing.T) {
 func TestSelectAll(t *testing.T) {
 	tests := []findTest{
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{0, 36}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{2, 2}, {3, 3}, {6, 6}},
 			[]Region{{0, 36}},
 		},
 		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{5, 5}},
 			[]Region{{0, 36}},
 		},
