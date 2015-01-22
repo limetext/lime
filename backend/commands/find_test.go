@@ -40,7 +40,7 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 			ed.CommandHandler().RunTextCommand(v, command, nil)
 		}
 		if sr := v.Sel().Regions(); !reflect.DeepEqual(sr, test.exp) {
-			t.Errorf("Test %d failed: %v, %+v", i, sr, test)
+			t.Errorf("Test %d: Expected %s, but got %s", i, test.exp, sr)
 		}
 	}
 }

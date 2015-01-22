@@ -8,7 +8,6 @@ import (
 	"errors"
 	. "github.com/limetext/lime/backend"
 	. "github.com/limetext/text"
-	"strings"
 )
 
 type (
@@ -55,27 +54,9 @@ func (c *FindUnderExpandCommand) Run(v *View, e *Edit) error {
 	last := rs[len(rs)-1]
 	b := v.Buffer()
 	lastSearch = b.SubstrR(last)
-	next := last
-	size := last.Size()
-	next.A += size
-	next.B += size
-	buf := b.SubstrR(Region{next.A, next.B})
-	for next.End() < b.Size() {
-		buf[size-1] = b.Index(next.B - 1)
-		found := true
-		for j, r := range buf {
-			if r != lastSearch[j] {
-				found = false
-				break
-			}
-		}
-		if found {
-			sel.Add(next)
-			break
-		}
-		copy(buf, buf[1:])
-		next.A += 1
-		next.B += 1
+	r := v.Find(string(lastSearch), last.End(), IGNORECASE|LITERAL)
+	if r.A != -1 {
+		sel.Add(r)
 	}
 	return nil
 }
@@ -90,27 +71,19 @@ func GetNextSelection(v *View, search string) (Region, error) {
 		last = Max(last, r.End())
 	}
 
-	b := v.Buffer()
 	// Start the search right after the last selection.
 	start := last
-	r := Region{start, b.Size()}
-	st := b.Substr(r)
-	p := search
-	size := len(p)
-	found := strings.Index(st, p)
+	r := v.Find(search, start, IGNORECASE|LITERAL)
 	// If not found yet, search from the start of the buffer to our original
 	// starting point.
-	if found == -1 {
-		r = Region{0, start}
-		st = b.Substr(r)
-		found = strings.Index(st, p)
+	if r.A == -1 {
+		r = v.Find(search, 0, IGNORECASE|LITERAL)
 	}
 	// If we found our string, select it.
-	if found != -1 {
-		newr := Region{r.A + found, r.A + found + size}
-		return newr, nil
+	if r.A != -1 {
+		return r, nil
 	}
-	return Region{}, errors.New("Selection not Found")
+	return Region{-1, -1}, errors.New("Selection not Found")
 }
 
 func (c *FindNextCommand) Run(v *View, e *Edit) error {
