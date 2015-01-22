@@ -25,7 +25,7 @@ func TestSingleSelection(t *testing.T) {
 		},
 	}
 
-	runFindTest(&tests, t, "single_selection")
+	runFindTest(tests, t, "single_selection")
 }
 
 func TestSelectAll(t *testing.T) {
@@ -44,5 +44,5 @@ func TestSelectAll(t *testing.T) {
 		},
 	}
 
-	runFindTest(&tests, t, "select_all")
+	runFindTest(tests, t, "select_all")
 }

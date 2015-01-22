@@ -16,7 +16,7 @@ type findTest struct {
 	exp []Region
 }
 
-func runFindTest(tests *[]findTest, t *testing.T, commands ...string) {
+func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 	ed := GetEditor()
 	w := ed.NewWindow()
 	defer w.Close()
@@ -31,7 +31,7 @@ func runFindTest(tests *[]findTest, t *testing.T, commands ...string) {
 	v.Insert(e, 0, "Hello World!\nTest123123\nAbrakadabra\n")
 	v.EndEdit(e)
 
-	for i, test := range *tests {
+	for i, test := range tests {
 		v.Sel().Clear()
 		for _, r := range test.in {
 			v.Sel().Add(r)
@@ -57,7 +57,7 @@ func TestFindUnderExpand(t *testing.T) {
 		},
 	}
 
-	runFindTest(&tests, t, "find_under_expand")
+	runFindTest(tests, t, "find_under_expand")
 }
 
 func TestFindNext(t *testing.T) {
@@ -72,5 +72,5 @@ func TestFindNext(t *testing.T) {
 		},
 	}
 
-	runFindTest(&tests, t, "find_under_expand", "find_next")
+	runFindTest(tests, t, "find_under_expand", "find_next")
 }
