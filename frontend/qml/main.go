@@ -405,8 +405,10 @@ func (fv *frontendView) Line(index int) *lineStruct {
 func (fv *frontendView) RegionLines() int {
 	var count int = 0
 	regs := fv.bv.Sel().Regions()
-	for _, r := range regs {
-		count += len(fv.bv.Buffer().Lines(r))
+	if fv.bv.Buffer() != nil {
+		for _, r := range regs {
+			count += len(fv.bv.Buffer().Lines(r))
+		}
 	}
 	return count
 }
