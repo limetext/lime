@@ -939,33 +939,6 @@ func BenchmarkScopeNameRandom(b *testing.B) {
 	}
 }
 
-func TestViewStatus(t *testing.T) {
-	w := GetEditor().NewWindow()
-	defer w.Close()
-
-	v := w.NewFile()
-	defer func() {
-		v.SetScratch(true)
-		v.Close()
-	}()
-
-	test := struct {
-		keys, vals []string
-	}{
-		[]string{"a", "", "d"},
-		[]string{"b", "c", ""},
-	}
-
-	for i, key := range test.keys {
-		v.SetStatus(key, test.vals[i])
-	}
-	for i, key := range test.keys {
-		if val := v.GetStatus(key); val != test.vals[i] {
-			t.Errorf("Expected view status with key %s be %s, but got %s", key, test.vals[i], val)
-		}
-	}
-}
-
 func TestFind(t *testing.T) {
 	in := "testing\nview.find\n[lite*r.al|ignoreCAsE]\n\tabra_kadabra\n\n"
 	tests := []struct {
@@ -1009,40 +982,58 @@ func TestFind(t *testing.T) {
 func TestSetStatus(t *testing.T) {
 	tests := []struct {
 		keys, vals []string
-		exp        status
+		exp        map[string]string
 	}{
 		{
 			[]string{"a", "", "d"},
 			[]string{"b", "c", ""},
-			status(map[string]string{"a": "b", "": "c", "d": ""}),
+			map[string]string{"a": "b", "": "c", "d": ""},
 		},
 	}
 
-	s := newStatus()
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	for i, test := range tests {
 		for j, key := range test.keys {
-			s.SetStatus(key, test.vals[j])
+			v.SetStatus(key, test.vals[j])
 		}
-		if !reflect.DeepEqual(s, test.exp) {
-			t.Errorf("Test %d: Expected %v be equal to %v", i, s, test.exp)
+		if !reflect.DeepEqual(v.status, test.exp) {
+			t.Errorf("Test %d: Expected %v be equal to %v", i, v.status, test.exp)
 		}
 	}
 }
 
 func TestGetStatus(t *testing.T) {
 	tests := []struct {
-		st  status
+		st  map[string]string
 		get map[string]string
 	}{
 		{
-			status(map[string]string{"a": "b", "": "c", "d": ""}),
+			map[string]string{"a": "b", "": "c", "d": ""},
 			map[string]string{"a": "b", "": "c", "d": ""},
 		},
 	}
 
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	for i, test := range tests {
+		v.status = test.st
 		for key, exp := range test.get {
-			if val := test.st.GetStatus(key); val != exp {
+			if val := v.GetStatus(key); val != exp {
 				t.Errorf("Test %d: Expected key %s value be %s, but got %s", i, key, exp, val)
 			}
 		}
@@ -1051,28 +1042,38 @@ func TestGetStatus(t *testing.T) {
 
 func TestEraseStatus(t *testing.T) {
 	tests := []struct {
-		st   status
+		st   map[string]string
 		keys []string
-		exp  status
+		exp  map[string]string
 	}{
 		{
-			status(map[string]string{"a": "b", "c": "d"}),
+			map[string]string{"a": "b", "c": "d"},
 			[]string{"a"},
-			status(map[string]string{"c": "d"}),
+			map[string]string{"c": "d"},
 		},
 		{
-			status(map[string]string{"a": "b", "": "c", "d": ""}),
+			map[string]string{"a": "b", "": "c", "d": ""},
 			[]string{"", "d"},
-			status(map[string]string{"a": "b"}),
+			map[string]string{"a": "b"},
 		},
 	}
 
+	w := GetEditor().NewWindow()
+	defer w.Close()
+
+	v := w.NewFile()
+	defer func() {
+		v.SetScratch(true)
+		v.Close()
+	}()
+
 	for i, test := range tests {
+		v.status = test.st
 		for _, key := range test.keys {
-			test.st.EraseStatus(key)
+			v.EraseStatus(key)
 		}
-		if !reflect.DeepEqual(test.st, test.exp) {
-			t.Errorf("Test %d: Expected %v be equal to %v", i, test.st, test.exp)
+		if !reflect.DeepEqual(v.status, test.exp) {
+			t.Errorf("Test %d: Expected %v be equal to %v", i, v.status, test.exp)
 		}
 	}
 }

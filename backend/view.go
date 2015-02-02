@@ -31,7 +31,6 @@ type (
 	View struct {
 		HasSettings
 		HasId
-		status
 		name        string
 		window      *Window
 		buffer      Buffer
@@ -45,16 +44,16 @@ type (
 		editstack   []*Edit
 		lock        sync.Mutex
 		reparseChan chan parseReq
+		status      map[string]string
 	}
 	parseReq struct {
 		forced bool
 	}
-
-	status map[string]string
 )
 
 func newView(w *Window) *View {
-	ret := &View{window: w, regions: make(render.ViewRegionMap), status: newStatus()}
+	ret := &View{window: w, regions: make(render.ViewRegionMap)}
+	ret.status = make(map[string]string)
 	ret.loadSettings()
 
 	ret.Settings().AddOnChange("lime.view.syntax", func(name string) {
@@ -961,18 +960,14 @@ func (v *View) Find(pat string, pos int, flags int) Region {
 	return Region{-1, -1}
 }
 
-func newStatus() status {
-	return make(status)
+func (v *View) SetStatus(key string, val string) {
+	v.status[key] = val
 }
 
-func (s status) SetStatus(key string, val string) {
-	s[key] = val
+func (v *View) GetStatus(key string) string {
+	return v.status[key]
 }
 
-func (s status) GetStatus(key string) string {
-	return s[key]
-}
-
-func (s status) EraseStatus(key string) {
-	delete(s, key)
+func (v *View) EraseStatus(key string) {
+	delete(v.status, key)
 }
