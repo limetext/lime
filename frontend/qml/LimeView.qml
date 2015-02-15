@@ -49,10 +49,10 @@ Item {
             height: childrenRect.height
             color: "transparent"
             Text {
-                property var line: myView.line(index)
+                property var line: !myView ? null : myView.line(index)
                 font.family: viewItem.fontFace
                 font.pointSize: viewItem.fontSize
-                text: line.text+" "
+                text: !line ? "" : line.text+" "
                 textFormat: TextEdit.RichText
                 color: "white"
             }
