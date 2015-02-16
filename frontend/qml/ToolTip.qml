@@ -25,8 +25,22 @@ Item {
         hoverEnabled: true;
         acceptedButtons: Qt.NoButton
         onPositionChanged: {
-            toolTipRoot.x = mouse.x;
-            toolTipRoot.y = mouse.y + 5;
+            function getAbsolutePosition(node) {
+                var returnPos = {};
+                returnPos.x = 0;
+                returnPos.y = 0;
+                if(node !== undefined && node !== null) {
+                    var parentValue = getAbsolutePosition(node.parent);
+                    returnPos.x = parentValue.x + node.x;
+                    returnPos.y = parentValue.y + node.y;
+                }
+                return returnPos;
+            }
+            var pos = getAbsolutePosition(this);
+            pos.x += mouse.x;
+            pos.y += mouse.y;
+            toolTipContainer.x = pos.x;
+            toolTipContainer.y = pos.y + 5;
         }
         Timer {
             interval: 500

@@ -210,11 +210,13 @@ ApplicationWindow {
                             implicitWidth: 180
                             implicitHeight: 28
                             ToolTip {
-                                id: tooltip
                                 backgroundColor: "#BECCCC66"
                                 textColor: "black"
                                 font.pointSize: 8
                                 text: styleData.title
+                                Component.onCompleted: {
+                                    this.parent = tabs;
+                                }
                             }
                             BorderImage {
                                 source: styleData.selected ? "../../packages/themes/soda/Soda Dark/tab-active.png" : "../../packages/themes/soda/Soda Dark/tab-inactive.png"
