@@ -154,7 +154,7 @@ func TestUnindent(t *testing.T) {
 			"a\n b\n  c\n   d\n",
 		},
 		{ // empty strings
-			// should perform unindent
+			// should continue
 			"",
 			false,
 			nil,
