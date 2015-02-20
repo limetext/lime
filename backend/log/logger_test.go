@@ -78,6 +78,7 @@ func TestLogFunctions(t *testing.T) {
 	l.Trace(time.Now().String())
 	l.Warn(time.Now().String())
 	l.Error(time.Now().String())
+	l.Errorf("%v", time.Now().String())
 	l.Critical(time.Now().String())
 
 }
