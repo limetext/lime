@@ -153,6 +153,14 @@ func TestUnindent(t *testing.T) {
 			[]Region{{3, 0}},
 			"a\n b\n  c\n   d\n",
 		},
+		{ // empty strings
+			// should perform unindent
+			"",
+			false,
+			4,
+			[]Region{{3, 0}},
+			"",
+		},
 	}
 
 	runIndentTest(t, tests, "unindent")
