@@ -94,6 +94,12 @@ func TestTitleCase(t *testing.T) {
 func TestSwapCase(t *testing.T) {
 	tests := []caseTest{
 		{
+			[]Region{{0, 0}},
+
+			"",
+			"",
+		},
+		{
 			[]Region{{0, 13}},
 
 			"Hello, World!",
