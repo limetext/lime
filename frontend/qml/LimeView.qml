@@ -43,19 +43,23 @@ Item {
 
     ListView {
         id: view
-        property var myView
-        boundsBehavior: Flickable.StopAtBounds
-        anchors.fill: parent
-        interactive: false
-        cacheBuffer: contentHeight
         model: ListModel {}
-
+        anchors.fill: parent
+        boundsBehavior: Flickable.StopAtBounds
+        cacheBuffer: contentHeight
+        interactive: false
+        clip: true
+        z: 4
+        
+        property var myView
         property bool showBars: false
         property var cursor: parent.cursor
+
         delegate: Rectangle {
+            color: "transparent"
             width: parent.width
             height: childrenRect.height
-            color: "transparent"
+            
             Text {
                 property var line: !myView ? null : myView.line(index)
                 font.family: viewItem.fontFace
@@ -65,6 +69,7 @@ Item {
                 color: "white"
             }
         }
+
         states: [
             State {
                 name: "ShowBars"
