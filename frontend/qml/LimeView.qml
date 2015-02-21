@@ -201,17 +201,20 @@ Item {
 
         Rectangle {
             id: verticalScrollBar
+
             visible: !isMinimap
             width: 10
             radius: width
             height: view.visibleArea.heightRatio * view.height
             anchors.right: view.right
             opacity: (view.showBars || ma.containsMouse || ma.drag.active) ? 0.5 : 0.0
+
             onYChanged: {
                 if (ma.drag.active) {
                     view.contentY = y*(view.contentHeight-view.height)/(view.height-height);
                 }
             }
+
             states: [
                 State {
                     when: !ma.drag.active
@@ -221,10 +224,13 @@ Item {
                     }
                 }
             ]
+
             Behavior on opacity { PropertyAnimation {} }
         }
+
         MouseArea {
             id: ma
+            enabled: true
             width: verticalScrollBar.width
             height: view.height
             anchors.right: parent.right
@@ -232,12 +238,9 @@ Item {
             drag.target: verticalScrollBar
             drag.minimumY: 0
             drag.maximumY: view.height-verticalScrollBar.height
-            enabled: true
         }
-
-        clip: true
-        z: 4
     }
+
     Repeater {
         id: regs
         model: (!isMinimap && sel()) ? sel().len() : 0
