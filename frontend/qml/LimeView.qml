@@ -88,30 +88,18 @@ Item {
                 }
             }
         ]
+
         MouseArea {
-            enabled: !isMinimap
             property var point: new Object()
+
+            enabled: !isMinimap
             x: 0
-            y: 0
+            y: 0            
+            cursorShape: parent.cursor
+            propagateComposedEvents: true
             height: parent.height
             width: parent.width-verticalScrollBar.width
-            propagateComposedEvents: true
-            cursorShape: parent.cursor
-            Text {
-                // just used to measure the text.
-                // If we change an actual displayed item's text,
-                // there's a risk (or is it always happening?)
-                // that the backend stored text data is no longer
-                // connected with that text item and hence changes
-                // made backend side aren't propagated.
-                id: dummy
-                font.family: viewItem.fontFace
-                textFormat: TextEdit.RichText
-                visible: false
-                Component.onCompleted: {
-                    dummy.font.pointSize = viewItem.fontSize
-                }
-            }
+
             function measure(line, x) {
                 var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0)),
                     str = myView.back().buffer().substr(line);
@@ -134,22 +122,41 @@ Item {
 
                 return col;
             }
+
+            Text {
+                // just used to measure the text.
+                // If we change an actual displayed item's text,
+                // there's a risk (or is it always happening?)
+                // that the backend stored text data is no longer
+                // connected with that text item and hence changes
+                // made backend side aren't propagated.
+                id: dummy
+                font.family: viewItem.fontFace
+                textFormat: TextEdit.RichText
+                visible: false
+                Component.onCompleted: {
+                    dummy.font.pointSize = viewItem.fontSize
+                }
+            }
+
             onPositionChanged: {
                 var item  = view.itemAt(0, mouse.y+view.contentY),
                     index = view.indexAt(0, mouse.y+view.contentY),
-                    s = sel();
-                if (item != null && sel != null) {
+                    selection = getCurrentSelection();
+
+                if (item != null && selection != null) {
                     var col = measure(index, mouse.x);
                     point.r = myView.back().buffer().textPoint(index, col);
                     if (point.p != null && point.p != point.r) {
                         // Remove the last region and replace it with new one
-                        var r = s.get(s.len()-1);
-                        s.substract(r);
-                        s.add(myView.region(point.p, point.r));
+                        var r = selection.get(selection.len()-1);
+                        selection.substract(r);
+                        selection.add(myView.region(point.p, point.r));
                     }
                 }
                 point.r = null;
             }
+
             onPressed: {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
@@ -160,11 +167,12 @@ Item {
                         var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        if (!ctrl) sel().clear();
-                        sel().add(myView.region(point.p, point.p))
+                        if (!ctrl) getCurrentSelection().clear();
+                        getCurrentSelection().add(myView.region(point.p, point.p))
                     }
                 }
             }
+
             onDoubleClicked: {
                 if (!isMinimap) {
                     var item  = view.itemAt(0, mouse.y+view.contentY),
@@ -173,11 +181,12 @@ Item {
                         var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        if (!ctrl) sel().clear();
-                        sel().add(myView.back().expandByClass(myView.region(point.p, point.p), 1|2|4|8))
+                        if (!ctrl) getCurrentSelection().clear();
+                        getCurrentSelection().add(myView.back().expandByClass(myView.region(point.p, point.p), 1|2|4|8))
                     }
                 }
             }
+
             onWheel: {
                 var delta = wheel.pixelDelta,
                     scaleFactor = 30;
