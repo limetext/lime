@@ -300,6 +300,7 @@ Item {
         repeat: true
         running: true
         
+        // getCursorOffset returns the x coordinate for the cursor.
         function getCursorOffset(cursorIndex, rowcol, cursor, buf) {
 
             var line = buf.line(cursorIndex),
@@ -319,19 +320,32 @@ Item {
             return (!cursorOffset) ? 0 : cursorOffset;
         }
         
-        // Works like buffer.Lines()
-        function lines(sel, buf) {
-            var lines = new Array(),
-                ss = (sel.b > sel.a) ? {a: sel.a, b: sel.b} : {a: sel.b, b: sel.a},
-                rc = {a: buf.rowCol(ss.a), b: buf.rowCol(ss.b)};
+        // getLinesFromSelection returns an array of lines from the given
+        // selection and buffer. Works like buffer.Lines()
+        //
+        // note: the selection could be inverted, for example if a user starts
+        // selecting from the bottom up. This makes sure that the start of
+        // the selection is where the user stopped selecting.
+        function getLinesFromSelection(selection, buf) {
+            var lines = [];
 
-            for(var i = rc.a[0]; i <= rc.b[0]; i++) {
+            var safeSelection = (selection.b > selection.a) ?
+                        { a: selection.a, b: selection.b }:
+                        { a: selection.b, b: selection.a };
+            
+            var rowCol = {
+                a: buf.rowCol(safeSelection.a),
+                b: buf.rowCol(safeSelection.b)
+            };
+
+            for(var i = rowCol.a[0]; i <= rowCol.b[0]; i++) {
                 var lr = buf.line(buf.textPoint(i, 0)),
-                    a = (i == rc.a[0]) ? ss.a : lr.a,
-                    b = (i == rc.b[0]) ? ss.b : lr.b,
+                    a = (i == rowCol.a[0]) ? safeSelection.a : lr.a,
+                    b = (i == rowCol.b[0]) ? safeSelection.b : lr.b,
                     res = (b > a) ? {a: a, b: b} : {a: b, b: a};
                 lines.push(res);
             }
+
             return lines;
         }
 
@@ -354,7 +368,7 @@ Item {
                 if (!s || !rect) continue;
 
                 var rowcol,
-                    lns = lines(s, buf);
+                    lns = getLinesFromSelection(s, buf);
 
                 // checks to see if there is more than one rune selected
                 if (s.b <= s.a) lns.reverse();
