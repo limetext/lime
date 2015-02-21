@@ -100,23 +100,35 @@ Item {
             height: parent.height
             width: parent.width-verticalScrollBar.width
 
-            function measure(line, x) {
-                var line = myView.back().buffer().line(myView.back().buffer().textPoint(line, 0)),
-                    str = myView.back().buffer().substr(line);
-                dummy.text = str;
-                // If we are clicking out of line width return end of line column
-                if(x > dummy.width) return myView.back().buffer().rowCol(line.b)[1]
-                // We try to start searching from somewhere close to click position
-                var col = Math.floor(0.5 + str.length * x/dummy.width);
+            function colFromMouseX(lineIndex, mouseX) {
+
+                var line = myView.back().buffer().line(myView.back().buffer().textPoint(lineIndex, 0)),
+                    lineText = myView.back().buffer().substr(line);
+
+                dummy.text = lineText;
+
+                // if the click was farther right than the last character of
+                // the line then return the last character's column
+                if(mouseX > dummy.width) {
+                    return myView.back().buffer().rowCol(line.b)[1]
+                }
+
+                // fixme: why do we need this magic number?
+                var OFFSET_MAGIC_NUMBER = 0.5;
+
+                // calculate a column from a given mouse x coordinate and the line text.
+                var col = Math.floor(OFFSET_MAGIC_NUMBER + lineText.length * (mouseX / dummy.width));
 
                 // Trying to find closest column to clicked position
-                dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
-                var d = Math.abs(x - dummy.width),
-                    add = (x > dummy.width) ? 1 : -1;
-                while(Math.abs(x - dummy.width) <= d) {
-                    d = Math.abs(x - dummy.width);
+                dummy.text = "<span style=\"white-space:pre\">" + lineText.substr(0, col) + "</span>";
+
+                var d = Math.abs(mouseX - dummy.width),
+                    add = (mouseX > dummy.width) ? 1 : -1;
+
+                while(Math.abs(mouseX - dummy.width) <= d) {
+                    d = Math.abs(mouseX - dummy.width);
                     col += add;
-                    dummy.text = "<span style=\"white-space:pre\">" + str.substr(0, col) + "</span>";
+                    dummy.text = "<span style=\"white-space:pre\">" + lineText.substr(0, col) + "</span>";
                 }
                 col -= add;
 
@@ -145,7 +157,7 @@ Item {
                     selection = getCurrentSelection();
 
                 if (item != null && selection != null) {
-                    var col = measure(index, mouse.x);
+                    var col = colFromMouseX(index, mouse.x);
                     point.r = myView.back().buffer().textPoint(index, col);
                     if (point.p != null && point.p != point.r) {
                         // Remove the last region and replace it with new one
@@ -164,7 +176,7 @@ Item {
                     var item  = view.itemAt(0, mouse.y+view.contentY),
                         index = view.indexAt(0, mouse.y+view.contentY);
                     if (item != null) {
-                        var col = measure(index, mouse.x);
+                        var col = colFromMouseX(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
                         if (!ctrl) getCurrentSelection().clear();
