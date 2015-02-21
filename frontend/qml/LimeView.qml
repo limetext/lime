@@ -302,10 +302,11 @@ Item {
                 if (style == "underscore") {
                     if (inv) {
                         rect.cursor.text = "_";
+                        rect.cursor.x += 1;
                     } else {
                         rect.cursor.text = "|";
                         // Shift the cursor to the edge of the character
-                        rect.cursor.x -= 4;
+                        rect.cursor.x -= 2;
                     }
                 }
             }
