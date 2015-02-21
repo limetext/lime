@@ -242,41 +242,59 @@ Item {
     }
 
     Repeater {
-        id: regs
-        model: (!isMinimap && sel()) ? sel().len() : 0
+        id: highlighedLines
+        model: (!isMinimap && getCurrentSelection()) ? getCurrentSelection().len() : 0
+
         delegate: Rectangle {
             property var rowcol
             property var cursor: children[0]
+
             color: "#444444"
             radius: 2
             border.color: "#1c1c1c"
             height: cursor.height
+            y: getYPosition(rowcol)
+            z: 3
+
+            function getYPosition(rowCol) {
+                if(rowCol) {
+                    return rowcol[0] * (view.contentHeight/view.count) - view.contentY;
+                }
+                return 0;
+            }
+
             Text {
                 color: "#F8F8F0"
                 font.family: viewItem.fontFace
                 font.pointSize: viewItem.fontSize
             }
-            y: rowcol ? rowcol[0]*(view.contentHeight/view.count)-view.contentY : 0;
-            z: 3
         }
     }
+
     Timer {
         interval: 100
-        running: true
         repeat: true
-        function measure(p, rowcol, cursor, buf) {
-            var line = buf.line(p),
-                str  = buf.substr(line);
+        running: true
+        
+        function getCursorOffset(cursorIndex, rowcol, cursor, buf) {
 
-            str = str.substr(0, rowcol[1]);
+            var line = buf.line(cursorIndex),
+                currentLineText  = buf.substr(line);
+
+            // text from the beginning of the line to the given column
+            var textToCursor = currentLineText.substr(0, rowcol[1]);
+            
             cursor.textFormat = TextEdit.RichText;
-            cursor.text = "<span style=\"white-space:pre\">" + str + "</span>";
-            var ret = cursor.width;
+            cursor.text = "<span style=\"white-space:pre\">" + textToCursor + "</span>";
+
+            var cursorOffset = cursor.width;
+            
             cursor.textFormat = TextEdit.PlainText;
             cursor.text = "";
 
-            return (!ret) ? 0 : ret;
+            return (!cursorOffset) ? 0 : cursorOffset;
         }
+        
         // Works like buffer.Lines()
         function lines(sel, buf) {
             var lines = new Array(),
@@ -292,40 +310,52 @@ Item {
             }
             return lines;
         }
+
+        // todo: extract body of this to functions
         onTriggered: {
+
             if (myView == undefined) return;
-            var s = sel(),
-                back = myView.back(),
-                buf = back.buffer(),
-                of = 0;
-            regs.model = myView.regionLines();
-            for(var i = 0; i < s.len(); i++) {
-                var rect = regs.itemAt(i),
-                    mysel = s.get(i);
-                if (!mysel || !rect) continue;
+            
+            var selection = getCurrentSelection(),
+                backend = myView.back(),
+                buf = backend.buffer(),
+                of = 0; // todo: rename 'of' to something more descriptive
+            
+            highlighedLines.model = myView.regionLines();
+            
+            for(var i = 0; i < selection.len(); i++) {
+                var rect = highlighedLines.itemAt(i),
+                    s = selection.get(i);
+
+                if (!s || !rect) continue;
 
                 var rowcol,
-                    lns = lines(mysel, buf);
+                    lns = lines(s, buf);
 
-                if (mysel.b <= mysel.a) lns.reverse();
+                // checks to see if there is more than one rune selected
+                if (s.b <= s.a) lns.reverse();
                 for(var j = 0; j < lns.length; j++) {
-                    rect = regs.itemAt(i+of);
+                    rect = highlighedLines.itemAt(i+of);
+                    // console.log(rect);
+                    
+                    // todo: rename 'of' to something more descriptive
                     of++;
                     rowcol = buf.rowCol(lns[j].a);
                     rect.rowcol = rowcol;
-                    rect.x = measure(lns[j].a, rowcol, rect.cursor, buf);
+                    rect.x = getCursorOffset(lns[j].a, rowcol, rect.cursor, buf);
                     rowcol = buf.rowCol(lns[j].b);
-                    rect.width = measure(lns[j].b, rowcol, rect.cursor, buf) - rect.x;
+                    rect.width = getCursorOffset(lns[j].b, rowcol, rect.cursor, buf) - rect.x;
                 }
                 of--;
 
-                rect.cursor.x = (mysel.b <= mysel.a) ? 0 : rect.width;
-                rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);;
+                rect.cursor.x = (s.b <= s.a) ? 0 : rect.width;
+                rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
 
-                var style = myView.setting("caret_style"),
-                    inv = myView.setting("inverse_caret_state");
-                if (style == "underscore") {
-                    if (inv) {
+                var caretStyle = myView.setting("caret_style"),
+                    inverseCaretState = myView.setting("inverse_caret_state");
+
+                if (caretStyle == "underscore") {
+                    if (inverseCaretState) {
                         rect.cursor.text = "_";
                         rect.cursor.x += 1;
                     } else {
@@ -336,8 +366,8 @@ Item {
                 }
             }
             // Clearing
-            for(var i = of+s.len()+1; i < regs.count; i++) {
-                var rect = regs.itemAt(i);
+            for(var i = of + selection.len()+1; i < highlighedLines.count; i++) {
+                var rect = highlighedLines.itemAt(i);
                 if (!rect) continue;
                 rect.width = 0;
             }
