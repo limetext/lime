@@ -3,20 +3,32 @@ import QtQuick.Layouts 1.0
 
 Item {
     id: viewItem
+
     property var myView
     property bool isMinimap: false
     property int fontSize: isMinimap ? 4 : 12
     property string fontFace: "Helvetica"
     property var cursor: Qt.IBeamCursor
     property bool ctrl: false
-    function sel() {
+
+    function getCurrentSelection() {
         if (!myView || !myView.back()) return null;
         return myView.back().sel();
     }
+
+    function addLine() {
+        view.model.append({});
+    }
+
+    function insertLine(idx) {
+        view.model.insert(idx, {});
+    }
+    
     Rectangle  {
         color: frontend.defaultBg()
         anchors.fill: parent
     }
+
     onMyViewChanged: {
         if (!isMinimap) {
             view.model.clear();
@@ -24,15 +36,11 @@ Item {
             myView.fix(viewItem);
         }
     }
+
     onFontSizeChanged: {
         dummy.font.pointSize = fontSize;
     }
-    function addLine() {
-        view.model.append({});
-    }
-    function insertLine(idx) {
-        view.model.insert(idx, {});
-    }
+
     ListView {
         id: view
         property var myView
