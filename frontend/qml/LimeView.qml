@@ -173,13 +173,18 @@ Item {
                 // TODO:
                 // Changing caret position doesn't work on empty lines
                 if (!isMinimap) {
+
                     var item  = view.itemAt(0, mouse.y+view.contentY),
                         index = view.indexAt(0, mouse.y+view.contentY);
+
                     if (item != null) {
                         var col = colFromMouseX(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        if (!ctrl) getCurrentSelection().clear();
+                        if (!ctrl) {
+                            getCurrentSelection().clear();
+                        }
+
                         getCurrentSelection().add(myView.region(point.p, point.p))
                     }
                 }
@@ -187,13 +192,18 @@ Item {
 
             onDoubleClicked: {
                 if (!isMinimap) {
+                    
                     var item  = view.itemAt(0, mouse.y+view.contentY),
                         index = view.indexAt(0, mouse.y+view.contentY);
+
                     if (item != null) {
                         var col = measure(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
-                        if (!ctrl) getCurrentSelection().clear();
+                        if (!ctrl) {
+                            getCurrentSelection().clear();
+                        }
+
                         getCurrentSelection().add(myView.back().expandByClass(myView.region(point.p, point.p), 1|2|4|8))
                     }
                 }
@@ -202,10 +212,12 @@ Item {
             onWheel: {
                 var delta = wheel.pixelDelta,
                     scaleFactor = 30;
+
                 if (delta.x == 0 && delta.y == 0) {
                     delta = wheel.angleDelta;
                     scaleFactor = 15;
                 }
+
                 view.flick(delta.x*scaleFactor, delta.y*scaleFactor);
                 wheel.accepted = true;
             }
