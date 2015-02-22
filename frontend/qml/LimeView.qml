@@ -370,13 +370,10 @@ Item {
                 var rowcol,
                     lns = getLinesFromSelection(s, buf);
 
-                // checks to see if there is more than one rune selected
+                // checks if we moved cursor forward or backward
                 if (s.b <= s.a) lns.reverse();
                 for(var j = 0; j < lns.length; j++) {
                     rect = highlighedLines.itemAt(i+of);
-                    // console.log(rect);
-                    
-                    // todo: rename 'of' to something more descriptive
                     of++;
                     rowcol = buf.rowCol(lns[j].a);
                     rect.rowcol = rowcol;
