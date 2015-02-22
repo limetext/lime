@@ -396,7 +396,7 @@ Item {
                     } else {
                         rect.cursor.text = "|";
                         // Shift the cursor to the edge of the character
-                        rect.cursor.x -= 2;
+                        rect.cursor.x -= 4;
                     }
                 }
             }
