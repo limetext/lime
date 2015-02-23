@@ -392,7 +392,6 @@ Item {
                 if (caretStyle == "underscore") {
                     if (inverseCaretState) {
                         rect.cursor.text = "_";
-                        rect.cursor.x += 1;
                     } else {
                         rect.cursor.text = "|";
                         // Shift the cursor to the edge of the character
