@@ -6,7 +6,6 @@ package main
 
 import (
 	"github.com/limetext/lime/backend"
-	_ "github.com/limetext/lime/backend/commands"
 	"gopkg.in/qml.v1"
 	"sync"
 )

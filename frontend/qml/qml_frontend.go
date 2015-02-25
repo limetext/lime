@@ -7,7 +7,6 @@ package main
 import (
 	"fmt"
 	"github.com/limetext/lime/backend"
-	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
@@ -24,7 +23,20 @@ import (
 	"time"
 )
 
-const batching_enabled = true
+var limeViewComponent qml.Object
+
+const (
+	batching_enabled = true
+	qmlMainFile      = "main.qml"
+	qmlViewFile      = "LimeView.qml"
+
+	// http://qt-project.org/doc/qt-5.1/qtcore/qt.html#KeyboardModifier-enum
+	shift_mod  = 0x02000000
+	ctrl_mod   = 0x04000000
+	alt_mod    = 0x08000000
+	meta_mod   = 0x10000000
+	keypad_mod = 0x20000000
+)
 
 // keeping track of frontend state
 type qmlfrontend struct {
@@ -34,6 +46,9 @@ type qmlfrontend struct {
 	Console        *frontendView
 	qmlDispatch    chan qmlDispatch
 }
+
+// Used for batching qml.Changed calls
+type qmlDispatch struct{ value, field interface{} }
 
 func (t *qmlfrontend) Window(w *backend.Window) *frontendWindow {
 	return t.windows[w]

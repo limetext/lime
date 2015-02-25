@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/limetext/lime/backend"
-	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
 	"gopkg.in/qml.v1"
@@ -23,6 +23,17 @@ type frontendView struct {
 	qv            qml.Object
 	FormattedLine []*lineStruct
 	Title         lineStruct
+}
+
+// This allows us to trigger a qml.Changed on a specific line in the view so
+// that only it is re-rendered by qml
+type lineStruct struct {
+	Text string
+}
+
+// htmlcol returns the hex color value for the given Colour object
+func htmlcol(c render.Colour) string {
+	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
 
 func (fv *frontendView) Line(index int) *lineStruct {
