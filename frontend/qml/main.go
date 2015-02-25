@@ -252,13 +252,6 @@ type (
 	lineStruct struct {
 		Text string
 	}
-	// A helper glue structure connecting the backend Window with
-	// the qml.Window
-	frontendWindow struct {
-		bw     *backend.Window
-		views  []*frontendView
-		window *qml.Window
-	}
 )
 
 var (
@@ -269,33 +262,6 @@ func htmlcol(c render.Colour) string {
 	return fmt.Sprintf("%02X%02X%02X", c.R, c.G, c.B)
 }
 
-// Instantiates a new window, and launches a new goroutine waiting for it
-// to be closed. The WaitGroup is increased at function entry and decreased
-// once the window closes.
-func (fw *frontendWindow) launch(wg *sync.WaitGroup, component qml.Object) {
-	wg.Add(1)
-	fw.window = component.CreateWindow(nil)
-	fw.window.Show()
-	fw.window.Set("myWindow", fw)
-
-	go func() {
-		fw.window.Wait()
-		wg.Done()
-	}()
-}
-
-func (fw *frontendWindow) View(idx int) *frontendView {
-	return fw.views[idx]
-}
-
-func (fw *frontendWindow) ActiveViewIndex() int {
-	for i, v := range fw.views {
-		if v.bv == fw.bw.ActiveView() {
-			return i
-		}
-	}
-	return 0
-}
 func (t *qmlfrontend) Window(w *backend.Window) *frontendWindow {
 	return t.windows[w]
 }
@@ -385,10 +351,6 @@ func (t *qmlfrontend) Erased(changed_buffer Buffer, region_removed Region, data_
 
 func (t *qmlfrontend) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
 	t.scroll(changed_buffer)
-}
-
-func (fw *frontendWindow) Back() *backend.Window {
-	return fw.bw
 }
 
 // Apparently calling qml.Changed also triggers a re-draw, meaning that typed text is at the
