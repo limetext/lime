@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
@@ -20,7 +19,6 @@ import (
 	"gopkg.in/fsnotify.v0"
 	"gopkg.in/qml.v1"
 	"image/color"
-	"io"
 	"runtime"
 	"strings"
 	"sync"
@@ -261,15 +259,6 @@ type (
 		views  []*frontendView
 		window *qml.Window
 	}
-
-	// A helper glue structure connecting the backend View
-	// with the qml code that then ends up rendering it.
-	frontendView struct {
-		bv            *backend.View
-		qv            qml.Object
-		FormattedLine []*lineStruct
-		Title         lineStruct
-	}
 )
 
 var (
@@ -398,28 +387,6 @@ func (t *qmlfrontend) Inserted(changed_buffer Buffer, region_inserted Region, da
 	t.scroll(changed_buffer)
 }
 
-func (fv *frontendView) Line(index int) *lineStruct {
-	return fv.FormattedLine[index]
-}
-
-func (fv *frontendView) RegionLines() int {
-	var count int = 0
-	regs := fv.bv.Sel().Regions()
-	if fv.bv.Buffer() != nil {
-		for _, r := range regs {
-			count += len(fv.bv.Buffer().Lines(r))
-		}
-	}
-	return count
-}
-
-func (fv *frontendView) Setting(name string) interface{} {
-	return fv.Back().Settings().Get(name, nil)
-}
-
-func (fv *frontendView) Back() *backend.View {
-	return fv.bv
-}
 func (fw *frontendWindow) Back() *backend.Window {
 	return fw.bw
 }
@@ -458,102 +425,6 @@ func (t *qmlfrontend) qmlChanged(value, field interface{}) {
 	}
 }
 
-func (fv *frontendView) Fix(obj qml.Object) {
-	fv.qv = obj
-
-	for i := range fv.FormattedLine {
-		_ = i
-		obj.Call("addLine")
-	}
-}
-
-func (fv *frontendView) bufferChanged(buf Buffer, pos, delta int) {
-	prof := util.Prof.Enter("frontendView.bufferChanged")
-	defer prof.Exit()
-
-	row1, _ := buf.RowCol(pos)
-	row2, _ := buf.RowCol(pos + delta)
-	if row1 > row2 {
-		row1, row2 = row2, row1
-	}
-
-	if delta > 0 && fv.qv != nil {
-		r1 := row1
-		if add := strings.Count(buf.Substr(Region{pos, pos + delta}), "\n"); add > 0 {
-			nn := make([]*lineStruct, len(fv.FormattedLine)+add)
-			copy(nn, fv.FormattedLine[:r1])
-			copy(nn[r1+add:], fv.FormattedLine[r1:])
-			for i := 0; i < add; i++ {
-				nn[r1+i] = &lineStruct{Text: ""}
-			}
-			fv.FormattedLine = nn
-			for i := 0; i < add; i++ {
-				fv.qv.Call("insertLine", r1+i)
-			}
-		}
-	}
-
-	for i := row1; i <= row2; i++ {
-		fv.formatLine(i)
-	}
-}
-
-func (fv *frontendView) Erased(changed_buffer Buffer, region_removed Region, data_removed []rune) {
-	fv.bufferChanged(changed_buffer, region_removed.B, region_removed.A-region_removed.B)
-}
-
-func (fv *frontendView) Inserted(changed_buffer Buffer, region_inserted Region, data_inserted []rune) {
-	fv.bufferChanged(changed_buffer, region_inserted.A, region_inserted.B-region_inserted.A)
-}
-
-func (fv *frontendView) formatLine(line int) {
-	prof := util.Prof.Enter("frontendView.formatLine")
-	defer prof.Exit()
-	buf := bytes.NewBuffer(nil)
-	vr := fv.bv.Buffer().Line(fv.bv.Buffer().TextPoint(line, 0))
-	for line >= len(fv.FormattedLine) {
-		fv.FormattedLine = append(fv.FormattedLine, &lineStruct{Text: ""})
-		if fv.qv != nil {
-			fv.qv.Call("addLine")
-		}
-	}
-	if vr.Size() == 0 {
-		if fv.FormattedLine[line].Text != "" {
-			fv.FormattedLine[line].Text = ""
-			t.qmlChanged(fv.FormattedLine[line], fv.FormattedLine[line])
-		}
-		return
-	}
-	recipie := fv.bv.Transform(scheme, vr).Transcribe()
-	highlight_line := false
-	if b, ok := fv.bv.Settings().Get("highlight_line", highlight_line).(bool); ok {
-		highlight_line = b
-	}
-	lastEnd := vr.Begin()
-
-	for _, reg := range recipie {
-		if lastEnd != reg.Region.Begin() {
-			fmt.Fprintf(buf, "<span>%s</span>", fv.bv.Buffer().Substr(Region{lastEnd, reg.Region.Begin()}))
-		}
-		fmt.Fprintf(buf, "<span style=\"white-space:pre; color:#%s; background:#%s\">%s</span>", htmlcol(reg.Flavour.Foreground), htmlcol(reg.Flavour.Background), fv.bv.Buffer().Substr(reg.Region))
-		lastEnd = reg.Region.End()
-	}
-	if lastEnd != vr.End() {
-		io.WriteString(buf, fv.bv.Buffer().Substr(Region{lastEnd, vr.End()}))
-	}
-
-	str := buf.String()
-
-	if fv.FormattedLine[line].Text != str {
-		fv.FormattedLine[line].Text = str
-		t.qmlChanged(fv.FormattedLine[line], fv.FormattedLine[line])
-	}
-}
-
-func (fv *frontendView) Region(a int, b int) Region {
-	return Region{a, b}
-}
-
 func (t *qmlfrontend) DefaultBg() color.RGBA {
 	c := scheme.Spice(&render.ViewRegions{})
 	c.Background.A = 0xff
@@ -564,16 +435,6 @@ func (t *qmlfrontend) DefaultFg() color.RGBA {
 	c := scheme.Spice(&render.ViewRegions{})
 	c.Foreground.A = 0xff
 	return color.RGBA(c.Foreground)
-}
-
-func (fv *frontendView) onChange(name string) {
-	if name != "lime.syntax.updated" {
-		return
-	}
-	// force redraw, as the syntax regions might have changed...
-	for i := range fv.FormattedLine {
-		fv.formatLine(i)
-	}
 }
 
 // Called when a new view is opened
