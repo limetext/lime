@@ -15,6 +15,7 @@ type (
 	// A Key press with the given Key
 	// and modifiers.
 	KeyPress struct {
+		Text                    string
 		Key                     Key
 		Shift, Super, Alt, Ctrl bool
 	}

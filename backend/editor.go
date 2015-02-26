@@ -355,7 +355,7 @@ func (e *Editor) inputthread() {
 		} else if kp.IsCharacter() {
 			p2 := Prof.Enter("hi.character")
 			log.Finest("kp: %v, pos: %v", kp, possible_actions)
-			if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": string(rune(kp.Key))}); err != nil {
+			if err := e.CommandHandler().RunTextCommand(v, "insert", Args{"characters": kp.Text}); err != nil {
 				log.Debug("Couldn't run textcommand: %s", err)
 			}
 			p2.Exit()
