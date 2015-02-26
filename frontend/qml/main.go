@@ -7,6 +7,7 @@ package main
 import (
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
+	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/textmate"
 	"gopkg.in/qml.v1"
