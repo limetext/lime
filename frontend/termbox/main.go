@@ -456,7 +456,7 @@ func (t *tbfe) renderthread() {
 	}
 
 	for range t.dorender {
-		log.Finest("Rendering")
+		// log.Finest("Rendering")
 		dorender()
 	}
 }
