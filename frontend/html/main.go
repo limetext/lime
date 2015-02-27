@@ -222,6 +222,9 @@ func (t *tbfe) render(w io.Writer) {
 	}
 	//	runes := []rune(t.status_message)
 }
+
+// key HandleFunc for the http /key endpoint. This only happens if the client
+// doesn't support websockets.
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	log.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
@@ -240,10 +243,12 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	if req.FormValue("shiftKey") == "true" {
 		kp.Shift = true
 	}
+
 	if !kp.Shift {
 		v = int64(unicode.ToLower(rune(v)))
 	}
 	kp.Key = keys.Key(v)
+	kp.Text = string(v)
 	backend.GetEditor().HandleInput(kp)
 }
 
@@ -405,6 +410,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					v = int64(unicode.ToLower(rune(v)))
 				}
 				kp.Key = keys.Key(v)
+				kp.Text = string(v)
 			}
 
 			backend.GetEditor().HandleInput(kp)
