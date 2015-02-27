@@ -11,15 +11,14 @@ import (
 	"unicode"
 )
 
-type (
-	// A Key press with the given Key
-	// and modifiers.
-	KeyPress struct {
-		Text                    string
-		Key                     Key
-		Shift, Super, Alt, Ctrl bool
-	}
-)
+// KeyPress describes a key press event.
+// Note that Key does not distinguish between capital and non-capital letters;
+// use the Text property for this purpose.
+type KeyPress struct {
+	Text                    string // the text representation of the key
+	Key                     Key    // the code for the key that was pressed
+	Shift, Super, Alt, Ctrl bool   // true if modifier key was pressed
+}
 
 // Returns an index used for sorting key presses.
 // TODO(.): This is in no way a unique index with quite a lot of collisions and potentially resulting
