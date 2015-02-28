@@ -456,7 +456,6 @@ func (t *tbfe) renderthread() {
 	}
 
 	for range t.dorender {
-		log.Finest("Rendering")
 		dorender()
 	}
 }
@@ -504,8 +503,10 @@ func (t *tbfe) handleInput(ev termbox.Event) {
 	var kp keys.KeyPress
 	if ev.Ch != 0 {
 		kp.Key = keys.Key(ev.Ch)
+		kp.Text = string(ev.Ch)
 	} else if v2, ok := lut[ev.Key]; ok {
 		kp = v2
+		kp.Text = string(kp.Key)
 	} else {
 		return
 	}

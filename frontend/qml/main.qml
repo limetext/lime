@@ -188,7 +188,7 @@ ApplicationWindow {
         anchors.fill: parent
         Keys.onPressed: {
             view().ctrl = (event.key == Qt.Key_Control) ? true : false;
-            event.accepted = frontend.handleInput(event.key, event.modifiers)
+            event.accepted = frontend.handleInput(event.text, event.key, event.modifiers)
         }
         Keys.onReleased: {
             view().ctrl = (event.key == Qt.Key_Control) ? false : view().ctrl;

@@ -215,8 +215,8 @@ func (t *qmlfrontend) RunCommandWithArgs(command string, args backend.Args) {
 	go ed.RunCommand(command, args)
 }
 
-func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
-	log.Debug("qmlfrontend.HandleInput: key=%x, modifiers=%x", keycode, modifiers)
+func (t *qmlfrontend) HandleInput(text string, keycode int, modifiers int) bool {
+	log.Debug("qmlfrontend.HandleInput: text=%v, key=%x, modifiers=%x", text, keycode, modifiers)
 	shift := false
 	alt := false
 	ctrl := false
@@ -246,7 +246,7 @@ func (t *qmlfrontend) HandleInput(keycode int, modifiers int) bool {
 			}
 		}
 
-		ed.HandleInput(keys.KeyPress{Key: key, Shift: shift, Alt: alt, Ctrl: ctrl, Super: super})
+		ed.HandleInput(keys.KeyPress{Text: text, Key: key, Shift: shift, Alt: alt, Ctrl: ctrl, Super: super})
 		return true
 	}
 	return false
