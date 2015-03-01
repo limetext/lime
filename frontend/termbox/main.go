@@ -5,6 +5,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"path"
+	"runtime/debug"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
@@ -15,11 +22,6 @@ import (
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
 	. "github.com/limetext/text"
-	"path"
-	"runtime/debug"
-	"strconv"
-	"sync"
-	"time"
 )
 
 var (
@@ -104,31 +106,35 @@ var (
 
 const (
 	render_chan_len = 2
+	statusbarHeight = 1
 )
 
-type layout struct {
-	x, y          int
-	width, height int
-	visible       Region
-	lastUpdate    int
-}
+type (
+	layout struct {
+		x, y          int
+		width, height int
+		visible       Region
+		lastUpdate    int
+	}
 
-type tbfe struct {
-	layout         map[*backend.View]layout
-	status_message string
-	dorender       chan bool
-	shutdown       chan bool
-	lock           sync.Mutex
-	editor         *backend.Editor
-	console        *backend.View
-	currentView    *backend.View
-	currentWindow  *backend.Window
-}
+	tbfe struct {
+		layout         map[*backend.View]layout
+		window_layout  layout
+		status_message string
+		dorender       chan bool
+		shutdown       chan bool
+		lock           sync.Mutex
+		editor         *backend.Editor
+		console        *backend.View
+		currentView    *backend.View
+		currentWindow  *backend.Window
+	}
 
-type tbfeBufferDeltaObserver struct {
-	t    *tbfe
-	view *backend.View
-}
+	tbfeBufferDeltaObserver struct {
+		t    *tbfe
+		view *backend.View
+	}
+)
 
 // Creates and initializes the frontend.
 func createFrontend() *tbfe {
@@ -183,23 +189,23 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
-	style, _ := v.Settings().Get("caret_style", "underline").(string)
-	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
+	style := v.Settings().Get("caret_style", "underline").(string)
+	inverse := v.Settings().Get("inverse_caret_state", false).(bool)
 
 	caretStyle := getCaretStyle(style, inverse)
 	oldCaretStyle := caretStyle
 
-	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
+	caretBlink := v.Settings().Get("caret_blink", true).(bool)
 	if caretBlink && blink {
 		caretStyle = 0
 	}
 
 	tabSize := 4
-	if i, ok := v.Settings().Get("tab_size", 4).(int); ok {
+	if i, ok := v.Settings().Get("tab_size", tabSize).(int); ok {
 		tabSize = i
 	}
 
-	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
+	lineNumbers := v.Settings().Get("line_numbers", true).(bool)
 
 	recipie := v.Transform(scheme, vr).Transcribe()
 
@@ -276,6 +282,60 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	if rs := sel.Regions(); len(rs) > 0 {
 		if r := rs[len(rs)-1]; !vr.Covers(r) {
 			t.Show(v, r)
+		}
+	}
+	t.renderStatusbar(v)
+}
+
+func (t *tbfe) renderStatusbar(v *backend.View) {
+	st := v.Status()
+	lay := t.window_layout
+	j, y := 0, lay.height-statusbarHeight
+	fg, bg := defaultFg, palLut(textmate.Color{28, 29, 26, 1})
+
+	for i := 0; i < lay.width; i++ {
+		termbox.SetCell(i, y, ' ', fg, bg)
+	}
+
+	for k, v := range st {
+		runes := []rune(fmt.Sprintf("%s: %s, ", k, v))
+		for i := j; i < len(runes) && j < lay.width; i++ {
+			termbox.SetCell(i, y, runes[i], fg, bg)
+			j++
+		}
+	}
+
+	sel := v.Sel()
+	if sel.Len() == 0 {
+		return
+	} else if l := sel.Len(); l > 1 {
+		runes := []rune(fmt.Sprintf("%d selection regions", l))
+		for i := j; i < len(runes) && j < lay.width; i++ {
+			termbox.SetCell(i, y, runes[i], fg, bg)
+			j++
+		}
+	} else if r := sel.Get(0); r.Size() == 0 {
+		row, col := v.Buffer().RowCol(r.A)
+		runes := []rune(fmt.Sprintf("Line %d, Column %d", row, col))
+		for i := j; i < len(runes) && j < lay.width; i++ {
+			termbox.SetCell(i, y, runes[i], fg, bg)
+			j++
+		}
+	} else {
+		ls := v.Buffer().Lines(r)
+		s := v.Buffer().Substr(r)
+		if len(ls) < 2 {
+			runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
+			for i := j; i < len(runes) && j < lay.width; i++ {
+				termbox.SetCell(i, y, runes[i], fg, bg)
+				j++
+			}
+		} else {
+			runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
+			for i := j; i < len(runes) && j < lay.width; i++ {
+				termbox.SetCell(i, y, runes[i], fg, bg)
+				j++
+			}
 		}
 	}
 }
@@ -439,13 +499,7 @@ func (t *tbfe) renderthread() {
 			vs = append(vs, v)
 			ls = append(ls, l)
 		}
-		runes := []rune(t.status_message)
 		t.lock.Unlock()
-
-		w, h := termbox.Size()
-		for i := 0; i < w && i < len(runes); i++ {
-			termbox.SetCell(i, h-2, runes[i], defaultFg, defaultBg)
-		}
 
 		for i, v := range vs {
 			t.renderView(v, ls[i])
@@ -465,27 +519,30 @@ func (t *tbfe) handleResize(height, width int, init bool) {
 	t.lock.Lock()
 	if init {
 		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
+		t.window_layout = layout{0, 0, 0, 0, Region{}, 0}
 		if *showConsole {
 			t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
 		}
 	}
 
+	t.window_layout.height = height
+	t.window_layout.width = width
+
+	view_layout := t.layout[t.currentView]
+	view_layout.height = height - statusbarHeight
+	view_layout.width = width
+	t.layout[t.currentView] = view_layout
 	if *showConsole {
 		view_layout := t.layout[t.currentView]
-		view_layout.height = height - *consoleHeight - 4
+		view_layout.height = height - *consoleHeight - statusbarHeight - 1
 		view_layout.width = width
 
 		console_layout := t.layout[t.console]
-		console_layout.y = height - *consoleHeight - 2
+		console_layout.y = height - *consoleHeight - statusbarHeight
 		console_layout.width = width
-		console_layout.height = *consoleHeight - 1
+		console_layout.height = *consoleHeight
 
 		t.layout[t.console] = console_layout
-		t.layout[t.currentView] = view_layout
-	} else {
-		view_layout := t.layout[t.currentView]
-		view_layout.height = height - 3
-		view_layout.width = width
 		t.layout[t.currentView] = view_layout
 	}
 	t.lock.Unlock()
