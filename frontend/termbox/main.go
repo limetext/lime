@@ -153,7 +153,7 @@ func createFrontend() *tbfe {
 	t.console.Buffer().AddObserver(&t)
 	t.setupCallbacks(t.currentView)
 
-	path := path.Join("..", "..", "packages", "themes", "TextMate-Themes", "Monokai.tmTheme")
+	path := path.Join(backend.LIME_PACKAGES_PATH, "themes", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
 		log.Error(err)
 	} else {
@@ -193,13 +193,10 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	if caretBlink && blink {
 		caretStyle = 0
 	}
+
 	tabSize := 4
-	ts := v.Settings().Get("tab_size", tabSize)
-	// TODO(.): crikey...
-	if i, ok := ts.(int); ok {
+	if i, ok := v.Settings().Get("tab_size", 4).(int); ok {
 		tabSize = i
-	} else if f, ok := ts.(float64); ok {
-		tabSize = int(f)
 	}
 
 	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
@@ -222,6 +219,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 		}
 
+		// TODO: doc
 		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
 			if o < recipie[curr].Region.End() {
 				fg = palLut(textmate.Color(recipie[curr].Flavour.Foreground))
@@ -229,20 +227,21 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			}
 			curr++
 		}
+
 		iscursor := sel.Contains(Region{o, o})
 		if iscursor {
 			fg = fg | caretStyle
 			termbox.SetCell(x, y, ' ', fg, bg)
 		}
+
 		if r == '\t' {
 			add := (x + 1 + (tabSize - 1)) &^ (tabSize - 1)
-			for x < add {
+			for ; x < add; x++ {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
 				// A long cursor looks weird
 				fg = fg & ^(termbox.AttrUnderline | termbox.AttrReverse)
-				x++
 			}
 			continue
 		} else if r == '\n' {
@@ -435,10 +434,10 @@ func (t *tbfe) renderthread() {
 
 		t.lock.Lock()
 		vs := make([]*backend.View, 0, len(t.layout))
-		l := make([]layout, 0, len(t.layout))
-		for k, v := range t.layout {
-			vs = append(vs, k)
-			l = append(l, v)
+		ls := make([]layout, 0, len(t.layout))
+		for v, l := range t.layout {
+			vs = append(vs, v)
+			ls = append(ls, l)
 		}
 		runes := []rune(t.status_message)
 		t.lock.Unlock()
@@ -449,7 +448,7 @@ func (t *tbfe) renderthread() {
 		}
 
 		for i, v := range vs {
-			t.renderView(v, l[i])
+			t.renderView(v, ls[i])
 		}
 
 		termbox.Flush()
