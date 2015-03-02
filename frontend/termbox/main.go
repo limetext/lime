@@ -284,59 +284,64 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			t.Show(v, r)
 		}
 	}
-	t.renderStatusbar(v)
-}
 
-func (t *tbfe) renderStatusbar(v *backend.View) {
-	st := v.Status()
-	lay := t.window_layout
-	j, y := 0, lay.height-statusbarHeight
-	fg, bg := defaultFg, palLut(textmate.Color{28, 29, 26, 1})
-
+	fg, bg = defaultFg, palLut(textmate.Color{28, 29, 26, 1})
+	y = t.window_layout.height - statusbarHeight
+	// Draw status bar bottom of window
 	for i := 0; i < lay.width; i++ {
 		termbox.SetCell(i, y, ' ', fg, bg)
 	}
+	t.renderLStatus(v, y, fg, bg)
+	// The right status
+	rns := []rune(fmt.Sprintf("Tab Size:%d   %s", tabSize, "Go"))
+	x = t.window_layout.width - 1 - len(rns)
+	addStatus(x, y, rns, fg, bg)
+}
+
+func (t *tbfe) renderLStatus(v *backend.View, y int, fg, bg termbox.Attribute) {
+	st := v.Status()
+	sel := v.Sel()
+	j := 0
 
 	for k, v := range st {
 		runes := []rune(fmt.Sprintf("%s: %s, ", k, v))
-		for i := j; i < len(runes) && j < lay.width; i++ {
-			termbox.SetCell(i, y, runes[i], fg, bg)
-			j++
-		}
+		addStatus(j, y, runes, fg, bg)
+		j += len(runes)
 	}
 
-	sel := v.Sel()
 	if sel.Len() == 0 {
 		return
-	} else if l := sel.Len(); l > 1 {
+	}
+	if l := sel.Len(); l > 1 {
 		runes := []rune(fmt.Sprintf("%d selection regions", l))
-		for i := j; i < len(runes) && j < lay.width; i++ {
-			termbox.SetCell(i, y, runes[i], fg, bg)
-			j++
-		}
-	} else if r := sel.Get(0); r.Size() == 0 {
+		addStatus(j, y, runes, fg, bg)
+		j += len(runes)
+		return
+	}
+	r := sel.Get(0)
+	if r.Size() == 0 {
 		row, col := v.Buffer().RowCol(r.A)
 		runes := []rune(fmt.Sprintf("Line %d, Column %d", row, col))
-		for i := j; i < len(runes) && j < lay.width; i++ {
-			termbox.SetCell(i, y, runes[i], fg, bg)
-			j++
-		}
-	} else {
-		ls := v.Buffer().Lines(r)
-		s := v.Buffer().Substr(r)
-		if len(ls) < 2 {
-			runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
-			for i := j; i < len(runes) && j < lay.width; i++ {
-				termbox.SetCell(i, y, runes[i], fg, bg)
-				j++
-			}
-		} else {
-			runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
-			for i := j; i < len(runes) && j < lay.width; i++ {
-				termbox.SetCell(i, y, runes[i], fg, bg)
-				j++
-			}
-		}
+		addStatus(j, y, runes, fg, bg)
+		j += len(runes)
+		return
+	}
+
+	ls := v.Buffer().Lines(r)
+	s := v.Buffer().Substr(r)
+	if len(ls) < 2 {
+		runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
+		addStatus(j, y, runes, fg, bg)
+		j += len(runes)
+		return
+	}
+	runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
+	addStatus(j, y, runes, fg, bg)
+}
+
+func addStatus(x, y int, runes []rune, fg, bg termbox.Attribute) {
+	for i := x; i-x < len(runes); i++ {
+		termbox.SetCell(i, y, runes[i-x], fg, bg)
 	}
 }
 
