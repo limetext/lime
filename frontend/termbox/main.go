@@ -304,40 +304,42 @@ func (t *tbfe) renderLStatus(v *backend.View, y int, fg, bg termbox.Attribute) {
 	j := 0
 
 	for k, v := range st {
-		runes := []rune(fmt.Sprintf("%s: %s, ", k, v))
-		addRunes(j, y, runes, fg, bg)
-		j += len(runes)
+		s := fmt.Sprintf("%s: %s, ", k, v)
+		addString(j, y, s, fg, bg)
 	}
 
 	if sel.Len() == 0 {
 		return
 	} else if l := sel.Len(); l > 1 {
-		runes := []rune(fmt.Sprintf("%d selection regions", l))
-		addRunes(j, y, runes, fg, bg)
-		j += len(runes)
+		s := fmt.Sprintf("%d selection regions", l)
+		j = addString(j, y, s, fg, bg)
 	} else if r := sel.Get(0); r.Size() == 0 {
 		row, col := v.Buffer().RowCol(r.A)
-		runes := []rune(fmt.Sprintf("Line %d, Column %d", row, col))
-		addRunes(j, y, runes, fg, bg)
-		j += len(runes)
+		s := fmt.Sprintf("Line %d, Column %d", row, col)
+		j = addString(j, y, s, fg, bg)
 	} else {
 		ls := v.Buffer().Lines(r)
 		s := v.Buffer().Substr(r)
 		if len(ls) < 2 {
-			runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
-			addRunes(j, y, runes, fg, bg)
-			j += len(runes)
+			s := fmt.Sprintf("%d characters selected", len(s))
+			j = addString(j, y, s, fg, bg)
 		} else {
-			runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
-			addRunes(j, y, runes, fg, bg)
-			j += len(runes)
+			s := fmt.Sprintf("%d lines %d characters selected", len(ls), len(s))
+			j = addString(j, y, s, fg, bg)
 		}
 	}
 
 	if t.status_message != "" {
-		runes := []rune(fmt.Sprintf("; %s", t.status_message))
-		addRunes(j, y, runes, fg, bg)
+		s := fmt.Sprintf("; %s", t.status_message)
+		addString(j, y, s, fg, bg)
 	}
+}
+
+func addString(x, y int, s string, fg, bg termbox.Attribute) int {
+	runes := []rune(s)
+	addRunes(x, y, runes, fg, bg)
+	x += len(runes)
+	return x
 }
 
 func addRunes(x, y int, runes []rune, fg, bg termbox.Attribute) {
