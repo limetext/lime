@@ -288,14 +288,14 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	fg, bg = defaultFg, palLut(textmate.Color{28, 29, 26, 1})
 	y = t.window_layout.height - statusbarHeight
 	// Draw status bar bottom of window
-	for i := 0; i < lay.width; i++ {
+	for i := 0; i < t.window_layout.width; i++ {
 		termbox.SetCell(i, y, ' ', fg, bg)
 	}
 	t.renderLStatus(v, y, fg, bg)
 	// The right status
 	rns := []rune(fmt.Sprintf("Tab Size:%d   %s", tabSize, "Go"))
 	x = t.window_layout.width - 1 - len(rns)
-	addStatus(x, y, rns, fg, bg)
+	addRunes(x, y, rns, fg, bg)
 }
 
 func (t *tbfe) renderLStatus(v *backend.View, y int, fg, bg termbox.Attribute) {
@@ -305,41 +305,42 @@ func (t *tbfe) renderLStatus(v *backend.View, y int, fg, bg termbox.Attribute) {
 
 	for k, v := range st {
 		runes := []rune(fmt.Sprintf("%s: %s, ", k, v))
-		addStatus(j, y, runes, fg, bg)
+		addRunes(j, y, runes, fg, bg)
 		j += len(runes)
 	}
 
 	if sel.Len() == 0 {
 		return
-	}
-	if l := sel.Len(); l > 1 {
+	} else if l := sel.Len(); l > 1 {
 		runes := []rune(fmt.Sprintf("%d selection regions", l))
-		addStatus(j, y, runes, fg, bg)
+		addRunes(j, y, runes, fg, bg)
 		j += len(runes)
-		return
-	}
-	r := sel.Get(0)
-	if r.Size() == 0 {
+	} else if r := sel.Get(0); r.Size() == 0 {
 		row, col := v.Buffer().RowCol(r.A)
 		runes := []rune(fmt.Sprintf("Line %d, Column %d", row, col))
-		addStatus(j, y, runes, fg, bg)
+		addRunes(j, y, runes, fg, bg)
 		j += len(runes)
-		return
+	} else {
+		ls := v.Buffer().Lines(r)
+		s := v.Buffer().Substr(r)
+		if len(ls) < 2 {
+			runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
+			addRunes(j, y, runes, fg, bg)
+			j += len(runes)
+		} else {
+			runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
+			addRunes(j, y, runes, fg, bg)
+			j += len(runes)
+		}
 	}
 
-	ls := v.Buffer().Lines(r)
-	s := v.Buffer().Substr(r)
-	if len(ls) < 2 {
-		runes := []rune(fmt.Sprintf("%d characters selected", len(s)))
-		addStatus(j, y, runes, fg, bg)
-		j += len(runes)
-		return
+	if t.status_message != "" {
+		runes := []rune(fmt.Sprintf("; %s", t.status_message))
+		addRunes(j, y, runes, fg, bg)
 	}
-	runes := []rune(fmt.Sprintf("%d lines %d characters selected", len(ls), len(s)))
-	addStatus(j, y, runes, fg, bg)
 }
 
-func addStatus(x, y int, runes []rune, fg, bg termbox.Attribute) {
+func addRunes(x, y int, runes []rune, fg, bg termbox.Attribute) {
 	for i := x; i-x < len(runes); i++ {
 		termbox.SetCell(i, y, runes[i-x], fg, bg)
 	}
