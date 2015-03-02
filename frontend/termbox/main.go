@@ -189,13 +189,13 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	x, y := sx, sy
 	ex, ey := sx+w, sy+h
 
-	style := v.Settings().Get("caret_style", "underline").(string)
-	inverse := v.Settings().Get("inverse_caret_state", false).(bool)
+	style, _ := v.Settings().Get("caret_style", "underline").(string)
+	inverse, _ := v.Settings().Get("inverse_caret_state", false).(bool)
 
 	caretStyle := getCaretStyle(style, inverse)
 	oldCaretStyle := caretStyle
 
-	caretBlink := v.Settings().Get("caret_blink", true).(bool)
+	caretBlink, _ := v.Settings().Get("caret_blink", true).(bool)
 	if caretBlink && blink {
 		caretStyle = 0
 	}
@@ -205,7 +205,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		tabSize = i
 	}
 
-	lineNumbers := v.Settings().Get("line_numbers", true).(bool)
+	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
 
 	recipie := v.Transform(scheme, vr).Transcribe()
 
@@ -343,8 +343,8 @@ func addString(x, y int, s string, fg, bg termbox.Attribute) int {
 }
 
 func addRunes(x, y int, runes []rune, fg, bg termbox.Attribute) {
-	for i := x; i-x < len(runes); i++ {
-		termbox.SetCell(i, y, runes[i-x], fg, bg)
+	for i, r := range runes {
+		termbox.SetCell(x+i, y, r, fg, bg)
 	}
 }
 
@@ -583,7 +583,7 @@ func (t *tbfe) loop() {
 
 	// Only set up the timers if we should actually blink the cursor
 	// This should somehow be changable on an OnSettingsChanged callback
-	if p := t.editor.Settings().Get("caret_blink", true).(bool); p {
+	if p, _ := t.editor.Settings().Get("caret_blink", true).(bool); p {
 		duration := time.Second / 2
 		if p, ok := t.editor.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
 			duration = time.Duration(float64(time.Second)*p) / 2
