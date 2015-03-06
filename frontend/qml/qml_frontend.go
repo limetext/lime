@@ -252,6 +252,19 @@ func (t *qmlfrontend) HandleInput(text string, keycode int, modifiers int) bool 
 	return false
 }
 
+// Quit closes all open windows to de-reference all qml objects
+func (t *qmlfrontend) Quit() (err error) {
+	// todo: handle changed files that aren't saved.
+	for _, v := range t.windows {
+		if v.window != nil {
+			v.window.Hide()
+			v.window.Destroy()
+			v.window = nil
+		}
+	}
+	return
+}
+
 func (t *qmlfrontend) loop() (err error) {
 	backend.OnNew.Add(t.onNew)
 	backend.OnClose.Add(t.onClose)
@@ -290,6 +303,7 @@ func (t *qmlfrontend) loop() (err error) {
 		}
 		log.Debug("calling newEngine")
 		engine = qml.NewEngine()
+		engine.On("quit", t.Quit)
 		log.Debug("setvar frontend")
 		engine.Context().SetVar("frontend", t)
 		log.Debug("setvar editor")
@@ -351,15 +365,7 @@ func (t *qmlfrontend) loop() (err error) {
 			case ev := <-watch.Event:
 				if ev != nil && strings.HasSuffix(ev.Name, ".qml") && ev.IsModify() && !ev.IsAttrib() {
 					reloadRequested = true
-					// Close all open windows to de-reference all
-					// qml objects
-					for _, v := range t.windows {
-						if v.window != nil {
-							v.window.Hide()
-							v.window.Destroy()
-							v.window = nil
-						}
-					}
+					t.Quit()
 				}
 			}
 		}
