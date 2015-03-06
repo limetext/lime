@@ -172,9 +172,6 @@ func createFrontend() *tbfe {
 	w, h := termbox.Size()
 	t.handleResize(h, w, true)
 
-	// These might take a while
-	go t.editor.Init()
-
 	return &t
 }
 
@@ -822,5 +819,6 @@ func main() {
 
 	t := createFrontend()
 	go t.renderthread()
+	go t.editor.Init()
 	t.loop()
 }
