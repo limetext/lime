@@ -524,9 +524,7 @@ func (t *tbfe) handleResize(height, width int, init bool) {
 	if init {
 		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
 		t.window_layout = layout{0, 0, 0, 0, Region{}, 0}
-		if *showConsole {
-			t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
-		}
+		t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
 	}
 
 	t.window_layout.height = height
