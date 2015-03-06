@@ -15,7 +15,7 @@ import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
-	"github.com/limetext/lime/backend/sublime"
+	_ "github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
@@ -506,10 +506,7 @@ func (t *tbfe) loop() {
 	t.Show(v, Region{100, 100})
 	t.Show(v, Region{1, 1})
 
-	go func() {
-		ed.Init()
-		sublime.Init()
-	}()
+	go ed.Init()
 	log.Debug("Serving on port %d", *port)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)

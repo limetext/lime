@@ -17,7 +17,7 @@ import (
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
-	"github.com/limetext/lime/backend/sublime"
+	_ "github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
@@ -173,8 +173,7 @@ func createFrontend() *tbfe {
 	t.handleResize(h, w, true)
 
 	// These might take a while
-	t.editor.Init()
-	go sublime.Init()
+	go t.editor.Init()
 
 	return &t
 }

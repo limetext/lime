@@ -10,7 +10,7 @@ import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
-	"github.com/limetext/lime/backend/sublime"
+	_ "github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
@@ -271,8 +271,6 @@ func (t *qmlfrontend) loop() (err error) {
 	backend.OnLoad.Add(t.onLoad)
 
 	ed := backend.GetEditor()
-	ed.Init()
-	go sublime.Init()
 	ed.SetFrontend(t)
 	ed.LogInput(false)
 	ed.LogCommands(false)
@@ -280,6 +278,7 @@ func (t *qmlfrontend) loop() (err error) {
 	t.Console = &frontendView{bv: c}
 	c.Buffer().AddObserver(t.Console)
 	c.Buffer().AddObserver(t)
+	go ed.Init()
 
 	var (
 		engine    *qml.Engine

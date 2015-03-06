@@ -41,6 +41,15 @@ type (
 	WindowEventCallback func(w *Window)
 	// A WindowEvent is simply a bunch of WindowEventCallbacks.
 	WindowEvent []WindowEventCallback
+
+	// The InitCallback allows complex (i.e. time consuming)
+	// initiation code to be deferred until after the UI is up and running.
+	InitCallback func()
+
+	// The InitEvent is executed once at startup, after the UI is up and running and
+	// is typically used by feature modules to defer heavy initialization work
+	// such as scanning for plugins, loading key bindings, macros etc.
+	InitEvent []InitCallback
 )
 
 const (
@@ -48,6 +57,21 @@ const (
 	False                             //< Returned when the context query does not match.
 	Unknown                           //< Returned when the QueryContextCallback does not know how to deal with the given context.
 )
+
+// Add the InitCallback to the InitEvent to be called during initialization.
+// This should be called in a module's init() function.
+func (ie *InitEvent) Add(i InitCallback) {
+	*ie = append(*ie, i)
+}
+
+// Execute the InitEvent.
+func (ie *InitEvent) call() {
+	log.Debug("OnInit callbacks executing")
+	defer log.Debug("OnInit callbacks finished")
+	for _, ev := range *ie {
+		ev()
+	}
+}
 
 // Add the provided ViewEventCallback to this ViewEvent
 // TODO(.): Support removing ViewEventCallbacks?
@@ -111,6 +135,7 @@ var (
 
 	OnNewWindow    WindowEvent       //< Called when a new window has been created.
 	OnQueryContext QueryContextEvent //< Called when context is being queried.
+	OnInit         InitEvent         //< Called once at program startup
 )
 
 var (

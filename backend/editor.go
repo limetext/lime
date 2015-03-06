@@ -162,9 +162,11 @@ func getClipboard() (string, error) {
 }
 
 func (e *Editor) Init() {
+	log.Info("Initializing")
 	e.SetClipboardFuncs(setClipboard, getClipboard)
 	e.loadKeyBindings()
 	e.loadSettings()
+	OnInit.call()
 }
 
 func (e *Editor) SetClipboardFuncs(setter func(string) error, getter func() (string, error)) {
