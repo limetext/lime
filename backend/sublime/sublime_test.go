@@ -48,7 +48,6 @@ func TestSublime(t *testing.T) {
 
 	ed.Console().Buffer().AddObserver(&consoleObserver{T: t})
 	w := ed.NewWindow()
-	Init()
 	l := py.NewLock()
 	py.AddToPath("testdata")
 	py.AddToPath("testdata/plugins")

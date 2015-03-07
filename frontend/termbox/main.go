@@ -17,7 +17,7 @@ import (
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
-	"github.com/limetext/lime/backend/sublime"
+	_ "github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	"github.com/limetext/termbox-go"
@@ -171,10 +171,6 @@ func createFrontend() *tbfe {
 
 	w, h := termbox.Size()
 	t.handleResize(h, w, true)
-
-	// These might take a while
-	t.editor.Init()
-	go sublime.Init()
 
 	return &t
 }
@@ -528,9 +524,7 @@ func (t *tbfe) handleResize(height, width int, init bool) {
 	if init {
 		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
 		t.window_layout = layout{0, 0, 0, 0, Region{}, 0}
-		if *showConsole {
-			t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
-		}
+		t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
 	}
 
 	t.window_layout.height = height
@@ -823,5 +817,6 @@ func main() {
 
 	t := createFrontend()
 	go t.renderthread()
+	go t.editor.Init()
 	t.loop()
 }
