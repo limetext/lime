@@ -126,6 +126,10 @@ ApplicationWindow {
                 onTriggered: if (consoleView.visible == true) { consoleView.visible=false } else { consoleView.visible=true }
             }
             MenuItem {
+                text: qsTr("Show/Hide Minimap")
+                onTriggered: if (minimap.visible == true) { minimap.visible=false } else { minimap.visible=true }
+            }
+            MenuItem {
                 text: qsTr("Sh&ow/Hide Statusbar")
                 onTriggered: if (statusBar.visible == true) { statusBar.visible=false } else { statusBar.visible=true }
             }
