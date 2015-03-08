@@ -392,3 +392,4 @@ status_message
 test_window
 unregister
 version
+windows
