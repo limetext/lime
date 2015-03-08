@@ -6,6 +6,15 @@ package main
 
 import (
 	"fmt"
+	"image/color"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+
+	"gopkg.in/fsnotify.v0"
+	"gopkg.in/qml.v1"
+
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
@@ -14,13 +23,6 @@ import (
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
-	"gopkg.in/fsnotify.v0"
-	"gopkg.in/qml.v1"
-	"image/color"
-	"runtime"
-	"strings"
-	"sync"
-	"time"
 )
 
 var limeViewComponent qml.Object
@@ -342,10 +344,10 @@ func (t *qmlfrontend) loop() (err error) {
 	w := ed.NewWindow()
 	v := w.OpenFile("main.go", 0)
 	// TODO: should be done backend side
-	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.SetSyntaxFile("../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 	v = w.OpenFile("../../backend/editor.go", 0)
 	// TODO: should be done backend side
-	v.Settings().Set("syntax", "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
+	v.SetSyntaxFile("../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 
 	watch, err := fsnotify.NewWatcher()
 	if err != nil {

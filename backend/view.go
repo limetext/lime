@@ -988,3 +988,7 @@ func (v *View) EraseStatus(key string) {
 	defer v.lock.Unlock()
 	delete(v.status, key)
 }
+
+func (v *View) SetSyntaxFile(file string) {
+	v.Settings().Set("syntax", file)
+}

@@ -7,13 +7,15 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"strings"
+
+	"gopkg.in/qml.v1"
+
 	"github.com/limetext/lime/backend"
 	"github.com/limetext/lime/backend/render"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
-	"gopkg.in/qml.v1"
-	"io"
-	"strings"
 )
 
 // A helper glue structure connecting the backend View with the qml code that

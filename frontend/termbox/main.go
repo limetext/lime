@@ -783,11 +783,10 @@ func setSchemeSettings() {
 }
 
 func createNewView(filename string, window *backend.Window) *backend.View {
-	syntax := "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v := window.OpenFile(filename, 0)
 
 	v.Settings().Set("trace", true)
-	v.Settings().Set("syntax", syntax)
+	v.SetSyntaxFile("../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 
 	return v
 }

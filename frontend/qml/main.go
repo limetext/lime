@@ -5,13 +5,15 @@
 package main
 
 import (
+	"runtime"
+
+	"gopkg.in/qml.v1"
+
 	"github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 	_ "github.com/limetext/lime/backend/commands"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/textmate"
-	"gopkg.in/qml.v1"
-	"runtime"
 )
 
 const (
