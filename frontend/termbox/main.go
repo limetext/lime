@@ -155,6 +155,8 @@ func createFrontend() *tbfe {
 	} else {
 		t.currentView = t.currentWindow.NewFile()
 	}
+	w, h := termbox.Size()
+	t.handleResize(h, w, true)
 
 	t.console.Buffer().AddObserver(&t)
 	t.setupCallbacks(t.currentView)
@@ -168,9 +170,6 @@ func createFrontend() *tbfe {
 
 	setColorMode()
 	setSchemeSettings()
-
-	w, h := termbox.Size()
-	t.handleResize(h, w, true)
 
 	return &t
 }
