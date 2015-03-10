@@ -393,7 +393,7 @@ Item {
                     if (inverseCaretState) {
                         rect.cursor.text = "_";
                         if (rect.width != 0)
-                            rect.cursor.x -= 12;
+                            rect.cursor.x -= rect.cursor.width;
                     } else {
                         rect.cursor.text = "|";
                         // Shift the cursor to the edge of the character
