@@ -23,7 +23,7 @@ Item {
     function insertLine(idx) {
         view.model.insert(idx, {});
     }
-    
+
     Rectangle  {
         color: frontend.defaultBg()
         anchors.fill: parent
@@ -50,7 +50,7 @@ Item {
         interactive: false
         clip: true
         z: 4
-        
+
         property var myView
         property bool showBars: false
         property var cursor: parent.cursor
@@ -59,7 +59,7 @@ Item {
             color: "transparent"
             width: parent.width
             height: childrenRect.height
-            
+
             Text {
                 property var line: !myView ? null : myView.line(index)
                 font.family: viewItem.fontFace
@@ -94,7 +94,7 @@ Item {
 
             enabled: !isMinimap
             x: 0
-            y: 0            
+            y: 0
             cursorShape: parent.cursor
             propagateComposedEvents: true
             height: parent.height
@@ -192,12 +192,12 @@ Item {
 
             onDoubleClicked: {
                 if (!isMinimap) {
-                    
+
                     var item  = view.itemAt(0, mouse.y+view.contentY),
                         index = view.indexAt(0, mouse.y+view.contentY);
 
                     if (item != null) {
-                        var col = measure(index, mouse.x);
+                        var col = colFromMouseX(index, mouse.x);
                         point.p = myView.back().buffer().textPoint(index, col)
 
                         if (!ctrl) {
@@ -299,7 +299,7 @@ Item {
         interval: 100
         repeat: true
         running: true
-        
+
         // getCursorOffset returns the x coordinate for the cursor.
         function getCursorOffset(cursorIndex, rowcol, cursor, buf) {
 
@@ -308,18 +308,18 @@ Item {
 
             // text from the beginning of the line to the given column
             var textToCursor = currentLineText.substr(0, rowcol[1]);
-            
+
             cursor.textFormat = TextEdit.RichText;
             cursor.text = "<span style=\"white-space:pre\">" + textToCursor + "</span>";
 
             var cursorOffset = cursor.width;
-            
+
             cursor.textFormat = TextEdit.PlainText;
             cursor.text = "";
 
             return (!cursorOffset) ? 0 : cursorOffset;
         }
-        
+
         // getLinesFromSelection returns an array of lines from the given
         // selection and buffer. Works like buffer.Lines()
         //
@@ -332,7 +332,7 @@ Item {
             var safeSelection = (selection.b > selection.a) ?
                         { a: selection.a, b: selection.b }:
                         { a: selection.b, b: selection.a };
-            
+
             var rowCol = {
                 a: buf.rowCol(safeSelection.a),
                 b: buf.rowCol(safeSelection.b)
@@ -353,14 +353,14 @@ Item {
         onTriggered: {
 
             if (myView == undefined) return;
-            
+
             var selection = getCurrentSelection(),
                 backend = myView.back(),
                 buf = backend.buffer(),
                 of = 0; // todo: rename 'of' to something more descriptive
-            
+
             highlighedLines.model = myView.regionLines();
-            
+
             for(var i = 0; i < selection.len(); i++) {
                 var rect = highlighedLines.itemAt(i),
                     s = selection.get(i);
@@ -392,6 +392,8 @@ Item {
                 if (caretStyle == "underscore") {
                     if (inverseCaretState) {
                         rect.cursor.text = "_";
+                        if (rect.width != 0)
+                            rect.cursor.x -= 12;
                     } else {
                         rect.cursor.text = "|";
                         // Shift the cursor to the edge of the character
