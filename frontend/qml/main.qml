@@ -77,6 +77,13 @@ ApplicationWindow {
             }
         }
         Menu {
+            title: qsTr("Find")
+            MenuItem {
+                text: qsTr("Find Next")
+                onTriggered: frontend.runCommand("find_next");
+            }
+        }
+        Menu {
             title: qsTr("&Edit")
             MenuItem {
                 text: qsTr("&Undo")
