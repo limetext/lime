@@ -10,3 +10,5 @@ out.txt
 frontend/termbox/termbox
 frontend/html/html
 frontend/qml/qml
+*.swp
+*~
