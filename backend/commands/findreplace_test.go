@@ -36,6 +36,12 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 		for _, r := range test.in {
 			v.Sel().Add(r)
 		}
+
+		v.Settings().Set("find_wrap", true)
+		if i == 2 {
+			v.Settings().Set("find_wrap", false)
+		}
+
 		for _, command := range commands {
 			ed.CommandHandler().RunTextCommand(v, command, nil)
 		}
@@ -72,10 +78,18 @@ func TestFindNext(t *testing.T) {
 			[]Region{{17, 20}},
 			[]Region{{17, 20}},
 		},
+		// test find_wrap setting true
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{21, 23}},
 			[]Region{{18, 20}},
+		},
+		// test find_wrap setting false
+		// NOTE: The positioning of this test is important
+		{
+			"Hello World!\nTest123123\nAbrakadabra\n",
+			[]Region{{21, 23}},
+			[]Region{{21, 23}},
 		},
 	}
 
@@ -108,6 +122,12 @@ func runReplaceTest(tests []replaceTest, t *testing.T, commands ...string) {
 		for _, r := range test.cursors {
 			v.Sel().Add(r)
 		}
+
+		v.Settings().Set("find_wrap", true)
+		if i == 6 {
+			v.Settings().Set("find_wrap", false)
+		}
+
 		replaceText = "f"
 		for _, command := range commands {
 			ed.CommandHandler().RunTextCommand(v, command, nil)
@@ -147,6 +167,19 @@ func TestReplaceNext(t *testing.T) {
 			[]Region{{0, 0}},
 			"abc abc bac abc abc",
 			"abc f bac abc abc",
+		},
+		// test find_wrap setting true
+		{
+			[]Region{{16, 19}},
+			"abc abc bac abc abc",
+			"f abc bac abc abc",
+		},
+		// test find_wrap setting false
+		// NOTE: The positioning of this test is important
+		{
+			[]Region{{16, 19}},
+			"abc abc bac abc abc",
+			"abc abc bac abc abc",
 		},
 	}
 
