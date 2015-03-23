@@ -43,3 +43,13 @@ func TestErrorf(t *testing.T) {
 func TestCritical(t *testing.T) {
 	Critical("testing critical")
 }
+
+//TestLogf is already defined in logger_test
+func TestGlobalLogf(t *testing.T) {
+	Logf(FINE, "testing %s", "logf")
+}
+
+//TestClose is already defined in logger_test
+func TestGlobalClose(t *testing.T) {
+	Close()
+}
