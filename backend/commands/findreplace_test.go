@@ -38,7 +38,7 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 			v.Sel().Add(r)
 		}
 
-		v.Settings().Set("find_wrap", tests[i].fw)
+		v.Settings().Set("find_wrap", test.fw)
 
 		for _, command := range commands {
 			ed.CommandHandler().RunTextCommand(v, command, nil)
@@ -126,7 +126,7 @@ func runReplaceTest(tests []replaceTest, t *testing.T, commands ...string) {
 			v.Sel().Add(r)
 		}
 
-		v.Settings().Set("find_wrap", tests[i].fw)
+		v.Settings().Set("find_wrap", test.fw)
 
 		replaceText = "f"
 		for _, command := range commands {
