@@ -15,6 +15,7 @@ type findTest struct {
 	text string
 	in   []Region
 	exp  []Region
+	fw   bool
 }
 
 func runFindTest(tests []findTest, t *testing.T, commands ...string) {
@@ -37,10 +38,7 @@ func runFindTest(tests []findTest, t *testing.T, commands ...string) {
 			v.Sel().Add(r)
 		}
 
-		v.Settings().Set("find_wrap", true)
-		if i == 2 {
-			v.Settings().Set("find_wrap", false)
-		}
+		v.Settings().Set("find_wrap", tests[i].fw)
 
 		for _, command := range commands {
 			ed.CommandHandler().RunTextCommand(v, command, nil)
@@ -60,11 +58,13 @@ func TestFindUnderExpand(t *testing.T) {
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{0, 0}},
 			[]Region{{0, 5}},
+			true,
 		},
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{19, 20}},
 			[]Region{{19, 20}, {22, 23}},
+			true,
 		},
 	}
 
@@ -77,19 +77,21 @@ func TestFindNext(t *testing.T) {
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{17, 20}},
 			[]Region{{17, 20}},
+			true,
 		},
 		// test find_wrap setting true
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{21, 23}},
 			[]Region{{18, 20}},
+			true,
 		},
 		// test find_wrap setting false
-		// NOTE: The positioning of this test is important
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{21, 23}},
 			[]Region{{21, 23}},
+			false,
 		},
 	}
 
@@ -100,6 +102,7 @@ type replaceTest struct {
 	cursors []Region
 	in      string
 	exp     string
+	fw      bool
 }
 
 func runReplaceTest(tests []replaceTest, t *testing.T, commands ...string) {
@@ -123,10 +126,7 @@ func runReplaceTest(tests []replaceTest, t *testing.T, commands ...string) {
 			v.Sel().Add(r)
 		}
 
-		v.Settings().Set("find_wrap", true)
-		if i == 6 {
-			v.Settings().Set("find_wrap", false)
-		}
+		v.Settings().Set("find_wrap", tests[i].fw)
 
 		replaceText = "f"
 		for _, command := range commands {
@@ -147,39 +147,45 @@ func TestReplaceNext(t *testing.T) {
 			[]Region{{1, 1}, {2, 2}, {3, 3}},
 			"abc abc bac abc abc",
 			"abc f bac abc abc",
+			true,
 		},
 		{
 			[]Region{{0, 0}, {4, 4}, {8, 8}, {12, 13}},
 			"abc abc bac abc abc",
 			"abc abc bac abc f",
+			true,
 		},
 		{
 			[]Region{{12, 13}, {8, 8}, {4, 4}, {1, 0}},
 			"abc abc bac abc abc",
 			"abc abc bac abc f",
+			true,
 		},
 		{
 			[]Region{{15, 15}},
 			"abc abc bac abc abc",
 			"abc abc bac abc f",
+			true,
 		},
 		{
 			[]Region{{0, 0}},
 			"abc abc bac abc abc",
 			"abc f bac abc abc",
+			true,
 		},
 		// test find_wrap setting true
 		{
 			[]Region{{16, 19}},
 			"abc abc bac abc abc",
 			"f abc bac abc abc",
+			true,
 		},
 		// test find_wrap setting false
-		// NOTE: The positioning of this test is important
 		{
 			[]Region{{16, 19}},
 			"abc abc bac abc abc",
 			"abc abc bac abc abc",
+			false,
 		},
 	}
 

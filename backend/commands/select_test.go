@@ -15,16 +15,19 @@ func TestSingleSelection(t *testing.T) {
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{1, 1}},
+			false,
 		},
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{2, 2}, {3, 3}, {6, 6}},
 			[]Region{{2, 2}},
+			false,
 		},
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{5, 5}},
 			[]Region{{5, 5}},
+			false,
 		},
 	}
 
@@ -37,16 +40,19 @@ func TestSelectAll(t *testing.T) {
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{1, 1}, {2, 2}, {3, 3}, {6, 6}},
 			[]Region{{0, 36}},
+			false,
 		},
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{2, 2}, {3, 3}, {6, 6}},
 			[]Region{{0, 36}},
+			false,
 		},
 		{
 			"Hello World!\nTest123123\nAbrakadabra\n",
 			[]Region{{5, 5}},
 			[]Region{{0, 36}},
+			false,
 		},
 	}
 
