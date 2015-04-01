@@ -54,7 +54,7 @@ test_all "frontend/termbox"
 let ret=$ret+$test_result
 fold_end "test.termbox"
 
-if [ "$ret" == "0" -a "$TRAVIS_OS_NAME" == "linux" ]; then
+if [ "$ret" == "0" ] && [ "$TRAVIS_OS_NAME" == "linux" ]; then
 	fold_start "coveralls" "post to coveralls"
 	"$(go env GOPATH | awk 'BEGIN{FS=":"} {print $1}')/bin/goveralls" -coverprofile=coverage.cov -service=travis-ci
 	fold_end "coveralls"
