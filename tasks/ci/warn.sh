@@ -10,7 +10,7 @@ while [ $# != 0 ]; do
 	shift
 done
 
-if [ "$TRAVIS" != "true" -a "$force" != "true" ]; then
+if [ "$TRAVIS" != "true" ] && [ "$force" != "true" ]; then
 	echo "WARNING: This script will destroy any unstaged changes."
 	echo "Do you want to continue? [Y/n]"
 	read cont
