@@ -21,8 +21,9 @@ if [ "$TRAVIS_OS_NAME" = "linux" ]; then
 elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
 
 	brew update
-	brew install oniguruma python3
+	brew install oniguruma python3 qt5
 	ln -s $(brew --prefix python3)/Frameworks/Python.framework/Versions/3.4/lib/pkgconfig/* $(brew --prefix)/lib/pkgconfig
+	ln -s $(brew --prefix qt5)/lib/pkgconfig/* $(brew --prefix)/lib/pkgconfig
 
 else
 
