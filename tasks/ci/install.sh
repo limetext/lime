@@ -23,7 +23,7 @@ elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
 	brew update
 	brew install oniguruma python3 qt5
 	brew link --force qt5
-	ln -s "$(brew --prefix python3)/Frameworks/Python.framework/Versions/3.4/lib/pkgconfig/*" "$(brew --prefix)/lib/pkgconfig"
+	ln -s "$(brew --prefix python3)/Frameworks/Python.framework/Versions/3.4/lib/pkgconfig/"* "$(brew --prefix)/lib/pkgconfig"
 
 else
 
