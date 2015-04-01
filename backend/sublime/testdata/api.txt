@@ -336,6 +336,7 @@ Window
 	__str__
 	__subclasshook__
 	active_view
+	focus_view
 	id
 	new_file
 	open_file
@@ -392,3 +393,4 @@ status_message
 test_window
 unregister
 version
+windows

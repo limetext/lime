@@ -66,6 +66,8 @@ func sublime_set_timeout(tu *py.Tuple, kwargs *py.Dict) (py.Object, error) {
 }
 
 func init() {
+	backend.OnInit.Add(onInit)
+
 	sublime_methods = append(sublime_methods, py.Method{Name: "console", Func: sublime_Console}, py.Method{Name: "set_timeout", Func: sublime_set_timeout})
 	backend.GetEditor()
 	l := py.InitAndLock()
@@ -237,8 +239,7 @@ func (p *plugin) loadSettings() {
 
 var watcher *watch.Watcher
 
-// TODO
-func Init() {
+func onInit() {
 	l := py.NewLock()
 	defer l.Unlock()
 	m, err := py.Import("sublime_plugin")

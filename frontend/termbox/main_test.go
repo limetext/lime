@@ -150,3 +150,28 @@ func TestLoopShutdown(t *testing.T) {
 		t.Error("Loop did not terminate within timeout")
 	}
 }
+
+func TestHandleInput(t *testing.T) {
+	frontend := createFrontend()
+
+	event_a := termbox.Event{
+		Type: termbox.EventKey,
+		Ch:   'a',
+	}
+	event_b := termbox.Event{
+		Type: termbox.EventKey,
+		Ch:   'b',
+	}
+	expected := "ab"
+
+	frontend.handleInput(event_a)
+	frontend.handleInput(event_b)
+
+	// Allow the event to be handled in the call chain
+	time.Sleep(10 * time.Millisecond)
+
+	buffer := frontend.currentView.Buffer()
+	if substring := buffer.Substr(Region{A: 0, B: buffer.Size()}); substring != expected {
+		t.Errorf("Expected %q to be in editor's buffer, but got %q.", expected, substring)
+	}
+}

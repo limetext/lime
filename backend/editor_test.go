@@ -73,8 +73,8 @@ func TestLoadSettings(t *testing.T) {
 			t.Errorf("Expected windows font_face be Consolas, but is %s", plat.Settings().Get("font_face", ""))
 		}
 	case "darwin":
-		if plat.Settings().Get("font_face", "") != "Menlo Regular" {
-			t.Errorf("Expected OSX font_face be Menlo Regular, but is %s", plat.Settings().Get("font_face", ""))
+		if plat.Settings().Get("font_face", "") != "Menlo" {
+			t.Errorf("Expected OSX font_face be Menlo, but is %s", plat.Settings().Get("font_face", ""))
 		}
 	default:
 		if plat.Settings().Get("font_face", "") != "Monospace" {

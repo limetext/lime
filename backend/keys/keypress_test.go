@@ -77,7 +77,7 @@ func TestKeyPressIsCharacter(t *testing.T) {
 }
 
 func TestKeyPressFix(t *testing.T) {
-	k := KeyPress{'A', false, false, false, false}
+	k := KeyPress{"A", 'A', false, false, false, false}
 	k.fix()
 	if k.Key != 'a' {
 		t.Errorf("Expected the key to be %q, but it was %q", 'a', k.Key)
@@ -97,12 +97,12 @@ func TestKeyPressUnmarshalJSON(t *testing.T) {
 }
 
 func TestKeyPressString(t *testing.T) {
-	k1 := KeyPress{'a', true, true, false, false}
+	k1 := KeyPress{"a", 'a', true, true, false, false}
 	if k1.String() != "super+shift+a" {
 		t.Errorf("Expected %q, but got %q", "super+shift+a", k1.String())
 	}
 
-	k2 := KeyPress{'b', true, false, true, true}
+	k2 := KeyPress{"b", 'b', true, false, true, true}
 	if k2.String() != "ctrl+alt+shift+b" {
 		t.Errorf("Expected %q, but got %q", "ctrl+alt+shift+b", k2.String())
 	}

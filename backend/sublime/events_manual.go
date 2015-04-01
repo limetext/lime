@@ -171,8 +171,6 @@ func (c *OnQueryContextGlue) onQueryContext(v *backend.View, key string, operato
 	}
 	defer ret.Decref()
 
-	//	if ret != nil {
-	log.Fine("onQueryContext: %v, %v", pv, ret.Base())
 	if r2, ok := ret.(*py.Bool); ok {
 		if r2.Bool() {
 			return backend.True

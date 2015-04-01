@@ -20,4 +20,7 @@
 
 	// Whether to render line numbers
 	"line_numbers": true,
+
+	// If true searches will continue from the beginning after reaching end of file
+	"find_wrap": true
 }

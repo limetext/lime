@@ -20,6 +20,11 @@ type (
 	PrevViewCommand struct {
 		DefaultCommand
 	}
+
+	SetFileTypeCommand struct {
+		DefaultCommand
+		Syntax string
+	}
 )
 
 func (c *CloseViewCommand) Run(w *Window) error {
@@ -57,10 +62,16 @@ func (c *PrevViewCommand) Run(w *Window) error {
 	return nil
 }
 
+func (c *SetFileTypeCommand) Run(v *View, e *Edit) error {
+	v.SetSyntaxFile(c.Syntax)
+	return nil
+}
+
 func init() {
 	register([]Command{
 		&CloseViewCommand{},
 		&NextViewCommand{},
 		&PrevViewCommand{},
+		&SetFileTypeCommand{},
 	})
 }

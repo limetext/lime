@@ -224,6 +224,18 @@ func sublime_Version() (py.Object, error) {
 	return pyret0, err
 }
 
+func sublime_Windows() (py.Object, error) {
+	ret0 := backend.GetEditor().Windows()
+	var err error
+	var pyret0 py.Object
+
+	pyret0, err = toPython(ret0)
+	if err != nil {
+		return nil, err
+	}
+	return pyret0, err
+}
+
 var sublime_methods = []py.Method{
 	{Name: "register", Func: sublime_Register},
 	{Name: "unregister", Func: sublime_Unregister},
@@ -244,4 +256,5 @@ var sublime_methods = []py.Method{
 	{Name: "set_clipboard", Func: sublime_SetClipboard},
 	{Name: "settings", Func: sublime_Settings},
 	{Name: "version", Func: sublime_Version},
+	{Name: "windows", Func: sublime_Windows},
 }

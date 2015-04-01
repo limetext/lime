@@ -960,14 +960,35 @@ func (v *View) Find(pat string, pos int, flags int) Region {
 	return Region{-1, -1}
 }
 
+func (v *View) Status() map[string]string {
+	m := make(map[string]string)
+	v.lock.Lock()
+	defer v.lock.Unlock()
+
+	for k, v := range v.status {
+		m[k] = v
+	}
+	return m
+}
+
 func (v *View) SetStatus(key string, val string) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	v.status[key] = val
 }
 
 func (v *View) GetStatus(key string) string {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	return v.status[key]
 }
 
 func (v *View) EraseStatus(key string) {
+	v.lock.Lock()
+	defer v.lock.Unlock()
 	delete(v.status, key)
+}
+
+func (v *View) SetSyntaxFile(file string) {
+	v.Settings().Set("syntax", file)
 }

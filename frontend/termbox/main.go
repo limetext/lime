@@ -5,21 +5,23 @@ package main
 
 import (
 	"flag"
-	"github.com/limetext/gopy/lib"
-	"github.com/limetext/lime/backend"
-	_ "github.com/limetext/lime/backend/commands"
-	"github.com/limetext/lime/backend/keys"
-	"github.com/limetext/lime/backend/log"
-	"github.com/limetext/lime/backend/sublime"
-	"github.com/limetext/lime/backend/textmate"
-	"github.com/limetext/lime/backend/util"
-	"github.com/limetext/termbox-go"
-	. "github.com/limetext/text"
+	"fmt"
 	"path"
 	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/limetext/gopy/lib"
+	"github.com/limetext/lime/backend"
+	_ "github.com/limetext/lime/backend/commands"
+	"github.com/limetext/lime/backend/keys"
+	"github.com/limetext/lime/backend/log"
+	_ "github.com/limetext/lime/backend/sublime"
+	"github.com/limetext/lime/backend/textmate"
+	"github.com/limetext/lime/backend/util"
+	"github.com/limetext/termbox-go"
+	. "github.com/limetext/text"
 )
 
 var (
@@ -104,31 +106,35 @@ var (
 
 const (
 	render_chan_len = 2
+	statusbarHeight = 1
 )
 
-type layout struct {
-	x, y          int
-	width, height int
-	visible       Region
-	lastUpdate    int
-}
+type (
+	layout struct {
+		x, y          int
+		width, height int
+		visible       Region
+		lastUpdate    int
+	}
 
-type tbfe struct {
-	layout         map[*backend.View]layout
-	status_message string
-	dorender       chan bool
-	shutdown       chan bool
-	lock           sync.Mutex
-	editor         *backend.Editor
-	console        *backend.View
-	currentView    *backend.View
-	currentWindow  *backend.Window
-}
+	tbfe struct {
+		layout         map[*backend.View]layout
+		window_layout  layout
+		status_message string
+		dorender       chan bool
+		shutdown       chan bool
+		lock           sync.Mutex
+		editor         *backend.Editor
+		console        *backend.View
+		currentView    *backend.View
+		currentWindow  *backend.Window
+	}
 
-type tbfeBufferDeltaObserver struct {
-	t    *tbfe
-	view *backend.View
-}
+	tbfeBufferDeltaObserver struct {
+		t    *tbfe
+		view *backend.View
+	}
+)
 
 // Creates and initializes the frontend.
 func createFrontend() *tbfe {
@@ -149,11 +155,13 @@ func createFrontend() *tbfe {
 	} else {
 		t.currentView = t.currentWindow.NewFile()
 	}
+	w, h := termbox.Size()
+	t.handleResize(h, w, true)
 
 	t.console.Buffer().AddObserver(&t)
 	t.setupCallbacks(t.currentView)
 
-	path := path.Join("..", "..", "packages", "themes", "TextMate-Themes", "Monokai.tmTheme")
+	path := path.Join(backend.LIME_PACKAGES_PATH, "themes", "TextMate-Themes", "Monokai.tmTheme")
 	if sc, err := textmate.LoadTheme(path); err != nil {
 		log.Error(err)
 	} else {
@@ -162,13 +170,6 @@ func createFrontend() *tbfe {
 
 	setColorMode()
 	setSchemeSettings()
-
-	w, h := termbox.Size()
-	t.handleResize(h, w, true)
-
-	// These might take a while
-	t.editor.Init()
-	go sublime.Init()
 
 	return &t
 }
@@ -193,13 +194,10 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 	if caretBlink && blink {
 		caretStyle = 0
 	}
+
 	tabSize := 4
-	ts := v.Settings().Get("tab_size", tabSize)
-	// TODO(.): crikey...
-	if i, ok := ts.(int); ok {
+	if i, ok := v.Settings().Get("tab_size", tabSize).(int); ok {
 		tabSize = i
-	} else if f, ok := ts.(float64); ok {
-		tabSize = int(f)
 	}
 
 	lineNumbers, _ := v.Settings().Get("line_numbers", true).(bool)
@@ -222,6 +220,7 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			renderLineNumber(&line, &x, y, lineNumberRenderSize, fg, bg)
 		}
 
+		// TODO: doc
 		for curr < len(recipie) && (o >= recipie[curr].Region.Begin()) {
 			if o < recipie[curr].Region.End() {
 				fg = palLut(textmate.Color(recipie[curr].Flavour.Foreground))
@@ -229,20 +228,21 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 			}
 			curr++
 		}
+
 		iscursor := sel.Contains(Region{o, o})
 		if iscursor {
 			fg = fg | caretStyle
 			termbox.SetCell(x, y, ' ', fg, bg)
 		}
+
 		if r == '\t' {
 			add := (x + 1 + (tabSize - 1)) &^ (tabSize - 1)
-			for x < add {
+			for ; x < add; x++ {
 				if x < ex {
 					termbox.SetCell(x, y, ' ', fg, bg)
 				}
 				// A long cursor looks weird
 				fg = fg & ^(termbox.AttrUnderline | termbox.AttrReverse)
-				x++
 			}
 			continue
 		} else if r == '\n' {
@@ -278,6 +278,68 @@ func (t *tbfe) renderView(v *backend.View, lay layout) {
 		if r := rs[len(rs)-1]; !vr.Covers(r) {
 			t.Show(v, r)
 		}
+	}
+
+	fg, bg = defaultFg, palLut(textmate.Color{28, 29, 26, 1})
+	y = t.window_layout.height - statusbarHeight
+	// Draw status bar bottom of window
+	for i := 0; i < t.window_layout.width; i++ {
+		termbox.SetCell(i, y, ' ', fg, bg)
+	}
+	t.renderLStatus(v, y, fg, bg)
+	// The right status
+	rns := []rune(fmt.Sprintf("Tab Size:%d   %s", tabSize, "Go"))
+	x = t.window_layout.width - 1 - len(rns)
+	addRunes(x, y, rns, fg, bg)
+}
+
+func (t *tbfe) renderLStatus(v *backend.View, y int, fg, bg termbox.Attribute) {
+	st := v.Status()
+	sel := v.Sel()
+	j := 0
+
+	for k, v := range st {
+		s := fmt.Sprintf("%s: %s, ", k, v)
+		addString(j, y, s, fg, bg)
+	}
+
+	if sel.Len() == 0 {
+		return
+	} else if l := sel.Len(); l > 1 {
+		s := fmt.Sprintf("%d selection regions", l)
+		j = addString(j, y, s, fg, bg)
+	} else if r := sel.Get(0); r.Size() == 0 {
+		row, col := v.Buffer().RowCol(r.A)
+		s := fmt.Sprintf("Line %d, Column %d", row, col)
+		j = addString(j, y, s, fg, bg)
+	} else {
+		ls := v.Buffer().Lines(r)
+		s := v.Buffer().Substr(r)
+		if len(ls) < 2 {
+			s := fmt.Sprintf("%d characters selected", len(s))
+			j = addString(j, y, s, fg, bg)
+		} else {
+			s := fmt.Sprintf("%d lines %d characters selected", len(ls), len(s))
+			j = addString(j, y, s, fg, bg)
+		}
+	}
+
+	if t.status_message != "" {
+		s := fmt.Sprintf("; %s", t.status_message)
+		addString(j, y, s, fg, bg)
+	}
+}
+
+func addString(x, y int, s string, fg, bg termbox.Attribute) int {
+	runes := []rune(s)
+	addRunes(x, y, runes, fg, bg)
+	x += len(runes)
+	return x
+}
+
+func addRunes(x, y int, runes []rune, fg, bg termbox.Attribute) {
+	for i, r := range runes {
+		termbox.SetCell(x+i, y, r, fg, bg)
 	}
 }
 
@@ -435,28 +497,21 @@ func (t *tbfe) renderthread() {
 
 		t.lock.Lock()
 		vs := make([]*backend.View, 0, len(t.layout))
-		l := make([]layout, 0, len(t.layout))
-		for k, v := range t.layout {
-			vs = append(vs, k)
-			l = append(l, v)
+		ls := make([]layout, 0, len(t.layout))
+		for v, l := range t.layout {
+			vs = append(vs, v)
+			ls = append(ls, l)
 		}
-		runes := []rune(t.status_message)
 		t.lock.Unlock()
 
-		w, h := termbox.Size()
-		for i := 0; i < w && i < len(runes); i++ {
-			termbox.SetCell(i, h-2, runes[i], defaultFg, defaultBg)
-		}
-
 		for i, v := range vs {
-			t.renderView(v, l[i])
+			t.renderView(v, ls[i])
 		}
 
 		termbox.Flush()
 	}
 
 	for range t.dorender {
-		log.Finest("Rendering")
 		dorender()
 	}
 }
@@ -467,27 +522,28 @@ func (t *tbfe) handleResize(height, width int, init bool) {
 	t.lock.Lock()
 	if init {
 		t.layout[t.currentView] = layout{0, 0, 0, 0, Region{}, 0}
-		if *showConsole {
-			t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
-		}
+		t.window_layout = layout{0, 0, 0, 0, Region{}, 0}
+		t.layout[t.console] = layout{0, 0, 0, 0, Region{}, 0}
 	}
 
+	t.window_layout.height = height
+	t.window_layout.width = width
+
+	view_layout := t.layout[t.currentView]
+	view_layout.height = height - statusbarHeight
+	view_layout.width = width
+	t.layout[t.currentView] = view_layout
 	if *showConsole {
 		view_layout := t.layout[t.currentView]
-		view_layout.height = height - *consoleHeight - 4
+		view_layout.height = height - *consoleHeight - statusbarHeight - 1
 		view_layout.width = width
 
 		console_layout := t.layout[t.console]
-		console_layout.y = height - *consoleHeight - 2
+		console_layout.y = height - *consoleHeight - statusbarHeight
 		console_layout.width = width
-		console_layout.height = *consoleHeight - 1
+		console_layout.height = *consoleHeight
 
 		t.layout[t.console] = console_layout
-		t.layout[t.currentView] = view_layout
-	} else {
-		view_layout := t.layout[t.currentView]
-		view_layout.height = height - 3
-		view_layout.width = width
 		t.layout[t.currentView] = view_layout
 	}
 	t.lock.Unlock()
@@ -504,8 +560,10 @@ func (t *tbfe) handleInput(ev termbox.Event) {
 	var kp keys.KeyPress
 	if ev.Ch != 0 {
 		kp.Key = keys.Key(ev.Ch)
+		kp.Text = string(ev.Ch)
 	} else if v2, ok := lut[ev.Key]; ok {
 		kp = v2
+		kp.Text = string(kp.Key)
 	} else {
 		return
 	}
@@ -518,7 +576,7 @@ func (t *tbfe) loop() {
 
 	// Only set up the timers if we should actually blink the cursor
 	// This should somehow be changable on an OnSettingsChanged callback
-	if p := t.editor.Settings().Get("caret_blink", true).(bool); p {
+	if p, _ := t.editor.Settings().Get("caret_blink", true).(bool); p {
 		duration := time.Second / 2
 		if p, ok := t.editor.Settings().Get("caret_blink_phase", 1.0).(float64); ok {
 			duration = time.Duration(float64(time.Second)*p) / 2
@@ -724,11 +782,10 @@ func setSchemeSettings() {
 }
 
 func createNewView(filename string, window *backend.Window) *backend.View {
-	syntax := "../../packages/go.tmbundle/Syntaxes/Go.tmLanguage"
 	v := window.OpenFile(filename, 0)
 
 	v.Settings().Set("trace", true)
-	v.Settings().Set("syntax", syntax)
+	v.SetSyntaxFile("../../packages/go.tmbundle/Syntaxes/Go.tmLanguage")
 
 	return v
 }
@@ -758,5 +815,6 @@ func main() {
 
 	t := createFrontend()
 	go t.renderthread()
+	go t.editor.Init()
 	t.loop()
 }

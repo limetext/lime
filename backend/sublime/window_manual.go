@@ -88,3 +88,24 @@ func (o *Window) Py_run_command(tu *py.Tuple) (py.Object, error) {
 	backend.GetEditor().CommandHandler().RunWindowCommand(o.data, arg1, arg2)
 	return toPython(nil)
 }
+
+func (o *Window) Py_focus_view(tu *py.Tuple) (py.Object, error) {
+	var (
+		arg1 *backend.View
+	)
+	if v, err := tu.GetItem(0); err != nil {
+		return nil, err
+	} else {
+		if v3, err2 := fromPython(v); err2 != nil {
+			return nil, err2
+		} else {
+			if v2, ok := v3.(*backend.View); !ok {
+				return nil, fmt.Errorf("Expected type *backend.View for backend.Window.SetActiveView() arg1, not %s", v.Type())
+			} else {
+				arg1 = v2
+			}
+		}
+	}
+	o.data.SetActiveView(arg1)
+	return toPython(nil)
+}

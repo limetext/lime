@@ -15,7 +15,7 @@ import (
 	"github.com/limetext/lime/backend/keys"
 	"github.com/limetext/lime/backend/log"
 	"github.com/limetext/lime/backend/render"
-	"github.com/limetext/lime/backend/sublime"
+	_ "github.com/limetext/lime/backend/sublime"
 	"github.com/limetext/lime/backend/textmate"
 	"github.com/limetext/lime/backend/util"
 	. "github.com/limetext/text"
@@ -222,6 +222,9 @@ func (t *tbfe) render(w io.Writer) {
 	}
 	//	runes := []rune(t.status_message)
 }
+
+// key HandleFunc for the http /key endpoint. This only happens if the client
+// doesn't support websockets.
 func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	log.Debug("key: %s", req)
 	kc := req.FormValue("keyCode")
@@ -240,10 +243,12 @@ func (t *tbfe) key(w http.ResponseWriter, req *http.Request) {
 	if req.FormValue("shiftKey") == "true" {
 		kp.Shift = true
 	}
+
 	if !kp.Shift {
 		v = int64(unicode.ToLower(rune(v)))
 	}
 	kp.Key = keys.Key(v)
+	kp.Text = string(v)
 	backend.GetEditor().HandleInput(kp)
 }
 
@@ -405,6 +410,7 @@ func (t *tbfe) WebsocketServer(ws *websocket.Conn) {
 					v = int64(unicode.ToLower(rune(v)))
 				}
 				kp.Key = keys.Key(v)
+				kp.Text = string(v)
 			}
 
 			backend.GetEditor().HandleInput(kp)
@@ -500,10 +506,7 @@ func (t *tbfe) loop() {
 	t.Show(v, Region{100, 100})
 	t.Show(v, Region{1, 1})
 
-	go func() {
-		ed.Init()
-		sublime.Init()
-	}()
+	go ed.Init()
 	log.Debug("Serving on port %d", *port)
 	http.HandleFunc("/", t.ServeHTTP)
 	http.HandleFunc("/view", t.view)

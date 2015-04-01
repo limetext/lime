@@ -77,6 +77,13 @@ ApplicationWindow {
             }
         }
         Menu {
+            title: qsTr("Find")
+            MenuItem {
+                text: qsTr("Find Next")
+                onTriggered: frontend.runCommand("find_next");
+            }
+        }
+        Menu {
             title: qsTr("&Edit")
             MenuItem {
                 text: qsTr("&Undo")
@@ -124,6 +131,10 @@ ApplicationWindow {
                 text: qsTr("Sh&ow/Hide Console")
                 shortcut: "Ctrl+`"
                 onTriggered: if (consoleView.visible == true) { consoleView.visible=false } else { consoleView.visible=true }
+            }
+            MenuItem {
+                text: qsTr("Show/Hide Minimap")
+                onTriggered: if (minimap.visible == true) { minimap.visible=false } else { minimap.visible=true }
             }
             MenuItem {
                 text: qsTr("Sh&ow/Hide Statusbar")
@@ -188,7 +199,7 @@ ApplicationWindow {
         anchors.fill: parent
         Keys.onPressed: {
             view().ctrl = (event.key == Qt.Key_Control) ? true : false;
-            event.accepted = frontend.handleInput(event.key, event.modifiers)
+            event.accepted = frontend.handleInput(event.text, event.key, event.modifiers)
         }
         Keys.onReleased: {
             view().ctrl = (event.key == Qt.Key_Control) ? false : view().ctrl;
@@ -210,11 +221,13 @@ ApplicationWindow {
                             implicitWidth: 180
                             implicitHeight: 28
                             ToolTip {
-                                id: tooltip
                                 backgroundColor: "#BECCCC66"
                                 textColor: "black"
                                 font.pointSize: 8
                                 text: styleData.title
+                                Component.onCompleted: {
+                                    this.parent = tabs;
+                                }
                             }
                             BorderImage {
                                 source: styleData.selected ? "../../packages/themes/soda/Soda Dark/tab-active.png" : "../../packages/themes/soda/Soda Dark/tab-inactive.png"

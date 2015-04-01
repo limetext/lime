@@ -72,6 +72,7 @@ func nextSelection(v *View, search string) (Region, error) {
 	sel := v.Sel()
 	rs := sel.Regions()
 	last := 0
+	wrap, _ := v.Settings().Get("find_wrap").(bool)
 
 	// Regions are not sorted, so finding the last one requires a search.
 	for _, r := range rs {
@@ -81,9 +82,9 @@ func nextSelection(v *View, search string) (Region, error) {
 	// Start the search right after the last selection.
 	start := last
 	r := v.Find(search, start, IGNORECASE|LITERAL)
-	// If not found yet, search from the start of the buffer to our original
-	// starting point.
-	if r.A == -1 {
+	// If not found yet and find_wrap setting is true, search
+	// from the start of the buffer to our original starting point.
+	if r.A == -1 && wrap {
 		r = v.Find(search, 0, IGNORECASE|LITERAL)
 	}
 	// If we found our string, select it.
