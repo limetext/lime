@@ -178,6 +178,11 @@ func (p *plugin) FileChanged(name string) {
 	p.loadPlugin()
 }
 
+func (p *plugin) FileCreated(name string) {
+	p.Reload()
+	p.loadPlugin()
+}
+
 func (p *plugin) loadPlugin() {
 	fi := p.Get().([]os.FileInfo)
 	for _, f := range fi {

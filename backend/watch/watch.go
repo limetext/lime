@@ -223,14 +223,12 @@ func (w *Watcher) Observe() {
 					w.Watch(dir, nil)
 					w.lock.Lock()
 				}
-				// We will apply parent directory FileChanged callbacks to,
-				// if one of the files inside the directory has changed
-				if cbs, exist := w.watched[dir]; ev.Op&fsnotify.Write != 0 && exist {
-					for _, cb := range cbs {
-						if c, ok := cb.(FileChangedCallback); ok {
-							c.FileChanged(dir)
-						}
-					}
+				// It's possible that we're only watching the parent
+				// directory of the file for which the event fired.
+				// Try to call the right callback if that's the case
+				if _, exist := w.watched[dir]; exist {
+					ev.Name = dir
+					w.apply(ev)
 				}
 
 			}()
