@@ -206,6 +206,18 @@ func (t *qmlfrontend) onLoad(v *backend.View) {
 	tab.Set("title", v2.Title.Text)
 }
 
+func (t *qmlfrontend) onSelectionModified(v *backend.View) {
+	w2 := t.windows[v.Window()]
+	i := 0
+	for i = range w2.views {
+		if w2.views[i].bv == v {
+			break
+		}
+	}
+	v2 := w2.views[i]
+	v2.qv.Call("onSelectionModified")
+}
+
 // Launches the provided command in a new goroutine
 // (to avoid locking up the GUI)
 func (t *qmlfrontend) RunCommand(command string) {
@@ -271,6 +283,7 @@ func (t *qmlfrontend) loop() (err error) {
 	backend.OnNew.Add(t.onNew)
 	backend.OnClose.Add(t.onClose)
 	backend.OnLoad.Add(t.onLoad)
+	backend.OnSelectionModified.Add(t.onSelectionModified)
 
 	ed := backend.GetEditor()
 	ed.SetFrontend(t)
