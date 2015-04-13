@@ -151,6 +151,7 @@ func pyError(err error) error {
 	// }
 	return fmt.Errorf("%v", err)
 }
+
 func (c *TextCommandGlue) Run(v *backend.View, e *backend.Edit) error {
 	l := py.NewLock()
 	defer l.Unlock()
