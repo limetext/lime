@@ -1,3 +1,7 @@
+os:
+  - osx
+  - linux
+
 language: go
 
 go: 1.4
@@ -8,8 +12,8 @@ install:
 script:
   - ./tasks/ci/run_tests.sh
   - ./tasks/ci/build_frontends.sh
-  - ./tasks/ci/check_gen.sh --force
-  - ./tasks/ci/check_fmt.sh --force
+  - ./tasks/ci/check_gen.sh
+  - ./tasks/ci/check_fmt.sh
 
 notifications:
   webhooks:
