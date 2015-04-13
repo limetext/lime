@@ -164,6 +164,7 @@ Item {
                         var r = selection.get(selection.len()-1);
                         selection.substract(r);
                         selection.add(myView.region(point.p, point.r));
+                        onSelectionModified();
                     }
                 }
                 point.r = null;
@@ -186,6 +187,7 @@ Item {
                         }
 
                         getCurrentSelection().add(myView.region(point.p, point.p))
+                        onSelectionModified();
                     }
                 }
             }
@@ -205,6 +207,7 @@ Item {
                         }
 
                         getCurrentSelection().add(myView.back().expandByClass(myView.region(point.p, point.p), 1|2|4|8))
+                        onSelectionModified();
                     }
                 }
             }
@@ -266,7 +269,7 @@ Item {
     }
 
     Repeater {
-        id: highlighedLines
+        id: highlightedLines
         model: (!isMinimap && getCurrentSelection()) ? getCurrentSelection().len() : 0
 
         delegate: Rectangle {
@@ -295,117 +298,123 @@ Item {
         }
     }
 
+    function onSelectionModified() {
+        if (myView == undefined) return;
+
+        var selection = getCurrentSelection(),
+            backend = myView.back(),
+            buf = backend.buffer(),
+            of = 0; // todo: rename 'of' to something more descriptive
+
+        highlightedLines.model = myView.regionLines();
+
+        for(var i = 0; i < selection.len(); i++) {
+            var rect = highlightedLines.itemAt(i),
+                s = selection.get(i);
+
+            if (!s || !rect) continue;
+
+            var rowcol,
+                lns = getLinesFromSelection(s, buf);
+
+            // checks if we moved cursor forward or backward
+            if (s.b <= s.a) lns.reverse();
+            for(var j = 0; j < lns.length; j++) {
+                rect = highlightedLines.itemAt(i+of);
+                of++;
+                rowcol = buf.rowCol(lns[j].a);
+                rect.rowcol = rowcol;
+                rect.x = getCursorOffset(lns[j].a, rowcol, rect.cursor, buf);
+                rowcol = buf.rowCol(lns[j].b);
+                rect.width = getCursorOffset(lns[j].b, rowcol, rect.cursor, buf) - rect.x;
+            }
+            of--;
+
+            rect.cursor.x = (s.b <= s.a) ? 0 : rect.width;
+            rect.cursor.opacity = 1;
+
+            var caretStyle = myView.setting("caret_style"),
+                inverseCaretState = myView.setting("inverse_caret_state");
+
+            if (caretStyle == "underscore") {
+                if (inverseCaretState) {
+                    rect.cursor.text = "_";
+                    if (rect.width != 0)
+                        rect.cursor.x -= rect.cursor.width;
+                } else {
+                    rect.cursor.text = "|";
+                    // Shift the cursor to the edge of the character
+                    rect.cursor.x -= 4;
+                }
+            }
+        }
+        // Clearing
+        for(var i = of + selection.len()+1; i < highlightedLines.count; i++) {
+            var rect = highlightedLines.itemAt(i);
+            if (!rect) continue;
+            rect.width = 0;
+        }
+    }
+
+    // getCursorOffset returns the x coordinate for the cursor.
+    function getCursorOffset(cursorIndex, rowcol, cursor, buf) {
+
+        var line = buf.line(cursorIndex),
+            currentLineText  = buf.substr(line);
+
+        // text from the beginning of the line to the given column
+        var textToCursor = currentLineText.substr(0, rowcol[1]);
+
+        cursor.textFormat = TextEdit.RichText;
+        cursor.text = "<span style=\"white-space:pre\">" + textToCursor + "</span>";
+
+        var cursorOffset = cursor.width;
+
+        cursor.textFormat = TextEdit.PlainText;
+        cursor.text = "";
+
+        return (!cursorOffset) ? 0 : cursorOffset;
+    }
+
+    // getLinesFromSelection returns an array of lines from the given
+    // selection and buffer. Works like buffer.Lines()
+    //
+    // note: the selection could be inverted, for example if a user starts
+    // selecting from the bottom up. This makes sure that the start of
+    // the selection is where the user stopped selecting.
+    function getLinesFromSelection(selection, buf) {
+        var lines = [];
+
+        var safeSelection = (selection.b > selection.a) ?
+                    { a: selection.a, b: selection.b }:
+                    { a: selection.b, b: selection.a };
+
+        var rowCol = {
+            a: buf.rowCol(safeSelection.a),
+            b: buf.rowCol(safeSelection.b)
+        };
+
+        for(var i = rowCol.a[0]; i <= rowCol.b[0]; i++) {
+            var lr = buf.line(buf.textPoint(i, 0)),
+                a = (i == rowCol.a[0]) ? safeSelection.a : lr.a,
+                b = (i == rowCol.b[0]) ? safeSelection.b : lr.b,
+                res = (b > a) ? {a: a, b: b} : {a: b, b: a};
+            lines.push(res);
+        }
+
+        return lines;
+    }
+
     Timer {
         interval: 100
         repeat: true
         running: true
-
-        // getCursorOffset returns the x coordinate for the cursor.
-        function getCursorOffset(cursorIndex, rowcol, cursor, buf) {
-
-            var line = buf.line(cursorIndex),
-                currentLineText  = buf.substr(line);
-
-            // text from the beginning of the line to the given column
-            var textToCursor = currentLineText.substr(0, rowcol[1]);
-
-            cursor.textFormat = TextEdit.RichText;
-            cursor.text = "<span style=\"white-space:pre\">" + textToCursor + "</span>";
-
-            var cursorOffset = cursor.width;
-
-            cursor.textFormat = TextEdit.PlainText;
-            cursor.text = "";
-
-            return (!cursorOffset) ? 0 : cursorOffset;
-        }
-
-        // getLinesFromSelection returns an array of lines from the given
-        // selection and buffer. Works like buffer.Lines()
-        //
-        // note: the selection could be inverted, for example if a user starts
-        // selecting from the bottom up. This makes sure that the start of
-        // the selection is where the user stopped selecting.
-        function getLinesFromSelection(selection, buf) {
-            var lines = [];
-
-            var safeSelection = (selection.b > selection.a) ?
-                        { a: selection.a, b: selection.b }:
-                        { a: selection.b, b: selection.a };
-
-            var rowCol = {
-                a: buf.rowCol(safeSelection.a),
-                b: buf.rowCol(safeSelection.b)
-            };
-
-            for(var i = rowCol.a[0]; i <= rowCol.b[0]; i++) {
-                var lr = buf.line(buf.textPoint(i, 0)),
-                    a = (i == rowCol.a[0]) ? safeSelection.a : lr.a,
-                    b = (i == rowCol.b[0]) ? safeSelection.b : lr.b,
-                    res = (b > a) ? {a: a, b: b} : {a: b, b: a};
-                lines.push(res);
-            }
-
-            return lines;
-        }
-
-        // todo: extract body of this to functions
         onTriggered: {
+            var o = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
 
-            if (myView == undefined) return;
-
-            var selection = getCurrentSelection(),
-                backend = myView.back(),
-                buf = backend.buffer(),
-                of = 0; // todo: rename 'of' to something more descriptive
-
-            highlighedLines.model = myView.regionLines();
-
-            for(var i = 0; i < selection.len(); i++) {
-                var rect = highlighedLines.itemAt(i),
-                    s = selection.get(i);
-
-                if (!s || !rect) continue;
-
-                var rowcol,
-                    lns = getLinesFromSelection(s, buf);
-
-                // checks if we moved cursor forward or backward
-                if (s.b <= s.a) lns.reverse();
-                for(var j = 0; j < lns.length; j++) {
-                    rect = highlighedLines.itemAt(i+of);
-                    of++;
-                    rowcol = buf.rowCol(lns[j].a);
-                    rect.rowcol = rowcol;
-                    rect.x = getCursorOffset(lns[j].a, rowcol, rect.cursor, buf);
-                    rowcol = buf.rowCol(lns[j].b);
-                    rect.width = getCursorOffset(lns[j].b, rowcol, rect.cursor, buf) - rect.x;
-                }
-                of--;
-
-                rect.cursor.x = (s.b <= s.a) ? 0 : rect.width;
-                rect.cursor.opacity = 0.5 + 0.5 * Math.sin(Date.now()*0.008);
-
-                var caretStyle = myView.setting("caret_style"),
-                    inverseCaretState = myView.setting("inverse_caret_state");
-
-                if (caretStyle == "underscore") {
-                    if (inverseCaretState) {
-                        rect.cursor.text = "_";
-                        if (rect.width != 0)
-                            rect.cursor.x -= rect.cursor.width;
-                    } else {
-                        rect.cursor.text = "|";
-                        // Shift the cursor to the edge of the character
-                        rect.cursor.x -= 4;
-                    }
-                }
-            }
-            // Clearing
-            for(var i = of + selection.len()+1; i < highlighedLines.count; i++) {
-                var rect = highlighedLines.itemAt(i);
-                if (!rect) continue;
-                rect.width = 0;
+            for (var i = 0; i < highlightedLines.count; i++) {
+                var rect =  highlightedLines.itemAt(i);
+                rect.cursor.opacity = o;
             }
         }
     }
