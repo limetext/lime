@@ -118,6 +118,7 @@ Item {
 
                 // calculate a column from a given mouse x coordinate and the line text.
                 var col = Math.floor(OFFSET_MAGIC_NUMBER + lineText.length * (mouseX / dummy.width));
+                if (col < 0) col = 0;
 
                 // Trying to find closest column to clicked position
                 dummy.text = "<span style=\"white-space:pre\">" + lineText.substr(0, col) + "</span>";
@@ -125,7 +126,7 @@ Item {
                 var d = Math.abs(mouseX - dummy.width),
                     add = (mouseX > dummy.width) ? 1 : -1;
 
-                while(Math.abs(mouseX - dummy.width) <= d) {
+                while (col >= 0 && col < lineText.length && Math.abs(mouseX - dummy.width) <= d) {
                     d = Math.abs(mouseX - dummy.width);
                     col += add;
                     dummy.text = "<span style=\"white-space:pre\">" + lineText.substr(0, col) + "</span>";
