@@ -3,3 +3,6 @@
 cd ./3rdparty/libs/gopy
 go install
 go test
+
+
+test
