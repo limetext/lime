@@ -1,8 +1,0 @@
-{
-	// If true, debug information will be printed to the console.
-	"vintageous_verbose": false,
-
-	// If true, some key bindings prefaced by the CTRL modifier will override default Sublime Text
-	// key bindings.
-	"vintageous_use_ctrl_keys": false
-}

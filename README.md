@@ -1,15 +1,21 @@
-[![Build Status](https://travis-ci.org/limetext/lime.svg?branch=master)](https://travis-ci.org/limetext/lime)
-[![Coverage Status](https://img.shields.io/coveralls/limetext/lime.svg?branch=master)](https://coveralls.io/r/limetext/lime?branch=master)
-[![GoDoc](https://godoc.org/github.com/limetext/lime?status.svg)](https://godoc.org/github.com/limetext/lime)
 [![Bountysource Bounties](https://www.bountysource.com/badge/team?team_id=8742&style=bounties_received)](https://www.bountysource.com/teams/limetext/issues?utm_source=limetext&utm_medium=shield&utm_campaign=bounties_received)
 [![Bountysource Raised](https://www.bountysource.com/badge/team?team_id=8742&style=raised)](https://www.bountysource.com/teams/limetext?utm_source=limetext&utm_medium=shield&utm_campaign=raised)
 
 [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/limetext/lime)
 
 
+# lime
+
+Welcome to the meta project for Lime.
+
+For the backend, please see [limetext/lime-backend](https://github.com/limetext/lime-backend).
+
+There are also three frontends currently in development: [limetext/lime-qml](https://github.com/limetext/lime-qml), [limetext/lime-termbox](https://github.com/limetext/lime-termbox), and [limetext/lime-html](https://github.com/limetext/lime-html).
+
+
 # Status
 
-The [frontends](https://github.com/limetext/lime/issues?direction=desc&labels=frontend) are **not** ready to replace your favourite editor, but the backend itself isn't too far away.
+The frontends are **not** ready to replace your favourite editor, but the backend isn't too far away.
 
 If you want to help us build Lime, great! We'd love your help. See [here](https://github.com/limetext/lime#contributing) for how you could be most useful.
 
@@ -54,11 +60,11 @@ If your pull request is not accepted on the first try, don't be discouraged! If 
 
 Where is a good place to start? The [Contributing](https://github.com/limetext/lime/wiki/Contributing) page in the wiki has some suggestions. Think the [wiki](https://github.com/limetext/lime/wiki/_pages) needs clarifying, or something is missing? Go ahead and make the change.
 
-Guidelines for making contributions can be found in [CONTRIBUTING.md](https://github.com/limetext/lime/blob/master/CONTRIBUTING.md).
+Guidelines for making contributions can be found in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Want to chat? Find us on [Gitter](https://gitter.im/limetext/lime).
 
 
 # License
 
-The license of the project is the [2-clause BSD license](https://github.com/limetext/lime/blob/master/LICENSE).
+The license of the project is the [2-clause BSD license](LICENSE).

@@ -12,14 +12,14 @@ All issues reported here should result in code being changed, added and/or remov
 
 ### 3. Feature requests belong here, unless they can be implemented via a plugin.
 
-If the feature can be implemented via a plugin it fails by proxy to satisfy [#2](https://github.com/limetext/lime/blob/master/CONTRIBUTING.md#2-issues-should-be-openened-up-in-the-correct-repository).
+If the feature can be implemented via a plugin it fails by proxy to satisfy [#2](CONTRIBUTING.md#2-issues-should-be-openened-up-in-the-correct-repository).
 
 
 ### 4. Bug reports belong here.
 
 Bug reports should include a description of current behaviour and the expected behaviour in cases where this isn't obvious.
 
-User errors where the error does not result in a code change count as support and fail to satisfy [#1](https://github.com/limetext/lime/blob/master/CONTRIBUTING.md#1-the-issues-list-is-for-development-purposes-only).
+User errors where the error does not result in a code change count as support and fail to satisfy [#1](CONTRIBUTING.md#1-the-issues-list-is-for-development-purposes-only).
 
 ### 5. If you'd like to help but don't know how.
 

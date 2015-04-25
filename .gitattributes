@@ -1,4 +1,0 @@
-backend/textmate/testdata/* -text
-backend/testdata/* -text
-backend/loaders/json/testdata/* -text
-backend/loaders/plist/testdata/* -text

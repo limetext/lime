@@ -1,4 +1,0 @@
-[
-    { "keys": ["ctrl+d", "ctrl+k"], "command": "t1", "context": [{ "key": "t1" }] },
-    { "keys": ["p"], "command": "t2", "context": [{ "key": "t2" }] },
-]
