@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"testing"
 
-	// "github.com/limetext/gopy/lib"
 	"github.com/limetext/lime/backend"
 )
 
