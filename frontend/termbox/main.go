@@ -511,7 +511,7 @@ func (t *tbfe) renderthread() {
 		termbox.Flush()
 	}
 
-	for range t.dorender {
+	for _ = range t.dorender {
 		dorender()
 	}
 }
@@ -589,7 +589,7 @@ func (t *tbfe) loop() {
 		}()
 
 		go func() {
-			for range timer.C {
+			for _ = range timer.C {
 				timechan <- true
 				timer.Reset(duration)
 			}
