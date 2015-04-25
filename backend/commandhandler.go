@@ -128,6 +128,9 @@ func (ch *commandHandler) RunTextCommand(view *View, name string, args Args) err
 				log.Logf(lvl, "Command execution failed: %s", err)
 				return err
 			}
+		} else {
+			log.Logf(lvl, "No text command found: %s", name)
+			return nil
 		}
 	}
 	log.Logf(lvl, "Ran text command: %s %s", name, time.Since(t))
