@@ -7,7 +7,7 @@ For support requests, please use [limetext/support](https://github.com/limetext/
 
 ### 2. Issues should be opened up in the correct repository.
 
-Issues should only be reported here if they cover the project as a whole. If the issue relates to a specific package, please file it there instead. LimeText is made up of a number of packages, which can be found [here](https://github.com/limetext).
+Issues should only be reported here if they cover the project as a whole. If the issue relates to a specific package, please file it there instead. Lime Text is made up of a number of packages, which can be found [here](https://github.com/limetext).
 
 
 ### 3. If you would like to help but do not know how.
