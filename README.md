@@ -60,7 +60,7 @@ If your pull request is not accepted on the first try, don't be discouraged! If 
 
 Where is a good place to start? The [Contributing](https://github.com/limetext/lime/wiki/Contributing) page in the wiki has some suggestions. Think the [wiki](https://github.com/limetext/lime/wiki/_pages) needs clarifying, or something is missing? Go ahead and make the change.
 
-Guidelines for making contributions can be found in [CONTRIBUTING.md](CONTRIBUTING.md).
+Guidelines for making contributions can be found in [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 Want to chat? Find us on [Gitter](https://gitter.im/limetext/lime).
 
