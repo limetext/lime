@@ -19,14 +19,14 @@ The frontends are **not** ready to replace your favourite editor, but the backen
 
 If you want to help us build Lime, great! We'd love your help. See [here](https://github.com/limetext/lime#contributing) for how you could be most useful.
 
-This project is not yet ready for daily use, and we currently lack the resource to support users. If you are in need of help building, running, or otherwise using Lime, try the [wiki](https://github.com/limetext/lime/wiki/_pages) or your search engine of choice. If you still need help, consider opening an issue in [limetext/support](https://github.com/limetext/support). Issues opened in this project that don't relate to bugs or improvements will be closed.
+This project is not yet ready for daily use, and we currently lack the resources to support users. If you need help building, running, or otherwise using Lime, try the [wiki](https://github.com/limetext/lime/wiki/_pages) or your favorite search engine. If you still need help, consider opening an issue in [limetext/support](https://github.com/limetext/support). Issues opened in this project that don't relate to bugs or improvements will be closed.
 
 Your help is needed to move the project forward! Claim an [issue](https://github.com/limetext/lime/issues) and submit a pull request!
 
 
 # What is Lime?
 
-![Screenshot taken Aug 27 2014](http://limetext.org/assets/img/screen.png)
+![Screenshot taken Aug 27 2014](http://limetext.org/assets/img/screenshot.png)
 
 > I love the [Sublime Text](http://www.sublimetext.com) editor. [I have](https://github.com/quarnster/SublimeClang) [created](https://github.com/quarnster/SublimeJava) [several](https://github.com/quarnster/CompleteSharp) [plugins](https://github.com/quarnster/SublimeGDB) [to make](https://github.com/quarnster/ADBView) it even better. One thing that scares me though is that it is not open sourced and the [pace of nightly releases](http://www.sublimetext.com/nightly) have recently been anything but nightly, even now that version 3 is out in Beta.
 >
