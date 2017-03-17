@@ -51,6 +51,10 @@ Please refer to the [Goals](https://github.com/limetext/lime/wiki/Goals) page in
 
 Please refer to the [Building](https://github.com/limetext/lime/wiki/Building) page in the [wiki](https://github.com/limetext/lime/wiki/_pages).
 
+# Installing (When Lime is Ready)
+
+Fedora users will be able to find the 'lime-text' package in the official fedora repositories.
+A .rpm will also be available for all rpm-based distros on the website.
 
 # Contributing
 
