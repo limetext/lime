@@ -14,6 +14,6 @@ Issues should only be reported here if they cover the project as a whole. If the
 
 There is plenty of work that needs to be done, requiring a wide variety of skills and skill levels. The [Contributing wiki page](https://github.com/limetext/lime/wiki/Contributing) is a good place to start for some ideas.
 
-There is no roadmap with well staked out milestones, where we can just give you a specific task to work on, and the few volunteers who are actively involved at the moment are already having a hard time managing everything. This is a community run project, without any commercial backing, and any time spent here by our volunteers is their own spare time that they kindly donate to the project instead of spending time with friends, family, and other interests.
+There is no roadmap with well staked out milestones, where we can just give you a specific task to work on, and the few volunteers who are actively involved at the moment are already having a hard time managing everything. This is a community-run project, without any commercial backing, and any time spent here by our volunteers is their own spare time that they kindly donate to the project instead of spending time with friends, family, and other interests.
 
 We do need your help. Even 5 minutes spent fixing a typo is valuable to us, and if you can spare more time, even better.
